@@ -1,0 +1,856 @@
+import { useState, useRef, useMemo, useEffect } from 'react'
+import Papa from 'papaparse'
+import { municipiosApi, endpointsApi, proxyApi, sistemasApi } from '../lib/api'
+import useMunicipioStore from '../stores/municipioStore'
+import SearchSelect from '../components/SearchSelect'
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function nomeRecurso(ep, moduleBase = '') {
+  const idx = ep.nome.lastIndexOf(' - ')
+  if (idx !== -1) return ep.nome.slice(idx + 3)
+  const partes = ep.path.split('/').filter((p) => p && !p.startsWith('{'))
+  if (partes.length === 0) return ep.nome
+  const ultima = partes[partes.length - 1]
+  const palavras = ultima.replace(/([A-Z])/g, ' $1').trim().split(/\s+/)
+  if (moduleBase && palavras.length > 1 && palavras[0].toLowerCase() === moduleBase.toLowerCase()) {
+    palavras.shift()
+  }
+  if (palavras.length === 0) return ultima.charAt(0).toUpperCase() + ultima.slice(1)
+  palavras[0] = palavras[0].charAt(0).toUpperCase() + palavras[0].slice(1)
+  return palavras.join(' ')
+}
+
+const METODOS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+const METODO_ACTIVE = {
+  GET:    'bg-blue-500   text-white border-blue-500',
+  POST:   'bg-green-500  text-white border-green-500',
+  PUT:    'bg-yellow-500 text-white border-yellow-500',
+  PATCH:  'bg-orange-500 text-white border-orange-500',
+  DELETE: 'bg-red-500    text-white border-red-500',
+}
+
+const TIPO_COR = {
+  string:  'bg-emerald-100 text-emerald-700',
+  number:  'bg-blue-100 text-blue-700',
+  object:  'bg-purple-100 text-purple-700',
+  boolean: 'bg-orange-100 text-orange-700',
+}
+function tipoCor(tipo) {
+  if (!tipo) return 'bg-gray-100 text-gray-400'
+  if (tipo.startsWith('array')) return 'bg-indigo-100 text-indigo-700'
+  return TIPO_COR[tipo] || 'bg-gray-100 text-gray-400'
+}
+
+export default function EnvioLote() {
+  const municipioAtivo = useMunicipioStore((s) => s.municipioAtivo)
+  const [municipios, setMunicipios] = useState([])
+  const [municipioSel, setMunicipioSel] = useState('')
+  const [sistemas, setSistemas] = useState([])
+  const [sistemaSel, setSistemaSel] = useState('')
+  const [modulos, setModulos] = useState([])
+  const [moduloSel, setModuloSel] = useState('')
+  const [endpoints, setEndpoints] = useState([])
+  const [recursoSel, setRecursoSel] = useState('')
+  const [endpointSel, setEndpointSel] = useState(null)
+  const [metodo, setMetodo] = useState('POST')
+  const [pathCustom, setPathCustom] = useState('')
+
+  const [csvData, setCsvData] = useState(null)
+  const [camposSelecionados, setCamposSelecionados] = useState({})
+  const [mapeamentoCampo, setMapeamentoCampo] = useState({})
+  const [modoMapeamento, setModoMapeamento] = useState({})  // { [campo]: 'csv' | 'fixo' }
+  const [valoresFixos, setValoresFixos] = useState({})      // { [campo]: string }
+  const [delay, setDelay] = useState(200)
+
+  const [executando, setExecutando] = useState(false)
+  const [progresso, setProgresso] = useState([])
+  const [concluido, setConcluido] = useState(false)
+  const abortRef = useRef(false)
+  const progressoRef = useRef(null)
+
+  useEffect(() => {
+    municipiosApi.listar().then(setMunicipios)
+    sistemasApi.listar().then(setSistemas)
+    endpointsApi.modulos().then(setModulos)
+    if (municipioAtivo) setMunicipioSel(String(municipioAtivo.id))
+  }, [municipioAtivo])
+
+  useEffect(() => {
+    const sistemaId = sistemaSel || undefined
+    endpointsApi.modulos(sistemaId).then(setModulos)
+    setModuloSel('')
+    setRecursoSel('')
+    setEndpoints([])
+    setEndpointSel(null)
+  }, [sistemaSel])
+
+  useEffect(() => {
+    if (!moduloSel) { setEndpoints([]); setRecursoSel(''); setEndpointSel(null); return }
+    const sistemaId = sistemaSel || undefined
+    endpointsApi.listar(moduloSel, sistemaId).then((eps) => {
+      setEndpoints(eps)
+      setRecursoSel('')
+      setEndpointSel(null)
+    })
+  }, [moduloSel])
+
+  const recursos = useMemo(() => {
+    const moduleBase = moduloSel.split(/[\s(]/)[0]
+    const byNome = new Map()
+    for (const ep of endpoints) {
+      const nome = nomeRecurso(ep, moduleBase)
+      if (!byNome.has(nome)) {
+        byNome.set(nome, { path: ep.path, nome })
+      } else {
+        const existing = byNome.get(nome)
+        if (!ep.path.includes('{') && existing.path.includes('{')) {
+          byNome.set(nome, { path: ep.path, nome })
+        }
+      }
+    }
+    return Array.from(byNome.values()).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+  }, [endpoints, moduloSel])
+
+  const handleRecursoChange = (path) => {
+    setRecursoSel(path)
+    if (!path) { setEndpointSel(null); setPathCustom(''); return }
+    setPathCustom(path)
+    const match = endpoints.find((ep) => ep.path === path && ep.metodo === metodo)
+    setEndpointSel(match || null)
+  }
+
+  const schema = (endpointSel?.bodySchema || []).filter((c) => !c._exemplo)
+
+  const schemaExpanded = useMemo(() => {
+    const sentinel = (endpointSel?.bodySchema || []).find((c) => c._exemplo)
+    const exJson = sentinel?.json
+    const exObj = Array.isArray(exJson) ? exJson[0] : exJson
+    const result = []
+    for (const c of schema) {
+      if (c.tipo === 'object' && exObj && typeof exObj[c.campo] === 'object' && exObj[c.campo] !== null && !Array.isArray(exObj[c.campo])) {
+        for (const [subKey, subVal] of Object.entries(exObj[c.campo])) {
+          const subTipo = typeof subVal === 'number' ? 'number'
+            : typeof subVal === 'boolean' ? 'boolean'
+            : (typeof subVal === 'object' && subVal !== null ? 'object' : 'string')
+          result.push({
+            campo: `${c.campo}.${subKey}`,
+            _displayCampo: subKey,
+            _parent: c.campo,
+            tipo: subTipo,
+            obrigatorio: false,
+            descricao: '',
+          })
+        }
+      } else {
+        result.push({ ...c, _displayCampo: c.campo, _parent: null })
+      }
+    }
+    return result
+  }, [schema, endpointSel])
+
+  useEffect(() => {
+    if (!endpointSel) return
+    setMetodo(endpointSel.metodo)
+    setPathCustom(endpointSel.path)
+    const initSel = {}
+    for (const c of schemaExpanded) {
+      initSel[c.campo] = c.obrigatorio || false
+    }
+    if ('idIntegracao' in initSel) initSel['idIntegracao'] = true
+    setCamposSelecionados(initSel)
+    setMapeamentoCampo({})
+    setModoMapeamento({})
+    setValoresFixos({})
+  }, [endpointSel])
+
+  const handleUploadCSV = (file) => {
+    if (!file) return
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (resultado) => {
+        const colunas = resultado.meta.fields || []
+        const linhas = resultado.data
+        setCsvData({ colunas, linhas })
+        setProgresso([])
+        setConcluido(false)
+        const autoSel = {}
+        const autoMap = {}
+        for (const c of schemaExpanded) {
+          const match = colunas.find((col) => col.toLowerCase() === c._displayCampo.toLowerCase())
+          if (match) {
+            autoSel[c.campo] = true
+            autoMap[c.campo] = match
+          }
+        }
+        // idIntegracao sempre selecionado
+        if (schemaExpanded.some((c) => c.campo === 'idIntegracao')) {
+          autoSel['idIntegracao'] = true
+        }
+        setCamposSelecionados(autoSel)
+        setMapeamentoCampo(autoMap)
+      },
+      error: (err) => alert('Erro ao parsear CSV: ' + err.message),
+    })
+  }
+
+  const iniciarEnvio = async () => {
+    if (!municipioSel) { alert('Selecione um município'); return }
+    if (!sistemaSel) { alert('Selecione um sistema'); return }
+    if (!pathCustom) { alert('Informe o path'); return }
+    if (!csvData) { alert('Faça upload de um CSV'); return }
+
+    abortRef.current = false
+    setExecutando(true)
+    setConcluido(false)
+    setProgresso([])
+
+    const linhas = csvData.linhas
+    const resultados = []
+
+    for (let i = 0; i < linhas.length; i++) {
+      if (abortRef.current) {
+        resultados.push({ linha: i + 1, status: 'abortado', msg: 'Abortado pelo usuário', dados: linhas[i] })
+        break
+      }
+
+      const linha = linhas[i]
+
+      const body = {}
+      for (const c of schemaExpanded) {
+        if (!camposSelecionados[c.campo]) continue
+        const modo = modoMapeamento[c.campo] || 'csv'
+        let valor
+        if (modo === 'fixo') {
+          valor = valoresFixos[c.campo]
+          if (valor === undefined || valor === '') continue
+        } else {
+          const colCSV = mapeamentoCampo[c.campo]
+          if (!colCSV || linha[colCSV] === undefined) continue
+          valor = linha[colCSV]
+        }
+        if (c._parent) {
+          if (!body[c._parent]) body[c._parent] = {}
+          body[c._parent][c._displayCampo] = valor
+        } else {
+          body[c.campo] = valor
+        }
+      }
+
+      let pathFinal = pathCustom
+      for (const c of schemaExpanded) {
+        if (!c._parent || !camposSelecionados[c.campo]) continue
+        const modo = modoMapeamento[c.campo] || 'csv'
+        const val = modo === 'fixo'
+          ? (valoresFixos[c.campo] || '')
+          : (mapeamentoCampo[c.campo] ? (linha[mapeamentoCampo[c.campo]] || '') : '')
+        if (val) pathFinal = pathFinal.replace(`{${c.campo}}`, val)
+      }
+
+      const inicio = Date.now()
+      try {
+        const res = await proxyApi.executar({
+          municipioId: Number(municipioSel),
+          sistemaId: Number(sistemaSel),
+          endpointId: endpointSel?.id || null,
+          path: pathFinal,
+          metodo,
+          body: ['GET', 'DELETE'].includes(metodo) ? undefined : body,
+          tipo: 'lote',
+        })
+        const duracao = Date.now() - inicio
+        resultados.push({ linha: i + 1, status: 'ok', msg: `${res.statusCode} — ${duracao}ms`, dados: linha })
+      } catch (err) {
+        resultados.push({ linha: i + 1, status: 'erro', msg: err.message, dados: linha })
+      }
+
+      setProgresso([...resultados])
+      if (progressoRef.current) {
+        progressoRef.current.scrollTop = progressoRef.current.scrollHeight
+      }
+      if (i < linhas.length - 1) await sleep(delay)
+    }
+
+    setExecutando(false)
+    setConcluido(true)
+  }
+
+  const abortar = () => { abortRef.current = true }
+
+  const exportarCSV = () => {
+    const rows = progresso.map((p) => ({ linha: p.linha, status: p.status, mensagem: p.msg, ...p.dados }))
+    const csv = Papa.unparse(rows)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `relatorio_lote_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const totalOk = progresso.filter((p) => p.status === 'ok').length
+  const totalErro = progresso.filter((p) => p.status === 'erro').length
+  const percentual = csvData ? Math.round((progresso.length / csvData.linhas.length) * 100) : 0
+
+  // Campos selecionados (exceto idIntegracao que é sempre mostrado à parte)
+  const camposMapeados = schemaExpanded.filter((c) => camposSelecionados[c.campo])
+
+  return (
+    <div className="space-y-4 animate-fadeIn">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Envio em Lote via CSV</h1>
+        <p className="text-sm text-gray-500 mt-1">Processe múltiplos registros sequencialmente a partir de um arquivo CSV</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+
+        {/* ── Coluna esquerda — configuração ── */}
+        <div className="space-y-4">
+
+          {/* 1. Município */}
+          <div className="card p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">1. Município</h3>
+            <div className="relative">
+              <select
+                value={municipioSel}
+                onChange={(e) => setMunicipioSel(e.target.value)}
+                className={`w-full appearance-none pl-3 pr-8 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sysgate-500 focus:border-transparent ${
+                  municipioSel
+                    ? 'border-sysgate-300 bg-sysgate-50/60 text-gray-800 font-medium'
+                    : 'border-gray-300 bg-white text-gray-400'
+                }`}
+              >
+                <option value="">Selecione um município...</option>
+                {municipios.map((m) => (
+                  <option key={m.id} value={m.id}>{m.nome} {m.ativo ? '(ativo)' : ''}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
+                <svg className={`w-4 h-4 ${municipioSel ? 'text-sysgate-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 20 20">
+                  <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Sistema */}
+          <div className="card p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">2. Sistema</h3>
+            <div className="relative">
+              <select
+                value={sistemaSel}
+                onChange={(e) => setSistemaSel(e.target.value)}
+                className={`w-full appearance-none pl-3 pr-8 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sysgate-500 focus:border-transparent ${
+                  sistemaSel
+                    ? 'border-sysgate-300 bg-sysgate-50/60 text-gray-800 font-medium'
+                    : 'border-gray-300 bg-white text-gray-400'
+                }`}
+              >
+                <option value="">Selecione um sistema...</option>
+                {sistemas.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nome}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
+                <svg className={`w-4 h-4 ${sistemaSel ? 'text-sysgate-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 20 20">
+                  <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Endpoint */}
+          <div className="card p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">3. Endpoint</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="label text-xs">Módulo</label>
+                <SearchSelect
+                  options={modulos.map((m) => ({ value: m, label: m }))}
+                  value={moduloSel}
+                  onChange={setModuloSel}
+                  placeholder="Buscar módulo..."
+                  disabled={!sistemaSel}
+                />
+              </div>
+              <div>
+                <label className="label text-xs">Recurso</label>
+                <SearchSelect
+                  options={recursos.map((r) => ({ value: r.path, label: r.nome }))}
+                  value={recursoSel}
+                  onChange={handleRecursoChange}
+                  placeholder="Buscar recurso..."
+                  disabled={!moduloSel}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Requisição */}
+          <div className="card p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">4. Requisição</h3>
+            <div className="flex gap-2 flex-wrap">
+              {METODOS.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => {
+                    setMetodo(m)
+                    const path = endpointSel?.path || pathCustom
+                    if (path) {
+                      const match = endpoints.find((ep) => ep.path === path && ep.metodo === m)
+                      setEndpointSel(match || null)
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wide border transition-all ${
+                    metodo === m
+                      ? METODO_ACTIVE[m]
+                      : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+            <div>
+              <label className="label text-xs">Path</label>
+              <input
+                value={pathCustom}
+                onChange={(e) => setPathCustom(e.target.value)}
+                className="input font-mono"
+                placeholder="/recurso/{id}"
+              />
+            </div>
+            {municipioSel && sistemaSel && pathCustom && (() => {
+              const base = (sistemas.find((s) => String(s.id) === sistemaSel)?.urlBase || '').replace(/\/$/, '')
+              let uniquePath = pathCustom
+              const parts = pathCustom.split('/').filter(Boolean)
+              for (let i = parts.length; i >= 1; i--) {
+                const prefix = '/' + parts.slice(0, i).join('/')
+                if (base.endsWith(prefix)) { uniquePath = '/' + parts.slice(i).join('/'); break }
+              }
+              return (
+                <div className="bg-gray-50 rounded-lg px-3 py-2 space-y-0.5">
+                  <p className="text-xs text-gray-400 truncate font-mono">{base}</p>
+                  <p className="text-sm font-semibold text-sysgate-600 font-mono break-words">{uniquePath}</p>
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* 5. Arquivo CSV */}
+          <div className="card p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">5. Arquivo CSV</h3>
+            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-sysgate-400 hover:bg-sysgate-50/30 transition-colors">
+              <svg className="w-6 h-6 text-gray-400 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-sm font-medium text-gray-600">Clique para selecionar o CSV</span>
+              <span className="text-xs text-gray-400 mt-0.5">ou arraste e solte</span>
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => handleUploadCSV(e.target.files[0])}
+              />
+            </label>
+            {csvData && (
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm text-green-700 font-medium">
+                  {csvData.linhas.length} linha{csvData.linhas.length !== 1 ? 's' : ''} · {csvData.colunas.length} coluna{csvData.colunas.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 6. Configuração de delay */}
+          <div className="card p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">6. Configuração</h3>
+            <div>
+              <label className="label text-xs">Delay entre requisições: <strong>{delay}ms</strong></label>
+              <input
+                type="range"
+                min={0}
+                max={5000}
+                step={100}
+                value={delay}
+                onChange={(e) => setDelay(Number(e.target.value))}
+                className="w-full accent-sysgate-600"
+              />
+              <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                <span>0ms</span>
+                <span>5000ms</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Coluna direita — mapeamento + progresso ── */}
+        <div className="space-y-4">
+
+          {/* 7. Mapeamento de campos */}
+          <div className="card p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">7. Mapeamento de campos</h3>
+
+            {!endpointSel ? (
+              <div className="flex items-center justify-center h-64 text-center">
+                <div className="text-gray-400">
+                  <svg className="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                  </svg>
+                  <p className="text-sm font-medium">Selecione um endpoint para ver os campos</p>
+                </div>
+              </div>
+            ) : schemaExpanded.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-center">
+                <p className="text-sm text-gray-400">Este endpoint não possui campos de body.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 h-96">
+
+                  {/* Painel esquerdo — campos do schema */}
+                  <div className="border border-gray-200 rounded-xl overflow-hidden flex flex-col bg-white">
+                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 flex-shrink-0 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Campos</span>
+                      {(() => {
+                        const alternaveis = schemaExpanded.filter((c) => c.campo !== 'idIntegracao')
+                        const todos = alternaveis.length > 0 && alternaveis.every((c) => camposSelecionados[c.campo])
+                        return (
+                          <button
+                            onClick={() => {
+                              const novoEstado = {}
+                              for (const c of alternaveis) novoEstado[c.campo] = !todos
+                              setCamposSelecionados((s) => ({ ...s, ...novoEstado }))
+                            }}
+                            className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
+                              todos
+                                ? 'bg-sysgate-100 text-sysgate-700 hover:bg-sysgate-200'
+                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            }`}
+                          >
+                            {todos ? 'Desmarcar todos' : 'Selecionar todos'}
+                          </button>
+                        )
+                      })()}
+                    </div>
+                    <div className="flex-1 overflow-y-auto scrollbar-thin divide-y divide-gray-100">
+                      {(() => {
+                        const items = []
+                        let lastParent = undefined
+                        for (const campo of schemaExpanded) {
+                          const isFixed = campo.campo === 'idIntegracao'
+
+                          if (!isFixed && lastParent === 'FIXED_SEPARATOR') {
+                            items.push(<div key="sep-integracao" className="h-px bg-gray-200 mx-2" />)
+                            lastParent = undefined
+                          }
+
+                          if (campo._parent && campo._parent !== lastParent) {
+                            items.push(
+                              <div key={`hdr-${campo._parent}`} className="px-3 py-1.5 bg-gray-50">
+                                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{campo._parent}</span>
+                              </div>
+                            )
+                            lastParent = campo._parent
+                          } else if (!campo._parent) {
+                            lastParent = isFixed ? 'FIXED_SEPARATOR' : null
+                          }
+
+                          if (isFixed) {
+                            items.push(
+                              <div key={campo.campo} className="flex items-center gap-2.5 px-3 py-2.5 bg-amber-50 select-none">
+                                <div className="w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center bg-amber-500 border-amber-500">
+                                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 8">
+                                    <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </div>
+                                <span className="flex-1 text-xs font-mono font-medium text-amber-800">{campo._displayCampo}</span>
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium flex-shrink-0">obrigatório</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded font-mono flex-shrink-0 ${tipoCor(campo.tipo)}`}>{campo.tipo}</span>
+                              </div>
+                            )
+                          } else {
+                            const checked = camposSelecionados[campo.campo] || false
+                            items.push(
+                              <div
+                                key={campo.campo}
+                                onClick={() => setCamposSelecionados((s) => ({ ...s, [campo.campo]: !s[campo.campo] }))}
+                                className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors select-none ${
+                                  campo._parent ? 'pl-5' : ''
+                                } ${checked ? 'bg-sysgate-50 hover:bg-sysgate-100/70' : 'hover:bg-gray-50'}`}
+                              >
+                                <div className={`w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all ${
+                                  checked ? 'bg-sysgate-600 border-sysgate-600' : 'border-gray-300 bg-white'
+                                }`}>
+                                  {checked && (
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 8">
+                                      <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  )}
+                                </div>
+                                <span className={`flex-1 text-xs font-mono font-medium truncate ${checked ? 'text-sysgate-700' : 'text-gray-700'}`}>
+                                  {campo._displayCampo}
+                                  {campo.obrigatorio && <span className="text-red-500 ml-0.5">*</span>}
+                                </span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded font-mono flex-shrink-0 ${tipoCor(campo.tipo)}`}>
+                                  {campo.tipo}
+                                </span>
+                              </div>
+                            )
+                          }
+                        }
+                        return items
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Painel direito — mapeamento para coluna CSV */}
+                  <div className="border border-sysgate-200 rounded-xl overflow-hidden flex flex-col bg-sysgate-50/40">
+                    <div className="px-3 py-2 bg-sysgate-100/60 border-b border-sysgate-200 flex-shrink-0">
+                      <span className="text-xs font-semibold text-sysgate-600 uppercase tracking-wide">
+                        Valores
+                        {csvData && <span className="ml-1.5 text-sysgate-400 normal-case font-normal">({csvData.colunas.length} colunas CSV)</span>}
+                      </span>
+                    </div>
+
+                    {camposMapeados.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center p-4">
+                        <p className="text-xs text-sysgate-400 text-center">Marque os campos ao lado</p>
+                      </div>
+                    ) : (
+                      <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1.5">
+                        {camposMapeados.map((campo) => {
+                          const isObrigatorio = campo.campo === 'idIntegracao'
+                          const modo = modoMapeamento[campo.campo] || 'csv'
+                          return (
+                            <div key={campo.campo} className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 border ${
+                              isObrigatorio ? 'bg-amber-50 border-amber-200' : 'bg-sysgate-100/40 border-sysgate-200/60'
+                            }`}>
+                              {/* Nome do campo */}
+                              <label className={`text-xs font-mono font-medium w-24 truncate flex-shrink-0 ${isObrigatorio ? 'text-amber-800' : 'text-sysgate-700'}`} title={campo.campo}>
+                                {campo._displayCampo}
+                                {isObrigatorio && <span className="text-amber-500 ml-0.5">*</span>}
+                              </label>
+
+                              {/* Toggle CSV / Fixo */}
+                              <div className={`flex rounded overflow-hidden border flex-shrink-0 text-xs ${isObrigatorio ? 'border-amber-300' : 'border-sysgate-300'}`}>
+                                <button
+                                  onClick={() => setModoMapeamento((m) => ({ ...m, [campo.campo]: 'csv' }))}
+                                  className={`px-1.5 py-1 transition-colors ${
+                                    modo === 'csv'
+                                      ? isObrigatorio ? 'bg-amber-500 text-white' : 'bg-sysgate-600 text-white'
+                                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  CSV
+                                </button>
+                                <button
+                                  onClick={() => setModoMapeamento((m) => ({ ...m, [campo.campo]: 'fixo' }))}
+                                  className={`px-1.5 py-1 transition-colors border-l ${isObrigatorio ? 'border-amber-300' : 'border-sysgate-300'} ${
+                                    modo === 'fixo'
+                                      ? isObrigatorio ? 'bg-amber-500 text-white' : 'bg-sysgate-600 text-white'
+                                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  Fixo
+                                </button>
+                              </div>
+
+                              {/* Input: coluna CSV ou valor fixo */}
+                              <div className="flex-1 relative min-w-0">
+                                {modo === 'csv' ? (
+                                  <>
+                                    <select
+                                      value={mapeamentoCampo[campo.campo] || ''}
+                                      onChange={(e) => setMapeamentoCampo((m) => ({ ...m, [campo.campo]: e.target.value }))}
+                                      disabled={!csvData}
+                                      className={`w-full appearance-none pl-2 pr-6 py-1.5 text-xs rounded-md border focus:outline-none focus:ring-2 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        isObrigatorio
+                                          ? 'border-amber-200 bg-white focus:ring-amber-400 text-gray-800'
+                                          : mapeamentoCampo[campo.campo]
+                                            ? 'border-sysgate-300 bg-white text-gray-800 focus:ring-sysgate-500'
+                                            : 'border-gray-200 bg-gray-50 text-gray-400 focus:ring-sysgate-500'
+                                      }`}
+                                    >
+                                      <option value="">{csvData ? '— coluna CSV —' : '— sem CSV —'}</option>
+                                      {(csvData?.colunas || []).map((col) => (
+                                        <option key={col} value={col}>{col}</option>
+                                      ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1.5">
+                                      <svg className={`w-3 h-3 ${isObrigatorio ? 'text-amber-400' : 'text-gray-400'}`} fill="none" viewBox="0 0 20 20">
+                                        <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={valoresFixos[campo.campo] || ''}
+                                    onChange={(e) => setValoresFixos((v) => ({ ...v, [campo.campo]: e.target.value }))}
+                                    placeholder="valor fixo para todas as linhas"
+                                    className={`w-full px-2 py-1.5 text-xs rounded-md border focus:outline-none focus:ring-2 focus:border-transparent transition-colors ${
+                                      isObrigatorio
+                                        ? 'border-amber-200 bg-white focus:ring-amber-400'
+                                        : 'border-gray-200 bg-white focus:ring-sysgate-500'
+                                    }`}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Preview JSON amostra — abaixo dos dois painéis */}
+                {(() => {
+                  const temAlgumValor = camposMapeados.some((c) => {
+                    const modo = modoMapeamento[c.campo] || 'csv'
+                    return modo === 'fixo' ? valoresFixos[c.campo] : mapeamentoCampo[c.campo]
+                  })
+                  if (!temAlgumValor) return null
+                  // Para campos fixos, usar o valor fixo em todas as linhas de prévia
+                  // Para campos CSV, precisamos de csvData
+                  const linhasPrevia = csvData?.linhas.slice(0, 3) || [{}]
+                  return (
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1.5 font-medium">
+                        Prévia{csvData ? ' (primeiras linhas)' : ' (valores fixos)'}
+                      </p>
+                      <pre className="bg-gray-900 text-green-300 rounded-xl p-3 text-xs font-mono overflow-auto scrollbar-thin">
+                        {linhasPrevia.map((linha, i) => {
+                          const body = {}
+                          for (const c of camposMapeados) {
+                            const modo = modoMapeamento[c.campo] || 'csv'
+                            let valor
+                            if (modo === 'fixo') {
+                              valor = valoresFixos[c.campo]
+                              if (!valor) continue
+                            } else {
+                              const colCSV = mapeamentoCampo[c.campo]
+                              if (!colCSV || linha[colCSV] === undefined) continue
+                              valor = linha[colCSV]
+                            }
+                            if (c._parent) {
+                              if (!body[c._parent]) body[c._parent] = {}
+                              body[c._parent][c._displayCampo] = valor
+                            } else {
+                              body[c.campo] = valor
+                            }
+                          }
+                          return `#${i + 1}  ${JSON.stringify(body)}\n`
+                        }).join('')}
+                      </pre>
+                    </div>
+                  )
+                })()}
+              </>
+            )}
+          </div>
+
+          {/* Botão iniciar — entre mapeamento e progresso */}
+          <div className="flex justify-end gap-2">
+            {executando && (
+              <button onClick={abortar} className="btn-danger px-5 py-2.5">
+                Abortar
+              </button>
+            )}
+            <button
+              onClick={iniciarEnvio}
+              disabled={executando || !csvData || !municipioSel || !sistemaSel || !pathCustom}
+              className="btn-primary px-6 py-2.5"
+            >
+              {executando ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Enviando {progresso.length}/{csvData?.linhas.length}...
+                </span>
+              ) : (
+                '▶ Iniciar envio'
+              )}
+            </button>
+          </div>
+
+          {/* Progresso */}
+          {progresso.length > 0 && (
+            <>
+              <div className="card p-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-700">Progresso</span>
+                  <span className="text-gray-500">{progresso.length}/{csvData.linhas.length} ({percentual}%)</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="h-full bg-sysgate-500 rounded-full transition-all duration-300"
+                    style={{ width: `${percentual}%` }}
+                  />
+                </div>
+                <div className="flex gap-4 text-sm">
+                  <span className="text-green-600 font-medium">{totalOk} ok</span>
+                  <span className="text-red-600 font-medium">{totalErro} erro{totalErro !== 1 ? 's' : ''}</span>
+                </div>
+                {concluido && (
+                  <button onClick={exportarCSV} className="btn-secondary w-full justify-center mt-1">
+                    Exportar relatório CSV
+                  </button>
+                )}
+              </div>
+
+              <div className="card overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-gray-200 text-sm font-semibold text-gray-700">
+                  Log de execução
+                </div>
+                <div
+                  ref={progressoRef}
+                  className="divide-y divide-gray-100 max-h-96 overflow-y-auto scrollbar-thin"
+                >
+                  {progresso.map((p, i) => (
+                    <div key={i} className={`flex items-start gap-3 px-4 py-2.5 ${p.status === 'erro' ? 'bg-red-50' : ''}`}>
+                      <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
+                        p.status === 'ok' ? 'bg-green-500' : p.status === 'erro' ? 'bg-red-500' : 'bg-gray-400'
+                      }`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-gray-600">Linha {p.linha}</span>
+                          <span className={`text-xs ${p.status === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
+                            {p.msg}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 font-mono truncate">
+                          {Object.values(p.dados).slice(0, 3).join(' · ')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Estado vazio — sem CSV ainda */}
+          {!csvData && !executando && (
+            <div className="card p-10 flex flex-col items-center justify-center text-center text-gray-400">
+              <svg className="w-12 h-12 mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-sm font-medium">Faça upload de um CSV para começar</p>
+              <p className="text-xs mt-1">O progresso da execução aparecerá aqui</p>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}

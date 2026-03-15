@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Sistema {
+  id                Int                @id @default(autoincrement())
+  nome              String
+  urlBase           String
+  descricao         String?
+  criadoEm         DateTime           @default(now())
+  endpoints         Endpoint[]
+  swaggerSpecs      SwaggerSpec[]
+  municipioSistemas MunicipioSistema[]
+  requisicoes       Requisicao[]
+}
+
+model Municipio {
+  id                Int                @id @default(autoincrement())
+  nome              String
+  observacoes       String?
+  ativo             Boolean            @default(false)
+  criadoEm         DateTime           @default(now())
+  atualizadoEm     DateTime           @updatedAt
+  requisicoes       Requisicao[]
+  scripts           Script[]
+  municipioSistemas MunicipioSistema[]
+}
+
+model MunicipioSistema {
+  id          Int       @id @default(autoincrement())
+  municipioId Int
+  sistemaId   Int
+  token       String
+  ambiente    String    // "producao" | "homologacao"
+  municipio   Municipio @relation(fields: [municipioId], references: [id], onDelete: Cascade)
+  sistema     Sistema   @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+
+  @@unique([municipioId, sistemaId])
+}
+
+model Endpoint {
+  id          Int          @id @default(autoincrement())
+  modulo      String
+  nome        String
+  path        String
+  metodo      String       // GET | POST | PUT | PATCH | DELETE
+  descricao   String?
+  bodySchema  String?      // JSON serializado com os campos do body
+  sistemaId   Int?
+  sistema     Sistema?     @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
+  criadoEm   DateTime     @default(now())
+  requisicoes  Requisicao[]
+}
+
+model Requisicao {
+  id          Int        @id @default(autoincrement())
+  municipioId Int
+  sistemaId   Int?
+  endpointId  Int?
+  metodo      String
+  url         String
+  headers     String?    // JSON serializado
+  body        String?    // JSON serializado
+  statusCode  Int?
+  resposta    String?    // JSON serializado
+  duracaoMs   Int?
+  tipo        String?    // "individual" | "lote"
+  idGerado    String?    // ID gerado pela API na resposta
+  criadoEm   DateTime   @default(now())
+  municipio   Municipio  @relation(fields: [municipioId], references: [id])
+  sistema     Sistema?   @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
+  endpoint    Endpoint?  @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+}
+
+model Script {
+  id           Int         @id @default(autoincrement())
+  titulo       String
+  conteudo     String
+  categoria    String      // "sql" | "comando" | "fonte" | "anotacao"
+  municipioId  Int?
+  municipio    Municipio?  @relation(fields: [municipioId], references: [id], onDelete: SetNull)
+  tags         Tag[]
+  criadoEm    DateTime    @default(now())
+  atualizadoEm DateTime   @updatedAt
+}
+
+model Tag {
+  id      Int      @id @default(autoincrement())
+  nome    String   @unique
+  scripts Script[]
+}
+
+model SwaggerSpec {
+  id             Int      @id @default(autoincrement())
+  nome           String
+  versao         String?
+  urlBase        String?  // URL base da API descrita no spec
+  conteudo       String   // JSON completo da spec (OpenAPI 2/3)
+  totalEndpoints Int      @default(0)
+  sistemaId      Int?
+  sistema        Sistema? @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
+  criadoEm      DateTime @default(now())
+}
