@@ -1,5 +1,6 @@
 @echo off
 title SysGate - Gerenciador de Servidores
+SET NM=node_modules
 
 :menu
 cls
@@ -26,14 +27,12 @@ goto menu
 :iniciar
 echo.
 echo  Verificando dependencias do Backend...
-if not exist "%~dp0backend
-ode_modules" (
+if not exist "%~dp0backend\%NM%" (
     echo  Instalando dependencias do Backend...
     cd /d "%~dp0backend" && npm install && cd /d "%~dp0"
 )
 echo  Verificando dependencias do Frontend...
-if not exist "%~dp0frontend
-ode_modules" (
+if not exist "%~dp0frontend\%NM%" (
     echo  Instalando dependencias do Frontend...
     cd /d "%~dp0frontend" && npm install && cd /d "%~dp0"
 )
@@ -72,12 +71,10 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3001"') do taskkill /PID %%
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000"') do taskkill /PID %%a /F >nul 2>nul
 timeout /t 2 /nobreak >nul
 echo  Reiniciando...
-if not exist "%~dp0backend
-ode_modules" (
+if not exist "%~dp0backend\%NM%" (
     cd /d "%~dp0backend" && npm install && cd /d "%~dp0"
 )
-if not exist "%~dp0frontend
-ode_modules" (
+if not exist "%~dp0frontend\%NM%" (
     cd /d "%~dp0frontend" && npm install && cd /d "%~dp0"
 )
 if not exist "%~dp0backend\prisma\dev.db" (
