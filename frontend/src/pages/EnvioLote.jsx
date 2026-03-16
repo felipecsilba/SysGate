@@ -8,6 +8,18 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function extrairId(data) {
+  if (!data || typeof data !== 'object') return null
+  for (const key of ['id', 'idGerado', 'idEconomico', 'idLote']) {
+    const v = data[key]
+    if (v != null) {
+      if (typeof v === 'number' || typeof v === 'string') return String(v)
+      if (typeof v === 'object' && v.id != null) return String(v.id)
+    }
+  }
+  return null
+}
+
 function nomeRecurso(ep, moduleBase = '') {
   const idx = ep.nome.lastIndexOf(' - ')
   if (idx !== -1) return ep.nome.slice(idx + 3)
@@ -58,6 +70,8 @@ export default function EnvioLote() {
   const [metodo, setMetodo] = useState('POST')
   const [pathCustom, setPathCustom] = useState('')
 
+  const [campoBusca, setCampoBusca] = useState('')
+
   const [csvData, setCsvData] = useState(null)
   const [camposSelecionados, setCamposSelecionados] = useState({})
   const [mapeamentoCampo, setMapeamentoCampo] = useState({})
@@ -68,6 +82,7 @@ export default function EnvioLote() {
   const [executando, setExecutando] = useState(false)
   const [progresso, setProgresso] = useState([])
   const [concluido, setConcluido] = useState(false)
+  const [consultasLote, setConsultasLote] = useState({})
   const abortRef = useRef(false)
   const progressoRef = useRef(null)
 
@@ -135,13 +150,18 @@ export default function EnvioLote() {
           const subTipo = typeof subVal === 'number' ? 'number'
             : typeof subVal === 'boolean' ? 'boolean'
             : (typeof subVal === 'object' && subVal !== null ? 'object' : 'string')
+          const subMeta = c.subFields?.find((f) => f.campo === subKey)
+          const isIdGeradoObj = subKey === 'idGerado' && typeof subVal === 'object' && subVal !== null
+          const tipoEfetivo = isIdGeradoObj ? 'number' : (subMeta?.tipo || subTipo)
           result.push({
             campo: `${c.campo}.${subKey}`,
             _displayCampo: subKey,
             _parent: c.campo,
-            tipo: subTipo,
+            tipo: tipoEfetivo,
+            _wrapAsIdObject: isIdGeradoObj,
             obrigatorio: false,
-            descricao: '',
+            descricao: subMeta?.descricao || '',
+            enum: subMeta?.enum || null,
           })
         }
       } else {
@@ -160,6 +180,10 @@ export default function EnvioLote() {
       initSel[c.campo] = c.obrigatorio || false
     }
     if ('idIntegracao' in initSel) initSel['idIntegracao'] = true
+    for (const key of Object.keys(initSel)) {
+      if (key === 'idGerado' || key.endsWith('.idGerado')) initSel[key] = true
+    }
+    setCampoBusca('')
     setCamposSelecionados(initSel)
     setMapeamentoCampo({})
     setModoMapeamento({})
@@ -186,9 +210,12 @@ export default function EnvioLote() {
             autoMap[c.campo] = match
           }
         }
-        // idIntegracao sempre selecionado
+        // idIntegracao e idGerado sempre selecionados
         if (schemaExpanded.some((c) => c.campo === 'idIntegracao')) {
           autoSel['idIntegracao'] = true
+        }
+        for (const c of schemaExpanded) {
+          if (c.campo === 'idGerado' || c._displayCampo === 'idGerado') autoSel[c.campo] = true
         }
         setCamposSelecionados(autoSel)
         setMapeamentoCampo(autoMap)
@@ -207,6 +234,7 @@ export default function EnvioLote() {
     setExecutando(true)
     setConcluido(false)
     setProgresso([])
+    setConsultasLote({})
 
     const linhas = csvData.linhas
     const resultados = []
@@ -232,11 +260,13 @@ export default function EnvioLote() {
           if (!colCSV || linha[colCSV] === undefined) continue
           valor = linha[colCSV]
         }
+        const numVal = (c.tipo === 'number' || c.tipo === 'integer') ? Number(valor) : valor
+        const typedVal = c._wrapAsIdObject ? { id: Number(valor) } : numVal
         if (c._parent) {
           if (!body[c._parent]) body[c._parent] = {}
-          body[c._parent][c._displayCampo] = valor
+          body[c._parent][c._displayCampo] = typedVal
         } else {
-          body[c.campo] = valor
+          body[c.campo] = typedVal
         }
       }
 
@@ -262,7 +292,8 @@ export default function EnvioLote() {
           tipo: 'lote',
         })
         const duracao = Date.now() - inicio
-        resultados.push({ linha: i + 1, status: 'ok', msg: `${res.statusCode} — ${duracao}ms`, dados: linha })
+        const idGerado = extrairId(res.data)
+        resultados.push({ linha: i + 1, status: 'ok', msg: `${res.statusCode} — ${duracao}ms`, dados: linha, idGerado, pathEnviado: pathFinal })
       } catch (err) {
         resultados.push({ linha: i + 1, status: 'erro', msg: err.message, dados: linha })
       }
@@ -279,6 +310,28 @@ export default function EnvioLote() {
   }
 
   const abortar = () => { abortRef.current = true }
+
+  const consultarLinhaLote = async (linha, idGerado, pathEnviado) => {
+    setConsultasLote((prev) => ({ ...prev, [linha]: { ...prev[linha], consultando: true } }))
+    try {
+      const res = await proxyApi.executar({
+        municipioId: Number(municipioSel),
+        sistemaId: Number(sistemaSel),
+        path: (pathEnviado || pathCustom).replace(/\/$/, '') + '/' + idGerado,
+        metodo: 'GET',
+        tipo: 'individual',
+      })
+      setConsultasLote((prev) => ({
+        ...prev,
+        [linha]: { consultando: false, statusCode: res.statusCode, data: res.data },
+      }))
+    } catch (e) {
+      setConsultasLote((prev) => ({
+        ...prev,
+        [linha]: { consultando: false, statusCode: null, data: { error: e.message } },
+      }))
+    }
+  }
 
   const exportarCSV = () => {
     const rows = progresso.map((p) => ({ linha: p.linha, status: p.status, mensagem: p.msg, ...p.dados }))
@@ -518,35 +571,66 @@ export default function EnvioLote() {
 
                   {/* Painel esquerdo — campos do schema */}
                   <div className="border border-gray-200 rounded-xl overflow-hidden flex flex-col bg-white">
-                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 flex-shrink-0 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Campos</span>
-                      {(() => {
-                        const alternaveis = schemaExpanded.filter((c) => c.campo !== 'idIntegracao')
-                        const todos = alternaveis.length > 0 && alternaveis.every((c) => camposSelecionados[c.campo])
-                        return (
+                    <div className="px-3 pt-2 pb-2 bg-gray-50 border-b border-gray-200 flex-shrink-0 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Campos</span>
+                        {(() => {
+                          const alternaveis = schemaExpanded.filter((c) => c.campo !== 'idIntegracao' && c._displayCampo !== 'idGerado')
+                          const todos = alternaveis.length > 0 && alternaveis.every((c) => camposSelecionados[c.campo])
+                          return (
+                            <button
+                              onClick={() => {
+                                const novoEstado = {}
+                                for (const c of alternaveis) novoEstado[c.campo] = !todos
+                                setCamposSelecionados((s) => ({ ...s, ...novoEstado }))
+                              }}
+                              className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
+                                todos
+                                  ? 'bg-sysgate-100 text-sysgate-700 hover:bg-sysgate-200'
+                                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                              }`}
+                            >
+                              {todos ? 'Desmarcar todos' : 'Selecionar todos'}
+                            </button>
+                          )
+                        })()}
+                      </div>
+                      <div className="relative">
+                        <svg className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                        </svg>
+                        <input
+                          type="text"
+                          value={campoBusca}
+                          onChange={(e) => setCampoBusca(e.target.value)}
+                          placeholder="Buscar campo..."
+                          className="w-full pl-6 pr-6 py-1 text-xs rounded-md border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-sysgate-400 focus:border-transparent"
+                        />
+                        {campoBusca && (
                           <button
-                            onClick={() => {
-                              const novoEstado = {}
-                              for (const c of alternaveis) novoEstado[c.campo] = !todos
-                              setCamposSelecionados((s) => ({ ...s, ...novoEstado }))
-                            }}
-                            className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
-                              todos
-                                ? 'bg-sysgate-100 text-sysgate-700 hover:bg-sysgate-200'
-                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            }`}
+                            onClick={() => setCampoBusca('')}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                           >
-                            {todos ? 'Desmarcar todos' : 'Selecionar todos'}
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                           </button>
-                        )
-                      })()}
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 overflow-y-auto scrollbar-thin divide-y divide-gray-100">
                       {(() => {
+                        const busca = campoBusca.trim().toLowerCase()
+                        const camposFiltrados = busca
+                          ? schemaExpanded.filter((c) => {
+                              const isFixed = c.campo === 'idIntegracao' || c._displayCampo === 'idGerado'
+                              return isFixed || c._displayCampo.toLowerCase().includes(busca)
+                            })
+                          : schemaExpanded
                         const items = []
                         let lastParent = undefined
-                        for (const campo of schemaExpanded) {
-                          const isFixed = campo.campo === 'idIntegracao'
+                        for (const campo of camposFiltrados) {
+                          const isFixed = campo.campo === 'idIntegracao' || campo._displayCampo === 'idGerado'
 
                           if (!isFixed && lastParent === 'FIXED_SEPARATOR') {
                             items.push(<div key="sep-integracao" className="h-px bg-gray-200 mx-2" />)
@@ -628,7 +712,7 @@ export default function EnvioLote() {
                     ) : (
                       <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1.5">
                         {camposMapeados.map((campo) => {
-                          const isObrigatorio = campo.campo === 'idIntegracao'
+                          const isObrigatorio = campo.campo === 'idIntegracao' || campo._displayCampo === 'idGerado'
                           const modo = modoMapeamento[campo.campo] || 'csv'
                           return (
                             <div key={campo.campo} className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 border ${
@@ -691,6 +775,28 @@ export default function EnvioLote() {
                                       </svg>
                                     </div>
                                   </>
+                                ) : campo.enum?.length > 0 ? (
+                                  <div className="relative w-full">
+                                    <select
+                                      value={valoresFixos[campo.campo] || ''}
+                                      onChange={(e) => setValoresFixos((v) => ({ ...v, [campo.campo]: e.target.value }))}
+                                      className={`w-full appearance-none pl-2 pr-6 py-1.5 text-xs rounded-md border focus:outline-none focus:ring-2 focus:border-transparent transition-colors ${
+                                        isObrigatorio
+                                          ? 'border-amber-200 bg-white focus:ring-amber-400 text-gray-800'
+                                          : 'border-gray-200 bg-white focus:ring-sysgate-500 text-gray-800'
+                                      }`}
+                                    >
+                                      <option value="">— selecione —</option>
+                                      {campo.enum.map((v) => (
+                                        <option key={v} value={v}>{v}</option>
+                                      ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1.5">
+                                      <svg className={`w-3 h-3 ${isObrigatorio ? 'text-amber-400' : 'text-gray-400'}`} fill="none" viewBox="0 0 20 20">
+                                        <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                    </div>
+                                  </div>
                                 ) : (
                                   <input
                                     type="text"
@@ -742,11 +848,13 @@ export default function EnvioLote() {
                               if (!colCSV || linha[colCSV] === undefined) continue
                               valor = linha[colCSV]
                             }
+                            const numVal = (c.tipo === 'number' || c.tipo === 'integer') ? Number(valor) : valor
+                            const typedVal = c._wrapAsIdObject ? { id: Number(valor) } : numVal
                             if (c._parent) {
                               if (!body[c._parent]) body[c._parent] = {}
-                              body[c._parent][c._displayCampo] = valor
+                              body[c._parent][c._displayCampo] = typedVal
                             } else {
-                              body[c.campo] = valor
+                              body[c.campo] = typedVal
                             }
                           }
                           return `#${i + 1}  ${JSON.stringify(body)}\n`
@@ -815,24 +923,55 @@ export default function EnvioLote() {
                   ref={progressoRef}
                   className="divide-y divide-gray-100 max-h-96 overflow-y-auto scrollbar-thin"
                 >
-                  {progresso.map((p, i) => (
-                    <div key={i} className={`flex items-start gap-3 px-4 py-2.5 ${p.status === 'erro' ? 'bg-red-50' : ''}`}>
-                      <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                        p.status === 'ok' ? 'bg-green-500' : p.status === 'erro' ? 'bg-red-500' : 'bg-gray-400'
-                      }`} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-gray-600">Linha {p.linha}</span>
-                          <span className={`text-xs ${p.status === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
-                            {p.msg}
-                          </span>
+                  {progresso.map((p, i) => {
+                    const consulta = consultasLote[p.linha]
+                    return (
+                      <div key={i} className={`px-4 py-2.5 ${p.status === 'erro' ? 'bg-red-50' : ''}`}>
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
+                            p.status === 'ok' ? 'bg-green-500' : p.status === 'erro' ? 'bg-red-500' : 'bg-gray-400'
+                          }`} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-gray-600">Linha {p.linha}</span>
+                              <span className={`text-xs ${p.status === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
+                                {p.msg}
+                              </span>
+                              {p.idGerado && (
+                                <button
+                                  onClick={() => consultarLinhaLote(p.linha, p.idGerado, p.pathEnviado)}
+                                  disabled={consulta?.consultando}
+                                  className="ml-auto flex items-center gap-1 text-xs text-sysgate-600 hover:text-sysgate-800 font-medium flex-shrink-0"
+                                >
+                                  {consulta?.consultando
+                                    ? <span className="w-2.5 h-2.5 border-2 border-sysgate-300 border-t-sysgate-600 rounded-full animate-spin" />
+                                    : '↻'
+                                  }
+                                  GET /{p.idGerado}
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-400 font-mono truncate">
+                              {Object.values(p.dados).slice(0, 3).join(' · ')}
+                            </p>
+                            {consulta && !consulta.consultando && (
+                              <div className="mt-1 flex items-center gap-2">
+                                {consulta.statusCode && (
+                                  <span className={`text-xs font-mono font-semibold px-1.5 py-0.5 rounded ${
+                                    consulta.statusCode < 300 ? 'bg-green-100 text-green-700' :
+                                    consulta.statusCode < 400 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                                  }`}>{consulta.statusCode}</span>
+                                )}
+                                <span className="text-xs text-gray-400 font-mono truncate">
+                                  {JSON.stringify(consulta.data).slice(0, 100)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-400 font-mono truncate">
-                          {Object.values(p.dados).slice(0, 3).join(' · ')}
-                        </p>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </>

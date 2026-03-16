@@ -42,7 +42,7 @@ router.get('/:id/tokens', async (req, res) => {
       where: { municipioId: Number(req.params.id) },
       include: { sistema: { select: { id: true, nome: true, urlBase: true } } },
     })
-    res.json(vinculos.map(v => ({ ...v, token: '••••' })))
+    res.json(vinculos)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -51,17 +51,17 @@ router.get('/:id/tokens', async (req, res) => {
 // POST /api/municipios/:id/tokens — upsert vínculo (cria ou atualiza token)
 router.post('/:id/tokens', async (req, res) => {
   try {
-    const { sistemaId, token, ambiente } = req.body
-    if (!sistemaId || !token || !ambiente) {
-      return res.status(400).json({ error: 'Campos obrigatórios: sistemaId, token, ambiente' })
+    const { sistemaId, token } = req.body
+    if (!sistemaId || !token) {
+      return res.status(400).json({ error: 'Campos obrigatórios: sistemaId, token' })
     }
     const vinculo = await prisma.municipioSistema.upsert({
       where: { municipioId_sistemaId: { municipioId: Number(req.params.id), sistemaId: Number(sistemaId) } },
-      update: { token, ambiente },
-      create: { municipioId: Number(req.params.id), sistemaId: Number(sistemaId), token, ambiente },
+      update: { token },
+      create: { municipioId: Number(req.params.id), sistemaId: Number(sistemaId), token },
       include: { sistema: { select: { id: true, nome: true, urlBase: true } } },
     })
-    res.json({ ...vinculo, token: '••••' })
+    res.json(vinculo)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

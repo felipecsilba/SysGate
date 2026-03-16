@@ -47,6 +47,18 @@ function JsonViewer({ data }) {
   )
 }
 
+function extrairId(data) {
+  if (!data || typeof data !== 'object') return null
+  for (const key of ['id', 'idGerado', 'idEconomico', 'idLote']) {
+    const v = data[key]
+    if (v != null) {
+      if (typeof v === 'number' || typeof v === 'string') return String(v)
+      if (typeof v === 'object' && v.id != null) return String(v.id)
+    }
+  }
+  return null
+}
+
 export default function ClienteAPI() {
   const municipioAtivo = useMunicipioStore((s) => s.municipioAtivo)
   const [municipios, setMunicipios] = useState([])
@@ -68,7 +80,12 @@ export default function ClienteAPI() {
   const [bodyRaw, setBodyRaw] = useState('')
   const [modoBody, setModoBody] = useState('schema') // 'schema' | 'raw'
 
+  const [campoBusca, setCampoBusca] = useState('')
+
   const [resposta, setResposta] = useState(null)
+  const [idConsulta, setIdConsulta] = useState(null)
+  const [consultandoResultado, setConsultandoResultado] = useState(false)
+  const [respostaConsulta, setRespostaConsulta] = useState(null)
   const [executando, setExecutando] = useState(false)
   const [historico, setHistorico] = useState([])
   const [abaAtiva, setAbaAtiva] = useState('resposta')
@@ -156,21 +173,37 @@ export default function ClienteAPI() {
         for (const [subKey, subVal] of Object.entries(exObj[c.campo])) {
           const key = `${c.campo}.${subKey}`
           sel[key] = false
-          vals[key] = subVal !== null && subVal !== undefined
-            ? (typeof subVal === 'object' ? JSON.stringify(subVal) : String(subVal))
-            : ''
+          if (subVal !== null && subVal !== undefined) {
+            if (typeof subVal === 'object') {
+              // idGerado example comes as {id: N} from spec — extract the raw ID
+              vals[key] = subKey === 'idGerado'
+                ? String(subVal.id ?? subVal.idGerado ?? 1)
+                : JSON.stringify(subVal)
+            } else {
+              vals[key] = String(subVal)
+            }
+          } else {
+            vals[key] = ''
+          }
         }
       } else {
         sel[c.campo] = c.obrigatorio || false
         vals[c.campo] = c.exemplo || ''
       }
     }
-    // idIntegracao sempre obrigatório com valor padrão
+    // idIntegracao e idGerado sempre obrigatórios
     if ('idIntegracao' in sel) sel['idIntegracao'] = true
     if ('idIntegracao' in vals && !vals['idIntegracao']) vals['idIntegracao'] = 'INTEGRACAO1'
+    for (const key of Object.keys(sel)) {
+      if (key === 'idGerado' || key.endsWith('.idGerado')) {
+        sel[key] = true
+        if (!vals[key]) vals[key] = '1'
+      }
+    }
     setCamposSelecionados(sel)
     setValoresCampos(vals)
 
+    setCampoBusca('')
     // Pré-preenche o JSON raw com o exemplo da spec
     if (exJson !== undefined) {
       setBodyRaw(JSON.stringify(exJson, null, 2))
@@ -201,7 +234,8 @@ export default function ClienteAPI() {
         for (const c of schemaExpanded) {
           if (camposSelecionados[c.campo] && valoresCampos[c.campo] !== '') {
             const val = valoresCampos[c.campo]
-            const typedVal = c.tipo === 'number' ? Number(val) : val
+            const numVal = (c.tipo === 'number' || c.tipo === 'integer') ? Number(val) : val
+            const typedVal = c._wrapAsIdObject ? { id: numVal } : numVal
             if (c._parent) {
               if (!body[c._parent]) body[c._parent] = {}
               body[c._parent][c._displayCampo] = typedVal
@@ -226,12 +260,35 @@ export default function ClienteAPI() {
         tipo: 'individual',
       })
       setResposta(res)
+      setIdConsulta(extrairId(res.data))
+      setRespostaConsulta(null)
       setAbaAtiva('resposta')
       carregarHistorico()
     } catch (e) {
       setResposta({ error: e.message })
+      setIdConsulta(null)
     } finally {
       setExecutando(false)
+    }
+  }
+
+  const consultarResultado = async () => {
+    if (!idConsulta) return
+    setConsultandoResultado(true)
+    try {
+      const res = await proxyApi.executar({
+        municipioId: Number(municipioSel),
+        sistemaId: Number(sistemaSel),
+        path: pathCustom.replace(/\/$/, '') + '/' + idConsulta,
+        metodo: 'GET',
+        tipo: 'individual',
+      })
+      setRespostaConsulta(res)
+      carregarHistorico()
+    } catch (e) {
+      setRespostaConsulta({ error: e.message })
+    } finally {
+      setConsultandoResultado(false)
     }
   }
 
@@ -254,16 +311,23 @@ export default function ClienteAPI() {
           const subTipo = typeof subVal === 'number' ? 'number'
             : typeof subVal === 'boolean' ? 'boolean'
             : (typeof subVal === 'object' && subVal !== null ? 'object' : 'string')
+          const subMeta = c.subFields?.find((f) => f.campo === subKey)
+          // idGerado vem como {id: N} na spec — exibimos só o ID no input,
+          // mas ao enviar precisamos reembalar como {id: N}
+          const isIdGeradoObj = subKey === 'idGerado' && typeof subVal === 'object' && subVal !== null
+          const tipoEfetivo = isIdGeradoObj ? 'number' : (subMeta?.tipo || subTipo)
           result.push({
             campo: `${c.campo}.${subKey}`,
             _displayCampo: subKey,
             _parent: c.campo,
-            tipo: subTipo,
+            tipo: tipoEfetivo,
+            _wrapAsIdObject: isIdGeradoObj,
             obrigatorio: false,
-            descricao: '',
+            descricao: subMeta?.descricao || '',
             exemplo: subVal !== null && subVal !== undefined
               ? (typeof subVal === 'object' ? JSON.stringify(subVal) : String(subVal))
               : '',
+            enum: subMeta?.enum || null,
           })
         }
       } else {
@@ -281,7 +345,8 @@ export default function ClienteAPI() {
     for (const c of schemaExpanded) {
       if (camposSelecionados[c.campo] && valoresCampos[c.campo] !== '') {
         const val = valoresCampos[c.campo]
-        const typedVal = c.tipo === 'number' ? Number(val) : val
+        const numVal = (c.tipo === 'number' || c.tipo === 'integer') ? Number(val) : val
+        const typedVal = c._wrapAsIdObject ? { id: numVal } : numVal
         if (c._parent) {
           if (!obj[c._parent]) obj[c._parent] = {}
           obj[c._parent][c._displayCampo] = typedVal
@@ -472,28 +537,52 @@ export default function ClienteAPI() {
                   <div className="grid grid-cols-2 gap-3 h-96">
                   {/* Coluna esquerda — checkboxes */}
                   <div className="border border-gray-200 rounded-xl overflow-hidden flex flex-col bg-white">
-                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 flex-shrink-0 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Campos</span>
-                      {(() => {
-                        const alternaveis = schemaExpanded.filter((c) => c.campo !== 'idIntegracao')
-                        const todos = alternaveis.length > 0 && alternaveis.every((c) => camposSelecionados[c.campo])
-                        return (
+                    <div className="px-3 pt-2 pb-2 bg-gray-50 border-b border-gray-200 flex-shrink-0 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Campos</span>
+                        {(() => {
+                          const alternaveis = schemaExpanded.filter((c) => c.campo !== 'idIntegracao' && c._displayCampo !== 'idGerado')
+                          const todos = alternaveis.length > 0 && alternaveis.every((c) => camposSelecionados[c.campo])
+                          return (
+                            <button
+                              onClick={() => {
+                                const novoEstado = {}
+                                for (const c of alternaveis) novoEstado[c.campo] = !todos
+                                setCamposSelecionados((s) => ({ ...s, ...novoEstado }))
+                              }}
+                              className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
+                                todos
+                                  ? 'bg-sysgate-100 text-sysgate-700 hover:bg-sysgate-200'
+                                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                              }`}
+                            >
+                              {todos ? 'Desmarcar todos' : 'Selecionar todos'}
+                            </button>
+                          )
+                        })()}
+                      </div>
+                      <div className="relative">
+                        <svg className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                        </svg>
+                        <input
+                          type="text"
+                          value={campoBusca}
+                          onChange={(e) => setCampoBusca(e.target.value)}
+                          placeholder="Buscar campo..."
+                          className="w-full pl-6 pr-6 py-1 text-xs rounded-md border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-sysgate-400 focus:border-transparent"
+                        />
+                        {campoBusca && (
                           <button
-                            onClick={() => {
-                              const novoEstado = {}
-                              for (const c of alternaveis) novoEstado[c.campo] = !todos
-                              setCamposSelecionados((s) => ({ ...s, ...novoEstado }))
-                            }}
-                            className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
-                              todos
-                                ? 'bg-sysgate-100 text-sysgate-700 hover:bg-sysgate-200'
-                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            }`}
+                            onClick={() => setCampoBusca('')}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                           >
-                            {todos ? 'Desmarcar todos' : 'Selecionar todos'}
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                           </button>
-                        )
-                      })()}
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 overflow-y-auto scrollbar-thin divide-y divide-gray-100">
                       {(() => {
@@ -508,10 +597,17 @@ export default function ClienteAPI() {
                           if (tipo.startsWith('array')) return 'bg-indigo-100 text-indigo-700'
                           return TIPO_COR[tipo] || 'bg-gray-100 text-gray-400'
                         }
+                        const busca = campoBusca.trim().toLowerCase()
+                        const camposFiltrados = busca
+                          ? schemaExpanded.filter((c) => {
+                              const isFixed = c.campo === 'idIntegracao' || c._displayCampo === 'idGerado'
+                              return isFixed || c._displayCampo.toLowerCase().includes(busca)
+                            })
+                          : schemaExpanded
                         const items = []
                         let lastParent = undefined
-                        for (const campo of schemaExpanded) {
-                          const isFixed = campo.campo === 'idIntegracao'
+                        for (const campo of camposFiltrados) {
+                          const isFixed = campo.campo === 'idIntegracao' || campo._displayCampo === 'idGerado'
 
                           // Separador visual após idIntegracao
                           if (!isFixed && lastParent === 'FIXED_SEPARATOR') {
@@ -602,7 +698,7 @@ export default function ClienteAPI() {
                     ) : (
                       <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1.5">
                         {schemaSelecionado.map((campo) => {
-                          const isFixed = campo.campo === 'idIntegracao'
+                          const isFixed = campo.campo === 'idIntegracao' || campo._displayCampo === 'idGerado'
                           return (
                             <div key={campo.campo} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 border ${
                               isFixed
@@ -614,17 +710,34 @@ export default function ClienteAPI() {
                                 {isFixed && <span className="text-amber-500 ml-0.5">*</span>}
                                 {!isFixed && campo.obrigatorio && <span className="text-red-500 ml-0.5">*</span>}
                               </label>
-                              <input
-                                type="text"
-                                value={valoresCampos[campo.campo] || ''}
-                                onChange={(e) => setValoresCampos((v) => ({ ...v, [campo.campo]: e.target.value }))}
-                                className={`flex-1 border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-colors ${
-                                  isFixed
-                                    ? 'bg-white border-amber-200 focus:ring-amber-400'
-                                    : 'bg-gray-50 border-gray-200 focus:ring-sysgate-500 focus:bg-white'
-                                }`}
-                                placeholder={campo.tipo}
-                              />
+                              {campo.enum?.length > 0 ? (
+                                <select
+                                  value={valoresCampos[campo.campo] || ''}
+                                  onChange={(e) => setValoresCampos((v) => ({ ...v, [campo.campo]: e.target.value }))}
+                                  className={`flex-1 border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-colors ${
+                                    isFixed
+                                      ? 'bg-white border-amber-200 focus:ring-amber-400'
+                                      : 'bg-gray-50 border-gray-200 focus:ring-sysgate-500 focus:bg-white'
+                                  }`}
+                                >
+                                  <option value="">— selecione —</option>
+                                  {campo.enum.map((v) => (
+                                    <option key={v} value={v}>{v}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={valoresCampos[campo.campo] || ''}
+                                  onChange={(e) => setValoresCampos((v) => ({ ...v, [campo.campo]: e.target.value }))}
+                                  className={`flex-1 border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-colors ${
+                                    isFixed
+                                      ? 'bg-white border-amber-200 focus:ring-amber-400'
+                                      : 'bg-gray-50 border-gray-200 focus:ring-sysgate-500 focus:bg-white'
+                                  }`}
+                                  placeholder={campo.tipo}
+                                />
+                              )}
                             </div>
                           )
                         })}
@@ -737,6 +850,44 @@ export default function ClienteAPI() {
                       </div>
                     )}
                     <JsonViewer data={resposta.data ?? resposta} />
+                    {idConsulta && (
+                      <div className="border-t border-gray-100 pt-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            ID gerado:{' '}
+                            <code className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{idConsulta}</code>
+                          </span>
+                          <button
+                            onClick={consultarResultado}
+                            disabled={consultandoResultado}
+                            className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
+                          >
+                            {consultandoResultado ? (
+                              <>
+                                <span className="w-3 h-3 border-2 border-gray-400/30 border-t-gray-600 rounded-full animate-spin" />
+                                Consultando...
+                              </>
+                            ) : (
+                              '↻ Consultar resultado'
+                            )}
+                          </button>
+                        </div>
+                        {respostaConsulta && (
+                          <div className="space-y-1.5">
+                            {respostaConsulta.statusCode && (
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className={`font-mono px-2 py-0.5 rounded font-semibold ${
+                                  respostaConsulta.statusCode < 300 ? 'bg-green-100 text-green-700' :
+                                  respostaConsulta.statusCode < 400 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                                }`}>{respostaConsulta.statusCode}</span>
+                                <span className="text-gray-400">{respostaConsulta.duracaoMs}ms</span>
+                              </div>
+                            )}
+                            <JsonViewer data={respostaConsulta.data ?? respostaConsulta} />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="py-12 text-center text-gray-400 text-sm">

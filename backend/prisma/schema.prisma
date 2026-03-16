@@ -36,7 +36,7 @@ model MunicipioSistema {
   municipioId Int
   sistemaId   Int
   token       String
-  ambiente    String    // "producao" | "homologacao"
+  ambiente    String    @default("producao")
   municipio   Municipio @relation(fields: [municipioId], references: [id], onDelete: Cascade)
   sistema     Sistema   @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
 
