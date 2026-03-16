@@ -32,6 +32,7 @@ Workflow de desenvolvimento adaptado do [obra/superpowers](https://github.com/ob
 sysgate/
 ├── CLAUDE.md                  # Este arquivo
 ├── docker-compose.yml
+├── sysgate.bat                # Gerenciador Windows: iniciar/parar/reiniciar backend+frontend
 ├── skills/                    # Documentação detalhada por domínio
 │   ├── backend.md
 │   ├── frontend.md
@@ -103,6 +104,9 @@ cd frontend
 npm install
 npm run dev                 # Inicia Vite (porta 3000, proxy → 3001)
 
+# Atalho Windows (duplo clique)
+sysgate.bat                 # Menu: Iniciar / Parar / Reiniciar / Status
+
 # Docker
 docker-compose up --build
 ```
@@ -151,7 +155,7 @@ docker-compose up --build
 - **Município urlBase**: NÃO deve terminar com `/api` — os paths dos endpoints já incluem `/api/...`
 - **Zustand persist**: município ativo persiste em `localStorage` (key: `sysgate-municipio`)
 - **Município sem codigoIBGE**: campo removido do schema, validação e UI — apenas `nome` e `observacoes`
-- **Tokens por município**: painel lateral em `Municipios.jsx` — abre ao clicar na linha da tabela; um token por par (município × sistema), com campo `ambiente` (homologacao/producao)
+- **Tokens por município**: painel lateral em `Municipios.jsx` — abre ao clicar na linha da tabela; um token por par (município × sistema). Campo `ambiente` removido da UI (default `"producao"` no banco). Painel exibe token mascarado (primeiros 8 chars + `••••`) com botão de olho para revelar e botão de copiar. Backend retorna token real (sem mascaramento)
 - **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `ClienteAPI.jsx` não tem mais esse botão
 - **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema)
 
@@ -187,12 +191,13 @@ Ambas as telas seguem o mesmo padrão de interação para seleção de endpoints
   - Cada sub-campo vira entrada com `campo: "parent.subKey"`, `_displayCampo: "subKey"`, `_parent: "parent"`
   - Sub-campos de tipo `object` aninhado (2+ níveis) não são expandidos automaticamente — ficam como `object` simples
   - Campos sem exemplo ou cujo valor de exemplo não seja objeto ficam como entrada única
+  - **`idGerado` especial**: quando o exemplo da spec é `{id: N}`, o sub-campo recebe `tipo: 'number'` e `_wrapAsIdObject: true`. O input exibe apenas o número `N`, mas ao enviar é reembalado como `{ id: N }` conforme esperado pela API
 - Layout 2 colunas:
   - **Esquerda**: lista com checkboxes; campos filhos ficam indentados (`ml-3`) sob cabeçalho de seção `UPPERCASE` do parent
   - **Direita** (ClienteAPI): campos marcados + inputs de valor + preview JSON verde em tempo real
   - **Direita** (EnvioLote): campos marcados + `<select>` da coluna CSV correspondente + preview das primeiras 2 linhas
 - Auto-switch para "JSON raw": apenas quando há campos `array<...>` (não mais para `object`)
-- Reconstrução do body ao enviar: `body[_parent][_displayCampo] = valor` para campos aninhados
+- Reconstrução do body ao enviar: campos `number`/`integer` → `Number(val)`; campos `_wrapAsIdObject` → `{ id: Number(val) }`; campos `_parent` → `body[_parent][_displayCampo]`
 
 ### Auto-mapeamento CSV (EnvioLote)
 - Ao fazer upload do CSV, compara `_displayCampo` (nome curto do sub-campo) com o nome da coluna CSV (case-insensitive)

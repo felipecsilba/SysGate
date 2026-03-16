@@ -66,27 +66,31 @@ Idêntico ao ClienteAPI:
 - Checkboxes SVG customizados
 - Badges de tipo coloridos (string=verde, number=azul, object=roxo, boolean=laranja, array=índigo)
 - Headers de grupo para campos aninhados (`_parent`)
-- Botão **Selecionar todos / Desmarcar todos** (exclui `idIntegracao`)
-- `idIntegracao` fixo/obrigatório com visual âmbar (ver seção abaixo)
-- Separador visual após `idIntegracao`
+- Botão **Selecionar todos / Desmarcar todos** (exclui `idIntegracao` e `idGerado`)
+- **Campo de busca** no header do painel: filtra campos em tempo real pelo `_displayCampo` (case-insensitive). Campos fixos (`idIntegracao`, `idGerado`) são sempre exibidos. Botão ✕ para limpar. State: `campoBusca` (string), resetado ao trocar de endpoint.
+- `idIntegracao` e `idGerado` fixos/obrigatórios com visual âmbar (ver seção abaixo)
+- Separador visual após os campos fixos
 
 #### Painel Valores (direita) — fundo sysgate-50/40
 
 Cada campo selecionado exibe uma linha com três elementos:
 
 ```
-[nome do campo] [CSV | Fixo] [select de coluna OU input de texto]
+[nome do campo] [CSV | Fixo] [select de coluna OU input/select de valor]
 ```
 
 **Toggle CSV / Fixo:**
 - **Modo CSV** (padrão): exibe `<select>` com as colunas do arquivo CSV. A coluna selecionada é lida linha a linha durante o envio
-- **Modo Fixo**: exibe `<input>` de texto. O valor digitado é enviado em **todas** as linhas, sem variar
+- **Modo Fixo**: exibe `<input>` de texto (ou `<select>` se o campo tiver enum). O valor digitado é enviado em **todas** as linhas, sem variar
 
 Isso permite combinar campos dinâmicos (do CSV) com campos estáticos (valor único para todo o lote).
+
+**Campos com `enum`:** no modo Fixo, exibem `<select>` com as opções válidas da spec ao invés de input livre.
 
 **Exemplo:**
 - `idEconomico` → Modo **CSV** → coluna `id_economico` do arquivo
 - `idAgrupamento` → Modo **Fixo** → valor `42` enviado em todas as linhas
+- `situacaoEconomico` → Modo **Fixo** → dropdown com valores `ATIVADO`, `DESATIVADO`, etc.
 - `idIntegracao` → Sempre presente (âmbar), pode ser CSV ou Fixo
 
 #### Preview JSON (abaixo dos painéis)
@@ -94,20 +98,24 @@ Isso permite combinar campos dinâmicos (do CSV) com campos estáticos (valor ú
 - Exibe as primeiras 3 linhas do CSV já montadas como JSON real
 - Respeita os modos CSV/Fixo de cada campo
 - Só aparece quando há pelo menos um campo com valor configurado
-- Iterates apenas sobre `camposMapeados` (campos selecionados) — desmarcar um campo o remove imediatamente da prévia
+- Itera apenas sobre `camposMapeados` (campos selecionados) — desmarcar um campo o remove imediatamente da prévia
 
 ---
 
-## Campo `idIntegracao` — Comportamento Especial
+## Campos Fixos/Obrigatórios: `idIntegracao` e `idGerado`
+
+Ambos os campos são sempre obrigatórios e recebem tratamento diferenciado idêntico:
 
 | Aspecto | Comportamento |
 |---------|--------------|
 | Seleção | Sempre marcado, não pode ser desmarcado |
-| "Selecionar todos" | Não afeta `idIntegracao` |
+| "Selecionar todos" | Não afeta estes campos |
 | Visual painel Campos | Fundo âmbar, checkbox âmbar fixo, badge "obrigatório" |
 | Visual painel Valores | Fundo âmbar, borda âmbar, label em `text-amber-800` |
 | Toggle CSV/Fixo | Disponível (botões âmbar quando ativo) |
 | Separador | Linha divisória antes dos demais campos |
+
+A seleção de ambos é forçada `true` tanto no `useEffect([endpointSel])` quanto no `handleUploadCSV`.
 
 ---
 
@@ -128,9 +136,12 @@ Para cada linha do CSV:
    - `modoMapeamento[campo] === 'fixo'` → usa `valoresFixos[campo]`
    - `modoMapeamento[campo] === 'csv'` → usa `linha[mapeamentoCampo[campo]]`
    - Campos desmarcados são ignorados (mesmo com valores armazenados)
+   - Campos `number` ou `integer` são convertidos com `Number(valor)`
+   - Campos com `_wrapAsIdObject: true` (e.g. `idGerado`) são embrulhados como `{ id: Number(valor) }` antes do envio
 2. **Substitui parâmetros no path** — ex: `/economicos/{idEconomico}` → `/economicos/123`
 3. **Chama `proxyApi.executar()`** com delay configurado entre chamadas
-4. **Registra resultado** em `progresso`: status `ok`, `erro` ou `abortado`
+4. **Extrai `idGerado`** da resposta via `extrairId(res.data)` e armazena no item do progresso junto com `pathEnviado`
+5. **Registra resultado** em `progresso`: status `ok`, `erro` ou `abortado`
 
 ---
 
@@ -149,6 +160,26 @@ Após iniciar o envio:
 - Auto-scroll para o fim durante a execução
 - Até 3 valores de dados da linha como texto resumido
 
+### Botão "↻ GET /{id}" por linha
+
+Para cada linha que retornou um `idGerado` identificável, aparece no canto direito da linha de log um botão **↻ GET /{id}**:
+
+- Ao clicar, executa um GET em `{pathEnviado}/{idGerado}` via `consultarLinhaLote()`
+- Exibe o **statusCode** colorido + resumo do JSON da resposta diretamente na linha do log
+- O botão é **re-clicável** para polling (ideal para APIs assíncronas)
+- State: `consultasLote` — `{ [linha]: { consultando, statusCode, data } }`
+- Resetado ao iniciar um novo envio
+
+---
+
+## Extração de ID da Resposta
+
+Função `extrairId(data)` compartilhada com o ClienteAPI — tenta as chaves na ordem:
+```js
+['id', 'idGerado', 'idEconomico', 'idLote']
+```
+Se o valor for um objeto com `.id`, extrai `.id`. Retorna `null` se nenhum for encontrado.
+
 ---
 
 ## Estado React (principais)
@@ -160,9 +191,11 @@ Após iniciar o envio:
 | `mapeamentoCampo` | `{ [campo]: string }` | Coluna CSV mapeada por campo (modo CSV) |
 | `modoMapeamento` | `{ [campo]: 'csv' \| 'fixo' }` | Modo de cada campo (padrão: `'csv'`) |
 | `valoresFixos` | `{ [campo]: string }` | Valor estático por campo (modo Fixo) |
-| `progresso` | array | Resultados acumulados linha a linha |
+| `progresso` | array | Resultados acumulados linha a linha (`{ linha, status, msg, dados, idGerado?, pathEnviado? }`) |
 | `executando` | boolean | Flag de execução ativa |
 | `concluido` | boolean | Flag de conclusão do lote |
+| `consultasLote` | `{ [linha]: { consultando, statusCode, data } }` | Estado das consultas GET por linha |
+| `campoBusca` | string | Texto de filtro do painel Campos (resetado ao trocar endpoint) |
 | `schemaExpanded` | array | Schema expandido com `_parent` para campos aninhados |
 | `camposMapeados` | array | `schemaExpanded.filter(c => camposSelecionados[c.campo])` |
 
