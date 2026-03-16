@@ -25,6 +25,17 @@ goto menu
 
 :iniciar
 echo.
+echo  Verificando dependencias do Backend...
+if not exist "%~dp0backend\node_modules" (
+    echo  Instalando dependencias do Backend...
+    pushd "%~dp0backend" && npm install && popd
+)
+echo  Verificando dependencias do Frontend...
+if not exist "%~dp0frontend\node_modules" (
+    echo  Instalando dependencias do Frontend...
+    pushd "%~dp0frontend" && npm install && popd
+)
+echo.
 echo  Iniciando Backend (porta 3001)...
 start "SysGate Backend" cmd /k "cd /d "%~dp0backend" && npm run dev"
 timeout /t 2 /nobreak >nul
@@ -54,6 +65,8 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3001"') do taskkill /PID %%
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000"') do taskkill /PID %%a /F >nul 2>nul
 timeout /t 2 /nobreak >nul
 echo  Reiniciando...
+if not exist "%~dp0backend\node_modules" pushd "%~dp0backend" && npm install && popd
+if not exist "%~dp0frontend\node_modules" pushd "%~dp0frontend" && npm install && popd
 start "SysGate Backend" cmd /k "cd /d "%~dp0backend" && npm run dev"
 timeout /t 2 /nobreak >nul
 start "SysGate Frontend" cmd /k "cd /d "%~dp0frontend" && npm run dev"
