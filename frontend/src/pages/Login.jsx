@@ -60,29 +60,18 @@ function Modal({ children, onClose }) {
 }
 
 // ─── Etapa 1: Dados básicos ───────────────────────────────────────────────────
-function EtapaDados({ onEnviarCodigo, onClose }) {
+function EtapaDados({ onSucesso, onClose }) {
   const [nome, setNome] = useState('')
   const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
-  const [telefone, setTelefone] = useState('')
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
-  const formatarTelefone = (val) => {
-    const nums = val.replace(/\D/g, '')
-    if (nums.length <= 2) return `+${nums}`
-    if (nums.length <= 4) return `+${nums.slice(0, 2)} ${nums.slice(2)}`
-    if (nums.length <= 9) return `+${nums.slice(0, 2)} ${nums.slice(2, 4)} ${nums.slice(4)}`
-    return `+${nums.slice(0, 2)} ${nums.slice(2, 4)} ${nums.slice(4, 9)}-${nums.slice(9, 13)}`
-  }
-
-  const telefoneE164 = () => '+' + telefone.replace(/\D/g, '')
-
-  const handleEnviar = async (e) => {
+  const handleRegistrar = async (e) => {
     e.preventDefault()
     setErro('')
-    if (!nome || !login || !senha || !telefone) {
+    if (!nome || !login || !senha) {
       setErro('Todos os campos são obrigatórios.')
       return
     }
@@ -90,17 +79,12 @@ function EtapaDados({ onEnviarCodigo, onClose }) {
       setErro('A senha deve ter no mínimo 6 caracteres.')
       return
     }
-    const tel = telefoneE164()
-    if (!/^\+[1-9]\d{7,14}$/.test(tel)) {
-      setErro('Número inválido. Use o formato: +55 11 99999-9999')
-      return
-    }
     setCarregando(true)
     try {
-      await api.post('/auth/solicitar-codigo', { telefone: tel })
-      onEnviarCodigo({ nome, login, senha, telefone: tel })
+      await api.post('/auth/registrar', { nome, login, senha })
+      onSucesso()
     } catch (err) {
-      setErro(err.response?.data?.error || 'Erro ao enviar código. Tente novamente.')
+      setErro(err.response?.data?.error || 'Erro ao criar conta. Tente novamente.')
     } finally {
       setCarregando(false)
     }
@@ -111,7 +95,7 @@ function EtapaDados({ onEnviarCodigo, onClose }) {
       <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
         <div>
           <h2 className="text-lg font-bold text-gray-900">Criar conta</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Etapa 1 de 2 — Seus dados</p>
+          <p className="text-xs text-gray-500 mt-0.5">Preencha seus dados para solicitar acesso</p>
         </div>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -120,7 +104,7 @@ function EtapaDados({ onEnviarCodigo, onClose }) {
         </button>
       </div>
 
-      <form onSubmit={handleEnviar} className="px-6 py-5 space-y-4">
+      <form onSubmit={handleRegistrar} className="px-6 py-5 space-y-4">
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">Nome completo</label>
           <input
@@ -167,19 +151,6 @@ function EtapaDados({ onEnviarCodigo, onClose }) {
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Número de telefone</label>
-          <input
-            type="tel"
-            className="input"
-            placeholder="+55 11 99999-9999"
-            value={telefone}
-            onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
-            autoComplete="tel"
-          />
-          <p className="text-xs text-gray-400 mt-1">Enviaremos um código SMS para verificação.</p>
-        </div>
-
         {erro && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">
             {erro}
@@ -191,163 +162,14 @@ function EtapaDados({ onEnviarCodigo, onClose }) {
           disabled={carregando}
           className="w-full bg-sysgate-600 hover:bg-sysgate-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors"
         >
-          {carregando ? 'Enviando código...' : 'Enviar código SMS →'}
+          {carregando ? 'Criando conta...' : 'Criar conta →'}
         </button>
       </form>
     </>
   )
 }
 
-// ─── Etapa 2: Verificação OTP ─────────────────────────────────────────────────
-function EtapaVerificacao({ dados, onSucesso, onClose }) {
-  const [digitos, setDigitos] = useState(['', '', '', '', '', ''])
-  const [erro, setErro] = useState('')
-  const [carregando, setCarregando] = useState(false)
-  const [reenvioSegundos, setReenvioSegundos] = useState(60)
-  const [reenviando, setReenviando] = useState(false)
-  const refs = Array.from({ length: 6 }, () => useRef(null))
-
-  useEffect(() => {
-    refs[0].current?.focus()
-    const timer = setInterval(() => setReenvioSegundos((s) => (s > 0 ? s - 1 : 0)), 1000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const handleDigito = (idx, val) => {
-    const char = val.replace(/\D/g, '').slice(-1)
-    const novo = [...digitos]
-    novo[idx] = char
-    setDigitos(novo)
-    if (char && idx < 5) refs[idx + 1].current?.focus()
-  }
-
-  const handleKeyDown = (idx, e) => {
-    if (e.key === 'Backspace' && !digitos[idx] && idx > 0) {
-      refs[idx - 1].current?.focus()
-    }
-  }
-
-  const handlePaste = (e) => {
-    const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
-    if (paste.length > 0) {
-      const novo = [...digitos]
-      paste.split('').forEach((c, i) => { if (i < 6) novo[i] = c })
-      setDigitos(novo)
-      refs[Math.min(paste.length, 5)].current?.focus()
-    }
-    e.preventDefault()
-  }
-
-  const handleVerificar = async (e) => {
-    e.preventDefault()
-    const codigo = digitos.join('')
-    if (codigo.length < 6) {
-      setErro('Digite os 6 dígitos do código.')
-      return
-    }
-    setErro('')
-    setCarregando(true)
-    try {
-      await api.post('/auth/registrar', { ...dados, codigo })
-      onSucesso()
-    } catch (err) {
-      setErro(err.response?.data?.error || 'Código incorreto ou expirado.')
-      setDigitos(['', '', '', '', '', ''])
-      refs[0].current?.focus()
-    } finally {
-      setCarregando(false)
-    }
-  }
-
-  const handleReenviar = async () => {
-    setReenviando(true)
-    try {
-      await api.post('/auth/solicitar-codigo', { telefone: dados.telefone })
-      setReenvioSegundos(60)
-      setDigitos(['', '', '', '', '', ''])
-      setErro('')
-      refs[0].current?.focus()
-    } catch (err) {
-      setErro(err.response?.data?.error || 'Erro ao reenviar. Tente novamente.')
-    } finally {
-      setReenviando(false)
-    }
-  }
-
-  const telMascarado = dados.telefone.replace(/(\+\d{2})(\d{2})(\d{5})(\d{4})/, '$1 $2 *****-$4')
-
-  return (
-    <>
-      <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">Verificação</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Etapa 2 de 2 — Código SMS</p>
-        </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <form onSubmit={handleVerificar} className="px-6 py-5">
-        <p className="text-sm text-gray-600 mb-5 text-center">
-          Enviamos um código de 6 dígitos para<br />
-          <span className="font-semibold text-gray-800">{telMascarado}</span>
-        </p>
-
-        <div className="flex gap-2 justify-center mb-5" onPaste={handlePaste}>
-          {digitos.map((d, i) => (
-            <input
-              key={i}
-              ref={refs[i]}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={d}
-              onChange={(e) => handleDigito(i, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(i, e)}
-              className="w-11 h-14 text-center text-xl font-bold border-2 rounded-xl border-gray-200 focus:border-sysgate-600 focus:outline-none transition-colors"
-            />
-          ))}
-        </div>
-
-        {erro && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2 mb-4">
-            {erro}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={carregando}
-          className="w-full bg-sysgate-600 hover:bg-sysgate-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors mb-4"
-        >
-          {carregando ? 'Verificando...' : 'Verificar'}
-        </button>
-
-        <div className="text-center">
-          {reenvioSegundos > 0 ? (
-            <p className="text-xs text-gray-400">
-              Reenviar código em <span className="font-medium text-gray-600">{reenvioSegundos}s</span>
-            </p>
-          ) : (
-            <button
-              type="button"
-              onClick={handleReenviar}
-              disabled={reenviando}
-              className="text-sm text-sysgate-600 hover:text-sysgate-700 font-medium disabled:opacity-50"
-            >
-              {reenviando ? 'Reenviando...' : 'Reenviar código'}
-            </button>
-          )}
-        </div>
-      </form>
-    </>
-  )
-}
-
-// ─── Etapa 3: Sucesso ─────────────────────────────────────────────────────────
+// ─── Etapa 2: Sucesso ────────────────────────────────────────────────────────
 function EtapaSucesso({ onClose }) {
   return (
     <div className="px-6 py-10 text-center">
@@ -371,21 +193,12 @@ function EtapaSucesso({ onClose }) {
 
 // ─── Modal de Cadastro ────────────────────────────────────────────────────────
 function ModalCadastro({ onClose }) {
-  const [etapa, setEtapa] = useState(1) // 1 | 2 | 3
-  const [dados, setDados] = useState(null)
-
-  const handleEnviarCodigo = (d) => {
-    setDados(d)
-    setEtapa(2)
-  }
-
-  const handleSucesso = () => setEtapa(3)
+  const [etapa, setEtapa] = useState(1) // 1 | 2
 
   return (
     <Modal onClose={onClose}>
-      {etapa === 1 && <EtapaDados onEnviarCodigo={handleEnviarCodigo} onClose={onClose} />}
-      {etapa === 2 && <EtapaVerificacao dados={dados} onSucesso={handleSucesso} onClose={onClose} />}
-      {etapa === 3 && <EtapaSucesso onClose={onClose} />}
+      {etapa === 1 && <EtapaDados onSucesso={() => setEtapa(2)} onClose={onClose} />}
+      {etapa === 2 && <EtapaSucesso onClose={onClose} />}
     </Modal>
   )
 }
