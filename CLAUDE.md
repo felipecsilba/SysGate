@@ -59,7 +59,7 @@ sysgate/
 │       ├── middleware/
 │       │   └── autenticar.js  # Verifica JWT Bearer; injeta req.usuario; exporta exigirAdmin
 │       └── routes/
-│           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha) + /logout + /me
+│           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha) + /logout + /me + /registrar
 │           ├── usuarios.js    # CRUD usuários (somente admin) — novas contas criadas como inativas
 │           ├── municipios.js  # CRUD (sem codigoIBGE) + PATCH /:id/ativar + tokens por sistema
 │           ├── sistemas.js    # CRUD sistemas
@@ -71,7 +71,10 @@ sysgate/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
     ├── vite.config.js         # Porta 3000, proxy /api → localhost:3001
-    ├── tailwind.config.js     # Paleta customizada "sysgate" + safelist [/sysgate/] (obrigatório para @apply funcionar)
+    ├── tailwind.config.js     # Paleta "sysgate" vermelho Krakion Labs + safelist [/sysgate/] (obrigatório)
+    ├── public/
+    │   ├── logo-com-nome.png  # Logo Krakion Labs com nome (uso em dashboards)
+    │   └── logo-sem-nome.png  # Logo Krakion Labs sem nome (usada na tela de login)
     └── src/
         ├── main.jsx
         ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute + AdminRoute
@@ -80,7 +83,7 @@ sysgate/
         │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: sysgate-municipio)
-        │   └── authStore.js       # Zustand + persist (localStorage, key: sysgate-auth) — token + usuario
+        │   └── authStore.js       # Zustand + persist (sysgate-auth) — token + usuario; suporta lembrar (30d)
         ├── components/
         │   ├── Layout.jsx         # Sidebar + header com nome/role do usuário + botão Sair
         │   ├── Sidebar.jsx        # NavLinks; entrada "Usuários" visível só para admin
@@ -89,7 +92,7 @@ sysgate/
         │   ├── SwaggerImport.jsx  # Modal: fetch por URL / upload arquivo / specs salvas / limpar tudo
         │   └── SearchSelect.jsx   # Combobox com busca filtrável (usado em Módulo e Recurso)
         └── pages/
-            ├── Login.jsx          # Tela isolada (sem sidebar); hCaptcha após 3 falhas
+            ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas
             ├── Usuarios.jsx       # CRUD usuários (admin); novas contas exigem ativação manual
             ├── Dashboard.jsx      # Resumo + atalhos + últimas requisições (sem codigoIBGE)
             ├── Municipios.jsx     # CRUD + painel lateral de tokens (clique na linha para abrir)
@@ -126,12 +129,13 @@ docker-compose up --build
 > Todas as rotas abaixo de `/api/auth` exigem header `Authorization: Bearer <token>`.
 
 ### Autenticação (públicas)
-| Método | Rota              | Descrição                                           |
-|--------|-------------------|-----------------------------------------------------|
-| POST   | /api/auth/login   | Login — retorna JWT (rate limit 10/15min + lockout) |
-| POST   | /api/auth/logout  | Logout (stateless — cliente descarta token)         |
-| GET    | /api/auth/me      | Retorna dados do usuário logado (requer token)      |
-| GET    | /api/health       | Health check                                        |
+| Método | Rota                  | Descrição                                                        |
+|--------|-----------------------|------------------------------------------------------------------|
+| POST   | /api/auth/login       | Login — retorna JWT (rate limit 10/15min + lockout)              |
+| POST   | /api/auth/logout      | Logout (stateless — cliente descarta token)                      |
+| GET    | /api/auth/me          | Retorna dados do usuário logado (requer token)                   |
+| POST   | /api/auth/registrar   | Auto-cadastro: cria conta com `ativo: false`, aguarda aprovação  |
+| GET    | /api/health           | Health check                                                     |
 
 ### Usuários (somente admin)
 | Método | Rota                        | Descrição                                         |
@@ -215,10 +219,15 @@ docker-compose up --build
 - Para produção: registrar em hcaptcha.com, adicionar domínio da VPS
 
 ### Aprovação de contas
-- `POST /api/usuarios` cria com `ativo: false` — usuário não consegue logar até admin ativar
-- Admin ativa via `PUT /api/usuarios/:id` com `{ ativo: true }`
+- `POST /api/auth/registrar` (auto-cadastro público) e `POST /api/usuarios` (admin) criam com `ativo: false`
+- Usuário não consegue logar até admin ativar via `PUT /api/usuarios/:id` com `{ ativo: true }`
 - UI exibe aviso em âmbar ao criar novo usuário
 - Impede desativar/excluir o último admin ativo
+
+### "Manter conectado"
+- Checkbox na tela de login; envia `{ lembrar: true }` para o backend
+- Backend: `expiresIn = lembrar ? '30d' : (JWT_EXPIRES_IN || '8h')`
+- Implementado em `authStore.login(loginStr, senha, hcaptchaToken, lembrar)`
 
 ### Senhas
 - bcryptjs com salt rounds 10
@@ -229,14 +238,15 @@ docker-compose up --build
 ```
 DATABASE_URL="file:./dev.db"
 PORT=3001
-JWT_SECRET=<string aleatória longa>
+JWT_SECRET=<string aleatória longa — gerar com: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))">
 JWT_EXPIRES_IN=8h
-HCAPTCHA_SECRET=<secret do hcaptcha.com>
+HCAPTCHA_SECRET=<secret do hcaptcha.com — deixar vazio para desativar verificação>
 ```
 
 ### Variáveis de ambiente (frontend/.env — não vai ao git)
 ```
-VITE_HCAPTCHA_SITEKEY=<sitekey do hcaptcha.com>
+VITE_HCAPTCHA_SITEKEY=10000000-ffff-ffff-ffff-000000000001  # chave de teste
+# Para produção: registrar em hcaptcha.com e substituir pela sitekey real
 ```
 
 ### Credenciais iniciais (seed)
@@ -246,11 +256,41 @@ senha: admin123
 ```
 **Trocar a senha após o primeiro acesso.**
 
+### Resetar senha via terminal (emergência)
+```bash
+cd backend
+node -e "
+const { PrismaClient } = require('@prisma/client')
+const bcrypt = require('bcryptjs')
+const prisma = new PrismaClient()
+bcrypt.hash('novaSenha123', 10).then(hash =>
+  prisma.usuario.update({ where: { login: 'admin' }, data: { senhaHash: hash, tentativasLogin: 0, bloqueadoAte: null } })
+).then(() => { console.log('Senha resetada!'); prisma.\$disconnect() })
+"
+```
+
+---
+
+## Identidade Visual — Krakion Labs
+
+A UI usa a marca **Krakion Labs** com paleta de vermelho escuro mapeada na chave `sysgate` do Tailwind:
+
+| Token         | Hex       | Uso principal                          |
+|---------------|-----------|----------------------------------------|
+| sysgate-600   | `#c91414` | Botões primários, links, foco          |
+| sysgate-700   | `#a81010` | Hover de botões                        |
+| sysgate-50    | `#fff1f1` | Fundo gradiente da tela de login       |
+
+- **Logos**: `frontend/public/logo-sem-nome.png` (tela de login) e `logo-com-nome.png` (uso geral)
+- **Tela de login**: gradiente `from-red-50 via-white to-red-50`, logo centralizada, card branco com sombra
+- **Modal de cadastro**: 2 etapas — (1) nome/login/senha → POST `/api/auth/registrar` → (2) tela de sucesso informando aguarda ativação
+- A paleta `sysgate` NÃO foi renomeada no Tailwind para não quebrar todos os componentes existentes que usam `sysgate-600`, `sysgate-700` etc.
+
 ---
 
 ## Padrões importantes
 
-- **Tailwind safelist obrigatório**: `tailwind.config.js` tem `safelist: [{ pattern: /sysgate/ }]` — sem isso, `@apply bg-sysgate-600` falha no `index.css` porque o JIT não gera a classe antes do `@layer components` ser processado. NÃO remover.
+- **Tailwind safelist obrigatório**: `tailwind.config.js` tem `safelist: [{ pattern: /sysgate/ }]` — sem isso, `@apply bg-sysgate-600` falha no `index.css` porque o JIT não gera a classe antes do `@layer components` ser processado. NÃO remover. A paleta `sysgate` usa vermelho Krakion Labs (sysgate-600 = `#c91414`).
 - **Rotas nomeadas ANTES de /:id** no Express (ex: `/swagger`, `/limpar-tudo` devem vir antes de `/:id`)
 - **bodySchema** é armazenado como `String` (JSON serializado) no SQLite, parseado/stringificado manualmente
 - **Sentinel `_exemplo`** no bodySchema: o primeiro elemento `{ _exemplo: true, json: {...} }` contém o exemplo completo do request body da spec. Frontend filtra com `.filter(c => !c._exemplo)`
