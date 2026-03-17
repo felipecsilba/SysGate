@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import useAuthStore from '../stores/authStore'
+
+const HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITEKEY || '10000000-ffff-ffff-ffff-000000000001'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -10,6 +13,11 @@ export default function Login() {
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [erro, setErro] = useState('')
+  const [falhasConsecutivas, setFalhasConsecutivas] = useState(0)
+  const [hcaptchaToken, setHcaptchaToken] = useState('')
+  const captchaRef = useRef(null)
+
+  const exibirCaptcha = falhasConsecutivas >= 3
 
   useEffect(() => {
     if (isAutenticado()) navigate('/', { replace: true })
@@ -18,11 +26,20 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErro('')
+
+    if (exibirCaptcha && !hcaptchaToken) {
+      setErro('Por favor, resolva o CAPTCHA antes de continuar.')
+      return
+    }
+
     try {
-      await login(loginInput, senha)
+      await login(loginInput, senha, hcaptchaToken || undefined)
       navigate('/', { replace: true })
     } catch (err) {
       setErro(err.message)
+      setFalhasConsecutivas((n) => n + 1)
+      setHcaptchaToken('')
+      captchaRef.current?.resetCaptcha()
     }
   }
 
@@ -88,6 +105,21 @@ export default function Login() {
                 </button>
               </div>
             </div>
+
+            {/* hCaptcha — aparece após 3 falhas */}
+            {exibirCaptcha && (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-1.5 w-full text-center">
+                  Verifique que você não é um robô para continuar.
+                </p>
+                <HCaptcha
+                  ref={captchaRef}
+                  sitekey={HCAPTCHA_SITEKEY}
+                  onVerify={(token) => setHcaptchaToken(token)}
+                  onExpire={() => setHcaptchaToken('')}
+                />
+              </div>
+            )}
 
             {erro && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">

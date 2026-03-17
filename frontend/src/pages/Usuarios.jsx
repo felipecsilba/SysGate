@@ -238,16 +238,21 @@ export default function Usuarios() {
               /* Formulário criar/editar */
               <div className="space-y-4">
                 {!editando && (
-                  <div>
-                    <label className="label">Login *</label>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="Ex: joao.silva"
-                      value={form.login}
-                      onChange={(e) => setForm((f) => ({ ...f, login: e.target.value }))}
-                    />
-                  </div>
+                  <>
+                    <div className="bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-lg px-3 py-2">
+                      O usuário será criado como <strong>inativo</strong>. Após criar, ative-o na tabela para liberar o acesso.
+                    </div>
+                    <div>
+                      <label className="label">Login *</label>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Ex: joao.silva"
+                        value={form.login}
+                        onChange={(e) => setForm((f) => ({ ...f, login: e.target.value }))}
+                      />
+                    </div>
+                  </>
                 )}
 
                 <div>

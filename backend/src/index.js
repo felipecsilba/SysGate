@@ -1,6 +1,8 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
+const rateLimit = require('express-rate-limit')
 
 const autenticar = require('./middleware/autenticar')
 const authRouter = require('./routes/auth')
@@ -14,6 +16,19 @@ const usuariosRouter = require('./routes/usuarios')
 
 const app = express()
 const PORT = process.env.PORT || 3001
+
+// Segurança — headers HTTP
+app.use(helmet())
+
+// Rate limiter global: 200 req / 15min por IP
+const limiterGeral = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' },
+})
+app.use(limiterGeral)
 
 app.use(cors())
 app.use(express.json({ limit: '10mb' }))

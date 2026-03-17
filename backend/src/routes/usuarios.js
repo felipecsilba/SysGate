@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
 
     const senhaHash = await bcrypt.hash(senha, 10)
     const usuario = await prisma.usuario.create({
-      data: { login, senhaHash, nome, role: role || 'operador', ativo: true },
+      data: { login, senhaHash, nome, role: role || 'operador', ativo: false },
       select: CAMPOS_PUBLICOS,
     })
     res.status(201).json(usuario)
