@@ -254,7 +254,7 @@ export default function Login() {
             <img
               src="/logo-sem-nome.png"
               alt="Krakion Labs"
-              className="w-16 h-16 mx-auto mb-3 object-contain drop-shadow-sm"
+              className="w-28 h-28 mx-auto mb-3 object-contain"
               onError={(e) => {
                 e.target.style.display = 'none'
               }}
@@ -262,7 +262,6 @@ export default function Login() {
             <p className="text-sm font-bold tracking-widest text-sysgate-600 uppercase">
               Krakion Labs
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">Toolkit Implantador</p>
           </div>
 
           {/* Card */}

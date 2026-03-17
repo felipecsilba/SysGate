@@ -33,7 +33,6 @@ export default function Sidebar() {
         />
         <div>
           <div className="font-semibold text-sm leading-tight text-white">Krakion Labs</div>
-          <div className="text-xs text-gray-400">Toolkit Implantador</div>
         </div>
       </div>
 
