@@ -1,8 +1,24 @@
 const { PrismaClient } = require('@prisma/client')
+const bcrypt = require('bcryptjs')
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Iniciando seed...')
+
+  // Cria usuário admin padrão (idempotente — não recria se já existir)
+  const adminExistente = await prisma.usuario.findUnique({ where: { login: 'admin' } })
+  if (!adminExistente) {
+    await prisma.usuario.create({
+      data: {
+        login: 'admin',
+        senhaHash: await bcrypt.hash('admin123', 10),
+        nome: 'Administrador',
+        role: 'admin',
+        ativo: true,
+      },
+    })
+    console.log('   👤 Usuário admin criado (login: admin / senha: admin123)')
+  }
 
   // Limpa dados existentes
   await prisma.requisicao.deleteMany()

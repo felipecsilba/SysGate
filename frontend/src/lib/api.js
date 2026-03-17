@@ -1,4 +1,5 @@
 import axios from 'axios'
+import useAuthStore from '../stores/authStore'
 
 const api = axios.create({
   baseURL: '/api',
@@ -6,13 +7,43 @@ const api = axios.create({
   timeout: 30000,
 })
 
+// Injeta token JWT em toda requisição
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`
+  }
+  return config
+})
+
+// Trata erros de resposta — 401 força logout
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    if (err.response?.status === 401) {
+      useAuthStore.getState().logout()
+      window.location.href = '/login'
+    }
     const msg = err.response?.data?.error || err.message || 'Erro de conexão'
     return Promise.reject(new Error(msg))
   }
 )
+
+// Auth
+export const authApi = {
+  login: (login, senha) => api.post('/auth/login', { login, senha }).then((r) => r.data),
+  logout: () => api.post('/auth/logout').then((r) => r.data),
+  me: () => api.get('/auth/me').then((r) => r.data),
+}
+
+// Usuários (admin)
+export const usuariosApi = {
+  listar: () => api.get('/usuarios').then((r) => r.data),
+  criar: (data) => api.post('/usuarios', data).then((r) => r.data),
+  atualizar: (id, data) => api.put(`/usuarios/${id}`, data).then((r) => r.data),
+  alterarSenha: (id, novaSenha) => api.patch(`/usuarios/${id}/senha`, { novaSenha }).then((r) => r.data),
+  deletar: (id) => api.delete(`/usuarios/${id}`).then((r) => r.data),
+}
 
 // Municípios
 export const municipiosApi = {

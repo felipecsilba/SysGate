@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
+import useAuthStore from '../stores/authStore'
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: '◉', exact: true },
   { to: '/municipios', label: 'Municípios', icon: '🏛' },
   { to: '/sistemas', label: 'Sistemas', icon: '⚙' },
@@ -11,6 +12,13 @@ const NAV_ITEMS = [
 ]
 
 export default function Sidebar() {
+  const usuario = useAuthStore((s) => s.usuario)
+
+  const navItems = [
+    ...BASE_NAV_ITEMS,
+    ...(usuario?.role === 'admin' ? [{ to: '/usuarios', label: 'Usuários', icon: '👥' }] : []),
+  ]
+
   return (
     <aside className="w-56 flex flex-col bg-gray-900 text-gray-100 shrink-0">
       {/* Logo */}
@@ -29,7 +37,7 @@ export default function Sidebar() {
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 mb-2">
           Menu
         </p>
-        {NAV_ITEMS.map(({ to, label, icon, exact }) => (
+        {navItems.map(({ to, label, icon, exact }) => (
           <NavLink
             key={to}
             to={to}
@@ -48,9 +56,15 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer da sidebar */}
+      {/* Footer da sidebar — nome do usuário logado */}
       <div className="px-4 py-3 border-t border-gray-700">
-        <p className="text-xs text-gray-500 text-center">
+        {usuario && (
+          <div className="mb-1">
+            <p className="text-xs text-gray-300 font-medium truncate">{usuario.nome}</p>
+            <p className="text-xs text-gray-500">{usuario.role}</p>
+          </div>
+        )}
+        <p className="text-xs text-gray-600 text-center">
           SysGate © {new Date().getFullYear()}
         </p>
       </div>

@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import PrivateRoute, { AdminRoute } from './components/PrivateRoute'
+import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Municipios from './pages/Municipios'
 import Sistemas from './pages/Sistemas'
@@ -7,19 +9,31 @@ import ClienteAPI from './pages/ClienteAPI'
 import EnvioLote from './pages/EnvioLote'
 import Scripts from './pages/Scripts'
 import Historico from './pages/Historico'
+import Usuarios from './pages/Usuarios'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="municipios" element={<Municipios />} />
-          <Route path="sistemas" element={<Sistemas />} />
-          <Route path="cliente-api" element={<ClienteAPI />} />
-          <Route path="envio-lote" element={<EnvioLote />} />
-          <Route path="scripts" element={<Scripts />} />
-          <Route path="historico" element={<Historico />} />
+        {/* Rota pública */}
+        <Route path="/login" element={<Login />} />
+
+        {/* Rotas protegidas */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="municipios" element={<Municipios />} />
+            <Route path="sistemas" element={<Sistemas />} />
+            <Route path="cliente-api" element={<ClienteAPI />} />
+            <Route path="envio-lote" element={<EnvioLote />} />
+            <Route path="scripts" element={<Scripts />} />
+            <Route path="historico" element={<Historico />} />
+
+            {/* Rota exclusiva admin */}
+            <Route element={<AdminRoute />}>
+              <Route path="usuarios" element={<Usuarios />} />
+            </Route>
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

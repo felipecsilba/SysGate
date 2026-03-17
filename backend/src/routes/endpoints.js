@@ -251,12 +251,18 @@ function extrairCampos(spec, schema) {
     }
     // objeto aninhado com properties → marca como "object"
     if (!defR.type && defR.properties) tipo = 'object'
+    // Para campos object, extrai sub-campos recursivamente (preserva enum de campos aninhados)
+    const subFields = (tipo === 'object' && (defR.properties || defR.type === 'object'))
+      ? extrairCampos(spec, defR)
+      : null
     return {
       campo,
       tipo,
       obrigatorio: required.includes(campo),
       descricao: defR.description || defR.title || '',
       exemplo: defR.example !== undefined ? String(defR.example) : '',
+      enum: Array.isArray(defR.enum) ? defR.enum.map(String) : null,
+      subFields: subFields?.length ? subFields : null,
     }
   })
 }

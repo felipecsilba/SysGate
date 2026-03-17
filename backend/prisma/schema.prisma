@@ -106,3 +106,14 @@ model SwaggerSpec {
   sistema        Sistema? @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
   criadoEm      DateTime @default(now())
 }
+
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  login        String   @unique
+  senhaHash    String
+  nome         String
+  role         String   @default("operador")  // "admin" | "operador"
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+}
