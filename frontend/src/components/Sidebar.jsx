@@ -23,12 +23,17 @@ export default function Sidebar() {
     <aside className="w-56 flex flex-col bg-gray-900 text-gray-100 shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-700">
-        <div className="w-8 h-8 bg-sysgate-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-          B
-        </div>
+        <img
+          src="/logo-sem-nome.png"
+          alt="Krakion Labs"
+          className="w-8 h-8 object-contain shrink-0"
+          onError={(e) => {
+            e.target.style.display = 'none'
+          }}
+        />
         <div>
-          <div className="font-semibold text-sm leading-tight">SysGate</div>
-          <div className="text-xs text-gray-400">Implantador v1.0</div>
+          <div className="font-semibold text-sm leading-tight text-white">Krakion Labs</div>
+          <div className="text-xs text-gray-400">Toolkit Implantador</div>
         </div>
       </div>
 
@@ -65,7 +70,7 @@ export default function Sidebar() {
           </div>
         )}
         <p className="text-xs text-gray-600 text-center">
-          SysGate © {new Date().getFullYear()}
+          Krakion Labs © {new Date().getFullYear()}
         </p>
       </div>
     </aside>

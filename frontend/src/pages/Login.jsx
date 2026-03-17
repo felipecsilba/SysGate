@@ -254,14 +254,15 @@ export default function Login() {
             <img
               src="/logo-sem-nome.png"
               alt="Krakion Labs"
-              className="w-16 h-16 mx-auto mb-3 object-contain"
+              className="w-16 h-16 mx-auto mb-3 object-contain drop-shadow-sm"
               onError={(e) => {
                 e.target.style.display = 'none'
               }}
             />
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
+            <p className="text-sm font-bold tracking-widest text-sysgate-600 uppercase">
               Krakion Labs
             </p>
+            <p className="text-xs text-gray-400 mt-0.5">Toolkit Implantador</p>
           </div>
 
           {/* Card */}
@@ -373,6 +374,11 @@ export default function Login() {
               </button>
             </p>
           </div>
+
+          {/* Rodapé */}
+          <p className="text-center text-xs text-gray-400 mt-6">
+            © {new Date().getFullYear()} Krakion Labs. Todos os direitos reservados.
+          </p>
         </div>
       </div>
 
