@@ -9,13 +9,14 @@ const useAuthStore = create(
       usuario: null, // { id, login, nome, role }
       carregando: false,
 
-      login: async (loginStr, senha, hcaptchaToken) => {
+      login: async (loginStr, senha, hcaptchaToken, lembrar = false) => {
         set({ carregando: true })
         try {
           const { data } = await api.post('/auth/login', {
             login: loginStr,
             senha,
             ...(hcaptchaToken && { hcaptchaToken }),
+            ...(lembrar && { lembrar: true }),
           })
           set({ token: data.token, usuario: data.usuario })
           return data
