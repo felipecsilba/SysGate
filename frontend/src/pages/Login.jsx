@@ -254,7 +254,7 @@ export default function Login() {
             <img
               src="/logo-sem-nome.png"
               alt="Krakion Labs"
-              className="w-28 h-28 mx-auto mb-3 object-contain"
+              className="w-28 h-28 mx-auto mb-3 object-contain mix-blend-multiply"
               onError={(e) => {
                 e.target.style.display = 'none'
               }}
