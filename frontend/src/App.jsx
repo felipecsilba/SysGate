@@ -29,10 +29,8 @@ export default function App() {
             <Route path="scripts" element={<Scripts />} />
             <Route path="historico" element={<Historico />} />
 
-            {/* Rota exclusiva admin */}
-            <Route element={<AdminRoute />}>
-              <Route path="usuarios" element={<Usuarios />} />
-            </Route>
+            {/* Usuários: admin vê todos; não-admin vê só o próprio perfil */}
+            <Route path="usuarios" element={<Usuarios />} />
           </Route>
         </Route>
       </Routes>

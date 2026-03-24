@@ -5,12 +5,15 @@ const router = express.Router()
 const prisma = new PrismaClient()
 
 // GET /api/requisicoes — filtros: municipioId, sistemaId, tipo, limite
+// Retorna apenas requisições de municípios do usuário logado
 router.get('/', async (req, res) => {
   try {
     const { municipioId, sistemaId, tipo, limite } = req.query
     const take = Math.min(Number(limite) || 100, 500)
 
-    const where = {}
+    const where = {
+      municipio: { usuarioId: req.usuario.id },
+    }
     if (municipioId) where.municipioId = Number(municipioId)
     if (sistemaId) where.sistemaId = Number(sistemaId)
     if (tipo) where.tipo = tipo
@@ -39,13 +42,17 @@ router.get('/', async (req, res) => {
   }
 })
 
-// DELETE /api/requisicoes — limpa histórico
+// DELETE /api/requisicoes — limpa histórico (apenas do usuário logado)
 router.delete('/', async (req, res) => {
   try {
     const { municipioId } = req.query
-    await prisma.requisicao.deleteMany({
-      where: municipioId ? { municipioId: Number(municipioId) } : undefined,
-    })
+
+    const where = {
+      municipio: { usuarioId: req.usuario.id },
+    }
+    if (municipioId) where.municipioId = Number(municipioId)
+
+    await prisma.requisicao.deleteMany({ where })
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })

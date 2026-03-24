@@ -9,24 +9,32 @@ const prisma = new PrismaClient()
 
 const CAMPOS_PUBLICOS = { id: true, login: true, nome: true, role: true, ativo: true, criadoEm: true, atualizadoEm: true }
 
-// Todos os endpoints exigem autenticação + admin
-router.use(autenticar, exigirAdmin)
+// Todos os endpoints exigem autenticação
+router.use(autenticar)
 
-// GET /api/usuarios
+// GET /api/usuarios — admin vê todos; não-admin vê apenas si mesmo
 router.get('/', async (req, res) => {
   try {
-    const usuarios = await prisma.usuario.findMany({
+    if (req.usuario.role === 'admin') {
+      const usuarios = await prisma.usuario.findMany({
+        select: CAMPOS_PUBLICOS,
+        orderBy: { criadoEm: 'asc' },
+      })
+      return res.json(usuarios)
+    }
+    // Não-admin: retorna apenas o próprio usuário
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: req.usuario.id },
       select: CAMPOS_PUBLICOS,
-      orderBy: { criadoEm: 'asc' },
     })
-    res.json(usuarios)
+    res.json(usuario ? [usuario] : [])
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// POST /api/usuarios
-router.post('/', async (req, res) => {
+// POST /api/usuarios — somente admin
+router.post('/', exigirAdmin, async (req, res) => {
   try {
     const { login, senha, nome, role } = req.body
     if (!login || !senha || !nome) {
@@ -53,13 +61,29 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PUT /api/usuarios/:id
+// PUT /api/usuarios/:id — admin edita qualquer um; não-admin edita apenas a si mesmo (só nome)
 router.put('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id)
+    const isAdmin = req.usuario.role === 'admin'
+
+    if (!isAdmin && id !== req.usuario.id) {
+      return res.status(403).json({ error: 'Acesso negado' })
+    }
+
     const { nome, role, ativo } = req.body
 
-    // Impede desativar o último admin ativo
+    if (!isAdmin) {
+      // Não-admin: só pode alterar o próprio nome
+      const usuario = await prisma.usuario.update({
+        where: { id },
+        data: { ...(nome !== undefined && { nome }) },
+        select: CAMPOS_PUBLICOS,
+      })
+      return res.json(usuario)
+    }
+
+    // Admin: Impede desativar o último admin ativo
     if (ativo === false) {
       const alvo = await prisma.usuario.findUnique({ where: { id } })
       if (alvo?.role === 'admin') {
@@ -82,10 +106,16 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// PATCH /api/usuarios/:id/senha
+// PATCH /api/usuarios/:id/senha — admin muda qualquer senha; não-admin muda apenas a própria
 router.patch('/:id/senha', async (req, res) => {
   try {
     const id = parseInt(req.params.id)
+    const isAdmin = req.usuario.role === 'admin'
+
+    if (!isAdmin && id !== req.usuario.id) {
+      return res.status(403).json({ error: 'Acesso negado' })
+    }
+
     const { novaSenha } = req.body
     if (!novaSenha || novaSenha.length < 6) {
       return res.status(400).json({ error: 'Nova senha deve ter no mínimo 6 caracteres' })
@@ -102,8 +132,8 @@ router.patch('/:id/senha', async (req, res) => {
   }
 })
 
-// DELETE /api/usuarios/:id
-router.delete('/:id', async (req, res) => {
+// DELETE /api/usuarios/:id — somente admin
+router.delete('/:id', exigirAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id)
 

@@ -61,12 +61,12 @@ sysgate/
 │       │   └── autenticar.js  # Verifica JWT Bearer; injeta req.usuario; exporta exigirAdmin
 │       └── routes/
 │           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha) + /logout + /me + /registrar
-│           ├── usuarios.js    # CRUD usuários (somente admin) — novas contas criadas como inativas
+│           ├── usuarios.js    # CRUD usuários — GET/PUT/PATCH permitidos ao próprio usuário; POST/DELETE somente admin
 │           ├── municipios.js  # CRUD (sem codigoIBGE) + PATCH /:id/ativar + tokens por sistema — ESCOPO DO USUÁRIO (cada usuário vê só os seus)
 │           ├── sistemas.js    # CRUD sistemas — leitura pública; escrita/exclusão somente admin
 │           ├── endpoints.js   # CRUD + importar JSON + Swagger parser + fetch-swagger + limpar-tudo — leitura pública; escrita/exclusão somente admin
 │           ├── proxy.js       # POST /executar — proxy para APIs com token; verifica posse do município; extrai idGerado de respostas array e objeto
-│           ├── requisicoes.js # GET (últimas 20) + DELETE histórico
+│           ├── requisicoes.js # GET + DELETE histórico — filtrado por municípios do usuário logado (isolamento por usuário)
 │           ├── scripts.js     # CRUD com tags (categoria: script|formula|anotacao) + importar JSON
 │           └── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
 └── frontend/
@@ -79,7 +79,7 @@ sysgate/
     │   └── logo-sem-nome.png  # Logo Krakion Labs sem nome (usada na tela de login)
     └── src/
         ├── main.jsx
-        ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute + AdminRoute
+        ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute (todas as rotas autenticadas)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
         │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi e relatoriosApi
@@ -88,14 +88,14 @@ sysgate/
         │   └── authStore.js       # Zustand + persist (sysgate-auth) — token + usuario; suporta lembrar (30d); logout limpa sysgate-municipio do localStorage
         ├── components/
         │   ├── Layout.jsx         # Sidebar + barra acento gradiente no topo + header: chip usuário + botão Sair
-        │   ├── Sidebar.jsx        # NavLinks com SVG icons; entrada "Usuários" visível só para admin
+        │   ├── Sidebar.jsx        # NavLinks com SVG icons; entrada "Usuários" (admin) ou "Meu Perfil" (não-admin) sempre visível
         │   ├── PrivateRoute.jsx   # Redireciona para /login se não autenticado; AdminRoute para role
         │   ├── MunicipioBadge.jsx # Badge do município ativo (alerta vermelho para produção)
         │   ├── SwaggerImport.jsx  # Modal: fetch por URL / upload arquivo / specs salvas / limpar tudo
         │   └── SearchSelect.jsx   # Combobox com busca filtrável (usado em Módulo e Recurso)
         └── pages/
             ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas
-            ├── Usuarios.jsx       # CRUD usuários (admin); novas contas exigem ativação manual
+            ├── Usuarios.jsx       # Admin: CRUD completo + resetar senha de outros; Não-admin: só próprio perfil (nome + senha)
             ├── Dashboard.jsx      # Cards de módulos com SVG icons + município ativo + últimas requisições
             ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação — dados isolados por usuário
             ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin
@@ -139,14 +139,16 @@ docker-compose up --build
 | POST   | /api/auth/registrar   | Auto-cadastro: cria conta com `ativo: false`, aguarda aprovação  |
 | GET    | /api/health           | Health check                                                     |
 
-### Usuários (somente admin)
-| Método | Rota                        | Descrição                                         |
-|--------|-----------------------------|---------------------------------------------------|
-| GET    | /api/usuarios               | Lista todos (sem senhaHash)                       |
-| POST   | /api/usuarios               | Cria (inativo por padrão — exige ativação manual) |
-| PUT    | /api/usuarios/:id           | Atualiza nome/role/ativo                          |
-| PATCH  | /api/usuarios/:id/senha     | Altera senha                                      |
-| DELETE | /api/usuarios/:id           | Remove (impede auto-exclusão e último admin)      |
+### Usuários
+> **Admin**: acesso completo. **Não-admin**: `GET` retorna só si mesmo; `PUT` e `PATCH /senha` permitidos apenas no próprio id; `POST` e `DELETE` bloqueados (403).
+
+| Método | Rota                        | Descrição                                                              |
+|--------|-----------------------------|------------------------------------------------------------------------|
+| GET    | /api/usuarios               | Admin: lista todos; não-admin: retorna apenas o próprio registro       |
+| POST   | /api/usuarios               | Cria usuário inativo — **somente admin**                               |
+| PUT    | /api/usuarios/:id           | Admin: atualiza nome/role/ativo; não-admin: só próprio nome            |
+| PATCH  | /api/usuarios/:id/senha     | Admin: redefine qualquer senha; não-admin: só a própria                |
+| DELETE | /api/usuarios/:id           | Remove — **somente admin** (impede auto-exclusão e último admin)       |
 
 ### Sistemas
 > **Leitura pública** (qualquer autenticado), **escrita restrita a admin**.
@@ -216,8 +218,8 @@ docker-compose up --build
 | Método | Rota                  | Descrição                                                                     |
 |--------|-----------------------|-------------------------------------------------------------------------------|
 | POST   | /api/proxy/executar   | Executa requisição via proxy — verifica posse do município antes de usar token |
-| GET    | /api/requisicoes      | Histórico (últimas 20, filtro ?municipioId=)                                  |
-| DELETE | /api/requisicoes      | Limpa histórico                                                               |
+| GET    | /api/requisicoes      | Histórico do usuário logado (filtro ?municipioId=) — isolado por usuário      |
+| DELETE | /api/requisicoes      | Limpa histórico do usuário logado (filtro ?municipioId=) — isolado por usuário |
 
 ## Segurança — padrões e decisões
 
@@ -231,8 +233,8 @@ docker-compose up --build
 ### Proteção de rotas
 - `autenticar.js`: middleware global aplicado em `index.js` APÓS montar `/api/auth` e `/api/health`
 - `PrivateRoute`: redireciona para `/login` se não autenticado
-- `AdminRoute`: redireciona para `/` se role !== 'admin'
-- Entrada "Usuários" na sidebar: condicional `usuario?.role === 'admin'`
+- `AdminRoute`: redireciona para `/` se role !== 'admin' — usado apenas onde necessário (ex: futuras rotas exclusivas)
+- Sidebar: exibe "Usuários" para admin e "Meu Perfil" para não-admin; a rota `/usuarios` é acessível a todos autenticados, mas a página se adapta ao role
 
 ### Isolamento de dados por usuário (multi-tenant)
 - **Municípios e tokens**: o campo `usuarioId Int?` em `Municipio` vincula cada município ao seu criador
@@ -245,6 +247,7 @@ docker-compose up --build
   - `sistemas.js`: GET público; POST/PUT/DELETE exigem `exigirAdmin`
   - `endpoints.js`: GET público; POST/PUT/DELETE/importar/fetch-swagger/importar-swagger exigem `exigirAdmin`
   - `Sistemas.jsx`: botões "Novo Sistema", editar/excluir sistema, importar Swagger, editar endpoint visíveis **apenas para admin** (`isAdmin = usuario?.role === 'admin'`)
+- **Histórico de requisições**: `requisicoes.js` sempre filtra `WHERE municipio.usuarioId = req.usuario.id` — cada usuário vê e limpa apenas o próprio histórico, mesmo sem filtro de município
 - **Logout seguro**: `authStore.logout()` limpa `localStorage.removeItem('sysgate-municipio')` para evitar que o próximo usuário (no mesmo browser) veja dados do anterior
 - **Migração**: ao adicionar `usuarioId` ao schema, municípios existentes com `null` devem ser atribuídos ao admin com o script abaixo
 

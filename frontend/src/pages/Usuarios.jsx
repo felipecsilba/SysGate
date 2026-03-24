@@ -12,6 +12,8 @@ function formatarData(iso) {
 
 export default function Usuarios() {
   const usuarioLogado = useAuthStore((s) => s.usuario)
+  const isAdmin = usuarioLogado?.role === 'admin'
+
   const [usuarios, setUsuarios] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -19,7 +21,7 @@ export default function Usuarios() {
   // Painel lateral
   const [painelAberto, setPainelAberto] = useState(false)
   const [modoSenha, setModoSenha] = useState(false)
-  const [editando, setEditando] = useState(null) // null = novo usuário
+  const [editando, setEditando] = useState(null)
 
   // Formulário criar/editar
   const [form, setForm] = useState({ login: '', senha: '', nome: '', role: 'operador', ativo: true })
@@ -43,6 +45,13 @@ export default function Usuarios() {
   }
 
   useEffect(() => { carregar() }, [])
+
+  // Para não-admin: abre automaticamente o painel de senha ao entrar na página
+  useEffect(() => {
+    if (!isAdmin && !carregando && usuarios.length > 0 && !painelAberto) {
+      abrirSenha(usuarios[0])
+    }
+  }, [isAdmin, carregando, usuarios])
 
   const abrirNovo = () => {
     setEditando(null)
@@ -106,6 +115,136 @@ export default function Usuarios() {
     }
   }
 
+  // ── Visão não-admin: perfil próprio ──────────────────────────────────────
+  if (!isAdmin) {
+    const eu = usuarios[0]
+    return (
+      <div className="flex gap-6 h-full">
+        <div className={`flex flex-col flex-1 min-w-0 transition-all ${painelAberto ? 'max-w-[calc(100%-26rem)]' : ''}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Meu Perfil</h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Logado como <span className="font-medium">{usuarioLogado?.nome}</span> ({usuarioLogado?.role})
+              </p>
+            </div>
+          </div>
+
+          {erro && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2 mb-4">{erro}</div>
+          )}
+
+          {carregando ? (
+            <div className="card flex items-center justify-center py-12 text-gray-400">Carregando...</div>
+          ) : eu ? (
+            <div className="card p-0 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Login</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Nome</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Membro desde</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={`border-b border-gray-100 ${editando?.id === eu.id && painelAberto ? 'bg-sysgate-50' : ''}`}>
+                    <td className="px-4 py-3 font-mono text-gray-800">{eu.login}</td>
+                    <td className="px-4 py-3 text-gray-700">{eu.nome}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ROLE_COLORS[eu.role]}`}>
+                        {ROLE_LABELS[eu.role] || eu.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{formatarData(eu.criadoEm)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1 justify-end">
+                        <button onClick={() => abrirEditar(eu)} className="text-xs text-gray-500 hover:text-sysgate-600 px-2 py-1 rounded hover:bg-gray-100">
+                          Editar nome
+                        </button>
+                        <button onClick={() => abrirSenha(eu)} className="text-xs text-gray-500 hover:text-sysgate-600 px-2 py-1 rounded hover:bg-gray-100">
+                          Alterar Senha
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Painel lateral */}
+        {painelAberto && (
+          <div className="w-96 shrink-0">
+            <div className="card h-fit">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-semibold text-gray-900">
+                  {modoSenha ? 'Alterar Minha Senha' : 'Editar Meu Nome'}
+                </h2>
+                <button onClick={fecharPainel} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+              </div>
+
+              {modoSenha ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="label">Nova Senha *</label>
+                    <div className="relative">
+                      <input
+                        type={mostrarNovaSenha ? 'text' : 'password'}
+                        className="input pr-10"
+                        placeholder="Mínimo 6 caracteres"
+                        value={novaSenha}
+                        onChange={(e) => setNovaSenha(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMostrarNovaSenha((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        tabIndex={-1}
+                      >
+                        {mostrarNovaSenha ? '🙈' : '👁'}
+                      </button>
+                    </div>
+                  </div>
+                  {erroForm && <p className="text-sm text-red-600">{erroForm}</p>}
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
+                      {salvando ? 'Salvando...' : 'Alterar Senha'}
+                    </button>
+                    <button onClick={fecharPainel} className="btn btn-secondary text-sm">Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="label">Nome *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Nome de exibição"
+                      value={form.nome}
+                      onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+                    />
+                  </div>
+                  {erroForm && <p className="text-sm text-red-600">{erroForm}</p>}
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
+                      {salvando ? 'Salvando...' : 'Salvar'}
+                    </button>
+                    <button onClick={fecharPainel} className="btn btn-secondary text-sm">Cancelar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Visão admin: CRUD completo ────────────────────────────────────────────
   return (
     <div className="flex gap-6 h-full">
       {/* Tabela */}
@@ -168,9 +307,15 @@ export default function Usuarios() {
                       <button onClick={() => abrirEditar(u)} className="text-xs text-gray-500 hover:text-sysgate-600 px-2 py-1 rounded hover:bg-gray-100">
                         Editar
                       </button>
-                      <button onClick={() => abrirSenha(u)} className="text-xs text-gray-500 hover:text-sysgate-600 px-2 py-1 rounded hover:bg-gray-100">
-                        Senha
-                      </button>
+                      {u.id === usuarioLogado?.id ? (
+                        <button onClick={() => abrirSenha(u)} className="text-xs text-gray-500 hover:text-sysgate-600 px-2 py-1 rounded hover:bg-gray-100">
+                          Minha Senha
+                        </button>
+                      ) : (
+                        <button onClick={() => abrirSenha(u)} className="text-xs text-gray-500 hover:text-amber-600 px-2 py-1 rounded hover:bg-amber-50" title="Redefinir senha deste usuário">
+                          Resetar Senha
+                        </button>
+                      )}
                       <button
                         onClick={() => excluir(u)}
                         disabled={u.id === usuarioLogado?.id}
@@ -195,7 +340,9 @@ export default function Usuarios() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-semibold text-gray-900">
                 {modoSenha
-                  ? `Alterar Senha — ${editando?.login}`
+                  ? editando?.id === usuarioLogado?.id
+                    ? 'Alterar Minha Senha'
+                    : `Resetar Senha — ${editando?.login}`
                   : editando
                   ? `Editar — ${editando.login}`
                   : 'Novo Usuário'}
@@ -206,6 +353,11 @@ export default function Usuarios() {
             {modoSenha ? (
               /* Formulário de senha */
               <div className="space-y-4">
+                {editando?.id !== usuarioLogado?.id && (
+                  <div className="bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-lg px-3 py-2">
+                    Você está redefinindo a senha de <strong>{editando?.login}</strong>. O usuário deverá trocar a senha no próximo acesso.
+                  </div>
+                )}
                 <div>
                   <label className="label">Nova Senha *</label>
                   <div className="relative">

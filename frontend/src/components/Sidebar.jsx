@@ -70,7 +70,11 @@ export default function Sidebar() {
 
   const navItems = [
     ...BASE_NAV_ITEMS,
-    ...(usuario?.role === 'admin' ? [{ to: '/usuarios', label: 'Usuários', icon: ICONS.usuarios }] : []),
+    {
+      to: '/usuarios',
+      label: usuario?.role === 'admin' ? 'Usuários' : 'Meu Perfil',
+      icon: ICONS.usuarios,
+    },
   ]
 
   return (
