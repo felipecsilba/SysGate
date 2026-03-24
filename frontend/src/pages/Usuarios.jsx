@@ -46,12 +46,6 @@ export default function Usuarios() {
 
   useEffect(() => { carregar() }, [])
 
-  // Para não-admin: abre automaticamente o painel de senha ao entrar na página
-  useEffect(() => {
-    if (!isAdmin && !carregando && usuarios.length > 0 && !painelAberto) {
-      abrirSenha(usuarios[0])
-    }
-  }, [isAdmin, carregando, usuarios])
 
   const abrirNovo = () => {
     setEditando(null)

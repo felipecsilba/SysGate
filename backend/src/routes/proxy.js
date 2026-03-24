@@ -53,6 +53,11 @@ router.post('/executar', async (req, res) => {
       error: 'Token não configurado para este sistema neste município. Configure em Municípios → Tokens.',
     })
   }
+  if (!vinculo.token || vinculo.token.trim() === '') {
+    return res.status(400).json({
+      error: 'Token configurado está vazio. Edite o token em Municípios → Tokens.',
+    })
+  }
 
   const url = `${vinculo.sistema.urlBase}${apiPath}`
   const headers = {
