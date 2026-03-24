@@ -28,6 +28,7 @@ model Municipio {
   atualizadoEm     DateTime           @updatedAt
   requisicoes       Requisicao[]
   scripts           Script[]
+  relatorios        Relatorio[]
   municipioSistemas MunicipioSistema[]
 }
 
@@ -90,9 +91,24 @@ model Script {
 }
 
 model Tag {
-  id      Int      @id @default(autoincrement())
-  nome    String   @unique
-  scripts Script[]
+  id         Int         @id @default(autoincrement())
+  nome       String      @unique
+  scripts    Script[]
+  relatorios Relatorio[]
+}
+
+model Relatorio {
+  id            Int        @id @default(autoincrement())
+  titulo        String
+  descricao     String?
+  jxrmlNome     String?
+  jxrmlConteudo String?    // base64 encoded JXRML file
+  scriptFonte   String?    // BFC script de fonte dinâmica
+  municipioId   Int?
+  municipio     Municipio? @relation(fields: [municipioId], references: [id], onDelete: SetNull)
+  tags          Tag[]
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
 }
 
 model SwaggerSpec {

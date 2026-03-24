@@ -73,16 +73,20 @@ export default function EnvioLote() {
   const [campoBusca, setCampoBusca] = useState('')
 
   const [csvData, setCsvData] = useState(null)
+  const [csvArquivo, setCsvArquivo] = useState(null)
+  const [csvSemCabecalho, setCsvSemCabecalho] = useState(false)
   const [camposSelecionados, setCamposSelecionados] = useState({})
   const [mapeamentoCampo, setMapeamentoCampo] = useState({})
   const [modoMapeamento, setModoMapeamento] = useState({})  // { [campo]: 'csv' | 'fixo' }
   const [valoresFixos, setValoresFixos] = useState({})      // { [campo]: string }
   const [delay, setDelay] = useState(200)
+  const [tamanhoBatch, setTamanhoBatch] = useState(50)
 
   const [executando, setExecutando] = useState(false)
   const [progresso, setProgresso] = useState([])
   const [concluido, setConcluido] = useState(false)
   const [consultasLote, setConsultasLote] = useState({})
+  const [consultasResultado, setConsultasResultado] = useState({})
   const abortRef = useRef(false)
   const progressoRef = useRef(null)
 
@@ -192,12 +196,31 @@ export default function EnvioLote() {
 
   const handleUploadCSV = (file) => {
     if (!file) return
-    Papa.parse(file, {
-      header: true,
+    setCsvArquivo(file)
+  }
+
+  useEffect(() => {
+    if (!csvArquivo) return
+    Papa.parse(csvArquivo, {
+      header: !csvSemCabecalho,
       skipEmptyLines: true,
       complete: (resultado) => {
-        const colunas = resultado.meta.fields || []
-        const linhas = resultado.data
+        let colunas, linhas
+        if (csvSemCabecalho) {
+          const rows = resultado.data
+          const numCols = rows[0]?.length || 0
+          colunas = Array.from({ length: numCols }, (_, i) =>
+            numCols <= 26 ? String.fromCharCode(65 + i) : `Col${i + 1}`
+          )
+          linhas = rows.map((row) => {
+            const obj = {}
+            colunas.forEach((col, i) => { obj[col] = row[i] ?? '' })
+            return obj
+          })
+        } else {
+          colunas = resultado.meta.fields || []
+          linhas = resultado.data
+        }
         setCsvData({ colunas, linhas })
         setProgresso([])
         setConcluido(false)
@@ -210,7 +233,6 @@ export default function EnvioLote() {
             autoMap[c.campo] = match
           }
         }
-        // idIntegracao e idGerado sempre selecionados
         if (schemaExpanded.some((c) => c.campo === 'idIntegracao')) {
           autoSel['idIntegracao'] = true
         }
@@ -222,6 +244,32 @@ export default function EnvioLote() {
       },
       error: (err) => alert('Erro ao parsear CSV: ' + err.message),
     })
+  }, [csvArquivo, csvSemCabecalho])
+
+  const construirBodyLinha = (linha) => {
+    const body = {}
+    for (const c of schemaExpanded) {
+      if (!camposSelecionados[c.campo]) continue
+      const modo = modoMapeamento[c.campo] || 'csv'
+      let valor
+      if (modo === 'fixo') {
+        valor = valoresFixos[c.campo]
+        if (valor === undefined || valor === '') continue
+      } else {
+        const colCSV = mapeamentoCampo[c.campo]
+        if (!colCSV || linha[colCSV] === undefined) continue
+        valor = linha[colCSV]
+      }
+      const numVal = (c.tipo === 'number' || c.tipo === 'integer') ? Number(valor) : valor
+      const typedVal = c._wrapAsIdObject ? { id: Number(valor) } : numVal
+      if (c._parent) {
+        if (!body[c._parent]) body[c._parent] = {}
+        body[c._parent][c._displayCampo] = typedVal
+      } else {
+        body[c.campo] = typedVal
+      }
+    }
+    return body
   }
 
   const iniciarEnvio = async () => {
@@ -237,48 +285,17 @@ export default function EnvioLote() {
     setConsultasLote({})
 
     const linhas = csvData.linhas
+    const totalBatches = Math.ceil(linhas.length / tamanhoBatch)
     const resultados = []
 
-    for (let i = 0; i < linhas.length; i++) {
+    for (let b = 0; b < totalBatches; b++) {
       if (abortRef.current) {
-        resultados.push({ linha: i + 1, status: 'abortado', msg: 'Abortado pelo usuário', dados: linhas[i] })
+        resultados.push({ lote: b + 1, totalLotes: totalBatches, status: 'abortado', msg: 'Abortado pelo usuário', count: 0 })
         break
       }
 
-      const linha = linhas[i]
-
-      const body = {}
-      for (const c of schemaExpanded) {
-        if (!camposSelecionados[c.campo]) continue
-        const modo = modoMapeamento[c.campo] || 'csv'
-        let valor
-        if (modo === 'fixo') {
-          valor = valoresFixos[c.campo]
-          if (valor === undefined || valor === '') continue
-        } else {
-          const colCSV = mapeamentoCampo[c.campo]
-          if (!colCSV || linha[colCSV] === undefined) continue
-          valor = linha[colCSV]
-        }
-        const numVal = (c.tipo === 'number' || c.tipo === 'integer') ? Number(valor) : valor
-        const typedVal = c._wrapAsIdObject ? { id: Number(valor) } : numVal
-        if (c._parent) {
-          if (!body[c._parent]) body[c._parent] = {}
-          body[c._parent][c._displayCampo] = typedVal
-        } else {
-          body[c.campo] = typedVal
-        }
-      }
-
-      let pathFinal = pathCustom
-      for (const c of schemaExpanded) {
-        if (!c._parent || !camposSelecionados[c.campo]) continue
-        const modo = modoMapeamento[c.campo] || 'csv'
-        const val = modo === 'fixo'
-          ? (valoresFixos[c.campo] || '')
-          : (mapeamentoCampo[c.campo] ? (linha[mapeamentoCampo[c.campo]] || '') : '')
-        if (val) pathFinal = pathFinal.replace(`{${c.campo}}`, val)
-      }
+      const batchLinhas = linhas.slice(b * tamanhoBatch, (b + 1) * tamanhoBatch)
+      const bodyArray = batchLinhas.map(construirBodyLinha)
 
       const inicio = Date.now()
       try {
@@ -286,23 +303,39 @@ export default function EnvioLote() {
           municipioId: Number(municipioSel),
           sistemaId: Number(sistemaSel),
           endpointId: endpointSel?.id || null,
-          path: pathFinal,
+          path: pathCustom,
           metodo,
-          body: ['GET', 'DELETE'].includes(metodo) ? undefined : body,
+          body: ['GET', 'DELETE'].includes(metodo) ? undefined : bodyArray,
           tipo: 'lote',
         })
         const duracao = Date.now() - inicio
-        const idGerado = extrairId(res.data)
-        resultados.push({ linha: i + 1, status: 'ok', msg: `${res.statusCode} — ${duracao}ms`, dados: linha, idGerado, pathEnviado: pathFinal })
+        const idsGerados = Array.isArray(res.data)
+          ? res.data.map((item) => extrairId(item)).filter(Boolean)
+          : [extrairId(res.data)].filter(Boolean)
+        resultados.push({
+          lote: b + 1,
+          totalLotes: totalBatches,
+          count: batchLinhas.length,
+          status: 'ok',
+          msg: `${res.statusCode} — ${duracao}ms`,
+          resposta: res.data,
+          idsGerados,
+        })
       } catch (err) {
-        resultados.push({ linha: i + 1, status: 'erro', msg: err.message, dados: linha })
+        resultados.push({
+          lote: b + 1,
+          totalLotes: totalBatches,
+          count: batchLinhas.length,
+          status: 'erro',
+          msg: err.message,
+        })
       }
 
       setProgresso([...resultados])
       if (progressoRef.current) {
         progressoRef.current.scrollTop = progressoRef.current.scrollHeight
       }
-      if (i < linhas.length - 1) await sleep(delay)
+      if (b < totalBatches - 1) await sleep(delay)
     }
 
     setExecutando(false)
@@ -310,6 +343,51 @@ export default function EnvioLote() {
   }
 
   const abortar = () => { abortRef.current = true }
+
+  const consultarLote = async (chave, loteId) => {
+    setConsultasResultado((prev) => ({ ...prev, [chave]: { consultando: true, aberto: true } }))
+    try {
+      const res = await proxyApi.executar({
+        municipioId: Number(municipioSel),
+        sistemaId: Number(sistemaSel),
+        path: pathCustom.replace(/\/$/, '') + '/' + loteId,
+        metodo: 'GET',
+        tipo: 'individual',
+      })
+      setConsultasResultado((prev) => ({
+        ...prev,
+        [chave]: { consultando: false, aberto: true, statusCode: res.statusCode, data: res.data },
+      }))
+    } catch (e) {
+      setConsultasResultado((prev) => ({
+        ...prev,
+        [chave]: { consultando: false, aberto: true, statusCode: null, data: { error: e.message } },
+      }))
+    }
+  }
+
+  const toggleResultado = (chave) => {
+    setConsultasResultado((prev) => ({
+      ...prev,
+      [chave]: { ...prev[chave], aberto: !prev[chave]?.aberto },
+    }))
+  }
+
+  const highlightJson = (obj) => {
+    const str = JSON.stringify(obj, null, 2)
+    return str.replace(
+      /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      (match) => {
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) return `<span style="color:#93c5fd">${match}</span>`
+          return `<span style="color:#86efac">${match}</span>`
+        }
+        if (/true|false/.test(match)) return `<span style="color:#c084fc">${match}</span>`
+        if (/null/.test(match)) return `<span style="color:#6b7280">${match}</span>`
+        return `<span style="color:#fde68a">${match}</span>`
+      }
+    )
+  }
 
   const consultarLinhaLote = async (linha, idGerado, pathEnviado) => {
     setConsultasLote((prev) => ({ ...prev, [linha]: { ...prev[linha], consultando: true } }))
@@ -334,7 +412,14 @@ export default function EnvioLote() {
   }
 
   const exportarCSV = () => {
-    const rows = progresso.map((p) => ({ linha: p.linha, status: p.status, mensagem: p.msg, ...p.dados }))
+    const rows = progresso.map((p) => ({
+      lote: p.lote,
+      itens: p.count,
+      status: p.status,
+      mensagem: p.msg,
+      ids_gerados: (p.idsGerados || []).join(','),
+      total_ids: (p.idsGerados || []).length,
+    }))
     const csv = Papa.unparse(rows)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -347,7 +432,8 @@ export default function EnvioLote() {
 
   const totalOk = progresso.filter((p) => p.status === 'ok').length
   const totalErro = progresso.filter((p) => p.status === 'erro').length
-  const percentual = csvData ? Math.round((progresso.length / csvData.linhas.length) * 100) : 0
+  const totalBatches = csvData ? Math.ceil(csvData.linhas.length / tamanhoBatch) : 0
+  const percentual = totalBatches ? Math.round((progresso.length / totalBatches) * 100) : 0
 
   // Campos selecionados (exceto idIntegracao que é sempre mostrado à parte)
   const camposMapeados = schemaExpanded.filter((c) => camposSelecionados[c.campo])
@@ -496,7 +582,18 @@ export default function EnvioLote() {
 
           {/* 5. Arquivo CSV */}
           <div className="card p-4 space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">5. Arquivo CSV</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-gray-700">5. Arquivo CSV</h3>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <div
+                  onClick={() => setCsvSemCabecalho((v) => !v)}
+                  className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${csvSemCabecalho ? 'bg-sysgate-600' : 'bg-gray-300'}`}
+                >
+                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${csvSemCabecalho ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </div>
+                <span className="text-xs text-gray-500">Sem cabeçalho</span>
+              </label>
+            </div>
             <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-sysgate-400 hover:bg-sysgate-50/30 transition-colors">
               <svg className="w-6 h-6 text-gray-400 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -511,22 +608,73 @@ export default function EnvioLote() {
               />
             </label>
             {csvData && (
-              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm text-green-700 font-medium">
-                  {csvData.linhas.length} linha{csvData.linhas.length !== 1 ? 's' : ''} · {csvData.colunas.length} coluna{csvData.colunas.length !== 1 ? 's' : ''}
-                </span>
-              </div>
+              <>
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                  <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm text-green-700 font-medium">
+                    {csvData.linhas.length} linha{csvData.linhas.length !== 1 ? 's' : ''} · {csvData.colunas.length} coluna{csvData.colunas.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                {/* Preview table: linhas como linhas, colunas como colunas */}
+                <div className="overflow-auto rounded-lg border border-gray-200 max-h-48">
+                  <table className="text-xs w-full">
+                    <thead>
+                      <tr className="bg-gray-50 sticky top-0">
+                        <th className="px-2 py-1.5 text-gray-400 font-normal text-left border-b border-r border-gray-200 whitespace-nowrap">#</th>
+                        {csvData.colunas.map((col, idx) => {
+                          const letra = idx < 26 ? String.fromCharCode(65 + idx) : `C${idx + 1}`
+                          return (
+                            <th key={col} title={!csvSemCabecalho ? col : undefined} className="px-2 py-1.5 text-left border-b border-gray-200 whitespace-nowrap">
+                              <span className="font-bold text-sysgate-600">{letra}</span>
+                              {!csvSemCabecalho && (
+                                <div className="text-gray-400 font-normal truncate max-w-[70px]" title={col}>{col}</div>
+                              )}
+                            </th>
+                          )
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvData.linhas.slice(0, 3).map((linha, i) => (
+                        <tr key={i} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                          <td className="px-2 py-1 font-mono font-bold text-gray-400 border-r border-gray-200 whitespace-nowrap">{i + 1}</td>
+                          {csvData.colunas.map((col) => (
+                            <td key={col} className="px-2 py-1 text-gray-600 max-w-[90px] truncate font-mono" title={String(linha[col] ?? '')}>
+                              {String(linha[col] ?? '')}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
 
-          {/* 6. Configuração de delay */}
+          {/* 6. Configuração */}
           <div className="card p-4 space-y-3">
             <h3 className="font-semibold text-sm text-gray-700">6. Configuração</h3>
             <div>
-              <label className="label text-xs">Delay entre requisições: <strong>{delay}ms</strong></label>
+              <label className="label text-xs">Itens por lote: <strong>{tamanhoBatch}</strong></label>
+              <input
+                type="range"
+                min={1}
+                max={200}
+                step={1}
+                value={tamanhoBatch}
+                onChange={(e) => setTamanhoBatch(Number(e.target.value))}
+                className="w-full accent-sysgate-600"
+              />
+              <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                <span>1</span>
+                <span>200</span>
+              </div>
+            </div>
+            <div>
+              <label className="label text-xs">Delay entre lotes: <strong>{delay}ms</strong></label>
               <input
                 type="range"
                 min={0}
@@ -765,9 +913,15 @@ export default function EnvioLote() {
                                       }`}
                                     >
                                       <option value="">{csvData ? '— coluna CSV —' : '— sem CSV —'}</option>
-                                      {(csvData?.colunas || []).map((col) => (
-                                        <option key={col} value={col}>{col}</option>
-                                      ))}
+                                      {(csvData?.colunas || []).map((col, idx) => {
+                                        const letra = idx < 26 ? String.fromCharCode(65 + idx) : `C${idx + 1}`
+                                        const amostra = csvData.linhas[0]?.[col]
+                                        const amostraStr = amostra !== undefined ? String(amostra).slice(0, 18) : ''
+                                        const label = csvSemCabecalho
+                                          ? `${letra}  —  ${amostraStr}`
+                                          : `${letra} — ${col}${amostraStr ? `  (${amostraStr})` : ''}`
+                                        return <option key={col} value={col}>{label}</option>
+                                      })}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1.5">
                                       <svg className={`w-3 h-3 ${isObrigatorio ? 'text-amber-400' : 'text-gray-400'}`} fill="none" viewBox="0 0 20 20">
@@ -819,47 +973,61 @@ export default function EnvioLote() {
                   </div>
                 </div>
 
-                {/* Preview JSON amostra — abaixo dos dois painéis */}
+                {/* Preview JSON amostra — formato array (lote) com syntax highlight */}
                 {(() => {
                   const temAlgumValor = camposMapeados.some((c) => {
                     const modo = modoMapeamento[c.campo] || 'csv'
                     return modo === 'fixo' ? valoresFixos[c.campo] : mapeamentoCampo[c.campo]
                   })
                   if (!temAlgumValor) return null
-                  // Para campos fixos, usar o valor fixo em todas as linhas de prévia
-                  // Para campos CSV, precisamos de csvData
-                  const linhasPrevia = csvData?.linhas.slice(0, 3) || [{}]
+                  const totalLinhas = csvData?.linhas.length || 0
+                  const totalBatchesPrevia = Math.ceil(totalLinhas / tamanhoBatch)
+                  const itensNoLote = Math.min(tamanhoBatch, totalLinhas)
+                  const maxPrevia = Math.min(5, itensNoLote)
+                  const linhasPrevia = csvData?.linhas.slice(0, maxPrevia) || [{}]
+                  const restante = itensNoLote - maxPrevia
+
+                  const linhasJson = ['[']
+                  linhasPrevia.forEach((linha, i) => {
+                    const body = construirBodyLinha(linha)
+                    const pretty = JSON.stringify(body, null, 2)
+                    const indented = pretty.split('\n').map((l) => `  ${l}`).join('\n')
+                    linhasJson.push(indented + (i < linhasPrevia.length - 1 || restante > 0 ? ',' : ''))
+                  })
+                  if (restante > 0) {
+                    linhasJson.push(`\n  // ... +${restante} item${restante !== 1 ? 's' : ''} neste lote`)
+                  }
+                  linhasJson.push(']')
+                  const jsonStr = linhasJson.join('\n')
+
+                  const highlighted = jsonStr.replace(
+                    /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|\/\/[^\n]*)/g,
+                    (match) => {
+                      if (match.startsWith('//')) return `<span style="color:#4b5563;font-style:italic">${match}</span>`
+                      if (/^"/.test(match)) {
+                        if (/:$/.test(match)) return `<span style="color:#93c5fd">${match}</span>`
+                        return `<span style="color:#86efac">${match}</span>`
+                      }
+                      if (/true|false/.test(match)) return `<span style="color:#c084fc">${match}</span>`
+                      if (/null/.test(match)) return `<span style="color:#6b7280">${match}</span>`
+                      return `<span style="color:#fde68a">${match}</span>`
+                    }
+                  )
+
                   return (
                     <div>
-                      <p className="text-xs text-gray-400 mb-1.5 font-medium">
-                        Prévia{csvData ? ' (primeiras linhas)' : ' (valores fixos)'}
-                      </p>
-                      <pre className="bg-gray-900 text-green-300 rounded-xl p-3 text-xs font-mono overflow-auto scrollbar-thin">
-                        {linhasPrevia.map((linha, i) => {
-                          const body = {}
-                          for (const c of camposMapeados) {
-                            const modo = modoMapeamento[c.campo] || 'csv'
-                            let valor
-                            if (modo === 'fixo') {
-                              valor = valoresFixos[c.campo]
-                              if (!valor) continue
-                            } else {
-                              const colCSV = mapeamentoCampo[c.campo]
-                              if (!colCSV || linha[colCSV] === undefined) continue
-                              valor = linha[colCSV]
-                            }
-                            const numVal = (c.tipo === 'number' || c.tipo === 'integer') ? Number(valor) : valor
-                            const typedVal = c._wrapAsIdObject ? { id: Number(valor) } : numVal
-                            if (c._parent) {
-                              if (!body[c._parent]) body[c._parent] = {}
-                              body[c._parent][c._displayCampo] = typedVal
-                            } else {
-                              body[c.campo] = typedVal
-                            }
-                          }
-                          return `#${i + 1}  ${JSON.stringify(body)}\n`
-                        }).join('')}
-                      </pre>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-medium text-gray-500">
+                          Prévia — Lote 1/{totalBatchesPrevia}
+                          <span className="ml-1.5 text-gray-400 font-normal">{itensNoLote} {itensNoLote !== 1 ? 'itens' : 'item'} por lote</span>
+                        </p>
+                        <span className="text-xs text-gray-400">mostrando {maxPrevia}/{itensNoLote}</span>
+                      </div>
+                      <pre
+                        className="bg-gray-950 rounded-xl px-4 py-3 text-xs font-mono overflow-auto scrollbar-thin max-h-80 leading-5"
+                        style={{ color: '#e5e7eb' }}
+                        dangerouslySetInnerHTML={{ __html: highlighted }}
+                      />
                     </div>
                   )
                 })()}
@@ -882,10 +1050,12 @@ export default function EnvioLote() {
               {executando ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Enviando {progresso.length}/{csvData?.linhas.length}...
+                  Lote {progresso.length}/{totalBatches}...
                 </span>
               ) : (
-                '▶ Iniciar envio'
+                csvData
+                  ? `▶ Iniciar envio (${totalBatches} lote${totalBatches !== 1 ? 's' : ''} · ${csvData.linhas.length} itens)`
+                  : '▶ Iniciar envio'
               )}
             </button>
           </div>
@@ -896,7 +1066,7 @@ export default function EnvioLote() {
               <div className="card p-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-gray-700">Progresso</span>
-                  <span className="text-gray-500">{progresso.length}/{csvData.linhas.length} ({percentual}%)</span>
+                  <span className="text-gray-500">Lote {progresso.length}/{totalBatches} ({percentual}%)</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                   <div
@@ -905,14 +1075,34 @@ export default function EnvioLote() {
                   />
                 </div>
                 <div className="flex gap-4 text-sm">
-                  <span className="text-green-600 font-medium">{totalOk} ok</span>
+                  <span className="text-green-600 font-medium">{totalOk} lote{totalOk !== 1 ? 's' : ''} ok</span>
                   <span className="text-red-600 font-medium">{totalErro} erro{totalErro !== 1 ? 's' : ''}</span>
+                  {(() => {
+                    const total = progresso.reduce((acc, p) => acc + (p.idsGerados?.length || 0), 0)
+                    return total > 0 ? <span className="text-sysgate-600 font-medium">{total} IDs gerados</span> : null
+                  })()}
                 </div>
-                {concluido && (
-                  <button onClick={exportarCSV} className="btn-secondary w-full justify-center mt-1">
-                    Exportar relatório CSV
-                  </button>
-                )}
+                {concluido && (() => {
+                  const todosIds = progresso.flatMap((p) => p.idsGerados || [])
+                  return (
+                    <div className="flex gap-2 mt-1">
+                      {todosIds.length > 0 && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(todosIds.join('\n'))}
+                          className="btn-secondary flex-1 justify-center gap-1.5"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copiar {todosIds.length} IDs
+                        </button>
+                      )}
+                      <button onClick={exportarCSV} className="btn-secondary flex-1 justify-center">
+                        Exportar relatório CSV
+                      </button>
+                    </div>
+                  )
+                })()}
               </div>
 
               <div className="card overflow-hidden">
@@ -923,57 +1113,156 @@ export default function EnvioLote() {
                   ref={progressoRef}
                   className="divide-y divide-gray-100 max-h-96 overflow-y-auto scrollbar-thin"
                 >
-                  {progresso.map((p, i) => {
-                    const consulta = consultasLote[p.linha]
-                    return (
-                      <div key={i} className={`px-4 py-2.5 ${p.status === 'erro' ? 'bg-red-50' : ''}`}>
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                            p.status === 'ok' ? 'bg-green-500' : p.status === 'erro' ? 'bg-red-500' : 'bg-gray-400'
-                          }`} />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-gray-600">Linha {p.linha}</span>
-                              <span className={`text-xs ${p.status === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
-                                {p.msg}
-                              </span>
-                              {p.idGerado && (
-                                <button
-                                  onClick={() => consultarLinhaLote(p.linha, p.idGerado, p.pathEnviado)}
-                                  disabled={consulta?.consultando}
-                                  className="ml-auto flex items-center gap-1 text-xs text-sysgate-600 hover:text-sysgate-800 font-medium flex-shrink-0"
-                                >
-                                  {consulta?.consultando
-                                    ? <span className="w-2.5 h-2.5 border-2 border-sysgate-300 border-t-sysgate-600 rounded-full animate-spin" />
-                                    : '↻'
-                                  }
-                                  GET /{p.idGerado}
-                                </button>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-400 font-mono truncate">
-                              {Object.values(p.dados).slice(0, 3).join(' · ')}
-                            </p>
-                            {consulta && !consulta.consultando && (
-                              <div className="mt-1 flex items-center gap-2">
-                                {consulta.statusCode && (
-                                  <span className={`text-xs font-mono font-semibold px-1.5 py-0.5 rounded ${
-                                    consulta.statusCode < 300 ? 'bg-green-100 text-green-700' :
-                                    consulta.statusCode < 400 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                                  }`}>{consulta.statusCode}</span>
-                                )}
-                                <span className="text-xs text-gray-400 font-mono truncate">
-                                  {JSON.stringify(consulta.data).slice(0, 100)}
-                                </span>
-                              </div>
+                  {progresso.map((p, i) => (
+                    <div key={i} className={`px-4 py-3 ${p.status === 'erro' ? 'bg-red-50' : ''}`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                          p.status === 'ok' ? 'bg-green-500' : p.status === 'erro' ? 'bg-red-500' : 'bg-gray-400'
+                        }`} />
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold text-gray-700">
+                              Lote {p.lote}/{p.totalLotes}
+                            </span>
+                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{p.count} itens</span>
+                            <span className={`text-xs font-mono ${p.status === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
+                              {p.msg}
+                            </span>
+                            {p.idsGerados?.length > 0 && (
+                              <button
+                                onClick={() => navigator.clipboard.writeText(p.idsGerados.join('\n'))}
+                                className="ml-auto text-xs text-sysgate-600 hover:text-sysgate-800 font-medium flex items-center gap-1 flex-shrink-0"
+                                title="Copiar IDs deste lote"
+                              >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                {p.idsGerados.length} IDs
+                              </button>
                             )}
                           </div>
+                          {p.idsGerados?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {p.idsGerados.slice(0, 30).map((id, j) => {
+                                const chave = `${p.lote}-${id}`
+                                const consulta = consultasResultado[chave]
+                                return (
+                                  <div key={j} className="flex items-center gap-0.5">
+                                    <span
+                                      className="text-xs font-mono bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-l cursor-pointer hover:bg-green-100"
+                                      title="Clique para copiar"
+                                      onClick={() => navigator.clipboard.writeText(id)}
+                                    >
+                                      {id}
+                                    </span>
+                                    <button
+                                      onClick={() => consulta?.aberto ? toggleResultado(chave) : consultarLote(chave, id)}
+                                      disabled={consulta?.consultando}
+                                      title="Consultar resultado"
+                                      className={`text-xs px-1.5 py-0.5 rounded-r border font-medium transition-colors flex items-center gap-0.5 ${
+                                        consulta?.aberto
+                                          ? 'bg-sysgate-600 text-white border-sysgate-600'
+                                          : 'bg-white text-sysgate-600 border-green-200 hover:bg-sysgate-50'
+                                      }`}
+                                    >
+                                      {consulta?.consultando
+                                        ? <span className="w-3 h-3 border-2 border-sysgate-300 border-t-sysgate-600 rounded-full animate-spin inline-block" />
+                                        : consulta?.aberto ? '▲' : '▼ GET'
+                                      }
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                              {p.idsGerados.length > 30 && (
+                                <span className="text-xs text-gray-400 self-center">+{p.idsGerados.length - 30} mais</span>
+                              )}
+                            </div>
+                          )}
+                          {/* Resultados expandidos por ID */}
+                          {p.idsGerados?.map((id) => {
+                            const chave = `${p.lote}-${id}`
+                            const consulta = consultasResultado[chave]
+                            if (!consulta?.aberto || consulta?.consultando) return null
+                            return (
+                              <div key={chave} className="mt-1 rounded-lg overflow-hidden border border-gray-700">
+                                <div className="flex items-center justify-between px-3 py-1.5 bg-gray-800">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono text-gray-300">GET /{id}</span>
+                                    {consulta.statusCode && (
+                                      <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
+                                        consulta.statusCode < 300 ? 'bg-green-900 text-green-300' :
+                                        consulta.statusCode < 400 ? 'bg-yellow-900 text-yellow-300' : 'bg-red-900 text-red-300'
+                                      }`}>{consulta.statusCode}</span>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(JSON.stringify(consulta.data, null, 2))}
+                                    className="text-xs text-gray-400 hover:text-gray-200 flex items-center gap-1"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    copiar
+                                  </button>
+                                </div>
+                                <pre
+                                  className="bg-gray-950 px-3 py-2.5 text-xs font-mono overflow-auto scrollbar-thin max-h-64 leading-5"
+                                  style={{ color: '#e5e7eb' }}
+                                  dangerouslySetInnerHTML={{ __html: highlightJson(consulta.data) }}
+                                />
+                              </div>
+                            )
+                          })}
+                          {p.status === 'erro' && p.resposta !== undefined && (
+                            <p className="text-xs text-red-500 font-mono truncate">
+                              {JSON.stringify(p.resposta).slice(0, 150)}
+                            </p>
+                          )}
                         </div>
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
+
+              {/* Painel de todos os IDs gerados */}
+              {concluido && (() => {
+                const todosIds = progresso.flatMap((p) => p.idsGerados || [])
+                if (todosIds.length === 0) return null
+                return (
+                  <div className="card overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-700">
+                        IDs gerados
+                        <span className="ml-2 text-xs font-normal text-gray-400">{todosIds.length} registros</span>
+                      </span>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(todosIds.join('\n'))}
+                        className="flex items-center gap-1.5 text-xs text-sysgate-600 hover:text-sysgate-800 font-medium"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copiar todos
+                      </button>
+                    </div>
+                    <div className="p-3 max-h-48 overflow-y-auto scrollbar-thin">
+                      <div className="flex flex-wrap gap-1">
+                        {todosIds.map((id, i) => (
+                          <span
+                            key={i}
+                            className="text-xs font-mono bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded cursor-pointer hover:bg-green-100 transition-colors"
+                            title="Clique para copiar"
+                            onClick={() => navigator.clipboard.writeText(id)}
+                          >
+                            {id}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
             </>
           )}
 

@@ -38,13 +38,44 @@ const METODO_ACTIVE = {
   DELETE: 'bg-red-500    text-white border-red-500',
 }
 
-function JsonViewer({ data }) {
-  const text = JSON.stringify(data, null, 2)
-  return (
-    <pre className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-auto text-xs font-mono leading-relaxed scrollbar-thin max-h-[60vh]">
-      {text}
-    </pre>
+function highlightJson(str) {
+  const escaped = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return escaped.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (match) => {
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) return `<span style="color:#a5b4fc">${match}</span>`
+        return `<span style="color:#86efac">${match}</span>`
+      }
+      if (/true|false/.test(match)) return `<span style="color:#f9a8d4">${match}</span>`
+      if (/null/.test(match)) return `<span style="color:#94a3b8;font-style:italic">${match}</span>`
+      return `<span style="color:#fde68a">${match}</span>`
+    }
   )
+}
+
+function CodeBlock({ text, title = 'JSON', maxH = '60vh' }) {
+  return (
+    <div className="rounded-xl overflow-hidden border border-gray-700/60 shadow-md">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 border-b border-gray-700/60">
+        <div className="flex gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-gray-600" />
+          <span className="w-2.5 h-2.5 rounded-full bg-gray-600" />
+          <span className="w-2.5 h-2.5 rounded-full bg-gray-600" />
+        </div>
+        <span className="text-[11px] text-gray-500 font-mono ml-1">{title}</span>
+      </div>
+      <pre
+        className="bg-gray-950 p-4 overflow-auto text-xs font-mono leading-relaxed scrollbar-thin"
+        style={{ maxHeight: maxH }}
+        dangerouslySetInnerHTML={{ __html: highlightJson(text) }}
+      />
+    </div>
+  )
+}
+
+function JsonViewer({ data }) {
+  return <CodeBlock text={JSON.stringify(data, null, 2)} maxH="60vh" />
 }
 
 function extrairId(data) {
@@ -362,7 +393,7 @@ export default function ClienteAPI() {
     <div className="space-y-6 animate-fadeIn">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cliente API</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Sandbox</h1>
           <p className="text-sm text-gray-500 mt-1">Execute chamadas às APIs via proxy local</p>
         </div>
       </div>
@@ -372,7 +403,10 @@ export default function ClienteAPI() {
         <div className="space-y-4">
           {/* Município */}
           <div className="card p-4 space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">1. Município</h3>
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sysgate-600 text-white text-[10px] font-bold leading-none shrink-0">1</span>
+              <h3 className="font-semibold text-sm text-gray-700">Município</h3>
+            </div>
             <div className="relative">
               <select
                 value={municipioSel}
@@ -400,7 +434,10 @@ export default function ClienteAPI() {
 
           {/* Sistema */}
           <div className="card p-4 space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">2. Sistema</h3>
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sysgate-600 text-white text-[10px] font-bold leading-none shrink-0">2</span>
+              <h3 className="font-semibold text-sm text-gray-700">Sistema</h3>
+            </div>
             <div className="relative">
               <select
                 value={sistemaSel}
@@ -426,7 +463,10 @@ export default function ClienteAPI() {
 
           {/* Seleção de endpoint */}
           <div className="card p-4 space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">3. Endpoint</h3>
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sysgate-600 text-white text-[10px] font-bold leading-none shrink-0">3</span>
+              <h3 className="font-semibold text-sm text-gray-700">Endpoint</h3>
+            </div>
             <div className="space-y-2">
               <div>
                 <label className="label text-xs">Módulo</label>
@@ -453,7 +493,10 @@ export default function ClienteAPI() {
 
           {/* Método e path */}
           <div className="card p-4 space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">4. Requisição</h3>
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sysgate-600 text-white text-[10px] font-bold leading-none shrink-0">4</span>
+              <h3 className="font-semibold text-sm text-gray-700">Requisição</h3>
+            </div>
             <div className="flex gap-2 flex-wrap">
               {METODOS.map((m) => (
                 <button
@@ -513,7 +556,10 @@ export default function ClienteAPI() {
           {temBody && (
             <div className="card p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-sm text-gray-700">5. Body</h3>
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sysgate-600 text-white text-[10px] font-bold leading-none shrink-0">5</span>
+                  <h3 className="font-semibold text-sm text-gray-700">Body</h3>
+                </div>
                 {schema.length > 0 && (
                   <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 text-xs">
                     <button
@@ -536,10 +582,13 @@ export default function ClienteAPI() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3 h-96">
                   {/* Coluna esquerda — checkboxes */}
-                  <div className="border border-gray-200 rounded-xl overflow-hidden flex flex-col bg-white">
-                    <div className="px-3 pt-2 pb-2 bg-gray-50 border-b border-gray-200 flex-shrink-0 space-y-2">
+                  <div className="border border-gray-200 rounded-xl overflow-hidden flex flex-col bg-white shadow-sm">
+                    <div className="px-3 pt-2.5 pb-2.5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex-shrink-0 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Campos</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Campos</span>
+                        </div>
                         {(() => {
                           const alternaveis = schemaExpanded.filter((c) => c.campo !== 'idIntegracao' && c._displayCampo !== 'idGerado')
                           const todos = alternaveis.length > 0 && alternaveis.every((c) => camposSelecionados[c.campo])
@@ -685,9 +734,10 @@ export default function ClienteAPI() {
                   </div>
 
                   {/* Coluna direita — inputs */}
-                  <div className="border border-sysgate-200 rounded-xl overflow-hidden flex flex-col bg-sysgate-50/40">
-                    <div className="px-3 py-2 bg-sysgate-100/60 border-b border-sysgate-200 flex-shrink-0">
-                      <span className="text-xs font-semibold text-sysgate-600 uppercase tracking-wide">Valores</span>
+                  <div className="border border-sysgate-200/60 rounded-xl overflow-hidden flex flex-col shadow-sm" style={{background: 'linear-gradient(to bottom, #eef2ff22, #fff)'}}>
+                    <div className="px-3 py-2.5 bg-gradient-to-r from-sysgate-600 to-violet-600 border-b border-sysgate-500/30 flex-shrink-0 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                      <span className="text-xs font-bold text-white uppercase tracking-widest">Valores</span>
                     </div>
                     {schemaSelecionado.length === 0 ? (
                       <div className="flex-1 flex items-center justify-center">
@@ -765,11 +815,7 @@ export default function ClienteAPI() {
                   </div>
 
                   {/* Preview JSON — abaixo do botão */}
-                  {bodyPreview && (
-                    <pre className="bg-gray-900 text-green-300 rounded-xl p-3 text-xs font-mono overflow-auto scrollbar-thin">
-                      {bodyPreview}
-                    </pre>
-                  )}
+                  {bodyPreview && <CodeBlock text={bodyPreview} maxH="240px" />}
 
                 </div>
               ) : (

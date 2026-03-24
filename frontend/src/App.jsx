@@ -5,7 +5,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Municipios from './pages/Municipios'
 import Sistemas from './pages/Sistemas'
-import ClienteAPI from './pages/ClienteAPI'
+import Sandbox from './pages/ClienteAPI'
 import EnvioLote from './pages/EnvioLote'
 import Scripts from './pages/Scripts'
 import Historico from './pages/Historico'
@@ -24,7 +24,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="municipios" element={<Municipios />} />
             <Route path="sistemas" element={<Sistemas />} />
-            <Route path="cliente-api" element={<ClienteAPI />} />
+            <Route path="sandbox" element={<Sandbox />} />
             <Route path="envio-lote" element={<EnvioLote />} />
             <Route path="scripts" element={<Scripts />} />
             <Route path="historico" element={<Historico />} />

@@ -51,7 +51,7 @@ sysgate/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
 │   ├── prisma/
-│   │   ├── schema.prisma      # 8 modelos: + Usuario (login, senhaHash, nome, role, ativo, tentativasLogin, bloqueadoAte)
+│   │   ├── schema.prisma      # 9 modelos: Script, Tag, Relatorio, Municipio, Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -64,14 +64,15 @@ sysgate/
 │           ├── municipios.js  # CRUD (sem codigoIBGE) + PATCH /:id/ativar + tokens por sistema
 │           ├── sistemas.js    # CRUD sistemas
 │           ├── endpoints.js   # CRUD + importar JSON + Swagger parser + fetch-swagger + limpar-tudo
-│           ├── proxy.js       # POST /executar — proxy para APIs com token
+│           ├── proxy.js       # POST /executar — proxy para APIs com token; extrai idGerado de respostas array e objeto
 │           ├── requisicoes.js # GET (últimas 20) + DELETE histórico
-│           └── scripts.js     # CRUD com tags + importar/exportar JSON
+│           ├── scripts.js     # CRUD com tags (categoria: script|formula|anotacao) + importar JSON
+│           └── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
     ├── vite.config.js         # Porta 3000, proxy /api → localhost:3001
-    ├── tailwind.config.js     # Paleta "sysgate" vermelho Krakion Labs + safelist [/sysgate/] (obrigatório)
+    ├── tailwind.config.js     # Paleta "sysgate" índigo/violeta Krakion Labs + safelist [/sysgate/] (obrigatório)
     ├── public/
     │   ├── logo-com-nome.png  # Logo Krakion Labs com nome (uso em dashboards)
     │   └── logo-sem-nome.png  # Logo Krakion Labs sem nome (usada na tela de login)
@@ -80,13 +81,13 @@ sysgate/
         ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute + AdminRoute
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
-        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout
+        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi e relatoriosApi
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: sysgate-municipio)
         │   └── authStore.js       # Zustand + persist (sysgate-auth) — token + usuario; suporta lembrar (30d)
         ├── components/
-        │   ├── Layout.jsx         # Sidebar + header com nome/role do usuário + botão Sair
-        │   ├── Sidebar.jsx        # NavLinks; entrada "Usuários" visível só para admin
+        │   ├── Layout.jsx         # Sidebar + barra acento gradiente no topo + header: chip usuário + botão Sair
+        │   ├── Sidebar.jsx        # NavLinks com SVG icons; entrada "Usuários" visível só para admin
         │   ├── PrivateRoute.jsx   # Redireciona para /login se não autenticado; AdminRoute para role
         │   ├── MunicipioBadge.jsx # Badge do município ativo (alerta vermelho para produção)
         │   ├── SwaggerImport.jsx  # Modal: fetch por URL / upload arquivo / specs salvas / limpar tudo
@@ -94,12 +95,12 @@ sysgate/
         └── pages/
             ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas
             ├── Usuarios.jsx       # CRUD usuários (admin); novas contas exigem ativação manual
-            ├── Dashboard.jsx      # Resumo + atalhos + últimas requisições (sem codigoIBGE)
-            ├── Municipios.jsx     # CRUD + painel lateral de tokens (clique na linha para abrir)
-            ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas: Informações / Specs / Endpoints
-            ├── ClienteAPI.jsx     # Seletor endpoint + body editor 2 colunas + proxy + resposta
-            ├── EnvioLote.jsx      # Upload CSV + mapeamento colunas 2 colunas + envio sequencial
-            └── Scripts.jsx        # CRUD com categorias + tags + copiar + importar/exportar
+            ├── Dashboard.jsx      # Cards de módulos com SVG icons + município ativo + últimas requisições
+            ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação
+            ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação
+            ├── ClienteAPI.jsx     # Rota: /sandbox — Seletor endpoint + CodeBlock JSON + body editor + proxy
+            ├── EnvioLote.jsx      # Upload CSV + toggle sem cabeçalho + mapeamento colunas 2 colunas + envio em lote (array body) + IDs gerados + consulta GET por ID + exportar CSV com IDs
+            └── Scripts.jsx        # 4 abas: Scripts BFC / Fórmulas BFC / Anotações / Relatórios (JRXML + fonte dinâmica)
 ```
 
 ## Comandos
@@ -172,18 +173,32 @@ docker-compose up --build
 | POST   | /api/endpoints/importar-swagger        | Importa spec OpenAPI (upload JSON)                  |
 | POST   | /api/endpoints/fetch-swagger           | Fetch server-side de URL (suporta HTML do Swagger UI) |
 
+### Scripts
+| Método | Rota                  | Descrição                                    |
+|--------|-----------------------|----------------------------------------------|
+| GET    | /api/scripts          | Lista scripts (filtro ?categoria=, ?tag=)    |
+| GET    | /api/scripts/tags     | Lista tags                                   |
+| POST   | /api/scripts          | Cria script com tags                         |
+| PUT    | /api/scripts/:id      | Atualiza                                     |
+| DELETE | /api/scripts/:id      | Remove                                       |
+| POST   | /api/scripts/importar | Importa JSON                                 |
+
+### Relatórios
+| Método | Rota                       | Descrição                                        |
+|--------|----------------------------|--------------------------------------------------|
+| GET    | /api/relatorios            | Lista (filtro ?busca=, ?tag=, ?municipioId=)     |
+| GET    | /api/relatorios/:id        | Obtém relatório por ID (sem jxrmlConteudo)       |
+| GET    | /api/relatorios/:id/jxrml  | Download do arquivo JRXML (base64 → buffer)      |
+| POST   | /api/relatorios            | Cria relatório (com ou sem JRXML anexado)        |
+| PUT    | /api/relatorios/:id        | Atualiza                                         |
+| DELETE | /api/relatorios/:id        | Remove                                           |
+
 ### Outros
 | Método | Rota                  | Descrição                                    |
 |--------|-----------------------|----------------------------------------------|
 | POST   | /api/proxy/executar   | Executa requisição via proxy com token       |
 | GET    | /api/requisicoes      | Histórico (últimas 20, filtro ?municipioId=) |
 | DELETE | /api/requisicoes      | Limpa histórico                              |
-| GET    | /api/scripts          | Lista scripts (filtro ?categoria=, ?tag=)    |
-| POST   | /api/scripts          | Cria script com tags                         |
-| PUT    | /api/scripts/:id      | Atualiza                                     |
-| DELETE | /api/scripts/:id      | Remove                                       |
-| POST   | /api/scripts/importar | Importa JSON                                 |
-| GET    | /api/scripts/tags     | Lista tags                                   |
 
 ## Segurança — padrões e decisões
 
@@ -273,16 +288,18 @@ bcrypt.hash('novaSenha123', 10).then(hash =>
 
 ## Identidade Visual — Krakion Labs
 
-A UI usa a marca **Krakion Labs** com paleta de vermelho escuro mapeada na chave `sysgate` do Tailwind:
+A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Linear.app) mapeada na chave `sysgate` do Tailwind:
 
 | Token         | Hex       | Uso principal                          |
 |---------------|-----------|----------------------------------------|
-| sysgate-600   | `#c91414` | Botões primários, links, foco          |
-| sysgate-700   | `#a81010` | Hover de botões                        |
-| sysgate-50    | `#fff1f1` | Fundo gradiente da tela de login       |
+| sysgate-600   | `#4f46e5` | Botões primários, links, foco          |
+| sysgate-700   | `#4338ca` | Hover de botões                        |
+| sysgate-500   | `#6366f1` | Acentos, ícones ativos                 |
+| sysgate-100   | `#e0e7ff` | Badges, hover de itens                 |
+| sysgate-50    | `#eef2ff` | Fundos suaves de itens selecionados    |
 
 - **Logos**: `frontend/public/logo-sem-nome.png` (tela de login) e `logo-com-nome.png` (uso geral)
-- **Tela de login**: gradiente `from-red-50 via-white to-red-50`, logo centralizada, card branco com sombra
+- **Tela de login**: gradiente `from-indigo-50 via-white to-violet-50`, logo centralizada, card branco com sombra
 - **Modal de cadastro**: 2 etapas — (1) nome/login/senha → POST `/api/auth/registrar` → (2) tela de sucesso informando aguarda ativação
 - A paleta `sysgate` NÃO foi renomeada no Tailwind para não quebrar todos os componentes existentes que usam `sysgate-600`, `sysgate-700` etc.
 
@@ -290,7 +307,7 @@ A UI usa a marca **Krakion Labs** com paleta de vermelho escuro mapeada na chave
 
 ## Padrões importantes
 
-- **Tailwind safelist obrigatório**: `tailwind.config.js` tem `safelist: [{ pattern: /sysgate/ }]` — sem isso, `@apply bg-sysgate-600` falha no `index.css` porque o JIT não gera a classe antes do `@layer components` ser processado. NÃO remover. A paleta `sysgate` usa vermelho Krakion Labs (sysgate-600 = `#c91414`).
+- **Tailwind safelist obrigatório**: `tailwind.config.js` tem `safelist: [{ pattern: /sysgate/ }]` — sem isso, `@apply bg-sysgate-600` falha no `index.css` porque o JIT não gera a classe antes do `@layer components` ser processado. NÃO remover. A paleta `sysgate` usa índigo/violeta Krakion Labs (sysgate-600 = `#4f46e5`).
 - **Rotas nomeadas ANTES de /:id** no Express (ex: `/swagger`, `/limpar-tudo` devem vir antes de `/:id`)
 - **bodySchema** é armazenado como `String` (JSON serializado) no SQLite, parseado/stringificado manualmente
 - **Sentinel `_exemplo`** no bodySchema: o primeiro elemento `{ _exemplo: true, json: {...} }` contém o exemplo completo do request body da spec. Frontend filtra com `.filter(c => !c._exemplo)`
@@ -301,10 +318,14 @@ A UI usa a marca **Krakion Labs** com paleta de vermelho escuro mapeada na chave
 - **Zustand persist**: município ativo persiste em `localStorage` (key: `sysgate-municipio`)
 - **Município sem codigoIBGE**: campo removido do schema, validação e UI — apenas `nome` e `observacoes`
 - **Tokens por município**: painel lateral em `Municipios.jsx` — abre ao clicar na linha da tabela; um token por par (município × sistema). Campo `ambiente` removido da UI (default `"producao"` no banco). Painel exibe token mascarado (primeiros 8 chars + `••••`) com botão de olho para revelar e botão de copiar. Backend retorna token real (sem mascaramento)
-- **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `ClienteAPI.jsx` não tem mais esse botão
+- **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (ClienteAPI.jsx)` não tem mais esse botão
 - **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema)
+- **idGerado no proxy**: `proxy.js` extrai `idGerado` de resposta array (mapeia `item.id ?? item.idGerado ?? item.idEconomico ?? item.idLote`, filtra nulos, une com vírgula) e de objeto simples (`.id`, `.idGerado`, `.idEconomico`). Salvo no histórico de requisições.
+- **Relatórios JRXML**: `Relatorio.jxrmlConteudo` armazena o arquivo como base64 no SQLite. A listagem (`GET /`) omite o campo por performance — apenas `temJxrml: bool`. Download via `GET /:id/jxrml` faz `Buffer.from(base64)` → `Content-Type: application/octet-stream`. Frontend faz download via `atob()` → `Uint8Array` → `Blob`.
+- **Scripts BFC vs Relatórios**: `Script` (modelo) cobre categorias `script`, `formula`, `anotacao` — exibidas em 3 das 4 abas de Scripts.jsx. `Relatorio` é modelo separado, exibido na 4ª aba, com suporte a JRXML + scriptFonte (fonte dinâmica BFC).
+- **UI — padrões visuais consistentes**: header com barra acento vertical (`w-1 h-6 rounded-full bg-sysgate-600`); botões de ação como ícones SVG (pencil/trash) em vez de texto; painel lateral com cabeçalho gradiente (`from-white to-sysgate-50/30`) + label "X selecionado" + botão X para fechar.
 
-## UI — ClienteAPI e EnvioLote (padrões compartilhados)
+## UI — Sandbox e EnvioLote (padrões compartilhados)
 
 Ambas as telas seguem o mesmo padrão de interação para seleção de endpoints e campos:
 
@@ -339,7 +360,7 @@ Ambas as telas seguem o mesmo padrão de interação para seleção de endpoints
   - **`idGerado` especial**: quando o exemplo da spec é `{id: N}`, o sub-campo recebe `tipo: 'number'` e `_wrapAsIdObject: true`. O input exibe apenas o número `N`, mas ao enviar é reembalado como `{ id: N }` conforme esperado pela API
 - Layout 2 colunas:
   - **Esquerda**: lista com checkboxes; campos filhos ficam indentados (`ml-3`) sob cabeçalho de seção `UPPERCASE` do parent
-  - **Direita** (ClienteAPI): campos marcados + inputs de valor + preview JSON verde em tempo real
+  - **Direita** (Sandbox): campos marcados + inputs de valor + preview JSON verde em tempo real
   - **Direita** (EnvioLote): campos marcados + `<select>` da coluna CSV correspondente + preview das primeiras 2 linhas
 - Auto-switch para "JSON raw": apenas quando há campos `array<...>` (não mais para `object`)
 - Reconstrução do body ao enviar: campos `number`/`integer` → `Number(val)`; campos `_wrapAsIdObject` → `{ id: Number(val) }`; campos `_parent` → `body[_parent][_displayCampo]`
@@ -347,3 +368,106 @@ Ambas as telas seguem o mesmo padrão de interação para seleção de endpoints
 ### Auto-mapeamento CSV (EnvioLote)
 - Ao fazer upload do CSV, compara `_displayCampo` (nome curto do sub-campo) com o nome da coluna CSV (case-insensitive)
 - Se houver match: pré-seleciona o checkbox e pré-preenche o dropdown
+
+## EnvioLote — padrões específicos
+
+### CSV sem cabeçalho
+- Toggle "Sem cabeçalho" na seção 5 do formulário
+- Estados: `csvArquivo` (guarda o `File` para re-parse) + `csvSemCabecalho` (boolean)
+- `useEffect` com deps `[csvArquivo, csvSemCabecalho]` re-parseia o arquivo ao mudar o toggle
+- Com `csvSemCabecalho: false` → PapaParse com `header: true`, colunas = `meta.fields`
+- Com `csvSemCabecalho: true` → PapaParse com `header: false`, colunas geradas automaticamente como letras `A`, `B`, `C`, ... (até 26; depois `Col1`, `Col2`, ...)
+- Dropdown de mapeamento exibe: `A — valor` (sem cabeçalho) ou `NomeColuna — valor` (com cabeçalho)
+- Tabela de preview: cabeçalho = letras das colunas, linhas = dados do CSV (não transposto)
+
+### Envio em lote (array body)
+- **Não envia uma requisição por linha** — agrupa linhas em batches e envia um array JSON por batch
+- `tamanhoBatch` (state, padrão 50): configurável via slider 1–200 na seção 6
+- `delayLotes` (state, padrão 0): delay em ms entre batches, configurável via slider
+- `construirBodyLinha(linha)`: função extraída que monta o body de uma linha CSV → objeto JS
+- `iniciarEnvio`: divide `linhas` em grupos de `tamanhoBatch`, envia cada grupo como array `[{...}, {...}, ...]`
+- Botão exibe: `▶ Iniciar envio (N lotes · M itens)`
+- Barra de progresso exibe: `Lote X/Y`
+- Log exibe por entrada: `Lote X/Y · N itens`, status badge, mensagem de resposta, IDs gerados
+
+### IDs gerados por lote
+- Backend (`proxy.js`): extrai `idGerado` de respostas array (join de todos os IDs por vírgula) e de objetos (campo `id`/`idGerado`/`idEconomico`)
+- Frontend: extrai `idsGerados[]` da resposta de cada batch — suporta array de objetos e resposta única
+- **Badges por ID**: cada ID gerado exibe um badge com split-button:
+  - Lado esquerdo: copia o ID para clipboard
+  - Lado direito `▼ GET`: dispara consulta GET para `pathCustom/{id}` via proxy
+- **Painel de resultado**: expande abaixo do badge com JSON destacado (syntax highlight) + statusCode
+- `consultasResultado` (state): `{ [chave]: { consultando, aberto, statusCode, data } }` onde `chave = "${loteIdx}-${idIdx}"`
+- Após conclusão: contador `X IDs gerados` na barra de progresso + botão "Copiar N IDs" (copia todos separados por vírgula)
+- Painel "IDs gerados" ao final: lista todos os IDs de todos os batches agrupados
+
+### Syntax highlight JSON (EnvioLote)
+- Função `highlightJson(obj)`: `JSON.stringify(obj, null, 2)` + regex colorizer via `dangerouslySetInnerHTML`
+- Cores: chaves = azul, strings = verde, números = amarelo, booleanos = roxo, `null`/comentários = cinza itálico
+- Preview de bodies: fundo `bg-gray-950`, max-h 320px com scroll, mostrando até 5 exemplos com contador `mostrando X/Y`
+
+### Exportar CSV com IDs
+- Botão "Exportar CSV" gera arquivo com colunas: `lote`, `itens`, `status`, `mensagem`, `ids_gerados` (vírgula-separados), `total_ids`
+- Disponível após conclusão do envio
+
+---
+
+## Deploy — VPS Hostinger
+
+**Servidor:** 187.77.230.138 | **Domínio:** krakionlabs.cloud | **OS:** Ubuntu 24.04 LTS
+**Repositório:** https://github.com/felipecsilba/SysGate | **Diretório:** `/var/www/krakion`
+
+### Stack de produção
+- **PM2** — gerencia o processo Node.js do backend (reinicia automaticamente)
+- **Nginx** — serve o frontend (`/dist`) e faz proxy `/api` → porta 3001
+- **Let's Encrypt (Certbot)** — certificado SSL gratuito (HTTPS)
+
+### Comandos úteis na VPS (via SSH)
+
+```bash
+# Conectar
+ssh root@187.77.230.138
+
+# Status do backend
+pm2 status
+pm2 logs krakion-backend
+
+# Parar tudo (site fica fora do ar)
+pm2 stop krakion-backend && systemctl stop nginx
+
+# Religar tudo
+pm2 start krakion-backend && systemctl start nginx
+
+# Atualizar após git push
+cd /var/www/krakion && git pull && cd frontend && npm run build && cd ../backend && pm2 restart krakion-backend
+
+# Renovar SSL (automático, mas pode forçar)
+certbot renew
+```
+
+### Configuração do Nginx
+Arquivo: `/etc/nginx/sites-available/krakion`
+```nginx
+server {
+    listen 80;
+    server_name krakionlabs.cloud www.krakionlabs.cloud;
+    root /var/www/krakion/frontend/dist;
+    index index.html;
+    location / { try_files $uri $uri/ /index.html; }
+    location /api {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### Variáveis de ambiente na VPS
+Arquivo: `/var/www/krakion/backend/.env`
+```
+DATABASE_URL="file:./dev.db"
+PORT=3001
+JWT_SECRET=krakion_secret_super_seguro_2026
+JWT_EXPIRES_IN=8h
+```

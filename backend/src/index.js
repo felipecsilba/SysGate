@@ -13,6 +13,7 @@ const requisicoesRouter = require('./routes/requisicoes')
 const scriptsRouter = require('./routes/scripts')
 const sistemasRouter = require('./routes/sistemas')
 const usuariosRouter = require('./routes/usuarios')
+const relatoriosRouter = require('./routes/relatorios')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -48,6 +49,7 @@ app.use('/api/endpoints', endpointsRouter)
 app.use('/api/proxy', proxyRouter)
 app.use('/api/requisicoes', requisicoesRouter)
 app.use('/api/scripts', scriptsRouter)
+app.use('/api/relatorios', relatoriosRouter)
 app.use('/api/sistemas', sistemasRouter)
 app.use('/api/usuarios', usuariosRouter)
 

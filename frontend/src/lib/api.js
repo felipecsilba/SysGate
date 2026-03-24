@@ -120,4 +120,14 @@ export const scriptsApi = {
   importar: (data) => api.post('/scripts/importar', data).then((r) => r.data),
 }
 
+// Relatórios
+export const relatoriosApi = {
+  listar: (params) => api.get('/relatorios', { params }).then((r) => r.data),
+  obter: (id) => api.get(`/relatorios/${id}`).then((r) => r.data),
+  criar: (data) => api.post('/relatorios', data).then((r) => r.data),
+  atualizar: (id, data) => api.put(`/relatorios/${id}`, data).then((r) => r.data),
+  deletar: (id) => api.delete(`/relatorios/${id}`).then((r) => r.data),
+  downloadUrl: (id) => `/api/relatorios/${id}/jxrml`,
+}
+
 export default api

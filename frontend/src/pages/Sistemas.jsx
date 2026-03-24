@@ -10,6 +10,40 @@ const METODO_COLORS = {
   DELETE: 'bg-red-100 text-red-800',
 }
 
+function IconEdit() {
+  return (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  )
+}
+
+function IconTrash() {
+  return (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+    </svg>
+  )
+}
+
+function IconX() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  )
+}
+
+function IconSearch() {
+  return (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  )
+}
+
 function ModalSistema({ sistema, onSalvar, onFechar }) {
   const [nome, setNome] = useState(sistema?.nome || '')
   const [urlBase, setUrlBase] = useState(sistema?.urlBase || '')
@@ -36,7 +70,9 @@ function ModalSistema({ sistema, onSalvar, onFechar }) {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">{sistema ? 'Editar Sistema' : 'Novo Sistema'}</h2>
-          <button onClick={onFechar} className="btn-ghost text-gray-500 px-2">✕</button>
+          <button onClick={onFechar} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <IconX />
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
@@ -46,7 +82,7 @@ function ModalSistema({ sistema, onSalvar, onFechar }) {
           <div>
             <label className="label">URL Base <span className="text-red-500">*</span></label>
             <input value={urlBase} onChange={(e) => setUrlBase(e.target.value)} className="input font-mono text-xs"
-              placeholder="https://tributos.betha.cloud/service-layer-tributos/api" />
+              placeholder="https://tributos.betha.cloud/service-layer-tributos" />
           </div>
           <div>
             <label className="label">Descrição <span className="text-xs text-gray-400">(opcional)</span></label>
@@ -93,7 +129,9 @@ function ModalEndpoint({ endpoint, onSalvar, onFechar }) {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Editar Endpoint</h2>
-          <button onClick={onFechar} className="btn-ghost text-gray-500 px-2">✕</button>
+          <button onClick={onFechar} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <IconX />
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -150,6 +188,7 @@ export default function Sistemas() {
   const [carregandoEndpoints, setCarregandoEndpoints] = useState(false)
   const [endpointEditando, setEndpointEditando] = useState(null)
   const [modalEndpoint, setModalEndpoint] = useState(false)
+  const [buscaEndpoint, setBuscaEndpoint] = useState('')
 
   const carregar = async () => {
     setCarregando(true)
@@ -177,8 +216,16 @@ export default function Sistemas() {
   const selecionarSistema = (s) => {
     setSistemaSel(s)
     setAbaDetalhe('info')
+    setBuscaEndpoint('')
     carregarDetalhe(s.id)
     carregarEndpoints(s.id)
+  }
+
+  const fecharPainel = () => {
+    setSistemaSel(null)
+    setDetalhe(null)
+    setEndpoints([])
+    setBuscaEndpoint('')
   }
 
   const handleSalvar = (resultado) => {
@@ -191,7 +238,7 @@ export default function Sistemas() {
     if (!confirm('Deletar este sistema?\n\nEndpoints e specs vinculados não serão removidos.')) return
     try {
       await sistemasApi.deletar(id)
-      if (sistemaSel?.id === id) { setSistemaSel(null); setDetalhe(null); setEndpoints([]) }
+      if (sistemaSel?.id === id) fecharPainel()
       carregar()
     } catch (e) { alert('Erro: ' + e.message) }
   }
@@ -213,70 +260,116 @@ export default function Sistemas() {
     } catch (e) { alert('Erro: ' + e.message) }
   }
 
+  const endpointsFiltrados = endpoints.filter((ep) => {
+    if (!buscaEndpoint.trim()) return true
+    const q = buscaEndpoint.toLowerCase()
+    return (
+      ep.nome?.toLowerCase().includes(q) ||
+      ep.path?.toLowerCase().includes(q) ||
+      ep.modulo?.toLowerCase().includes(q) ||
+      ep.metodo?.toLowerCase().includes(q)
+    )
+  })
+
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col animate-fadeIn">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-end justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sistemas</h1>
-          <p className="text-sm text-gray-500 mt-1">Gerencie os sistemas, importe Swaggers e gerencie endpoints</p>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="w-1 h-6 rounded-full bg-sysgate-600" />
+            <h1 className="text-2xl font-bold text-gray-900">Sistemas</h1>
+          </div>
+          <p className="text-sm text-gray-400 ml-3">Gerencie sistemas, importe Swaggers e endpoints</p>
         </div>
-        <button onClick={() => { setSistemaEditando(null); setModalAberto(true) }} className="btn-primary">
-          + Novo Sistema
+        <button
+          onClick={() => { setSistemaEditando(null); setModalAberto(true) }}
+          className="btn-primary gap-1.5"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Novo Sistema
         </button>
       </div>
 
-      <div className="flex gap-6 flex-1 min-h-0">
+      <div className="flex gap-4 flex-1 min-h-0">
         {/* Tabela de sistemas */}
         <div className="flex-1 min-w-0">
           {carregando ? (
-            <div className="flex items-center justify-center h-32 text-gray-400 text-sm">Carregando...</div>
+            <div className="card p-8 flex items-center justify-center gap-2 text-sm text-gray-400">
+              <span className="w-4 h-4 border-2 border-gray-300 border-t-sysgate-500 rounded-full animate-spin" />
+              Carregando...
+            </div>
           ) : sistemas.length === 0 ? (
             <div className="card p-12 text-center">
-              <div className="text-4xl mb-3">⚙</div>
+              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gray-400">
+                  <path d="M12 2L2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+              </div>
               <p className="text-gray-600 font-medium mb-1">Nenhum sistema cadastrado</p>
               <p className="text-sm text-gray-400 mb-4">Crie um sistema para organizar seus endpoints por produto</p>
               <button onClick={() => { setSistemaEditando(null); setModalAberto(true) }} className="btn-primary">
-                + Criar primeiro sistema
+                Criar primeiro sistema
               </button>
             </div>
           ) : (
             <div className="card overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">URL Base</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Endpoints</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Specs</th>
-                    <th className="px-4 py-3"></th>
+                  <tr className="bg-gray-50/80 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Nome</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">URL Base</th>
+                    <th className="text-center px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Endpoints</th>
+                    <th className="text-center px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Specs</th>
+                    <th className="px-4 py-3 w-16"></th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {sistemas.map((s) => (
                     <tr
                       key={s.id}
                       onClick={() => selecionarSistema(s)}
-                      className={`border-b border-gray-100 last:border-0 cursor-pointer hover:bg-blue-50/40 transition-colors ${sistemaSel?.id === s.id ? 'bg-blue-50 hover:bg-blue-50' : ''}`}
+                      className={`cursor-pointer transition-colors ${
+                        sistemaSel?.id === s.id
+                          ? 'bg-sysgate-50/60'
+                          : 'hover:bg-gray-50'
+                      }`}
                     >
-                      <td className="px-4 py-3 font-medium text-gray-900">{s.nome}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500 max-w-[220px] truncate">{s.urlBase}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all ${
+                            sistemaSel?.id === s.id ? 'bg-sysgate-500' : 'bg-transparent'
+                          }`} />
+                          <span className="font-medium text-gray-900">{s.nome}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-400 max-w-[220px] truncate">{s.urlBase}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className="badge badge-blue text-xs">{s._count?.endpoints ?? 0}</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-sysgate-50 text-sysgate-700">
+                          {s._count?.endpoints ?? 0}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="badge badge-gray text-xs">{s._count?.swaggerSpecs ?? 0}</span>
+                        <span className="badge badge-gray text-[11px]">{s._count?.swaggerSpecs ?? 0}</span>
                       </td>
-                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex gap-1 justify-end">
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-0.5 justify-end">
                           <button
                             onClick={() => { setSistemaEditando(s); setModalAberto(true) }}
-                            className="btn-ghost text-xs text-gray-500 px-2 py-1"
-                          >Editar</button>
+                            className="p-1.5 rounded-md text-gray-300 hover:text-sysgate-600 hover:bg-sysgate-50 transition-colors"
+                            title="Editar"
+                          >
+                            <IconEdit />
+                          </button>
                           <button
                             onClick={() => handleDeletar(s.id)}
-                            className="btn-ghost text-xs text-red-500 hover:bg-red-50 px-2 py-1"
-                          >Deletar</button>
+                            className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Deletar"
+                          >
+                            <IconTrash />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -287,20 +380,33 @@ export default function Sistemas() {
           )}
         </div>
 
-        {/* Painel de detalhe com abas */}
+        {/* Painel de detalhe */}
         {sistemaSel && (
           <div className="w-96 flex-shrink-0 flex flex-col">
             {carregandoDetalhe ? (
-              <div className="card p-6 text-center text-gray-400 text-sm">Carregando...</div>
+              <div className="card p-6 flex items-center justify-center gap-2 text-sm text-gray-400">
+                <span className="w-4 h-4 border-2 border-gray-300 border-t-sysgate-500 rounded-full animate-spin" />
+                Carregando...
+              </div>
             ) : detalhe ? (
               <div className="card overflow-hidden flex flex-col flex-1 min-h-0">
-                {/* Header do sistema */}
-                <div className="px-5 py-4 border-b border-gray-100">
-                  <h3 className="font-semibold text-gray-900 text-base">{detalhe.nome}</h3>
-                  <p className="font-mono text-xs text-gray-400 mt-0.5 truncate">{detalhe.urlBase}</p>
+                {/* Header do painel */}
+                <div className="px-4 py-3.5 border-b border-gray-100 bg-gradient-to-r from-white to-sysgate-50/30 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Sistema selecionado</p>
+                    <h3 className="font-semibold text-gray-900 truncate">{detalhe.nome}</h3>
+                    <p className="font-mono text-[11px] text-gray-400 mt-0.5 truncate">{detalhe.urlBase}</p>
+                  </div>
+                  <button
+                    onClick={fecharPainel}
+                    className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0 mt-0.5"
+                    title="Fechar painel"
+                  >
+                    <IconX />
+                  </button>
                 </div>
 
-                {/* Barra de abas */}
+                {/* Abas */}
                 <div className="flex border-b border-gray-200 flex-shrink-0">
                   {[
                     ['info', 'Informações'],
@@ -310,10 +416,10 @@ export default function Sistemas() {
                     <button
                       key={id}
                       onClick={() => setAbaDetalhe(id)}
-                      className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors ${
+                      className={`flex-1 px-2 py-2.5 text-xs font-medium transition-colors ${
                         abaDetalhe === id
                           ? 'border-b-2 border-sysgate-600 text-sysgate-600'
-                          : 'text-gray-500 hover:text-gray-700'
+                          : 'text-gray-400 hover:text-gray-600'
                       }`}
                     >
                       {label}
@@ -323,32 +429,34 @@ export default function Sistemas() {
 
                 {/* Aba: Informações */}
                 {abaDetalhe === 'info' && (
-                  <div className="p-5 space-y-4">
+                  <div className="p-4 space-y-4">
                     {detalhe.descricao && (
-                      <p className="text-sm text-gray-500">{detalhe.descricao}</p>
+                      <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                        {detalhe.descricao}
+                      </p>
                     )}
-                    <div className="flex gap-3">
-                      <div className="flex-1 text-center bg-blue-50 rounded-lg py-2">
-                        <div className="text-xl font-bold text-blue-700">{detalhe._count?.endpoints ?? 0}</div>
-                        <div className="text-xs text-blue-600">Endpoints</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center bg-sysgate-50 rounded-xl py-3 border border-sysgate-100/50">
+                        <div className="text-2xl font-bold text-sysgate-700">{detalhe._count?.endpoints ?? 0}</div>
+                        <div className="text-[11px] text-sysgate-600 font-medium mt-0.5">Endpoints</div>
                       </div>
-                      <div className="flex-1 text-center bg-gray-50 rounded-lg py-2">
-                        <div className="text-xl font-bold text-gray-700">{detalhe._count?.swaggerSpecs ?? 0}</div>
-                        <div className="text-xs text-gray-500">Specs</div>
+                      <div className="text-center bg-gray-50 rounded-xl py-3 border border-gray-100">
+                        <div className="text-2xl font-bold text-gray-700">{detalhe._count?.swaggerSpecs ?? 0}</div>
+                        <div className="text-[11px] text-gray-500 font-medium mt-0.5">Specs</div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => { setSistemaEditando(detalhe); setModalAberto(true) }}
-                        className="btn-secondary flex-1 text-xs"
-                      >
-                        Editar sistema
-                      </button>
+                    <div className="flex flex-col gap-2">
                       <button
                         onClick={() => setSwaggerAberto(true)}
-                        className="btn-primary flex-1 text-xs"
+                        className="btn-primary w-full text-xs"
                       >
                         Importar Swagger
+                      </button>
+                      <button
+                        onClick={() => { setSistemaEditando(detalhe); setModalAberto(true) }}
+                        className="btn-secondary w-full text-xs"
+                      >
+                        Editar sistema
                       </button>
                     </div>
                   </div>
@@ -357,42 +465,40 @@ export default function Sistemas() {
                 {/* Aba: Specs */}
                 {abaDetalhe === 'specs' && (
                   <div className="flex flex-col flex-1 min-h-0">
-                    <div className="p-4 border-b border-gray-100 flex-shrink-0">
-                      <button
-                        onClick={() => setSwaggerAberto(true)}
-                        className="btn-primary w-full text-xs"
-                      >
+                    <div className="p-3 border-b border-gray-100 flex-shrink-0">
+                      <button onClick={() => setSwaggerAberto(true)} className="btn-primary w-full text-xs">
                         + Importar nova spec
                       </button>
                     </div>
-                    <div className="overflow-y-auto scrollbar-thin flex-1 p-4 space-y-3">
+                    <div className="overflow-y-auto scrollbar-thin flex-1 p-3 space-y-2">
                       {detalhe.swaggerSpecs?.length === 0 ? (
                         <p className="text-xs text-gray-400 text-center py-6">
                           Nenhuma spec importada para este sistema.
                         </p>
                       ) : (
                         detalhe.swaggerSpecs?.map((spec) => (
-                          <div key={spec.id} className="border border-gray-100 rounded-lg p-3">
+                          <div key={spec.id} className="border border-gray-100 rounded-lg p-3 hover:border-gray-200 transition-colors">
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-800 truncate">{spec.nome}</p>
-                                <div className="flex gap-2 mt-1 flex-wrap">
+                                <p className="text-xs font-semibold text-gray-800 truncate">{spec.nome}</p>
+                                <div className="flex gap-1.5 mt-1.5 flex-wrap">
                                   {spec.versao && (
-                                    <span className="badge badge-blue text-xs">v{spec.versao}</span>
+                                    <span className="badge badge-blue text-[10px]">v{spec.versao}</span>
                                   )}
-                                  <span className="badge badge-gray text-xs">
+                                  <span className="badge badge-gray text-[10px]">
                                     {spec.totalEndpoints} endpoints
                                   </span>
                                 </div>
-                                <p className="text-xs text-gray-400 mt-1">
+                                <p className="text-[10px] text-gray-400 mt-1">
                                   {new Date(spec.criadoEm).toLocaleDateString('pt-BR')}
                                 </p>
                               </div>
                               <button
                                 onClick={() => deletarSpec(spec.id)}
-                                className="btn-ghost text-xs text-red-600 hover:bg-red-50 flex-shrink-0 px-2"
+                                className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                                title="Remover spec"
                               >
-                                Remover
+                                <IconTrash />
                               </button>
                             </div>
                           </div>
@@ -405,37 +511,62 @@ export default function Sistemas() {
                 {/* Aba: Endpoints */}
                 {abaDetalhe === 'endpoints' && (
                   <div className="flex flex-col flex-1 min-h-0">
+                    {/* Busca */}
+                    <div className="p-3 border-b border-gray-100 flex-shrink-0">
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                          <IconSearch />
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Buscar por nome, path ou módulo..."
+                          value={buscaEndpoint}
+                          onChange={(e) => setBuscaEndpoint(e.target.value)}
+                          className="input pl-8 text-xs py-1.5"
+                        />
+                      </div>
+                    </div>
+
                     {carregandoEndpoints ? (
-                      <p className="text-xs text-gray-400 text-center py-6">Carregando...</p>
-                    ) : endpoints.length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-6">
-                        Nenhum endpoint. Importe um Swagger para popular.
+                      <div className="flex items-center justify-center gap-2 py-8 text-xs text-gray-400">
+                        <span className="w-3.5 h-3.5 border-2 border-gray-300 border-t-sysgate-500 rounded-full animate-spin" />
+                        Carregando...
+                      </div>
+                    ) : endpointsFiltrados.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-8">
+                        {buscaEndpoint ? 'Nenhum endpoint encontrado para essa busca.' : 'Nenhum endpoint. Importe um Swagger para popular.'}
                       </p>
                     ) : (
                       <div className="overflow-y-auto scrollbar-thin flex-1">
-                        {endpoints.map((ep) => (
+                        {endpointsFiltrados.map((ep) => (
                           <div
                             key={ep.id}
-                            className="flex items-start gap-2 px-4 py-2.5 border-b border-gray-50 hover:bg-gray-50 group"
+                            className="flex items-start gap-2 px-3 py-2.5 border-b border-gray-50 hover:bg-gray-50 group transition-colors"
                           >
-                            <span className={`badge text-xs flex-shrink-0 mt-0.5 ${METODO_COLORS[ep.metodo] || ''}`}>
+                            <span className={`badge text-[10px] flex-shrink-0 mt-0.5 ${METODO_COLORS[ep.metodo] || ''}`}>
                               {ep.metodo}
                             </span>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-medium text-gray-800 truncate">{ep.nome}</p>
-                              <p className="font-mono text-xs text-gray-400 truncate">{ep.path}</p>
+                              <p className="font-mono text-[10px] text-gray-400 truncate">{ep.path}</p>
                               {ep.modulo && (
-                                <span className="badge badge-gray text-xs mt-0.5">{ep.modulo}</span>
+                                <span className="badge badge-gray text-[10px] mt-0.5">{ep.modulo}</span>
                               )}
                             </div>
                             <button
                               onClick={() => { setEndpointEditando(ep); setModalEndpoint(true) }}
-                              className="btn-ghost text-xs px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                              className="p-1 rounded-md text-gray-300 hover:text-sysgate-600 hover:bg-sysgate-50 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                              title="Editar endpoint"
                             >
-                              Editar
+                              <IconEdit />
                             </button>
                           </div>
                         ))}
+                        {buscaEndpoint && (
+                          <p className="text-[10px] text-gray-400 text-center py-3">
+                            {endpointsFiltrados.length} de {endpoints.length} endpoints
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

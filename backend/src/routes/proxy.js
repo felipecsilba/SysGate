@@ -74,11 +74,20 @@ router.post('/executar', async (req, res) => {
     const duracaoMs = Date.now() - inicio
 
     // Extrai o ID gerado pela API na resposta (tenta campos comuns)
-    const idGerado =
-      resposta?.id?.toString() ||
-      resposta?.idGerado?.toString() ||
-      resposta?.idEconomico?.toString() ||
-      null
+    let idGerado = null
+    if (Array.isArray(resposta)) {
+      const ids = resposta
+        .map((item) => item?.id ?? item?.idGerado ?? item?.idEconomico ?? item?.idLote)
+        .filter((v) => v != null)
+        .map(String)
+      idGerado = ids.length > 0 ? ids.join(',') : null
+    } else {
+      idGerado =
+        resposta?.id?.toString() ||
+        resposta?.idGerado?.toString() ||
+        resposta?.idEconomico?.toString() ||
+        null
+    }
 
     await salvarRequisicao({
       municipioId: Number(municipioId),
