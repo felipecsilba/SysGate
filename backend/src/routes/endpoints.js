@@ -1,5 +1,6 @@
 const express = require('express')
 const { PrismaClient } = require('@prisma/client')
+const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -65,8 +66,8 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// POST /api/endpoints — cria
-router.post('/', async (req, res) => {
+// POST /api/endpoints — cria (somente admin)
+router.post('/', exigirAdmin, async (req, res) => {
   try {
     const { modulo, nome, path, metodo, descricao, bodySchema } = req.body
     if (!modulo || !nome || !path || !metodo) {
@@ -88,8 +89,8 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PUT /api/endpoints/:id
-router.put('/:id', async (req, res) => {
+// PUT /api/endpoints/:id (somente admin)
+router.put('/:id', exigirAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id)
     const { modulo, nome, path, metodo, descricao, bodySchema } = req.body
@@ -111,8 +112,8 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// DELETE /api/endpoints/limpar-tudo — apaga todos endpoints + specs importadas do swagger
-router.delete('/limpar-tudo', async (req, res) => {
+// DELETE /api/endpoints/limpar-tudo — apaga todos endpoints + specs importadas do swagger (somente admin)
+router.delete('/limpar-tudo', exigirAdmin, async (req, res) => {
   try {
     await prisma.requisicao.updateMany({ data: { endpointId: null } })
     const specs = await prisma.swaggerSpec.deleteMany()
@@ -123,8 +124,8 @@ router.delete('/limpar-tudo', async (req, res) => {
   }
 })
 
-// DELETE /api/endpoints/:id
-router.delete('/:id', async (req, res) => {
+// DELETE /api/endpoints/:id (somente admin)
+router.delete('/:id', exigirAdmin, async (req, res) => {
   try {
     await prisma.requisicao.updateMany({
       where: { endpointId: Number(req.params.id) },
@@ -138,8 +139,8 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-// POST /api/endpoints/importar — importa array de endpoints via JSON
-router.post('/importar', async (req, res) => {
+// POST /api/endpoints/importar — importa array de endpoints via JSON (somente admin)
+router.post('/importar', exigirAdmin, async (req, res) => {
   try {
     const endpoints = req.body
     if (!Array.isArray(endpoints)) return res.status(400).json({ error: 'Envie um array de endpoints' })
@@ -372,11 +373,11 @@ function extrairSpecUrlDoHtml(html, paginaUrl) {
   return null
 }
 
-// POST /api/endpoints/fetch-swagger
+// POST /api/endpoints/fetch-swagger (somente admin)
 // Body: { url, nome?, headers? }
 // O backend faz o fetch server-side (sem CORS) e devolve a spec parseada
 // Query: ?preview=true → apenas analisa, não salva
-router.post('/fetch-swagger', async (req, res) => {
+router.post('/fetch-swagger', exigirAdmin, async (req, res) => {
   const axios = require('axios')
   try {
     const { url, nome, headers: headersExtras, sistemaId } = req.body
@@ -491,8 +492,8 @@ router.post('/fetch-swagger', async (req, res) => {
   }
 })
 
-// DELETE /api/endpoints/swagger/:id — remove spec (não remove endpoints gerados)
-router.delete('/swagger/:id', async (req, res) => {
+// DELETE /api/endpoints/swagger/:id — remove spec (somente admin; não remove endpoints gerados)
+router.delete('/swagger/:id', exigirAdmin, async (req, res) => {
   try {
     await prisma.swaggerSpec.delete({ where: { id: Number(req.params.id) } })
     res.json({ ok: true })
@@ -502,10 +503,10 @@ router.delete('/swagger/:id', async (req, res) => {
   }
 })
 
-// POST /api/endpoints/importar-swagger
+// POST /api/endpoints/importar-swagger (somente admin)
 // Body: { nome, spec } — spec é o objeto OpenAPI/Swagger completo
 // Query: ?preview=true  → apenas retorna endpoints sem salvar
-router.post('/importar-swagger', async (req, res) => {
+router.post('/importar-swagger', exigirAdmin, async (req, res) => {
   try {
     const { nome, spec, sistemaId } = req.body
     if (!spec || typeof spec !== 'object') {

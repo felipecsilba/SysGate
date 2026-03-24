@@ -1,5 +1,6 @@
 const express = require('express')
 const { PrismaClient } = require('@prisma/client')
+const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -39,8 +40,8 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// POST /api/sistemas — cria
-router.post('/', async (req, res) => {
+// POST /api/sistemas — cria (somente admin)
+router.post('/', exigirAdmin, async (req, res) => {
   try {
     const { nome, urlBase, descricao } = req.body
     if (!nome || !urlBase) {
@@ -55,8 +56,8 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PUT /api/sistemas/:id — atualiza
-router.put('/:id', async (req, res) => {
+// PUT /api/sistemas/:id — atualiza (somente admin)
+router.put('/:id', exigirAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id)
     const { nome, urlBase, descricao } = req.body
@@ -75,8 +76,8 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// DELETE /api/sistemas/:id — remove (endpoints/specs ficam com sistemaId = null via onDelete: SetNull)
-router.delete('/:id', async (req, res) => {
+// DELETE /api/sistemas/:id — remove (somente admin; endpoints/specs ficam com sistemaId = null via onDelete: SetNull)
+router.delete('/:id', exigirAdmin, async (req, res) => {
   try {
     await prisma.sistema.delete({ where: { id: Number(req.params.id) } })
     res.json({ ok: true })

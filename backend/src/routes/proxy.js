@@ -34,6 +34,15 @@ router.post('/executar', async (req, res) => {
     return res.status(400).json({ error: 'Campos obrigatórios: municipioId, sistemaId, path, metodo' })
   }
 
+  // Verifica que o município pertence ao usuário logado (impede uso indevido de tokens alheios)
+  const municipioDoUsuario = await prisma.municipio.findFirst({
+    where: { id: Number(municipioId), usuarioId: req.usuario.id },
+    select: { id: true },
+  })
+  if (!municipioDoUsuario) {
+    return res.status(403).json({ error: 'Acesso negado: este município não pertence ao seu usuário.' })
+  }
+
   // Carrega vínculo município+sistema (contém token e ambiente)
   const vinculo = await prisma.municipioSistema.findUnique({
     where: { municipioId_sistemaId: { municipioId: Number(municipioId), sistemaId: Number(sistemaId) } },

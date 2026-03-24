@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { sistemasApi, endpointsApi } from '../lib/api'
 import SwaggerImport from '../components/SwaggerImport'
+import useAuthStore from '../stores/authStore'
 
 const METODO_COLORS = {
   GET: 'bg-blue-100 text-blue-800',
@@ -174,6 +175,9 @@ function ModalEndpoint({ endpoint, onSalvar, onFechar }) {
 }
 
 export default function Sistemas() {
+  const usuario = useAuthStore(state => state.usuario)
+  const isAdmin = usuario?.role === 'admin'
+
   const [sistemas, setSistemas] = useState([])
   const [sistemaSel, setSistemaSel] = useState(null)
   const [detalhe, setDetalhe] = useState(null)
@@ -282,15 +286,17 @@ export default function Sistemas() {
           </div>
           <p className="text-sm text-gray-400 ml-3">Gerencie sistemas, importe Swaggers e endpoints</p>
         </div>
-        <button
-          onClick={() => { setSistemaEditando(null); setModalAberto(true) }}
-          className="btn-primary gap-1.5"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Novo Sistema
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => { setSistemaEditando(null); setModalAberto(true) }}
+            className="btn-primary gap-1.5"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Novo Sistema
+          </button>
+        )}
       </div>
 
       <div className="flex gap-4 flex-1 min-h-0">
@@ -309,10 +315,14 @@ export default function Sistemas() {
                 </svg>
               </div>
               <p className="text-gray-600 font-medium mb-1">Nenhum sistema cadastrado</p>
-              <p className="text-sm text-gray-400 mb-4">Crie um sistema para organizar seus endpoints por produto</p>
-              <button onClick={() => { setSistemaEditando(null); setModalAberto(true) }} className="btn-primary">
-                Criar primeiro sistema
-              </button>
+              <p className="text-sm text-gray-400 mb-4">
+                {isAdmin ? 'Crie um sistema para organizar seus endpoints por produto' : 'Nenhum sistema disponível ainda.'}
+              </p>
+              {isAdmin && (
+                <button onClick={() => { setSistemaEditando(null); setModalAberto(true) }} className="btn-primary">
+                  Criar primeiro sistema
+                </button>
+              )}
             </div>
           ) : (
             <div className="card overflow-hidden">
@@ -354,24 +364,26 @@ export default function Sistemas() {
                       <td className="px-4 py-3 text-center">
                         <span className="badge badge-gray text-[11px]">{s._count?.swaggerSpecs ?? 0}</span>
                       </td>
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex gap-0.5 justify-end">
-                          <button
-                            onClick={() => { setSistemaEditando(s); setModalAberto(true) }}
-                            className="p-1.5 rounded-md text-gray-300 hover:text-sysgate-600 hover:bg-sysgate-50 transition-colors"
-                            title="Editar"
-                          >
-                            <IconEdit />
-                          </button>
-                          <button
-                            onClick={() => handleDeletar(s.id)}
-                            className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                            title="Deletar"
-                          >
-                            <IconTrash />
-                          </button>
-                        </div>
-                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-0.5 justify-end">
+                            <button
+                              onClick={() => { setSistemaEditando(s); setModalAberto(true) }}
+                              className="p-1.5 rounded-md text-gray-300 hover:text-sysgate-600 hover:bg-sysgate-50 transition-colors"
+                              title="Editar"
+                            >
+                              <IconEdit />
+                            </button>
+                            <button
+                              onClick={() => handleDeletar(s.id)}
+                              className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              title="Deletar"
+                            >
+                              <IconTrash />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -445,31 +457,35 @@ export default function Sistemas() {
                         <div className="text-[11px] text-gray-500 font-medium mt-0.5">Specs</div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => setSwaggerAberto(true)}
-                        className="btn-primary w-full text-xs"
-                      >
-                        Importar Swagger
-                      </button>
-                      <button
-                        onClick={() => { setSistemaEditando(detalhe); setModalAberto(true) }}
-                        className="btn-secondary w-full text-xs"
-                      >
-                        Editar sistema
-                      </button>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => setSwaggerAberto(true)}
+                          className="btn-primary w-full text-xs"
+                        >
+                          Importar Swagger
+                        </button>
+                        <button
+                          onClick={() => { setSistemaEditando(detalhe); setModalAberto(true) }}
+                          className="btn-secondary w-full text-xs"
+                        >
+                          Editar sistema
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Aba: Specs */}
                 {abaDetalhe === 'specs' && (
                   <div className="flex flex-col flex-1 min-h-0">
-                    <div className="p-3 border-b border-gray-100 flex-shrink-0">
-                      <button onClick={() => setSwaggerAberto(true)} className="btn-primary w-full text-xs">
-                        + Importar nova spec
-                      </button>
-                    </div>
+                    {isAdmin && (
+                      <div className="p-3 border-b border-gray-100 flex-shrink-0">
+                        <button onClick={() => setSwaggerAberto(true)} className="btn-primary w-full text-xs">
+                          + Importar nova spec
+                        </button>
+                      </div>
+                    )}
                     <div className="overflow-y-auto scrollbar-thin flex-1 p-3 space-y-2">
                       {detalhe.swaggerSpecs?.length === 0 ? (
                         <p className="text-xs text-gray-400 text-center py-6">
@@ -493,13 +509,15 @@ export default function Sistemas() {
                                   {new Date(spec.criadoEm).toLocaleDateString('pt-BR')}
                                 </p>
                               </div>
-                              <button
-                                onClick={() => deletarSpec(spec.id)}
-                                className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
-                                title="Remover spec"
-                              >
-                                <IconTrash />
-                              </button>
+                              {isAdmin && (
+                                <button
+                                  onClick={() => deletarSpec(spec.id)}
+                                  className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                                  title="Remover spec"
+                                >
+                                  <IconTrash />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))
@@ -553,13 +571,15 @@ export default function Sistemas() {
                                 <span className="badge badge-gray text-[10px] mt-0.5">{ep.modulo}</span>
                               )}
                             </div>
-                            <button
-                              onClick={() => { setEndpointEditando(ep); setModalEndpoint(true) }}
-                              className="p-1 rounded-md text-gray-300 hover:text-sysgate-600 hover:bg-sysgate-50 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-                              title="Editar endpoint"
-                            >
-                              <IconEdit />
-                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => { setEndpointEditando(ep); setModalEndpoint(true) }}
+                                className="p-1 rounded-md text-gray-300 hover:text-sysgate-600 hover:bg-sysgate-50 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                                title="Editar endpoint"
+                              >
+                                <IconEdit />
+                              </button>
+                            )}
                           </div>
                         ))}
                         {buscaEndpoint && (

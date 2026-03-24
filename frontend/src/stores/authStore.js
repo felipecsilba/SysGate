@@ -26,6 +26,8 @@ const useAuthStore = create(
       },
 
       logout: () => {
+        // Limpa dados do município ao sair para evitar vazamento entre usuários
+        try { localStorage.removeItem('sysgate-municipio') } catch {}
         set({ token: null, usuario: null })
       },
 

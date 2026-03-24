@@ -34,6 +34,7 @@ sysgate/
 ├── CLAUDE.md                  # Este arquivo
 ├── docker-compose.yml
 ├── sysgate.bat                # Gerenciador Windows: iniciar/parar/reiniciar backend+frontend
+├── deploy.bat                 # Deploy para produção: git pull + build + pm2 restart no servidor
 ├── skills/                    # Documentação detalhada por domínio
 │   ├── backend.md
 │   ├── frontend.md
@@ -51,7 +52,7 @@ sysgate/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
 │   ├── prisma/
-│   │   ├── schema.prisma      # 9 modelos: Script, Tag, Relatorio, Municipio, Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario
+│   │   ├── schema.prisma      # 9 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ municipios[])
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -61,10 +62,10 @@ sysgate/
 │       └── routes/
 │           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha) + /logout + /me + /registrar
 │           ├── usuarios.js    # CRUD usuários (somente admin) — novas contas criadas como inativas
-│           ├── municipios.js  # CRUD (sem codigoIBGE) + PATCH /:id/ativar + tokens por sistema
-│           ├── sistemas.js    # CRUD sistemas
-│           ├── endpoints.js   # CRUD + importar JSON + Swagger parser + fetch-swagger + limpar-tudo
-│           ├── proxy.js       # POST /executar — proxy para APIs com token; extrai idGerado de respostas array e objeto
+│           ├── municipios.js  # CRUD (sem codigoIBGE) + PATCH /:id/ativar + tokens por sistema — ESCOPO DO USUÁRIO (cada usuário vê só os seus)
+│           ├── sistemas.js    # CRUD sistemas — leitura pública; escrita/exclusão somente admin
+│           ├── endpoints.js   # CRUD + importar JSON + Swagger parser + fetch-swagger + limpar-tudo — leitura pública; escrita/exclusão somente admin
+│           ├── proxy.js       # POST /executar — proxy para APIs com token; verifica posse do município; extrai idGerado de respostas array e objeto
 │           ├── requisicoes.js # GET (últimas 20) + DELETE histórico
 │           ├── scripts.js     # CRUD com tags (categoria: script|formula|anotacao) + importar JSON
 │           └── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
@@ -84,7 +85,7 @@ sysgate/
         │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi e relatoriosApi
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: sysgate-municipio)
-        │   └── authStore.js       # Zustand + persist (sysgate-auth) — token + usuario; suporta lembrar (30d)
+        │   └── authStore.js       # Zustand + persist (sysgate-auth) — token + usuario; suporta lembrar (30d); logout limpa sysgate-municipio do localStorage
         ├── components/
         │   ├── Layout.jsx         # Sidebar + barra acento gradiente no topo + header: chip usuário + botão Sair
         │   ├── Sidebar.jsx        # NavLinks com SVG icons; entrada "Usuários" visível só para admin
@@ -96,8 +97,8 @@ sysgate/
             ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas
             ├── Usuarios.jsx       # CRUD usuários (admin); novas contas exigem ativação manual
             ├── Dashboard.jsx      # Cards de módulos com SVG icons + município ativo + últimas requisições
-            ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação
-            ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação
+            ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação — dados isolados por usuário
+            ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin
             ├── ClienteAPI.jsx     # Rota: /sandbox — Seletor endpoint + CodeBlock JSON + body editor + proxy
             ├── EnvioLote.jsx      # Upload CSV + toggle sem cabeçalho + mapeamento colunas 2 colunas + envio em lote (array body) + IDs gerados + consulta GET por ID + exportar CSV com IDs
             └── Scripts.jsx        # 4 abas: Scripts BFC / Fórmulas BFC / Anotações / Relatórios (JRXML + fonte dinâmica)
@@ -147,31 +148,49 @@ docker-compose up --build
 | PATCH  | /api/usuarios/:id/senha     | Altera senha                                      |
 | DELETE | /api/usuarios/:id           | Remove (impede auto-exclusão e último admin)      |
 
+### Sistemas
+> **Leitura pública** (qualquer autenticado), **escrita restrita a admin**.
+
+| Método | Rota              | Descrição                                            |
+|--------|-------------------|------------------------------------------------------|
+| GET    | /api/sistemas     | Lista todos (com contagem de endpoints e specs)      |
+| GET    | /api/sistemas/:id | Detalhe com specs (sem conteúdo JSON)                |
+| POST   | /api/sistemas     | Cria sistema — **somente admin**                     |
+| PUT    | /api/sistemas/:id | Atualiza — **somente admin**                         |
+| DELETE | /api/sistemas/:id | Remove — **somente admin**                           |
+
 ### Municípios
-| Método | Rota                                   | Descrição                                    |
-|--------|----------------------------------------|----------------------------------------------|
-| GET    | /api/municipios                        | Lista todos                                  |
-| GET    | /api/municipios/ativo                  | Retorna o ativo (com token)                  |
-| POST   | /api/municipios                        | Cria município                               |
-| PUT    | /api/municipios/:id                    | Atualiza                                     |
-| PATCH  | /api/municipios/:id/ativar             | Ativa (desativa demais)                      |
-| DELETE | /api/municipios/:id                    | Remove                                       |
+> **Isolamento por usuário**: todas as rotas filtram/operam apenas nos municípios do usuário logado (`usuarioId = req.usuario.id`). Tokens também são protegidos — o proxy verifica posse do município antes de executar.
+
+| Método | Rota                                   | Descrição                                                          |
+|--------|----------------------------------------|--------------------------------------------------------------------|
+| GET    | /api/municipios                        | Lista municípios **do usuário logado**                             |
+| GET    | /api/municipios/ativo                  | Retorna o ativo **do usuário logado** (com tokens de sistema)      |
+| POST   | /api/municipios                        | Cria município vinculado ao usuário logado (`usuarioId`)           |
+| PUT    | /api/municipios/:id                    | Atualiza (somente dono)                                            |
+| PATCH  | /api/municipios/:id/ativar             | Ativa (desativa apenas os demais do mesmo usuário)                 |
+| DELETE | /api/municipios/:id                    | Remove (somente dono)                                              |
+| GET    | /api/municipios/:id/tokens             | Lista tokens (somente dono do município)                           |
+| POST   | /api/municipios/:id/tokens             | Upsert token (somente dono do município)                           |
+| DELETE | /api/municipios/:id/tokens/:sistemaId  | Remove token (somente dono do município)                           |
 
 ### Endpoints / Swagger
-| Método | Rota                                   | Descrição                                           |
-|--------|----------------------------------------|-----------------------------------------------------|
-| GET    | /api/endpoints                         | Lista (filtro ?modulo=)                             |
-| GET    | /api/endpoints/modulos                 | Lista módulos únicos                                |
-| GET    | /api/endpoints/swagger                 | Lista specs importadas                              |
-| GET    | /api/endpoints/:id                     | Obtém endpoint por ID                               |
-| POST   | /api/endpoints                         | Cria endpoint manual                                |
-| PUT    | /api/endpoints/:id                     | Atualiza                                            |
-| DELETE | /api/endpoints/limpar-tudo             | Apaga TODOS endpoints + specs                       |
-| DELETE | /api/endpoints/swagger/:id             | Remove spec do histórico                            |
-| DELETE | /api/endpoints/:id                     | Remove endpoint                                     |
-| POST   | /api/endpoints/importar                | Importa array JSON de endpoints                     |
-| POST   | /api/endpoints/importar-swagger        | Importa spec OpenAPI (upload JSON)                  |
-| POST   | /api/endpoints/fetch-swagger           | Fetch server-side de URL (suporta HTML do Swagger UI) |
+> **Leitura pública** (qualquer autenticado), **escrita restrita a admin**.
+
+| Método | Rota                                   | Descrição                                                   |
+|--------|----------------------------------------|-------------------------------------------------------------|
+| GET    | /api/endpoints                         | Lista (filtro ?modulo=) — todos os usuários                 |
+| GET    | /api/endpoints/modulos                 | Lista módulos únicos — todos os usuários                    |
+| GET    | /api/endpoints/swagger                 | Lista specs importadas — todos os usuários                  |
+| GET    | /api/endpoints/:id                     | Obtém endpoint por ID — todos os usuários                   |
+| POST   | /api/endpoints                         | Cria endpoint manual — **somente admin**                    |
+| PUT    | /api/endpoints/:id                     | Atualiza — **somente admin**                                |
+| DELETE | /api/endpoints/limpar-tudo             | Apaga TODOS endpoints + specs — **somente admin**           |
+| DELETE | /api/endpoints/swagger/:id             | Remove spec do histórico — **somente admin**                |
+| DELETE | /api/endpoints/:id                     | Remove endpoint — **somente admin**                         |
+| POST   | /api/endpoints/importar                | Importa array JSON de endpoints — **somente admin**         |
+| POST   | /api/endpoints/importar-swagger        | Importa spec OpenAPI (upload JSON) — **somente admin**      |
+| POST   | /api/endpoints/fetch-swagger           | Fetch server-side de URL (suporta HTML do Swagger UI) — **somente admin** |
 
 ### Scripts
 | Método | Rota                  | Descrição                                    |
@@ -194,11 +213,11 @@ docker-compose up --build
 | DELETE | /api/relatorios/:id        | Remove                                           |
 
 ### Outros
-| Método | Rota                  | Descrição                                    |
-|--------|-----------------------|----------------------------------------------|
-| POST   | /api/proxy/executar   | Executa requisição via proxy com token       |
-| GET    | /api/requisicoes      | Histórico (últimas 20, filtro ?municipioId=) |
-| DELETE | /api/requisicoes      | Limpa histórico                              |
+| Método | Rota                  | Descrição                                                                     |
+|--------|-----------------------|-------------------------------------------------------------------------------|
+| POST   | /api/proxy/executar   | Executa requisição via proxy — verifica posse do município antes de usar token |
+| GET    | /api/requisicoes      | Histórico (últimas 20, filtro ?municipioId=)                                  |
+| DELETE | /api/requisicoes      | Limpa histórico                                                               |
 
 ## Segurança — padrões e decisões
 
@@ -214,6 +233,32 @@ docker-compose up --build
 - `PrivateRoute`: redireciona para `/login` se não autenticado
 - `AdminRoute`: redireciona para `/` se role !== 'admin'
 - Entrada "Usuários" na sidebar: condicional `usuario?.role === 'admin'`
+
+### Isolamento de dados por usuário (multi-tenant)
+- **Municípios e tokens**: o campo `usuarioId Int?` em `Municipio` vincula cada município ao seu criador
+  - Todas as queries de `municipios.js` filtram por `WHERE usuarioId = req.usuario.id`
+  - Helper `verificarDono(id, usuarioId)` retorna `null` se o município não pertencer ao usuário → 404
+  - Ativação (`PATCH /:id/ativar`) desativa apenas os municípios do mesmo usuário, não todos
+  - Operações de token (`GET/POST/DELETE /:id/tokens`) verificam posse do município via `verificarDono`
+  - Proxy (`POST /executar`) verifica `municipioId` pertence ao usuário antes de buscar o token no banco — impede uso indevido de tokens alheios (403)
+- **Sistemas e endpoints**: globais (sem dono), mas escrita/exclusão restrita a admin via `exigirAdmin`
+  - `sistemas.js`: GET público; POST/PUT/DELETE exigem `exigirAdmin`
+  - `endpoints.js`: GET público; POST/PUT/DELETE/importar/fetch-swagger/importar-swagger exigem `exigirAdmin`
+  - `Sistemas.jsx`: botões "Novo Sistema", editar/excluir sistema, importar Swagger, editar endpoint visíveis **apenas para admin** (`isAdmin = usuario?.role === 'admin'`)
+- **Logout seguro**: `authStore.logout()` limpa `localStorage.removeItem('sysgate-municipio')` para evitar que o próximo usuário (no mesmo browser) veja dados do anterior
+- **Migração**: ao adicionar `usuarioId` ao schema, municípios existentes com `null` devem ser atribuídos ao admin com o script abaixo
+
+```bash
+# Migrar municípios sem dono para o primeiro admin ativo
+cd backend
+node -e "
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
+prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
+  .then(admin => prisma.municipio.updateMany({ where: { usuarioId: null }, data: { usuarioId: admin.id } }))
+  .then(r => { console.log('Migrados:', r.count); prisma.\$disconnect() })
+"
+```
 
 ### Rate limiting
 - **Global**: 200 req/15min por IP (todas as rotas)
@@ -317,9 +362,10 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Município urlBase**: NÃO deve terminar com `/api` — os paths dos endpoints já incluem `/api/...`
 - **Zustand persist**: município ativo persiste em `localStorage` (key: `sysgate-municipio`)
 - **Município sem codigoIBGE**: campo removido do schema, validação e UI — apenas `nome` e `observacoes`
-- **Tokens por município**: painel lateral em `Municipios.jsx` — abre ao clicar na linha da tabela; um token por par (município × sistema). Campo `ambiente` removido da UI (default `"producao"` no banco). Painel exibe token mascarado (primeiros 8 chars + `••••`) com botão de olho para revelar e botão de copiar. Backend retorna token real (sem mascaramento)
-- **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (ClienteAPI.jsx)` não tem mais esse botão
-- **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema)
+- **Tokens por município**: painel lateral em `Municipios.jsx` — abre ao clicar na linha da tabela; um token por par (município × sistema). Campo `ambiente` removido da UI (default `"producao"` no banco). Painel exibe token mascarado (primeiros 8 chars + `••••`) com botão de olho para revelar e botão de copiar. Backend retorna token real (sem mascaramento). Tokens isolados por usuário — o proxy verifica `usuarioId` antes de executar
+- **Municípios isolados por usuário**: campo `usuarioId Int?` em `Municipio`; queries sempre filtradas por `req.usuario.id`. Municípios de outros usuários são invisíveis e inacessíveis (404 em vez de 403 para não vazar informação de existência)
+- **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (ClienteAPI.jsx)` não tem mais esse botão; botões de importação visíveis **apenas para admin**
+- **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema); ações de escrita visíveis **apenas para admin** (`isAdmin = useAuthStore(state => state.usuario)?.role === 'admin'`)
 - **idGerado no proxy**: `proxy.js` extrai `idGerado` de resposta array (mapeia `item.id ?? item.idGerado ?? item.idEconomico ?? item.idLote`, filtra nulos, une com vírgula) e de objeto simples (`.id`, `.idGerado`, `.idEconomico`). Salvo no histórico de requisições.
 - **Relatórios JRXML**: `Relatorio.jxrmlConteudo` armazena o arquivo como base64 no SQLite. A listagem (`GET /`) omite o campo por performance — apenas `temJxrml: bool`. Download via `GET /:id/jxrml` faz `Buffer.from(base64)` → `Content-Type: application/octet-stream`. Frontend faz download via `atob()` → `Uint8Array` → `Blob`.
 - **Scripts BFC vs Relatórios**: `Script` (modelo) cobre categorias `script`, `formula`, `anotacao` — exibidas em 3 das 4 abas de Scripts.jsx. `Relatorio` é modelo separado, exibido na 4ª aba, com suporte a JRXML + scriptFonte (fonte dinâmica BFC).

@@ -24,6 +24,8 @@ model Municipio {
   nome              String
   observacoes       String?
   ativo             Boolean            @default(false)
+  usuarioId         Int?
+  usuario           Usuario?           @relation(fields: [usuarioId], references: [id])
   criadoEm         DateTime           @default(now())
   atualizadoEm     DateTime           @updatedAt
   requisicoes       Requisicao[]
@@ -124,14 +126,15 @@ model SwaggerSpec {
 }
 
 model Usuario {
-  id               Int       @id @default(autoincrement())
-  login            String    @unique
+  id               Int         @id @default(autoincrement())
+  login            String      @unique
   senhaHash        String
   nome             String
-  role             String    @default("operador")  // "admin" | "operador"
-  ativo            Boolean   @default(true)
-  tentativasLogin  Int       @default(0)
+  role             String      @default("operador")  // "admin" | "operador"
+  ativo            Boolean     @default(true)
+  tentativasLogin  Int         @default(0)
   bloqueadoAte     DateTime?
-  criadoEm         DateTime  @default(now())
-  atualizadoEm     DateTime  @updatedAt
+  municipios       Municipio[]
+  criadoEm         DateTime    @default(now())
+  atualizadoEm     DateTime    @updatedAt
 }
