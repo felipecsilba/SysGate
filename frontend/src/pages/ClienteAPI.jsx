@@ -328,7 +328,7 @@ export default function ClienteAPI() {
   }, [abaAtiva])
 
   const schema = (endpointSel?.bodySchema || []).filter((c) => !c._exemplo)
-  const temBody = ['POST', 'PUT', 'PATCH'].includes(metodo) || (metodo === 'DELETE' && schema.length > 0)
+  const temBody = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(metodo)
 
   // Expande campos de tipo 'object' usando o exemplo da spec (um nível de profundidade)
   const schemaExpanded = useMemo(() => {

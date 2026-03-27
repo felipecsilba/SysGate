@@ -247,6 +247,15 @@ export default function EnvioLote() {
   }, [csvArquivo, csvSemCabecalho])
 
   const construirBodyLinha = (linha) => {
+    // DELETE sem schema: usa colunas do CSV diretamente como campos do body
+    if (schemaExpanded.length === 0) {
+      const body = {}
+      for (const [key, val] of Object.entries(linha)) {
+        const num = Number(val)
+        body[key] = val !== '' && !isNaN(num) ? num : val
+      }
+      return body
+    }
     const body = {}
     for (const c of schemaExpanded) {
       if (!camposSelecionados[c.campo]) continue
@@ -710,8 +719,19 @@ export default function EnvioLote() {
                 </div>
               </div>
             ) : schemaExpanded.length === 0 ? (
-              <div className="flex items-center justify-center h-32 text-center">
-                <p className="text-sm text-gray-400">Este endpoint não possui campos de body.</p>
+              <div className="flex flex-col items-center justify-center h-32 text-center gap-2 px-4">
+                {metodo === 'DELETE' && csvData ? (
+                  <>
+                    <p className="text-sm font-medium text-gray-700">Mapeamento automático pelo CSV</p>
+                    <p className="text-xs text-gray-400">As colunas do seu CSV serão usadas diretamente como campos do body. Renomeie as colunas conforme a API espera (ex: <span className="font-mono bg-gray-100 px-1 rounded">id</span>).</p>
+                    <div className="bg-gray-900 rounded-lg px-3 py-2 text-left w-full max-w-xs">
+                      <p className="text-xs text-gray-400 mb-1">Exemplo de body por linha:</p>
+                      <pre className="text-xs text-green-400 font-mono">{JSON.stringify(Object.fromEntries(csvData.colunas.map((col) => { const v = csvData.linhas[0]?.[col] ?? ''; const n = Number(v); return [col, v !== '' && !isNaN(n) ? n : v] })), null, 2)}</pre>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-400">Este endpoint não possui campos de body definidos na spec.</p>
+                )}
               </div>
             ) : (
               <>
