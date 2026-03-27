@@ -87,6 +87,7 @@ export default function EnvioLote() {
   const [concluido, setConcluido] = useState(false)
   const [consultasLote, setConsultasLote] = useState({})
   const [consultasResultado, setConsultasResultado] = useState({})
+  const [consultandoTodos, setConsultandoTodos] = useState(false)
   const abortRef = useRef(false)
   const progressoRef = useRef(null)
 
@@ -1166,6 +1167,7 @@ export default function EnvioLote() {
                               {p.idsGerados.slice(0, 30).map((id, j) => {
                                 const chave = `${p.lote}-${id}`
                                 const consulta = consultasResultado[chave]
+                                const jaConsultado = !!consulta?.statusCode
                                 return (
                                   <div key={j} className="flex items-center gap-0.5">
                                     <span
@@ -1175,19 +1177,32 @@ export default function EnvioLote() {
                                     >
                                       {id}
                                     </span>
+                                    {jaConsultado && (
+                                      <button
+                                        onClick={() => toggleResultado(chave)}
+                                        title={consulta?.aberto ? 'Recolher' : 'Expandir'}
+                                        className={`text-xs px-1.5 py-0.5 border-y font-medium transition-colors ${
+                                          consulta?.aberto
+                                            ? 'bg-sysgate-600 text-white border-sysgate-600'
+                                            : 'bg-white text-sysgate-500 border-green-200 hover:bg-sysgate-50'
+                                        }`}
+                                      >
+                                        {consulta?.aberto ? '▲' : '▼'}
+                                      </button>
+                                    )}
                                     <button
-                                      onClick={() => consulta?.aberto ? toggleResultado(chave) : consultarLote(chave, id)}
+                                      onClick={() => consultarLote(chave, id)}
                                       disabled={consulta?.consultando}
-                                      title="Consultar resultado"
+                                      title={jaConsultado ? 'Reprocessar GET' : 'Consultar GET'}
                                       className={`text-xs px-1.5 py-0.5 rounded-r border font-medium transition-colors flex items-center gap-0.5 ${
-                                        consulta?.aberto
-                                          ? 'bg-sysgate-600 text-white border-sysgate-600'
+                                        jaConsultado
+                                          ? 'bg-white text-gray-500 border-green-200 hover:bg-gray-50'
                                           : 'bg-white text-sysgate-600 border-green-200 hover:bg-sysgate-50'
                                       }`}
                                     >
                                       {consulta?.consultando
                                         ? <span className="w-3 h-3 border-2 border-sysgate-300 border-t-sysgate-600 rounded-full animate-spin inline-block" />
-                                        : consulta?.aberto ? '▲' : '▼ GET'
+                                        : jaConsultado ? '↺' : '▼ GET'
                                       }
                                     </button>
                                   </div>
@@ -1278,6 +1293,102 @@ export default function EnvioLote() {
                             {id}
                           </span>
                         ))}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Monitor de lotes — status por ID */}
+              {concluido && (() => {
+                const todosIdsComLote = progresso.flatMap((p) =>
+                  (p.idsGerados || []).map((id) => ({ id, lote: p.lote }))
+                )
+                if (todosIdsComLote.length === 0) return null
+
+                const getStatus = (chave) => {
+                  const c = consultasResultado[chave]
+                  if (!c || !c.statusCode) return 'pendente'
+                  if (c.consultando) return 'consultando'
+                  if (c.statusCode >= 200 && c.statusCode < 300) return 'sucesso'
+                  return 'erro'
+                }
+
+                const pendentes = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'pendente')
+                const nSucesso = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'sucesso').length
+                const nErro = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'erro').length
+
+                const consultarTodosPendentes = async () => {
+                  setConsultandoTodos(true)
+                  for (const { id, lote } of pendentes) {
+                    const chave = `${lote}-${id}`
+                    await consultarLote(chave, id)
+                    await sleep(300)
+                  }
+                  setConsultandoTodos(false)
+                }
+
+                const CORES = {
+                  pendente: 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100',
+                  consultando: 'bg-blue-50 text-blue-700 border-blue-300 animate-pulse cursor-wait',
+                  sucesso: 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100',
+                  erro: 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100',
+                }
+
+                return (
+                  <div className="card overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-sm font-semibold text-gray-700 shrink-0">Monitor de lotes</span>
+                        <div className="flex items-center gap-2 text-xs">
+                          {nSucesso > 0 && <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-medium">{nSucesso} ✓</span>}
+                          {nErro > 0 && <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium">{nErro} ✗</span>}
+                          {pendentes.length > 0 && <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">{pendentes.length} pendentes</span>}
+                        </div>
+                      </div>
+                      {pendentes.length > 0 && (
+                        <button
+                          onClick={consultarTodosPendentes}
+                          disabled={consultandoTodos}
+                          className="flex items-center gap-1.5 text-xs bg-sysgate-600 text-white px-3 py-1.5 rounded-lg hover:bg-sysgate-700 disabled:opacity-50 transition-colors shrink-0 font-medium"
+                        >
+                          {consultandoTodos
+                            ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Consultando...</>
+                            : <>↺ Consultar {pendentes.length} pendentes</>
+                          }
+                        </button>
+                      )}
+                    </div>
+                    <div className="p-3 max-h-64 overflow-y-auto scrollbar-thin">
+                      <div className="flex flex-wrap gap-1.5">
+                        {todosIdsComLote.map(({ id, lote }, i) => {
+                          const chave = `${lote}-${id}`
+                          const status = getStatus(chave)
+                          const consulta = consultasResultado[chave]
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => status !== 'consultando' && consultarLote(chave, id)}
+                              disabled={status === 'consultando'}
+                              title={
+                                status === 'sucesso' ? `${consulta.statusCode} — clique para reprocessar` :
+                                status === 'erro' ? `${consulta.statusCode} — clique para reprocessar` :
+                                'Clique para consultar'
+                              }
+                              className={`text-xs font-mono border px-2 py-1 rounded transition-all flex items-center gap-1 ${CORES[status]}`}
+                            >
+                              {status === 'consultando' && (
+                                <span className="w-2.5 h-2.5 border border-blue-400 border-t-blue-700 rounded-full animate-spin shrink-0" />
+                              )}
+                              {status === 'sucesso' && <span className="shrink-0 font-bold">✓</span>}
+                              {status === 'erro' && <span className="shrink-0 font-bold">✗</span>}
+                              <span>{id}</span>
+                              {consulta?.statusCode && (
+                                <span className="opacity-50 text-[10px] font-sans shrink-0">{consulta.statusCode}</span>
+                              )}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   </div>
