@@ -1310,8 +1310,11 @@ export default function EnvioLote() {
                   const c = consultasResultado[chave]
                   if (!c || !c.statusCode) return 'pendente'
                   if (c.consultando) return 'consultando'
-                  if (c.statusCode >= 200 && c.statusCode < 300) return 'sucesso'
-                  return 'erro'
+                  if (c.statusCode < 200 || c.statusCode >= 300) return 'erro'
+                  const statusLote = c.data?.statusLote
+                  if (statusLote === 'NAO_PROCESSADO') return 'pendente'
+                  if (statusLote === 'ERRO' || statusLote === 'FALHA') return 'erro'
+                  return 'sucesso'
                 }
 
                 const pendentes = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'pendente')
