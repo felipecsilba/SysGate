@@ -305,7 +305,7 @@ export default function EnvioLote() {
           endpointId: endpointSel?.id || null,
           path: pathCustom,
           metodo,
-          body: ['GET', 'DELETE'].includes(metodo) ? undefined : bodyArray,
+          body: metodo === 'GET' ? undefined : bodyArray,
           tipo: 'lote',
         })
         const duracao = Date.now() - inicio

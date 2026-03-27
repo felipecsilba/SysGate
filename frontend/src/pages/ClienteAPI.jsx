@@ -259,7 +259,7 @@ export default function ClienteAPI() {
     setResposta(null)
 
     let body = undefined
-    if (['POST', 'PUT', 'PATCH'].includes(metodo)) {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(metodo)) {
       if (modoBody === 'schema' && schemaExpanded.length > 0) {
         body = {}
         for (const c of schemaExpanded) {
@@ -327,8 +327,8 @@ export default function ClienteAPI() {
     if (abaAtiva === 'historico') carregarHistorico()
   }, [abaAtiva])
 
-  const temBody = ['POST', 'PUT', 'PATCH'].includes(metodo)
   const schema = (endpointSel?.bodySchema || []).filter((c) => !c._exemplo)
+  const temBody = ['POST', 'PUT', 'PATCH'].includes(metodo) || (metodo === 'DELETE' && schema.length > 0)
 
   // Expande campos de tipo 'object' usando o exemplo da spec (um nível de profundidade)
   const schemaExpanded = useMemo(() => {
