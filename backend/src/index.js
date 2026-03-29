@@ -21,10 +21,13 @@ const PORT = process.env.PORT || 3001
 // Segurança — headers HTTP
 app.use(helmet())
 
-// Rate limiter global: 200 req / 15min por IP
+// Confia no proxy reverso (Nginx) para ler o IP real do cliente via X-Real-IP / X-Forwarded-For
+app.set('trust proxy', 1)
+
+// Rate limiter global: 1000 req / 15min por IP real
 const limiterGeral = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' },
