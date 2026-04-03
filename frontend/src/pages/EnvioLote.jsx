@@ -8,16 +8,33 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function extrairId(data) {
-  if (!data || typeof data !== 'object') return null
+function extrairIds(data) {
+  if (!data || typeof data !== 'object') return []
+  const result = []
+  // Extrai ID de nível raiz (idLote, id, idGerado, idEconomico)
   for (const key of ['id', 'idGerado', 'idEconomico', 'idLote']) {
     const v = data[key]
     if (v != null) {
-      if (typeof v === 'number' || typeof v === 'string') return String(v)
-      if (typeof v === 'object' && v.id != null) return String(v.id)
+      if (typeof v === 'number' || typeof v === 'string') { result.push(String(v)); break }
+      if (typeof v === 'object' && v.id != null) { result.push(String(v.id)); break }
     }
   }
-  return null
+  // Extrai IDs de retorno[] — idGerado pode ser objeto {id:N} ou escalar
+  if (Array.isArray(data.retorno)) {
+    for (const item of data.retorno) {
+      if (!item || typeof item !== 'object') continue
+      for (const key of ['idGerado', 'id', 'idEconomico']) {
+        const v = item[key]
+        if (v != null) {
+          let val = null
+          if (typeof v === 'number' || typeof v === 'string') val = String(v)
+          else if (typeof v === 'object' && v.id != null) val = String(v.id)
+          if (val !== null) { result.push(val); break }
+        }
+      }
+    }
+  }
+  return result
 }
 
 function nomeRecurso(ep, moduleBase = '') {
@@ -320,8 +337,8 @@ export default function EnvioLote() {
         })
         const duracao = Date.now() - inicio
         const idsGerados = Array.isArray(res.data)
-          ? res.data.map((item) => extrairId(item)).filter(Boolean)
-          : [extrairId(res.data)].filter(Boolean)
+          ? res.data.flatMap(extrairIds)
+          : extrairIds(res.data)
         resultados.push({
           lote: b + 1,
           totalLotes: totalBatches,
