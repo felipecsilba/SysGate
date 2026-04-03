@@ -96,11 +96,24 @@ router.post('/executar', async (req, res) => {
         .map(String)
       idGerado = ids.length > 0 ? ids.join(',') : null
     } else {
-      idGerado =
-        resposta?.id?.toString() ||
-        resposta?.idGerado?.toString() ||
-        resposta?.idEconomico?.toString() ||
-        null
+      const parts = []
+      // Extrai IDs de campos diretos na raiz da resposta (inclui idLote)
+      const topId = resposta?.id ?? resposta?.idGerado ?? resposta?.idEconomico ?? resposta?.idLote
+      if (topId != null) parts.push(String(topId))
+      // Extrai IDs de retorno[] — idGerado pode ser objeto {id: N} ou escalar
+      if (Array.isArray(resposta?.retorno)) {
+        for (const item of resposta.retorno) {
+          const ig = item?.idGerado
+          let val = null
+          if (ig != null && typeof ig === 'object') {
+            val = ig.id ?? ig.idGerado ?? ig.idEconomico
+          } else {
+            val = ig ?? item?.id ?? item?.idEconomico ?? item?.idLote
+          }
+          if (val != null) parts.push(String(val))
+        }
+      }
+      idGerado = parts.length > 0 ? parts.join(',') : null
     }
 
     await salvarRequisicao({
