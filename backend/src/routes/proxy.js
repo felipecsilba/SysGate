@@ -5,6 +5,25 @@ const { PrismaClient } = require('@prisma/client')
 const router = express.Router()
 const prisma = new PrismaClient()
 
+// Proxy HTTP opcional — configurar PROXY_URL no .env para rotear chamadas externas
+// Formato: http://usuario:senha@host:porta  ou  http://host:porta
+function buildProxyConfig() {
+  const raw = process.env.PROXY_URL
+  if (!raw) return undefined
+  try {
+    const u = new URL(raw)
+    return {
+      protocol: u.protocol.replace(':', ''),
+      host: u.hostname,
+      port: Number(u.port) || (u.protocol === 'https:' ? 443 : 80),
+      ...(u.username ? { auth: { username: decodeURIComponent(u.username), password: decodeURIComponent(u.password) } } : {}),
+    }
+  } catch {
+    console.warn('[proxy] PROXY_URL inválida, ignorando:', raw)
+    return undefined
+  }
+}
+
 const HISTORICO_MAX = 200
 
 async function salvarRequisicao(data) {
@@ -80,6 +99,7 @@ router.post('/executar', async (req, res) => {
       data: body || undefined,
       validateStatus: () => true, // nunca lança exceção por status HTTP
       timeout: 30000,
+      proxy: buildProxyConfig(),
     })
 
     statusCode = axiosResponse.status
