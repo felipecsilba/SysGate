@@ -138,3 +138,76 @@ model Usuario {
   criadoEm         DateTime    @default(now())
   atualizadoEm     DateTime    @updatedAt
 }
+
+// ── Módulo Portfólio ─────────────────────────────────────────────────────────
+
+model PortfolioMunicipio {
+  id           Int        @id @default(autoincrement())
+  nome         String
+  estado       String?
+  observacoes  String?
+  entidades    Entidade[]
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+}
+
+model Entidade {
+  id                   Int                  @id @default(autoincrement())
+  nome                 String
+  tipo                 String
+  observacoes          String?
+  portfolioMunicipioId Int
+  portfolioMunicipio   PortfolioMunicipio   @relation(fields: [portfolioMunicipioId], references: [id], onDelete: Cascade)
+  sistemas             EntidadeSistema[]
+  stakeholders         Stakeholder[]
+  criadoEm             DateTime             @default(now())
+  atualizadoEm         DateTime             @updatedAt
+}
+
+model EntidadeSistema {
+  id           Int                  @id @default(autoincrement())
+  nome         String
+  vertical     String?
+  ativo        Boolean              @default(true)
+  observacoes  String?
+  entidadeId   Int
+  entidade     Entidade             @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  stakeholders StakeholderSistema[]
+  criadoEm     DateTime             @default(now())
+  atualizadoEm DateTime             @updatedAt
+}
+
+model Stakeholder {
+  id                 Int                  @id @default(autoincrement())
+  nome               String
+  cargo              String?
+  telefone           String?
+  email              String?
+  descricao          String?
+  horarioAtendimento String?
+  ativo              Boolean              @default(true)
+  entidadeId         Int
+  entidade           Entidade             @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  sistemas           StakeholderSistema[]
+  criadoEm           DateTime             @default(now())
+  atualizadoEm       DateTime             @updatedAt
+}
+
+model StakeholderSistema {
+  stakeholderId     Int
+  entidadeSistemaId Int
+  stakeholder       Stakeholder     @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+  entidadeSistema   EntidadeSistema @relation(fields: [entidadeSistemaId], references: [id], onDelete: Cascade)
+
+  @@id([stakeholderId, entidadeSistemaId])
+}
+
+model CatalogoVertical {
+  id           Int      @id @default(autoincrement())
+  nome         String   @unique
+  cor          String   @default("#94A3B8")
+  sistemas     String   @default("[]")
+  ordem        Int      @default(0)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+}

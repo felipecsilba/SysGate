@@ -10,6 +10,7 @@ import EnvioLote from './pages/EnvioLote'
 import Scripts from './pages/Scripts'
 import Historico from './pages/Historico'
 import Usuarios from './pages/Usuarios'
+import Portfolio from './pages/Portfolio'
 
 export default function App() {
   return (
@@ -28,6 +29,8 @@ export default function App() {
             <Route path="envio-lote" element={<EnvioLote />} />
             <Route path="scripts" element={<Scripts />} />
             <Route path="historico" element={<Historico />} />
+
+            <Route path="portfolio" element={<Portfolio />} />
 
             {/* Usuários: admin vê todos; não-admin vê só o próprio perfil */}
             <Route path="usuarios" element={<Usuarios />} />

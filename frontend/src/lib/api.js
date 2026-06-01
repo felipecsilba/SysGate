@@ -130,4 +130,39 @@ export const relatoriosApi = {
   downloadUrl: (id) => `/api/relatorios/${id}/jxrml`,
 }
 
+// Portfólio de Clientes
+export const portfolioApi = {
+  // Municípios do portfólio
+  listar: (busca) => api.get('/portfolio', { params: busca ? { busca } : {} }).then((r) => r.data),
+  obter: (id) => api.get(`/portfolio/${id}`).then((r) => r.data),
+  criar: (data) => api.post('/portfolio', data).then((r) => r.data),
+  atualizar: (id, data) => api.put(`/portfolio/${id}`, data).then((r) => r.data),
+  deletar: (id) => api.delete(`/portfolio/${id}`).then((r) => r.data),
+  // Entidades do município
+  entidades: (id) => api.get(`/portfolio/${id}/entidades`).then((r) => r.data),
+  criarEntidade: (id, data) => api.post(`/portfolio/${id}/entidades`, data).then((r) => r.data),
+  // Entidade por ID
+  obterEntidade: (eid) => api.get(`/portfolio/entidades/${eid}`).then((r) => r.data),
+  atualizarEntidade: (eid, data) => api.put(`/portfolio/entidades/${eid}`, data).then((r) => r.data),
+  deletarEntidade: (eid) => api.delete(`/portfolio/entidades/${eid}`).then((r) => r.data),
+  // Sistemas da entidade
+  sistemas: (eid) => api.get(`/portfolio/entidades/${eid}/sistemas`).then((r) => r.data),
+  criarSistema: (eid, data) => api.post(`/portfolio/entidades/${eid}/sistemas`, data).then((r) => r.data),
+  atualizarSistema: (sid, data) => api.put(`/portfolio/sistemas/${sid}`, data).then((r) => r.data),
+  deletarSistema: (sid) => api.delete(`/portfolio/sistemas/${sid}`).then((r) => r.data),
+  // Stakeholders da entidade
+  stakeholders: (eid) => api.get(`/portfolio/entidades/${eid}/stakeholders`).then((r) => r.data),
+  criarStakeholder: (eid, data) => api.post(`/portfolio/entidades/${eid}/stakeholders`, data).then((r) => r.data),
+  atualizarStakeholder: (shid, data) => api.put(`/portfolio/stakeholders/${shid}`, data).then((r) => r.data),
+  deletarStakeholder: (shid) => api.delete(`/portfolio/stakeholders/${shid}`).then((r) => r.data),
+}
+
+// Catálogo de Verticais Betha
+export const catalogoApi = {
+  listar:    ()         => api.get('/catalogo').then((r) => r.data),
+  criar:     (data)     => api.post('/catalogo', data).then((r) => r.data),
+  atualizar: (id, data) => api.put(`/catalogo/${id}`, data).then((r) => r.data),
+  deletar:   (id)       => api.delete(`/catalogo/${id}`),
+}
+
 export default api

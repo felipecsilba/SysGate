@@ -53,11 +53,18 @@ const ICONS = {
       <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
     </Icon>
   ),
+  portfolio: (
+    <Icon>
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+    </Icon>
+  ),
 }
 
 const BASE_NAV_ITEMS = [
   { to: '/',            label: 'Dashboard',         icon: ICONS.dashboard,  exact: true },
   { to: '/municipios',  label: 'Municípios',        icon: ICONS.municipios },
+  { to: '/portfolio',   label: 'Portfólio',         icon: ICONS.portfolio },
   { to: '/sistemas',    label: 'Sistemas',          icon: ICONS.sistemas },
   { to: '/sandbox',     label: 'Sandbox',            icon: ICONS.sandbox },
   { to: '/envio-lote',  label: 'Envio em Lote',     icon: ICONS.envioLote },

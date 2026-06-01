@@ -1,6 +1,6 @@
 # SysGate
 
-Ferramenta interna fullstack para implantadores da SysGate. Gerencia municípios, executa chamadas API via proxy, importa specs Swagger/OpenAPI, envia requisições em lote e organiza scripts.
+Ferramenta interna fullstack para implantadores da SysGate. Gerencia municípios, executa chamadas API via proxy, importa specs Swagger/OpenAPI, envia requisições em lote, organiza scripts e mantém o portfólio de clientes (municípios atendidos com entidades, sistemas e contatos).
 
 ## Stack
 
@@ -52,11 +52,11 @@ sysgate/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
 │   ├── prisma/
-│   │   ├── schema.prisma      # 9 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ municipios[])
+│   │   ├── schema.prisma      # 15 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ municipios[]), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
-│       ├── index.js           # Express server + Helmet + rate limiter global (200 req/15min)
+│       ├── index.js           # Express server + Helmet + rate limiter global (50000 req/15min)
 │       ├── middleware/
 │       │   └── autenticar.js  # Verifica JWT Bearer; injeta req.usuario; exporta exigirAdmin
 │       └── routes/
@@ -68,7 +68,9 @@ sysgate/
 │           ├── proxy.js       # POST /executar — proxy para APIs com token; verifica posse do município; extrai idGerado de respostas array e objeto
 │           ├── requisicoes.js # GET + DELETE histórico — filtrado por municípios do usuário logado (isolamento por usuário)
 │           ├── scripts.js     # CRUD com tags (categoria: script|formula|anotacao) + importar JSON
-│           └── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
+│           ├── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
+│           ├── portfolio.js   # CRUD Portfólio — PortfolioMunicipio + Entidade + EntidadeSistema + Stakeholder (M2M) — leitura pública; escrita/exclusão somente admin
+│           └── catalogo.js   # CRUD CatalogoVertical — verticais Betha com nome/cor/sistemas/ordem; seed automático na 1ª chamada GET — leitura pública; escrita somente admin
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
@@ -82,7 +84,7 @@ sysgate/
         ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute (todas as rotas autenticadas)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
-        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi e relatoriosApi
+        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi e catalogoApi
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: sysgate-municipio)
         │   └── authStore.js       # Zustand + persist (sysgate-auth) — token + usuario; suporta lembrar (30d); logout limpa sysgate-municipio do localStorage
@@ -98,6 +100,7 @@ sysgate/
             ├── Usuarios.jsx       # Admin: CRUD completo + resetar senha de outros; Não-admin: só próprio perfil (nome + senha)
             ├── Dashboard.jsx      # Cards de módulos com SVG icons + município ativo + últimas requisições
             ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação — dados isolados por usuário
+            ├── Portfolio.jsx      # Rota: /portfolio — CRM de clientes: lista municípios + painel accordion de entidades + sistemas agrupados por vertical (cores oficiais Betha) + modal picker "Catálogo Betha" (chips coloridos por vertical) + modal "Configurar Catálogo" (admin) + contatos com chips — leitura pública; edição somente admin
             ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin
             ├── ClienteAPI.jsx     # Rota: /sandbox — Seletor endpoint + CodeBlock JSON + body editor + proxy
             ├── EnvioLote.jsx      # Upload CSV + toggle sem cabeçalho + mapeamento colunas 2 colunas + envio em lote (array body) + IDs gerados + consulta GET por ID + exportar CSV com IDs
@@ -214,6 +217,40 @@ docker-compose up --build
 | PUT    | /api/relatorios/:id        | Atualiza                                         |
 | DELETE | /api/relatorios/:id        | Remove                                           |
 
+### Portfólio
+> **Leitura pública** (qualquer autenticado), **escrita restrita a admin**. Dados globais — sem isolamento por usuário.
+
+| Método | Rota                                        | Descrição                                                                 |
+|--------|---------------------------------------------|---------------------------------------------------------------------------|
+| GET    | /api/portfolio                              | Lista municípios (filtro ?busca=) com contagem de entidades               |
+| POST   | /api/portfolio                              | Cria município — **somente admin**                                        |
+| GET    | /api/portfolio/:id                          | Detalhe do município com entidades (contagem sistemas/stakeholders)        |
+| PUT    | /api/portfolio/:id                          | Atualiza município — **somente admin**                                    |
+| DELETE | /api/portfolio/:id                          | Remove município (cascade completo) — **somente admin**                   |
+| GET    | /api/portfolio/:id/entidades                | Lista entidades com sistemas e stakeholders completos                     |
+| POST   | /api/portfolio/:id/entidades                | Cria entidade no município — **somente admin**                            |
+| GET    | /api/portfolio/entidades/:eid               | Detalhe da entidade com sistemas e stakeholders                           |
+| PUT    | /api/portfolio/entidades/:eid               | Atualiza entidade — **somente admin**                                     |
+| DELETE | /api/portfolio/entidades/:eid               | Remove entidade (cascade) — **somente admin**                             |
+| GET    | /api/portfolio/entidades/:eid/sistemas      | Lista sistemas da entidade                                                |
+| POST   | /api/portfolio/entidades/:eid/sistemas      | Cria sistema na entidade — **somente admin**                              |
+| PUT    | /api/portfolio/sistemas/:sid                | Atualiza sistema (nome/vertical/ativo/observacoes) — **somente admin**    |
+| DELETE | /api/portfolio/sistemas/:sid                | Remove sistema (cascade M2M) — **somente admin**                          |
+| GET    | /api/portfolio/entidades/:eid/stakeholders  | Lista stakeholders com sistemas vinculados                                |
+| POST   | /api/portfolio/entidades/:eid/stakeholders  | Cria stakeholder com sistemas[] (M2M) — **somente admin**                 |
+| PUT    | /api/portfolio/stakeholders/:shid           | Atualiza stakeholder + recria vínculos M2M — **somente admin**            |
+| DELETE | /api/portfolio/stakeholders/:shid           | Remove stakeholder — **somente admin**                                    |
+
+### Catálogo de Verticais
+> **Leitura pública** (qualquer autenticado), **escrita restrita a admin**. Seed automático na 1ª chamada GET se a tabela estiver vazia.
+
+| Método | Rota              | Descrição                                                                         |
+|--------|-------------------|-----------------------------------------------------------------------------------|
+| GET    | /api/catalogo     | Lista verticais ordenadas por `ordem` — popula seed Betha se vazio               |
+| POST   | /api/catalogo     | Cria vertical (nome, cor hex, sistemas[], ordem) — **somente admin**              |
+| PUT    | /api/catalogo/:id | Atualiza vertical — **somente admin**                                             |
+| DELETE | /api/catalogo/:id | Remove vertical — retorna 409 se há `EntidadeSistema` vinculados — **somente admin** |
+
 ### Outros
 | Método | Rota                  | Descrição                                                                     |
 |--------|-----------------------|-------------------------------------------------------------------------------|
@@ -264,7 +301,7 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 ```
 
 ### Rate limiting
-- **Global**: 200 req/15min por IP (todas as rotas)
+- **Global**: 50000 req/15min por IP (todas as rotas)
 - **Login**: 10 tentativas/15min por IP (`skipSuccessfulRequests: true`)
 - Resposta 429 com mensagem em português
 
@@ -373,6 +410,18 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Relatórios JRXML**: `Relatorio.jxrmlConteudo` armazena o arquivo como base64 no SQLite. A listagem (`GET /`) omite o campo por performance — apenas `temJxrml: bool`. Download via `GET /:id/jxrml` faz `Buffer.from(base64)` → `Content-Type: application/octet-stream`. Frontend faz download via `atob()` → `Uint8Array` → `Blob`.
 - **Scripts BFC vs Relatórios**: `Script` (modelo) cobre categorias `script`, `formula`, `anotacao` — exibidas em 3 das 4 abas de Scripts.jsx. `Relatorio` é modelo separado, exibido na 4ª aba, com suporte a JRXML + scriptFonte (fonte dinâmica BFC).
 - **UI — padrões visuais consistentes**: header com barra acento vertical (`w-1 h-6 rounded-full bg-sysgate-600`); botões de ação como ícones SVG (pencil/trash) em vez de texto; painel lateral com cabeçalho gradiente (`from-white to-sysgate-50/30`) + label "X selecionado" + botão X para fechar.
+- **Portfólio — dados globais (sem isolamento)**: `PortfolioMunicipio` não possui `usuarioId`; todos os usuários autenticados veem o mesmo portfólio. Diferente do módulo `Municipios` que é isolado por usuário. Escrita/exclusão restrita a admin via `exigirAdmin`.
+- **Portfólio — hierarquia**: `PortfolioMunicipio` → `Entidade[]` → `EntidadeSistema[]` + `Stakeholder[]` → `StakeholderSistema[]` (M2M). Os sistemas do portfólio são independentes dos modelos `Sistema`/`Endpoint` usados no Sandbox — são listas simples de nomes para documentar quais sistemas cada entidade utiliza.
+- **Portfólio — M2M Stakeholder ↔ EntidadeSistema**: tabela pivot `StakeholderSistema` com `@@id([stakeholderId, entidadeSistemaId])`. Update = `deleteMany` todos os vínculos do stakeholder + `createMany` com os novos IDs (padrão "replace all"). Frontend envia `sistemas: [id1, id2]` (array de IDs de `EntidadeSistema`).
+- **Portfólio — cascade delete manual**: SQLite não executa cascades automáticos via Prisma para relações M2M explícitas. Handlers deletam na ordem correta: `StakeholderSistema` → `Stakeholder` → `EntidadeSistema` → `Entidade` → `PortfolioMunicipio`.
+- **Portfólio — ordem de rotas Express**: segmentos literais (`/entidades/:eid`, `/sistemas/:sid`, `/stakeholders/:shid`) registrados ANTES de `/:id` e `/:id/entidades` para evitar conflito de captura. Regra geral já documentada em "Rotas nomeadas ANTES de /:id".
+- **Portfólio — layout Portfolio.jsx**: duas colunas — lista de municípios (`w-72 shrink-0`) com busca local + painel de entidades (`flex-1`) com accordion. Município selecionado: highlight `bg-sysgate-50 border-l-2 border-sysgate-500`. Mobile: colunas empilham, painel substitui lista com botão "← Voltar".
+- **Portfólio — accordion de entidades**: estado `entidadesAbertas` é um `Set<number>` de IDs. Toggle: se ID está no Set → remove; senão → adiciona. Seção "Sistemas" exibe badge ativo/inativo com toggle direto (admin). Seção "Contatos" exibe cards com avatar de iniciais, dados de contato e chips dos sistemas vinculados.
+- **Portfólio — verticais**: `EntidadeSistema` possui campo `vertical String?` que referencia o nome de uma `CatalogoVertical`. No accordion, sistemas são agrupados por vertical (cada vertical = card com header colorido + fundo tingido). Sistemas sem vertical ficam no grupo "Outros".
+- **Portfólio — CatalogoVertical**: modelo `CatalogoVertical` (nome único, cor hex, sistemas JSON array, ordem int) armazena o catálogo de verticais Betha no banco. Na 1ª chamada `GET /api/catalogo` a tabela é populada com as 9 verticais oficiais (Contábil, Contratos, Arrecadação, Pessoal, Atendimento, NoPaper, Educação, Saúde, Gestão Municipal) e suas cores. `sistemas` é armazenado como `JSON.stringify(array)` e retornado como `JSON.parse(array)`.
+- **Portfólio — cores de verticais**: mapa `CORES_VERTICAIS` em `Portfolio.jsx` (hardcoded, cores oficiais Betha) mapeia nome → hex. `corVertical(v)` faz lookup e retorna `COR_OUTROS_HEX = '#94A3B8'` para verticais não mapeadas. `hexToRgb(hex)` converte para `"r, g, b"` usado em `rgba(...)` para fundos com opacidade. Cabeçalhos de cards usam cor sólida + texto branco; fundos de cards usam `rgba(..., 0.05/0.15)`.
+- **Portfólio — modal picker (ModalGerenciarSistemas)**: aceita prop `catalogo` (array da API). Chips de sistemas usam `getChipStyle(vertical, sis)` que retorna `{ cls, sty }` — chips ativos têm cor da vertical (inline style), chips fantasma têm borda pontilhada cinza, chips pendentes de ativação têm fundo sólido da vertical + texto branco. A API retorna `nome` (não `vertical`) — desestruturar como `{ nome: vertical, sistemas }`.
+- **Portfólio — modal catálogo (ModalCatalogo)**: admin only, acessível pelo botão de engrenagem no header. Lista cards editáveis: nome (input), cor (`<input type="color">`), sistemas (chips com × para remover + input Enter para adicionar). "+ Nova vertical" adiciona entrada com `_novo: true`. Ao salvar: itera `deletados[]` (DELETE), depois itera `itens` (POST para `_novo`, PUT para existentes). `onSaved()` recarrega o catálogo no componente pai via `catalogoApi.listar().then(setCatalogo)`.
 
 ## UI — Sandbox e EnvioLote (padrões compartilhados)
 
