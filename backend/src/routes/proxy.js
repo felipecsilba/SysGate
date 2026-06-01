@@ -90,6 +90,14 @@ router.post('/executar', async (req, res) => {
   let statusCode = null
   let resposta = null
 
+  // Log de debug — visível em: pm2 logs krakion-backend
+  console.log('\n[proxy] ══════════════════════════════')
+  console.log('[proxy] ▶', metodo.toUpperCase(), url)
+  console.log('[proxy] Token:', vinculo.token ? vinculo.token.substring(0, 12) + '...' : 'VAZIO')
+  console.log('[proxy] Body:', JSON.stringify(body, null, 2))
+  console.log('[proxy] QueryParams:', JSON.stringify(queryParams))
+  console.log('[proxy] HeadersExtras:', JSON.stringify(headersExtras))
+
   try {
     const axiosResponse = await axios({
       method: metodo.toLowerCase(),
@@ -104,6 +112,10 @@ router.post('/executar', async (req, res) => {
 
     statusCode = axiosResponse.status
     resposta = axiosResponse.data
+
+    console.log('[proxy] ◀ Status:', statusCode)
+    console.log('[proxy] Resposta:', JSON.stringify(resposta).substring(0, 1000))
+    console.log('[proxy] ══════════════════════════════\n')
 
     const duracaoMs = Date.now() - inicio
 
