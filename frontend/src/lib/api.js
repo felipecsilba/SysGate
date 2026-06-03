@@ -173,6 +173,7 @@ export const chamadosApi = {
   atualizar:         (id, data) => api.put(`/chamados/${id}`, data).then(r => r.data),
   deletar:           (id) => api.delete(`/chamados/${id}`).then(r => r.data),
   estatisticas:      () => api.get('/chamados/estatisticas').then(r => r.data),
+  dashboard:         () => api.get('/chamados/dashboard').then(r => r.data),
   historico:         (id) => api.get(`/chamados/${id}/historico`).then(r => r.data),
   criarComentario:   (id, data) => api.post(`/chamados/${id}/comentarios`, data).then(r => r.data),
   deletarComentario: (cid) => api.delete(`/chamados/comentarios/${cid}`).then(r => r.data),

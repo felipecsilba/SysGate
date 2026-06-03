@@ -61,6 +61,125 @@ router.get('/estatisticas', async (req, res) => {
   res.json(stats)
 })
 
+// ── GET /dashboard — Dados agregados para o painel ───────────────────────────
+router.get('/dashboard', async (req, res) => {
+  const agora = new Date()
+  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1)
+  const inicioDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())
+
+  const [
+    porStatus,
+    porMunicipio,
+    porVertical,
+    porClassificacao,
+    porPrioridade,
+    semResponsavel,
+    criadosHoje,
+    criadosMes,
+    concluidosMes,
+    porDia,
+  ] = await Promise.all([
+    // Por status
+    prisma.chamado.groupBy({ by: ['status'], _count: { id: true } }),
+
+    // Top municípios
+    prisma.chamado.groupBy({
+      by: ['municipio'],
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    }),
+
+    // Por vertical
+    prisma.chamado.groupBy({
+      by: ['vertical'],
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+    }),
+
+    // Por classificação
+    prisma.chamado.groupBy({ by: ['classificacao'], _count: { id: true } }),
+
+    // Por prioridade
+    prisma.chamado.groupBy({ by: ['prioridade'], _count: { id: true } }),
+
+    // Chamados sem responsável (abertos)
+    prisma.chamado.findMany({
+      where: {
+        responsavelId: null,
+        status: { not: 'Concluido' },
+      },
+      orderBy: { criadoEm: 'desc' },
+      take: 8,
+      select: {
+        id: true, titulo: true, status: true, prioridade: true,
+        municipio: true, vertical: true, criadoEm: true,
+        criadoPor: { select: { nome: true } },
+      },
+    }),
+
+    // Criados hoje
+    prisma.chamado.count({ where: { criadoEm: { gte: inicioDia } } }),
+
+    // Criados este mês
+    prisma.chamado.count({ where: { criadoEm: { gte: inicioMes } } }),
+
+    // Concluídos este mês
+    prisma.chamado.count({
+      where: { status: 'Concluido', atualizadoEm: { gte: inicioMes } }
+    }),
+
+    // Últimos 14 dias — contagem por dia
+    prisma.$queryRaw`
+      SELECT
+        date(criadoEm) as dia,
+        COUNT(*) as total
+      FROM Chamado
+      WHERE criadoEm >= datetime('now', '-14 days')
+      GROUP BY date(criadoEm)
+      ORDER BY dia ASC
+    `,
+  ])
+
+  // Normalizar por status
+  const statusMap = {}
+  porStatus.forEach(g => { statusMap[g.status] = g._count.id })
+
+  const abertos = (statusMap['Nao Analisado'] || 0)
+    + (statusMap['Em Analise'] || 0)
+    + (statusMap['Em Atendimento'] || 0)
+
+  res.json({
+    resumo: {
+      total: Object.values(statusMap).reduce((a, b) => a + b, 0),
+      abertos,
+      aguardando: statusMap['Aguardando Retorno'] || 0,
+      concluidos: statusMap['Concluido'] || 0,
+      criadosHoje,
+      criadosMes,
+      concluidosMes,
+    },
+    porStatus: porStatus.map(g => ({ status: g.status, total: g._count.id })),
+    porMunicipio: porMunicipio
+      .filter(g => g.municipio)
+      .map(g => ({ municipio: g.municipio, total: g._count.id })),
+    porVertical: porVertical
+      .filter(g => g.vertical)
+      .map(g => ({ vertical: g.vertical, total: g._count.id })),
+    porClassificacao: porClassificacao
+      .filter(g => g.classificacao)
+      .map(g => ({ classificacao: g.classificacao, total: g._count.id })),
+    porPrioridade: porPrioridade
+      .filter(g => g.prioridade)
+      .map(g => ({ prioridade: g.prioridade, total: g._count.id })),
+    semResponsavel,
+    porDia: (porDia || []).map(r => ({
+      dia: r.dia,
+      total: typeof r.total === 'bigint' ? Number(r.total) : Number(r.total),
+    })),
+  })
+})
+
 // ── POST / — Criar chamado ───────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade } = req.body
