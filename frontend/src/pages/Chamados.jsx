@@ -539,14 +539,19 @@ export default function Chamados() {
                   <h2 className="text-lg font-semibold text-gray-900 flex-1">{detalhe.titulo}</h2>
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Dropdown status */}
-                    <select
-                      className="text-xs rounded px-2 py-1 text-white font-medium border-0 cursor-pointer"
-                      style={{ backgroundColor: STATUS_CORES[detalhe.status] || '#94A3B8' }}
-                      value={detalhe.status}
-                      onChange={e => atualizarCampo('status', e.target.value)}
-                    >
-                      {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <div className="flex items-center gap-1.5 border border-gray-200 rounded px-2 py-1 bg-white">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0 transition-colors duration-200"
+                        style={{ backgroundColor: STATUS_CORES[detalhe.status] || '#94A3B8' }}
+                      />
+                      <select
+                        className="text-xs font-medium text-gray-700 border-0 outline-none bg-transparent cursor-pointer pr-1"
+                        value={detalhe.status}
+                        onChange={e => atualizarCampo('status', e.target.value)}
+                      >
+                        {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
                     <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
                       há {diasDesde(detalhe.criadoEm)}d
                     </span>
