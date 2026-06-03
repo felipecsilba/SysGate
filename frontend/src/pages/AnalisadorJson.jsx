@@ -1,7 +1,20 @@
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 
-// ─── Syntax highlight ────────────────────────────────────────────────────────
+// ─── Paletas de cores ─────────────────────────────────────────────────────────
 
+const DARK = {
+  page:       '#0f172a',   // slate-900
+  toolbar:    '#1e293b',   // slate-800
+  toolbarBdr: '#334155',   // slate-700
+  panel:      '#0d1117',   // github dark
+  panelHdr:   '#161b27',
+  lineNum:    '#374151',
+  lineNumBg:  '#0f172a',
+  caret:      '#818cf8',
+  statusBar:  '#0a0e1a',
+}
+
+// Syntax highlight — claro e escuro usam as mesmas cores
 function highlightJson(str) {
   return str
     .replace(/&/g, '&amp;')
@@ -10,15 +23,28 @@ function highlightJson(str) {
     .replace(
       /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
       (match) => {
-        let cls = 'color:#facc15'
-        if (/^"/.test(match)) {
-          cls = /:$/.test(match) ? 'color:#93c5fd' : 'color:#4ade80'
-        } else if (/true|false/.test(match)) {
-          cls = 'color:#c084fc'
-        } else if (/null/.test(match)) {
-          cls = 'color:#6b7280'
-        }
-        return `<span style="${cls}">${match}</span>`
+        let s = 'color:#facc15'                             // number  — yellow
+        if (/^"/.test(match))  s = /:$/.test(match) ? 'color:#93c5fd' : 'color:#4ade80'  // key=blue, str=green
+        else if (/true|false/.test(match)) s = 'color:#c084fc'   // boolean — purple
+        else if (/null/.test(match))       s = 'color:#6b7280'   // null    — gray
+        return `<span style="${s}">${match}</span>`
+      }
+    )
+}
+
+function highlightJsonLight(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
+      (match) => {
+        let s = 'color:#b45309'                            // number  — amber dark
+        if (/^"/.test(match))  s = /:$/.test(match) ? 'color:#1d4ed8' : 'color:#15803d' // key=blue, str=green
+        else if (/true|false/.test(match)) s = 'color:#7c3aed'  // boolean — violet
+        else if (/null/.test(match))       s = 'color:#9ca3af'  // null    — gray
+        return `<span style="${s}">${match}</span>`
       }
     )
 }
@@ -29,106 +55,170 @@ function analyzeJson(value, depth = 0, stats = null) {
   if (!stats) stats = { keys: 0, strings: 0, numbers: 0, booleans: 0, nulls: 0, arrays: 0, objects: 0, maxDepth: 0 }
   stats.maxDepth = Math.max(stats.maxDepth, depth)
   if (value === null) { stats.nulls++ }
-  else if (typeof value === 'string') { stats.strings++ }
-  else if (typeof value === 'number') { stats.numbers++ }
+  else if (typeof value === 'string')  { stats.strings++ }
+  else if (typeof value === 'number')  { stats.numbers++ }
   else if (typeof value === 'boolean') { stats.booleans++ }
-  else if (Array.isArray(value)) {
-    stats.arrays++
-    value.forEach((item) => analyzeJson(item, depth + 1, stats))
-  } else if (typeof value === 'object') {
+  else if (Array.isArray(value))  { stats.arrays++;  value.forEach((i) => analyzeJson(i, depth + 1, stats)) }
+  else if (typeof value === 'object') {
     stats.objects++
-    Object.keys(value).forEach((key) => { stats.keys++; analyzeJson(value[key], depth + 1, stats) })
+    Object.keys(value).forEach((k) => { stats.keys++; analyzeJson(value[k], depth + 1, stats) })
   }
   return stats
 }
 
+// ─── Editor com numeração de linhas ──────────────────────────────────────────
+
+function EditorLinhas({ value, onChange, onCursor, taRef }) {
+  const lineNumsRef = useRef()
+
+  const linhas = value ? value.split('\n').length : 1
+
+  const syncScroll = useCallback(() => {
+    if (lineNumsRef.current && taRef.current) {
+      lineNumsRef.current.scrollTop = taRef.current.scrollTop
+    }
+  }, [taRef])
+
+  const onKeyUp   = useCallback((e) => { syncScroll(); onCursor(e) }, [syncScroll, onCursor])
+  const onClick   = useCallback((e) => { onCursor(e) }, [onCursor])
+  const onSelect  = useCallback((e) => { onCursor(e) }, [onCursor])
+  const onScroll  = syncScroll
+
+  return (
+    <div className="flex flex-1 min-h-0 overflow-hidden">
+      {/* Numeração */}
+      <div
+        ref={lineNumsRef}
+        className="overflow-hidden shrink-0 pt-4 pb-4 text-right select-none pointer-events-none font-mono text-[12px] leading-relaxed"
+        style={{ background: DARK.lineNumBg, color: DARK.lineNum, minWidth: '3rem', paddingRight: '8px', paddingLeft: '8px' }}
+      >
+        {Array.from({ length: linhas }, (_, i) => (
+          <div key={i}>{i + 1}</div>
+        ))}
+      </div>
+      {/* Divisor */}
+      <div style={{ width: '1px', background: '#1e293b', flexShrink: 0 }} />
+      {/* Textarea */}
+      <textarea
+        ref={taRef}
+        className="flex-1 font-mono text-[13px] p-4 resize-none outline-none leading-relaxed"
+        style={{ background: DARK.panel, color: '#e2e8f0', caretColor: DARK.caret }}
+        placeholder={'Cole seu JSON aqui...\n\n{\n  "chave": "valor"\n}'}
+        value={value}
+        onChange={onChange}
+        onScroll={onScroll}
+        onKeyUp={onKeyUp}
+        onClick={onClick}
+        onSelect={onSelect}
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+      />
+    </div>
+  )
+}
+
 // ─── Tree node ────────────────────────────────────────────────────────────────
 
-const MAX_ITEMS_PREVIEW = 200
+const MAX_ITEMS = 200
 
-function JsonNode({ value, keyName, depth, path, onCopyPath }) {
-  const [expanded, setExpanded] = useState(depth < 2)
-  const [mostrandoMais, setMostrandoMais] = useState(false)
+function JsonNode({ value, keyName, depth, path, onCopyPath, dark }) {
+  const [expanded, setExpanded]     = useState(depth < 2)
+  const [mostrandoMais, setMais]    = useState(false)
 
-  const isArray = Array.isArray(value)
-  const isObject = value !== null && typeof value === 'object' && !isArray
+  const isArray      = Array.isArray(value)
+  const isObject     = value !== null && typeof value === 'object' && !isArray
   const isExpandable = isArray || isObject
-  const entries = isArray ? value : isObject ? Object.entries(value) : null
-  const count = entries ? (isArray ? value.length : entries.length) : 0
+  const entries      = isArray ? value : isObject ? Object.entries(value) : null
+  const count        = entries ? (isArray ? value.length : entries.length) : 0
 
   const currentPath = keyName !== undefined
     ? (typeof keyName === 'number' ? `${path}[${keyName}]` : `${path}.${keyName}`)
     : path
 
-  const handleClick = () => { if (isExpandable) setExpanded((v) => !v); else onCopyPath(currentPath) }
+  const colorKey    = dark ? '#93c5fd' : '#1d4ed8'
+  const colorStr    = dark ? '#4ade80' : '#15803d'
+  const colorNum    = dark ? '#facc15' : '#b45309'
+  const colorBool   = dark ? '#c084fc' : '#7c3aed'
+  const colorNull   = dark ? '#6b7280' : '#9ca3af'
+  const colorBrace  = dark ? '#94a3b8' : '#64748b'
+  const colorCount  = dark ? '#475569' : '#94a3b8'
+  const hoverBg     = dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'
 
   const renderLeaf = () => {
-    if (value === null) return <span style={{ color: '#6b7280', fontStyle: 'italic' }}>null</span>
-    if (typeof value === 'boolean') return <span style={{ color: '#c084fc' }}>{String(value)}</span>
-    if (typeof value === 'number') return <span style={{ color: '#facc15' }}>{value}</span>
+    if (value === null)            return <span style={{ color: colorNull, fontStyle: 'italic' }}>null</span>
+    if (typeof value === 'boolean') return <span style={{ color: colorBool }}>{String(value)}</span>
+    if (typeof value === 'number')  return <span style={{ color: colorNum }}>{value}</span>
     if (typeof value === 'string') {
-      const display = value.length > 120 ? value.slice(0, 120) + '…' : value
-      return <span style={{ color: '#4ade80' }}>"{display}"</span>
+      const d = value.length > 120 ? value.slice(0, 120) + '…' : value
+      return <span style={{ color: colorStr }}>"{d}"</span>
     }
     return null
   }
 
-  const visibleEntries = useMemo(() => {
+  const visible = useMemo(() => {
     if (!entries) return []
-    if (mostrandoMais || count <= MAX_ITEMS_PREVIEW) return entries
-    return entries.slice(0, MAX_ITEMS_PREVIEW)
+    return mostrandoMais || count <= MAX_ITEMS ? entries : entries.slice(0, MAX_ITEMS)
   }, [entries, mostrandoMais, count])
 
   return (
     <div className={depth > 0 ? 'ml-4' : ''}>
       <div
-        className="flex items-start gap-1 py-0.5 px-1 hover:bg-white/5 rounded group cursor-pointer select-none"
-        onClick={handleClick}
+        className="flex items-start gap-1 py-0.5 px-1 rounded group cursor-pointer select-none"
+        style={{ borderRadius: 4 }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = hoverBg }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        onClick={() => { if (isExpandable) setExpanded(v => !v); else onCopyPath(currentPath) }}
       >
-        <span className="w-3 text-xs text-gray-500 shrink-0 mt-0.5">
+        <span className="w-3 text-xs shrink-0 mt-0.5" style={{ color: colorCount }}>
           {isExpandable ? (expanded ? '▼' : '▶') : ' '}
         </span>
+
         {keyName !== undefined && (
           <button
             className="shrink-0 hover:underline"
-            style={{ color: '#93c5fd' }}
+            style={{ color: colorKey }}
             onClick={(e) => { e.stopPropagation(); onCopyPath(currentPath) }}
             title={`Copiar path: ${currentPath}`}
           >
             {typeof keyName === 'number' ? `[${keyName}]` : `"${keyName}"`}
-            <span className="text-gray-600">: </span>
+            <span style={{ color: colorCount }}>: </span>
           </button>
         )}
+
         {isExpandable ? (
-          <span className="text-gray-400">
+          <span style={{ color: colorBrace }}>
             {isArray ? '[' : '{'}
-            {!expanded && <span className="text-gray-600 text-xs ml-1">{count} {isArray ? (count === 1 ? 'item' : 'itens') : (count === 1 ? 'chave' : 'chaves')}</span>}
-            {!expanded && <span className="text-gray-400 ml-0.5">{isArray ? ']' : '}'}</span>}
+            {!expanded && <span style={{ color: colorCount, fontSize: '11px', marginLeft: 4 }}>{count} {isArray ? (count === 1 ? 'item' : 'itens') : (count === 1 ? 'chave' : 'chaves')}</span>}
+            {!expanded && <span style={{ color: colorBrace, marginLeft: 2 }}>{isArray ? ']' : '}'}</span>}
           </span>
         ) : (
-          <span className="font-mono text-sm">
+          <span className="font-mono text-[13px]">
             {renderLeaf()}
             <button
-              className="ml-2 opacity-0 group-hover:opacity-60 hover:!opacity-100 text-gray-500 text-xs"
+              className="ml-2 text-xs opacity-0 group-hover:opacity-50 hover:!opacity-100"
+              style={{ color: colorCount }}
               onClick={(e) => { e.stopPropagation(); onCopyPath(currentPath) }}
               title="Copiar path"
             >⎘</button>
           </span>
         )}
       </div>
+
       {isExpandable && expanded && (
-        <div className="border-l border-gray-700 ml-2">
-          {visibleEntries.map((entry, i) => {
+        <div style={{ borderLeft: `1px solid ${dark ? '#1e293b' : '#e2e8f0'}`, marginLeft: 8 }}>
+          {visible.map((entry, i) => {
             const [k, v] = isArray ? [i, entry] : entry
-            return <JsonNode key={isArray ? i : k} value={v} keyName={k} depth={depth + 1} path={currentPath} onCopyPath={onCopyPath} />
+            return <JsonNode key={isArray ? i : k} value={v} keyName={k} depth={depth + 1} path={currentPath} onCopyPath={onCopyPath} dark={dark} />
           })}
-          {count > MAX_ITEMS_PREVIEW && !mostrandoMais && (
+          {count > MAX_ITEMS && !mostrandoMais && (
             <button
-              className="ml-4 my-1 text-xs text-blue-400 hover:text-blue-300 px-2 py-0.5 rounded border border-gray-700 hover:border-gray-600"
-              onClick={(e) => { e.stopPropagation(); setMostrandoMais(true) }}
-            >+ {count - MAX_ITEMS_PREVIEW} itens ocultos</button>
+              className="ml-4 my-1 text-xs px-2 py-0.5 rounded"
+              style={{ color: '#818cf8', border: `1px solid ${dark ? '#312e81' : '#c7d2fe'}`, background: 'transparent' }}
+              onClick={(e) => { e.stopPropagation(); setMais(true) }}
+            >+ {count - MAX_ITEMS} itens ocultos</button>
           )}
-          <div className="ml-3 text-gray-400 text-sm py-0.5">{isArray ? ']' : '}'}</div>
+          <div className="ml-3 text-[13px] py-0.5" style={{ color: colorBrace }}>{isArray ? ']' : '}'}</div>
         </div>
       )}
     </div>
@@ -137,65 +227,77 @@ function JsonNode({ value, keyName, depth, path, onCopyPath }) {
 
 // ─── Tabela ───────────────────────────────────────────────────────────────────
 
-function JsonTabela({ data }) {
+function JsonTabela({ data, dark }) {
+  const bg    = dark ? '#1e293b' : '#ffffff'
+  const bgHdr = dark ? '#0f172a' : '#f8fafc'
+  const bdr   = dark ? '#334155' : '#e2e8f0'
+  const txt   = dark ? '#e2e8f0' : '#1e293b'
+  const txtSub = dark ? '#94a3b8' : '#64748b'
+
   if (!Array.isArray(data)) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full" style={{ background: bg }}>
         <div className="text-center">
-          <div className="text-5xl mb-3 text-gray-200 select-none">⊘</div>
-          <div className="text-sm font-medium text-gray-500">Tabela de Dados</div>
-          <div className="text-xs text-gray-400 mt-1">Disponível apenas para arrays de objetos</div>
+          <div className="text-5xl mb-3 select-none" style={{ color: dark ? '#334155' : '#e2e8f0' }}>⊘</div>
+          <div className="text-sm font-medium" style={{ color: txtSub }}>Disponível apenas para arrays de objetos</div>
         </div>
       </div>
     )
   }
+
   const objetos = data.filter((item) => item !== null && typeof item === 'object' && !Array.isArray(item))
   if (objetos.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full" style={{ background: bg }}>
         <div className="text-center">
-          <div className="text-5xl mb-3 text-gray-200 select-none">⊘</div>
-          <div className="text-sm text-gray-500">Nenhum objeto encontrado no array</div>
+          <div className="text-5xl mb-3 select-none" style={{ color: dark ? '#334155' : '#e2e8f0' }}>⊘</div>
+          <div className="text-sm" style={{ color: txtSub }}>Nenhum objeto encontrado no array</div>
         </div>
       </div>
     )
   }
+
   const colunas = [...new Set(objetos.flatMap((o) => Object.keys(o)))]
+
   const renderCell = (value) => {
-    if (value === undefined) return <span className="text-gray-300">—</span>
-    if (value === null) return <span className="text-gray-400 italic text-xs">null</span>
-    if (typeof value === 'boolean') return <span className="text-purple-600 text-xs font-mono">{String(value)}</span>
-    if (typeof value === 'number') return <span className="text-yellow-700 font-mono">{value}</span>
-    if (Array.isArray(value)) return <span className="text-gray-400 text-xs bg-gray-100 px-1.5 py-0.5 rounded">[{value.length}]</span>
-    if (typeof value === 'object') return <span className="text-gray-400 text-xs bg-gray-100 px-1.5 py-0.5 rounded">{'{'}{Object.keys(value).length}{'}'}</span>
+    if (value === undefined) return <span style={{ color: dark ? '#475569' : '#cbd5e1' }}>—</span>
+    if (value === null)      return <span style={{ color: dark ? '#6b7280' : '#9ca3af', fontStyle: 'italic', fontSize: 11 }}>null</span>
+    if (typeof value === 'boolean') return <span style={{ color: dark ? '#c084fc' : '#7c3aed', fontSize: 12, fontFamily: 'monospace' }}>{String(value)}</span>
+    if (typeof value === 'number')  return <span style={{ color: dark ? '#facc15' : '#b45309', fontFamily: 'monospace' }}>{value}</span>
+    if (Array.isArray(value))  return <span style={{ color: dark ? '#64748b' : '#94a3b8', fontSize: 11, background: dark ? '#0f172a' : '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>[{value.length}]</span>
+    if (typeof value === 'object') return <span style={{ color: dark ? '#64748b' : '#94a3b8', fontSize: 11, background: dark ? '#0f172a' : '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>{'{'}{Object.keys(value).length}{'}'}</span>
     const str = String(value)
-    return <span className="text-gray-700" title={str.length > 60 ? str : undefined}>{str.length > 60 ? str.slice(0, 60) + '…' : str}</span>
+    return <span style={{ color: txt }} title={str.length > 60 ? str : undefined}>{str.length > 60 ? str.slice(0, 60) + '…' : str}</span>
   }
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: bg }}>
       <div className="flex-1 overflow-auto">
         <table className="w-full text-sm border-collapse">
           <thead className="sticky top-0 z-10">
             <tr>
-              <th className="px-3 py-2.5 text-left text-xs font-bold text-gray-500 bg-gray-50 border-b border-gray-200 w-10">#</th>
+              <th style={{ background: bgHdr, color: txtSub, borderBottom: `1px solid ${bdr}`, padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, width: 40 }}>#</th>
               {colunas.map((col) => (
-                <th key={col} className="px-3 py-2.5 text-left text-xs font-bold text-gray-700 bg-gray-50 border-b border-gray-200 whitespace-nowrap">{col}</th>
+                <th key={col} style={{ background: bgHdr, color: txt, borderBottom: `1px solid ${bdr}`, padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>{col}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {objetos.map((row, i) => (
-              <tr key={i} className="border-b border-gray-100 hover:bg-sysgate-50/40 transition-colors">
-                <td className="px-3 py-2 text-xs text-gray-400 font-mono">{i}</td>
+              <tr key={i} style={{ borderBottom: `1px solid ${dark ? '#1e293b' : '#f1f5f9'}` }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = dark ? '#1e293b' : '#f8fafc' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <td style={{ padding: '8px 12px', fontSize: 11, color: txtSub, fontFamily: 'monospace' }}>{i}</td>
                 {colunas.map((col) => (
-                  <td key={col} className="px-3 py-2 whitespace-nowrap font-mono text-sm">{renderCell(row[col])}</td>
+                  <td key={col} style={{ padding: '8px 12px', whiteSpace: 'nowrap', fontFamily: 'monospace', fontSize: 13 }}>{renderCell(row[col])}</td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-2 border-t border-gray-200 text-xs text-gray-500 bg-gray-50 shrink-0">
+      <div style={{ padding: '8px 16px', borderTop: `1px solid ${bdr}`, background: bgHdr, fontSize: 11, color: txtSub }}>
         {objetos.length} registros · {colunas.length} colunas
         {data.length !== objetos.length && ` · ${data.length - objetos.length} item(ns) não-objeto ignorado(s)`}
       </div>
@@ -205,54 +307,60 @@ function JsonTabela({ data }) {
 
 // ─── Estatísticas ─────────────────────────────────────────────────────────────
 
-function JsonEstatisticas({ parsed, rawText }) {
+function JsonEstatisticas({ parsed, rawText, dark }) {
   const stats = useMemo(() => analyzeJson(parsed), [parsed])
   const formatNum = (n) => n.toLocaleString('pt-BR')
+
+  const bg   = dark ? '#1e293b' : '#ffffff'
+  const bdr  = dark ? '#334155' : '#e2e8f0'
+
   const cards = [
-    { label: 'Tamanho', value: formatNum(rawText.length) + ' chars', sub: (new Blob([rawText]).size / 1024).toFixed(2) + ' KB', cls: 'bg-blue-50 border-blue-200 text-blue-700' },
-    { label: 'Profundidade', value: stats.maxDepth, sub: 'níveis de aninhamento', cls: 'bg-violet-50 border-violet-200 text-violet-700' },
-    { label: 'Chaves', value: formatNum(stats.keys), sub: 'propriedades', cls: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
-    { label: 'Objetos', value: formatNum(stats.objects), sub: '{ ... }', cls: 'bg-purple-50 border-purple-200 text-purple-700' },
-    { label: 'Arrays', value: formatNum(stats.arrays), sub: '[ ... ]', cls: 'bg-cyan-50 border-cyan-200 text-cyan-700' },
-    { label: 'Strings', value: formatNum(stats.strings), sub: '"..."', cls: 'bg-green-50 border-green-200 text-green-700' },
-    { label: 'Números', value: formatNum(stats.numbers), sub: '0–9', cls: 'bg-yellow-50 border-yellow-200 text-yellow-700' },
-    { label: 'Booleanos', value: formatNum(stats.booleans), sub: 'true / false', cls: 'bg-orange-50 border-orange-200 text-orange-700' },
-    { label: 'Nulos', value: formatNum(stats.nulls), sub: 'null', cls: 'bg-red-50 border-red-200 text-red-700' },
+    { label: 'Tamanho',      value: formatNum(rawText.length) + ' chars', sub: (new Blob([rawText]).size / 1024).toFixed(2) + ' KB', h: dark ? '#1d4ed8' : '#1d4ed8', t: '#93c5fd', bg: dark ? '#0f172a' : '#eff6ff', bdr: dark ? '#1e3a5f' : '#bfdbfe' },
+    { label: 'Profundidade', value: stats.maxDepth, sub: 'níveis',         h: dark ? '#6d28d9' : '#6d28d9', t: '#c4b5fd', bg: dark ? '#0f0a1e' : '#f5f3ff', bdr: dark ? '#3b1e6e' : '#ddd6fe' },
+    { label: 'Chaves',       value: formatNum(stats.keys), sub: 'props',   h: dark ? '#4338ca' : '#4338ca', t: '#a5b4fc', bg: dark ? '#0d0f23' : '#eef2ff', bdr: dark ? '#1e2156' : '#c7d2fe' },
+    { label: 'Objetos',      value: formatNum(stats.objects), sub: '{ }',  h: dark ? '#7c3aed' : '#7c3aed', t: '#c084fc', bg: dark ? '#100b1f' : '#faf5ff', bdr: dark ? '#3b1e6e' : '#e9d5ff' },
+    { label: 'Arrays',       value: formatNum(stats.arrays), sub: '[ ]',   h: dark ? '#0e7490' : '#0e7490', t: '#67e8f9', bg: dark ? '#061218' : '#ecfeff', bdr: dark ? '#134e4a' : '#a5f3fc' },
+    { label: 'Strings',      value: formatNum(stats.strings), sub: '"..."', h: dark ? '#15803d' : '#15803d', t: '#4ade80', bg: dark ? '#071311' : '#f0fdf4', bdr: dark ? '#14532d' : '#bbf7d0' },
+    { label: 'Números',      value: formatNum(stats.numbers), sub: '0–9',   h: dark ? '#a16207' : '#a16207', t: '#facc15', bg: dark ? '#1a1200' : '#fefce8', bdr: dark ? '#4d3800' : '#fde047' },
+    { label: 'Booleanos',    value: formatNum(stats.booleans), sub: 'true/false', h: dark ? '#c2410c' : '#c2410c', t: '#fb923c', bg: dark ? '#1a0c00' : '#fff7ed', bdr: dark ? '#5e1c00' : '#fed7aa' },
+    { label: 'Nulos',        value: formatNum(stats.nulls), sub: 'null',    h: dark ? '#991b1b' : '#991b1b', t: '#f87171', bg: dark ? '#150808' : '#fef2f2', bdr: dark ? '#500d0d' : '#fecaca' },
   ]
+
   const total = stats.strings + stats.numbers + stats.booleans + stats.nulls
   const tipos = [
-    { label: 'Strings', count: stats.strings, pct: total > 0 ? Math.round((stats.strings / total) * 100) : 0, color: 'bg-green-400' },
-    { label: 'Números', count: stats.numbers, pct: total > 0 ? Math.round((stats.numbers / total) * 100) : 0, color: 'bg-yellow-400' },
-    { label: 'Booleanos', count: stats.booleans, pct: total > 0 ? Math.round((stats.booleans / total) * 100) : 0, color: 'bg-purple-400' },
-    { label: 'Nulos', count: stats.nulls, pct: total > 0 ? Math.round((stats.nulls / total) * 100) : 0, color: 'bg-gray-400' },
+    { label: 'Strings',   count: stats.strings,  pct: total > 0 ? Math.round((stats.strings  / total) * 100) : 0, color: '#4ade80' },
+    { label: 'Números',   count: stats.numbers,  pct: total > 0 ? Math.round((stats.numbers  / total) * 100) : 0, color: '#facc15' },
+    { label: 'Booleanos', count: stats.booleans, pct: total > 0 ? Math.round((stats.booleans / total) * 100) : 0, color: '#c084fc' },
+    { label: 'Nulos',     count: stats.nulls,    pct: total > 0 ? Math.round((stats.nulls    / total) * 100) : 0, color: '#94a3b8' },
   ].filter((t) => t.count > 0)
 
   return (
-    <div className="p-5 overflow-auto h-full">
+    <div className="overflow-auto h-full p-5" style={{ background: bg }}>
       <div className="grid grid-cols-3 gap-3 mb-5">
         {cards.map((c) => (
-          <div key={c.label} className={`border rounded-xl p-4 ${c.cls}`}>
-            <div className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">{c.label}</div>
-            <div className="text-2xl font-bold tabular-nums">{c.value}</div>
-            <div className="text-xs opacity-50 mt-0.5">{c.sub}</div>
+          <div key={c.label} style={{ background: c.bg, border: `1px solid ${c.bdr}`, borderRadius: 12, padding: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: c.h, opacity: 0.7, marginBottom: 4 }}>{c.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: c.t, fontVariantNumeric: 'tabular-nums' }}>{c.value}</div>
+            <div style={{ fontSize: 11, color: c.h, opacity: 0.5, marginTop: 2 }}>{c.sub}</div>
           </div>
         ))}
       </div>
+
       {tipos.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">Distribuição de tipos primitivos</div>
-          <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5 mb-3">
+        <div style={{ background: dark ? '#0f172a' : '#f8fafc', border: `1px solid ${bdr}`, borderRadius: 12, padding: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: dark ? '#64748b' : '#94a3b8', marginBottom: 12 }}>Distribuição de tipos primitivos</div>
+          <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 2, marginBottom: 12 }}>
             {tipos.map((t) => (
-              <div key={t.label} className={`${t.color}`} style={{ width: `${t.pct}%`, minWidth: t.pct > 0 ? '4px' : '0' }} title={`${t.label}: ${t.count} (${t.pct}%)`} />
+              <div key={t.label} style={{ background: t.color, width: `${t.pct}%`, minWidth: t.pct > 0 ? 4 : 0, borderRadius: 999 }} title={`${t.label}: ${t.count}`} />
             ))}
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
             {tipos.map((t) => (
-              <div key={t.label} className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${t.color} shrink-0`} />
-                <span className="text-xs text-gray-600">{t.label}</span>
-                <span className="text-xs font-semibold text-gray-500">{t.pct}%</span>
-                <span className="text-xs text-gray-400">({formatNum(t.count)})</span>
+              <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: dark ? '#94a3b8' : '#64748b' }}>{t.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: dark ? '#e2e8f0' : '#1e293b' }}>{t.pct}%</span>
+                <span style={{ fontSize: 11, color: dark ? '#475569' : '#94a3b8' }}>({formatNum(t.count)})</span>
               </div>
             ))}
           </div>
@@ -262,7 +370,7 @@ function JsonEstatisticas({ parsed, rawText }) {
   )
 }
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
+// ─── Exemplo ──────────────────────────────────────────────────────────────────
 
 const EXEMPLO_JSON = `{
   "usuario": {
@@ -282,11 +390,7 @@ const EXEMPLO_JSON = `{
     "preferencias": {
       "tema": "escuro",
       "idioma": "pt-BR",
-      "notificacoes": {
-        "email": true,
-        "sms": false,
-        "push": true
-      }
+      "notificacoes": { "email": true, "sms": false, "push": true }
     }
   },
   "metadata": {
@@ -308,17 +412,17 @@ const ABAS = [
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function AnalisadorJson() {
-  const [input, setInput]             = useState('')
-  const [parsed, setParsed]           = useState(null)
-  const [erro, setErro]               = useState(null)
-  const [aba, setAba]                 = useState('formatado')
-  const [pathCopiado, setPathCopiado] = useState('')
-  const [copiado, setCopiado]         = useState(false)
-  const [cursor, setCursor]           = useState({ linha: 1, coluna: 1 })
-  const textareaRef = useRef()
-  const fileRef     = useRef()
+  const [input, setInput]         = useState('')
+  const [parsed, setParsed]       = useState(null)
+  const [erro, setErro]           = useState(null)
+  const [aba, setAba]             = useState('formatado')
+  const [pathCopiado, setPath]    = useState('')
+  const [copiado, setCopiado]     = useState(false)
+  const [cursor, setCursor]       = useState({ linha: 1, coluna: 1 })
+  const [viewerDark, setViewerDark] = useState(false)  // toggle dark/light no visualizador
+  const taRef   = useRef()
+  const fileRef = useRef()
 
-  // Parse em tempo real
   const processarInput = useCallback((text) => {
     setInput(text)
     if (!text.trim()) { setParsed(null); setErro(null); return }
@@ -326,27 +430,23 @@ export default function AnalisadorJson() {
     catch (e) { setParsed(null); setErro(e.message) }
   }, [])
 
-  // Rastrear posição do cursor
   const atualizarCursor = useCallback((e) => {
-    const pos = e.target.selectionStart
+    const pos  = e.target.selectionStart
     const before = e.target.value.slice(0, pos)
     const linhas = before.split('\n')
     setCursor({ linha: linhas.length, coluna: linhas[linhas.length - 1].length + 1 })
   }, [])
 
-  const formatado  = useMemo(() => (parsed !== null ? JSON.stringify(parsed, null, 2) : ''), [parsed])
-  const highlighted = useMemo(() => (formatado ? highlightJson(formatado) : ''), [formatado])
-  const bytes      = useMemo(() => new Blob([input]).size, [input])
+  const formatado   = useMemo(() => (parsed !== null ? JSON.stringify(parsed, null, 2) : ''), [parsed])
+  const highlighted = useMemo(() => formatado ? (viewerDark ? highlightJson(formatado) : highlightJsonLight(formatado)) : '', [formatado, viewerDark])
+  const bytes       = useMemo(() => new Blob([input]).size, [input])
 
   const formatar  = () => { if (parsed !== null) processarInput(formatado) }
   const minificar = () => { if (parsed !== null) processarInput(JSON.stringify(parsed)) }
   const limpar    = () => processarInput('')
 
   const colar = async () => {
-    try {
-      const text = await navigator.clipboard.readText()
-      processarInput(text)
-    } catch (_) {}
+    try { const t = await navigator.clipboard.readText(); processarInput(t) } catch (_) {}
   }
 
   const copiarResultado = async () => {
@@ -361,16 +461,16 @@ export default function AnalisadorJson() {
     const text = formatado || input
     if (!text) return
     const blob = new Blob([text], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
     a.href = url; a.download = 'dados.json'; a.click()
     URL.revokeObjectURL(url)
   }
 
   const onCopyPath = async (path) => {
     await navigator.clipboard.writeText(path)
-    setPathCopiado(path)
-    setTimeout(() => setPathCopiado(''), 2000)
+    setPath(path)
+    setTimeout(() => setPath(''), 2000)
   }
 
   const carregarArquivo = (e) => {
@@ -382,151 +482,172 @@ export default function AnalisadorJson() {
     e.target.value = ''
   }
 
+  // Viewer bg e texto dependem do toggle
+  const viewerBg   = viewerDark ? '#1e293b' : '#ffffff'
+  const viewerText = viewerDark ? '#e2e8f0' : '#1e293b'
+
+  // Cores base dos botões da toolbar (sempre dark)
+  const btnBase = 'font-medium transition-colors rounded'
+  const btnGhost = { background: 'transparent', border: '1px solid #334155', color: '#94a3b8', padding: '4px 10px', fontSize: 12, cursor: 'pointer', borderRadius: 6 }
+  const btnGhostHover = { background: '#334155' }
+
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: DARK.page }}>
+
+      {/* ── Barra de título ── */}
+      <div style={{ background: DARK.toolbar, borderBottom: `1px solid ${DARK.toolbarBdr}`, padding: '0 16px', height: 44, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        {/* Acento */}
+        <div style={{ width: 3, height: 20, borderRadius: 999, background: 'linear-gradient(to bottom, #6366f1, #8b5cf6)', flexShrink: 0 }} />
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em' }}>Analisador JSON</span>
+        <span style={{ fontSize: 12, color: '#475569', marginLeft: 2 }}>— Formate, visualize e analise</span>
+      </div>
 
       {/* ── Toolbar ── */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
+      <div style={{ background: DARK.toolbar, borderBottom: `1px solid ${DARK.toolbarBdr}`, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
 
-        {/* Título compacto */}
-        <div className="flex items-center gap-2 mr-3 pr-3 border-r border-gray-200">
-          <div className="w-1 h-5 rounded-full bg-sysgate-600 shrink-0" />
-          <span className="text-sm font-bold text-gray-800 whitespace-nowrap">Analisador JSON</span>
-        </div>
-
-        {/* Ações de entrada */}
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Entrada</span>
-          <button onClick={limpar} disabled={!input}
-            className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-35 disabled:cursor-not-allowed">
-            Limpar
-          </button>
-          <button onClick={colar}
-            className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors">
-            Colar
-          </button>
-          <button onClick={formatar} disabled={!parsed}
-            className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-35 disabled:cursor-not-allowed">
-            Formatar
-          </button>
-          <button onClick={minificar} disabled={!parsed}
-            className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-35 disabled:cursor-not-allowed">
-            Minificar
-          </button>
-        </div>
+        {/* Grupo: Entrada */}
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>Entrada</span>
+        {[
+          { label: 'Limpar', action: limpar, disabled: !input },
+          { label: 'Colar',  action: colar,  disabled: false  },
+          { label: 'Formatar', action: formatar, disabled: !parsed },
+          { label: 'Minificar', action: minificar, disabled: !parsed },
+        ].map(({ label, action, disabled }) => (
+          <button key={label} onClick={action} disabled={disabled}
+            style={{ ...btnGhost, opacity: disabled ? 0.35 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+            onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = '#334155' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+          >{label}</button>
+        ))}
 
         {/* Divisor */}
-        <div className="w-px h-5 bg-gray-200 mx-1" />
+        <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
 
-        {/* Ações de saída */}
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Resultado</span>
-          <button onClick={copiarResultado} disabled={!parsed}
-            className={`text-xs px-2.5 py-1 rounded border transition-colors disabled:opacity-35 disabled:cursor-not-allowed ${
-              copiado
-                ? 'border-green-300 bg-green-50 text-green-700'
-                : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300'
-            }`}>
-            {copiado ? '✓ Copiado' : 'Copiar Resultado'}
-          </button>
-          <button onClick={baixar} disabled={!parsed}
-            className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-35 disabled:cursor-not-allowed">
-            Baixar .json
-          </button>
-          <label className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer">
-            Abrir arquivo
-            <input type="file" accept=".json,application/json,text/plain" ref={fileRef} onChange={carregarArquivo} className="hidden" />
-          </label>
-          <button onClick={() => processarInput(EXEMPLO_JSON)}
-            className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors">
-            Exemplo
-          </button>
-        </div>
+        {/* Grupo: Resultado */}
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>Resultado</span>
+        <button onClick={copiarResultado} disabled={!parsed}
+          style={{ ...btnGhost, opacity: !parsed ? 0.35 : 1, cursor: !parsed ? 'not-allowed' : 'pointer',
+            ...(copiado ? { background: '#14532d', border: '1px solid #15803d', color: '#4ade80' } : {}) }}
+          onMouseEnter={(e) => { if (parsed && !copiado) e.currentTarget.style.background = '#334155' }}
+          onMouseLeave={(e) => { if (!copiado) e.currentTarget.style.background = 'transparent' }}
+        >{copiado ? '✓ Copiado' : 'Copiar Resultado'}</button>
 
-        {/* Validar (destaque) */}
-        {input && (
-          <div className="ml-auto shrink-0">
-            {parsed !== null ? (
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                JSON Válido
-              </span>
-            ) : erro ? (
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                JSON Inválido
-              </span>
-            ) : null}
-          </div>
-        )}
+        <button onClick={baixar} disabled={!parsed}
+          style={{ ...btnGhost, opacity: !parsed ? 0.35 : 1, cursor: !parsed ? 'not-allowed' : 'pointer' }}
+          onMouseEnter={(e) => { if (parsed) e.currentTarget.style.background = '#334155' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        >Baixar .json</button>
+
+        <label style={{ ...btnGhost, cursor: 'pointer' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#334155' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        >
+          Abrir arquivo
+          <input type="file" accept=".json,application/json,text/plain" ref={fileRef} onChange={carregarArquivo} style={{ display: 'none' }} />
+        </label>
+
+        <button onClick={() => processarInput(EXEMPLO_JSON)}
+          style={{ ...btnGhost }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#334155' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        >Exemplo</button>
+
+        {/* Validar — CTA primário */}
+        <button
+          style={{ background: parsed !== null ? '#4f46e5' : erro ? '#7f1d1d' : '#1e293b', border: 'none', color: '#ffffff', padding: '5px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: 'pointer', marginLeft: 4, transition: 'background 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}
+          onClick={() => {}} disabled
+        >
+          {parsed !== null ? (
+            <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} /> Válido</>
+          ) : erro ? (
+            <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f87171', display: 'inline-block' }} /> Inválido</>
+          ) : (
+            <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#6b7280', display: 'inline-block' }} /> Validar</>
+          )}
+        </button>
       </div>
 
       {/* ── Split pane ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* ── Painel ENTRADA (esquerda, compacto) ── */}
-        <div className="flex flex-col bg-gray-950 border-r border-gray-800 shrink-0" style={{ width: '34%' }}>
+        {/* ── Painel ENTRADA (esquerda) ── */}
+        <div className="flex flex-col shrink-0" style={{ width: '34%', background: DARK.panel, borderRight: `1px solid ${DARK.toolbarBdr}` }}>
 
-          {/* Header da entrada */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 shrink-0">
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Entrada Bruta</span>
-            {input.length > 0 && (
-              <span className="text-[10px] text-gray-600">{input.length.toLocaleString('pt-BR')} chars</span>
-            )}
+          {/* Header da entrada com dots macOS */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', background: DARK.panelHdr, borderBottom: `1px solid #1e293b`, flexShrink: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Entrada Bruta</span>
+            {/* Dots estilo macOS */}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57', display: 'inline-block' }} title="Limpar" onClick={limpar} className="cursor-pointer" />
+              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e', display: 'inline-block' }} title="Minificar" onClick={minificar} className="cursor-pointer" />
+              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840', display: 'inline-block' }} title="Formatar" onClick={formatar} className="cursor-pointer" />
+            </div>
           </div>
 
-          {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            className="flex-1 bg-transparent text-gray-200 font-mono text-[13px] p-4 resize-none outline-none leading-relaxed"
-            style={{ caretColor: '#818cf8' }}
-            placeholder={'Cole seu JSON aqui...\n\n{\n  "chave": "valor"\n}'}
+          {/* Editor com linhas */}
+          <EditorLinhas
             value={input}
             onChange={(e) => processarInput(e.target.value)}
-            onClick={atualizarCursor}
-            onKeyUp={atualizarCursor}
-            onSelect={atualizarCursor}
-            spellCheck={false}
-            autoComplete="off"
-            autoCorrect="off"
+            onCursor={atualizarCursor}
+            taRef={taRef}
           />
 
-          {/* Erro inline (se houver) */}
+          {/* Erro inline */}
           {erro && (
-            <div className="px-4 py-2.5 border-t border-red-900/50 bg-red-950/30 shrink-0">
-              <div className="text-[10px] font-bold text-red-400 uppercase tracking-wide mb-0.5">Erro de sintaxe</div>
-              <div className="text-xs text-red-300 font-mono break-all leading-relaxed">{erro}</div>
+            <div style={{ padding: '10px 14px', borderTop: '1px solid #450a0a', background: '#1a0808', flexShrink: 0 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Erro de sintaxe</div>
+              <div style={{ fontSize: 12, color: '#fca5a5', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.5 }}>{erro}</div>
             </div>
           )}
         </div>
 
-        {/* ── Painel VISUALIZADOR (direita, principal) ── */}
-        <div className="flex flex-col bg-white flex-1 min-w-0">
+        {/* ── Painel VISUALIZADOR (direita) ── */}
+        <div className="flex flex-col flex-1 min-w-0" style={{ background: viewerBg }}>
 
-          {/* Tabs */}
-          <div className="flex items-center px-4 border-b border-gray-200 shrink-0 bg-gray-50">
+          {/* Tabs + toggle dark/light */}
+          <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: `1px solid ${viewerDark ? '#334155' : '#e2e8f0'}`, background: viewerDark ? '#0f172a' : '#f8fafc', flexShrink: 0 }}>
             {ABAS.map((a) => (
               <button
                 key={a.id}
                 onClick={() => setAba(a.id)}
                 disabled={parsed === null}
-                className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed ${
-                  aba === a.id
-                    ? 'border-sysgate-600 text-sysgate-700 bg-white'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-white'
-                }`}
-              >
-                {a.label}
-              </button>
+                style={{
+                  padding: '10px 16px',
+                  fontSize: 12,
+                  fontWeight: aba === a.id ? 700 : 500,
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: aba === a.id ? '2px solid #6366f1' : '2px solid transparent',
+                  color: aba === a.id ? (viewerDark ? '#a5b4fc' : '#4f46e5') : (viewerDark ? '#64748b' : '#94a3b8'),
+                  cursor: parsed === null ? 'not-allowed' : 'pointer',
+                  opacity: parsed === null ? 0.35 : 1,
+                  whiteSpace: 'nowrap',
+                  transition: 'color 0.15s',
+                  marginBottom: -1,
+                }}
+              >{a.label}</button>
             ))}
 
-            {/* Notificação de path copiado na tab bar */}
-            {pathCopiado && (
-              <div className="ml-auto flex items-center gap-1.5 text-xs text-sysgate-600 bg-sysgate-50 px-3 py-1 rounded border border-sysgate-200">
-                <span className="font-semibold">Path:</span>
-                <span className="font-mono">{pathCopiado}</span>
-              </div>
-            )}
+            {/* Toggle dark/light do visualizador */}
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: 12, gap: 8 }}>
+              {pathCopiado && (
+                <div style={{ fontSize: 11, color: '#818cf8', background: viewerDark ? '#1e1b4b' : '#eef2ff', border: '1px solid #4338ca', borderRadius: 6, padding: '2px 8px', display: 'flex', gap: 4 }}>
+                  <span style={{ fontWeight: 700 }}>Path:</span>
+                  <span style={{ fontFamily: 'monospace' }}>{pathCopiado}</span>
+                </div>
+              )}
+              <button
+                onClick={() => setViewerDark(v => !v)}
+                title={viewerDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 6, border: `1px solid ${viewerDark ? '#334155' : '#e2e8f0'}`, background: viewerDark ? '#1e293b' : '#ffffff', color: viewerDark ? '#94a3b8' : '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+              >
+                {viewerDark ? (
+                  <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Claro</>
+                ) : (
+                  <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Escuro</>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Conteúdo */}
@@ -534,29 +655,27 @@ export default function AnalisadorJson() {
 
             {/* Placeholder */}
             {parsed === null && !erro && (
-              <div className="flex items-center justify-center h-full bg-white">
-                <div className="text-center">
-                  <div className="text-7xl mb-5 font-mono select-none" style={{ color: '#e5e7eb' }}>{'{}'}</div>
-                  <div className="text-sm font-semibold text-gray-400">Cole um JSON no painel à esquerda</div>
-                  <div className="text-xs text-gray-300 mt-1 mb-5">ou carregue um arquivo para começar</div>
-                  <button
-                    onClick={() => processarInput(EXEMPLO_JSON)}
-                    className="text-xs px-5 py-2 rounded-lg bg-sysgate-600 text-white hover:bg-sysgate-700 transition-colors font-medium shadow-sm"
-                  >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: viewerBg }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 72, fontFamily: 'monospace', color: viewerDark ? '#1e293b' : '#e2e8f0', marginBottom: 16, userSelect: 'none', lineHeight: 1 }}>{'{}'}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: viewerDark ? '#475569' : '#94a3b8' }}>Cole um JSON no painel esquerdo</div>
+                  <div style={{ fontSize: 12, color: viewerDark ? '#334155' : '#cbd5e1', marginTop: 6, marginBottom: 20 }}>ou carregue um arquivo para começar</div>
+                  <button onClick={() => processarInput(EXEMPLO_JSON)}
+                    style={{ background: '#4f46e5', color: '#ffffff', border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                     Carregar exemplo
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Erro state no visualizador */}
+            {/* Erro no visualizador */}
             {parsed === null && erro && (
-              <div className="flex items-center justify-center h-full bg-white">
-                <div className="text-center max-w-sm px-6">
-                  <div className="text-5xl mb-4 select-none">⚠</div>
-                  <div className="text-sm font-bold text-red-600 mb-2">JSON Inválido</div>
-                  <div className="text-xs text-gray-500 font-mono bg-gray-50 border border-gray-200 rounded-lg p-3 text-left break-all leading-relaxed">{erro}</div>
-                  <div className="text-xs text-gray-400 mt-3">Corrija a sintaxe no painel esquerdo</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: viewerBg }}>
+                <div style={{ textAlign: 'center', maxWidth: 380, padding: '0 24px' }}>
+                  <div style={{ fontSize: 48, marginBottom: 16, color: viewerDark ? '#7f1d1d' : '#fca5a5' }}>⚠</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#ef4444', marginBottom: 8 }}>JSON Inválido</div>
+                  <div style={{ fontSize: 12, fontFamily: 'monospace', background: viewerDark ? '#0f172a' : '#f8fafc', border: `1px solid ${viewerDark ? '#7f1d1d' : '#fecaca'}`, borderRadius: 8, padding: 12, color: viewerDark ? '#fca5a5' : '#dc2626', textAlign: 'left', wordBreak: 'break-all', lineHeight: 1.6 }}>{erro}</div>
+                  <div style={{ fontSize: 12, color: viewerDark ? '#475569' : '#94a3b8', marginTop: 10 }}>Corrija a sintaxe no painel esquerdo</div>
                 </div>
               </div>
             )}
@@ -564,8 +683,8 @@ export default function AnalisadorJson() {
             {/* Formatado */}
             {parsed !== null && aba === 'formatado' && (
               <pre
-                className="p-5 text-[13px] font-mono leading-relaxed overflow-auto h-full"
-                style={{ background: '#030712', color: '#e5e7eb', margin: 0 }}
+                className="overflow-auto h-full"
+                style={{ margin: 0, padding: 20, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
                 dangerouslySetInnerHTML={{ __html: highlighted }}
               />
             )}
@@ -573,81 +692,60 @@ export default function AnalisadorJson() {
             {/* Árvore */}
             {parsed !== null && aba === 'arvore' && (
               <div
-                className="p-4 overflow-auto h-full font-mono text-[13px] leading-relaxed"
-                style={{ background: '#030712', color: '#e5e7eb' }}
+                className="overflow-auto h-full"
+                style={{ padding: 16, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
               >
-                <JsonNode value={parsed} depth={0} path="$" onCopyPath={onCopyPath} />
+                <JsonNode value={parsed} depth={0} path="$" onCopyPath={onCopyPath} dark={viewerDark} />
               </div>
             )}
 
             {/* Tabela */}
             {parsed !== null && aba === 'tabela' && (
-              <JsonTabela data={parsed} />
+              <JsonTabela data={parsed} dark={viewerDark} />
             )}
 
             {/* Estatísticas */}
             {parsed !== null && aba === 'stats' && (
-              <JsonEstatisticas parsed={parsed} rawText={input} />
+              <JsonEstatisticas parsed={parsed} rawText={input} dark={viewerDark} />
             )}
           </div>
         </div>
       </div>
 
       {/* ── Status bar ── */}
-      <div className="flex items-center gap-4 px-4 py-1.5 border-t border-gray-200 bg-gray-900 text-xs shrink-0">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '5px 16px', borderTop: `1px solid ${DARK.toolbarBdr}`, background: DARK.statusBar, fontSize: 11, flexShrink: 0 }}>
         {/* Validade */}
-        {!input && (
-          <span className="text-gray-600">Aguardando entrada…</span>
-        )}
-        {input && parsed !== null && (
-          <span className="flex items-center gap-1.5 text-green-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+        {!input ? (
+          <span style={{ color: '#475569' }}>Aguardando entrada…</span>
+        ) : parsed !== null ? (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#4ade80', fontWeight: 600 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }} />
             JSON Válido
           </span>
-        )}
-        {input && erro && (
-          <span className="flex items-center gap-1.5 text-red-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+        ) : (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#f87171', fontWeight: 600 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f87171' }} />
             JSON Inválido
           </span>
         )}
 
-        {/* Separador */}
-        {input && <span className="text-gray-700">|</span>}
-
-        {/* Cursor */}
-        {input && (
-          <span className="text-gray-500">
-            Linha {cursor.linha}, Coluna {cursor.coluna}
-          </span>
-        )}
-
-        {/* Encoding */}
-        <span className="text-gray-700">|</span>
-        <span className="text-gray-600">UTF-8</span>
-
-        {/* Bytes */}
+        {input && <span style={{ color: '#334155' }}>|</span>}
+        {input && <span style={{ color: '#64748b' }}>Linha {cursor.linha}, Coluna {cursor.coluna}</span>}
+        <span style={{ color: '#334155' }}>|</span>
+        <span style={{ color: '#475569' }}>UTF-8</span>
         {bytes > 0 && (
           <>
-            <span className="text-gray-700">|</span>
-            <span className="text-gray-600">
-              {bytes >= 1024
-                ? `${(bytes / 1024).toFixed(1)} KB`
-                : `${bytes} bytes`}
-            </span>
+            <span style={{ color: '#334155' }}>|</span>
+            <span style={{ color: '#475569' }}>{bytes >= 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${bytes} bytes`}</span>
           </>
         )}
-
-        {/* Linhas formatadas */}
         {parsed !== null && (
           <>
-            <span className="text-gray-700">|</span>
-            <span className="text-gray-600">{formatado.split('\n').length} linhas formatadas</span>
+            <span style={{ color: '#334155' }}>|</span>
+            <span style={{ color: '#475569' }}>{formatado.split('\n').length} linhas formatadas</span>
           </>
         )}
-
-        {/* Spacer + aba ativa */}
-        <span className="ml-auto text-gray-600 capitalize">{ABAS.find(a => a.id === aba)?.label ?? ''}</span>
+        <span style={{ marginLeft: 'auto', color: '#475569' }}>{ABAS.find(a => a.id === aba)?.label ?? ''}</span>
       </div>
     </div>
   )
