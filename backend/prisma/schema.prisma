@@ -139,6 +139,7 @@ model Usuario {
   chamadosCriados      Chamado[]           @relation("chamadosCriados")
   chamadosResponsavel  Chamado[]           @relation("chamadosResponsavel")
   comentariosChamado   ChamadoComentario[] @relation("comentariosChamado")
+  historicoChamado     ChamadoHistorico[]  @relation("historicoChamado")
   criadoEm         DateTime    @default(now())
   atualizadoEm     DateTime    @updatedAt
 }
@@ -225,6 +226,7 @@ model Chamado {
   responsavel     Usuario?           @relation("chamadosResponsavel", fields: [responsavelId], references: [id])
   comentarios     ChamadoComentario[]
   anexos          ChamadoAnexo[]
+  historicos      ChamadoHistorico[]
   criadoEm        DateTime           @default(now())
   atualizadoEm    DateTime           @updatedAt
 }
@@ -247,6 +249,18 @@ model ChamadoAnexo {
   tamanho     Int?
   chamadoId   Int
   chamado     Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
+  criadoEm    DateTime @default(now())
+}
+
+model ChamadoHistorico {
+  id          Int      @id @default(autoincrement())
+  chamadoId   Int
+  chamado     Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
+  usuarioId   Int
+  usuario     Usuario  @relation("historicoChamado", fields: [usuarioId], references: [id])
+  tipo        String   // "criacao" | "status" | "responsavel" | "classificacao" | "prioridade" | "titulo"
+  valorAntes  String?
+  valorDepois String?
   criadoEm    DateTime @default(now())
 }
 

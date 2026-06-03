@@ -5,6 +5,19 @@ const { exigirAdmin } = require('../middleware/autenticar')
 const prisma = new PrismaClient()
 const router = express.Router()
 
+// ── Helper: registrar entrada de histórico ───────────────────────────────────
+async function registrarHistorico(chamadoId, usuarioId, tipo, valorAntes, valorDepois) {
+  await prisma.chamadoHistorico.create({
+    data: {
+      chamadoId,
+      usuarioId,
+      tipo,
+      valorAntes: valorAntes !== undefined && valorAntes !== null ? String(valorAntes) : null,
+      valorDepois: valorDepois !== undefined && valorDepois !== null ? String(valorDepois) : null,
+    }
+  })
+}
+
 // ── GET / — Listar chamados com filtros ──────────────────────────────────────
 router.get('/', async (req, res) => {
   const { busca, status, classificacao, responsavelId, vertical } = req.query
@@ -73,6 +86,10 @@ router.post('/', async (req, res) => {
       _count: { select: { comentarios: true, anexos: true } }
     }
   })
+
+  // Registrar histórico de criação
+  await registrarHistorico(chamado.id, req.usuario.id, 'criacao', null, null)
+
   res.status(201).json(chamado)
 })
 
@@ -112,6 +129,17 @@ router.delete('/comentarios/:cid', async (req, res) => {
   res.json({ ok: true })
 })
 
+// ── GET /:id/historico — Histórico de alterações ─────────────────────────────
+router.get('/:id/historico', async (req, res) => {
+  const id = Number(req.params.id)
+  const historico = await prisma.chamadoHistorico.findMany({
+    where: { chamadoId: id },
+    orderBy: { criadoEm: 'desc' },
+    include: { usuario: { select: { id: true, nome: true } } }
+  })
+  res.json(historico)
+})
+
 // ── GET /:id — Detalhe completo ──────────────────────────────────────────────
 router.get('/:id', async (req, res) => {
   const chamado = await prisma.chamado.findUnique({
@@ -139,6 +167,13 @@ router.put('/:id', async (req, res) => {
   const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade } = req.body
 
   try {
+    // Buscar estado atual para comparar e registrar histórico
+    const atual = await prisma.chamado.findUnique({
+      where: { id },
+      include: { responsavel: { select: { id: true, nome: true } } }
+    })
+    if (!atual) return res.status(404).json({ error: 'Chamado nao encontrado' })
+
     const chamado = await prisma.chamado.update({
       where: { id },
       data: {
@@ -159,6 +194,49 @@ router.put('/:id', async (req, res) => {
         _count: { select: { comentarios: true, anexos: true } }
       }
     })
+
+    // Registrar histórico das alterações detectadas
+    const entradas = []
+
+    if (status !== undefined && status !== atual.status) {
+      entradas.push({ tipo: 'status', valorAntes: atual.status, valorDepois: status })
+    }
+    if (prioridade !== undefined && prioridade !== atual.prioridade) {
+      entradas.push({ tipo: 'prioridade', valorAntes: atual.prioridade, valorDepois: prioridade })
+    }
+    if (classificacao !== undefined && (classificacao || null) !== atual.classificacao) {
+      entradas.push({ tipo: 'classificacao', valorAntes: atual.classificacao, valorDepois: classificacao || null })
+    }
+    if (titulo !== undefined && titulo.trim() !== atual.titulo) {
+      entradas.push({ tipo: 'titulo', valorAntes: atual.titulo, valorDepois: titulo.trim() })
+    }
+    if (responsavelId !== undefined) {
+      const novoId = responsavelId ? Number(responsavelId) : null
+      if (novoId !== atual.responsavelId) {
+        let nomeNovo = null
+        if (novoId) {
+          const u = await prisma.usuario.findUnique({ where: { id: novoId }, select: { nome: true } })
+          nomeNovo = u?.nome || null
+        }
+        entradas.push({ tipo: 'responsavel', valorAntes: atual.responsavel?.nome || null, valorDepois: nomeNovo })
+      }
+    }
+    if (vertical !== undefined && (vertical || null) !== atual.vertical) {
+      entradas.push({ tipo: 'vertical', valorAntes: atual.vertical, valorDepois: vertical || null })
+    }
+
+    if (entradas.length > 0) {
+      await prisma.chamadoHistorico.createMany({
+        data: entradas.map(e => ({
+          chamadoId: id,
+          usuarioId: req.usuario.id,
+          tipo: e.tipo,
+          valorAntes: e.valorAntes !== null && e.valorAntes !== undefined ? String(e.valorAntes) : null,
+          valorDepois: e.valorDepois !== null && e.valorDepois !== undefined ? String(e.valorDepois) : null,
+        }))
+      })
+    }
+
     res.json(chamado)
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Chamado nao encontrado' })
