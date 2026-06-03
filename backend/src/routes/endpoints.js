@@ -7,18 +7,16 @@ const prisma = new PrismaClient()
 
 function buildProxyConfig() {
   const raw = process.env.PROXY_URL
-  if (!raw) return undefined
+  if (!raw) return {}
   try {
-    const u = new URL(raw)
+    const { HttpsProxyAgent } = require('https-proxy-agent')
     return {
-      protocol: u.protocol.replace(':', ''),
-      host: u.hostname,
-      port: Number(u.port) || (u.protocol === 'https:' ? 443 : 80),
-      ...(u.username ? { auth: { username: decodeURIComponent(u.username), password: decodeURIComponent(u.password) } } : {}),
+      httpsAgent: new HttpsProxyAgent(raw),
+      proxy: false,
     }
-  } catch {
-    console.warn('[endpoints] PROXY_URL inválida, ignorando:', raw)
-    return undefined
+  } catch (e) {
+    console.warn('[endpoints] PROXY_URL inválida ou https-proxy-agent indisponível:', e.message)
+    return {}
   }
 }
 
@@ -411,7 +409,7 @@ router.post('/fetch-swagger', exigirAdmin, async (req, res) => {
       headers: headersBase,
       timeout: 15000,
       validateStatus: () => true,
-      proxy: buildProxyConfig(),
+      ...buildProxyConfig(),
     })
 
     // ── Detecta página HTML do Swagger UI e tenta extrair o URL do JSON ──
@@ -427,7 +425,7 @@ router.post('/fetch-swagger', exigirAdmin, async (req, res) => {
           headers: headersBase,
           timeout: 15000,
           validateStatus: () => true,
-          proxy: buildProxyConfig(),
+          ...buildProxyConfig(),
         })
         if (r2.status === 200) {
           fetchUrl = specUrl

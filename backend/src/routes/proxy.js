@@ -9,18 +9,16 @@ const prisma = new PrismaClient()
 // Formato: http://usuario:senha@host:porta  ou  http://host:porta
 function buildProxyConfig() {
   const raw = process.env.PROXY_URL
-  if (!raw) return undefined
+  if (!raw) return {}
   try {
-    const u = new URL(raw)
+    const { HttpsProxyAgent } = require('https-proxy-agent')
     return {
-      protocol: u.protocol.replace(':', ''),
-      host: u.hostname,
-      port: Number(u.port) || (u.protocol === 'https:' ? 443 : 80),
-      ...(u.username ? { auth: { username: decodeURIComponent(u.username), password: decodeURIComponent(u.password) } } : {}),
+      httpsAgent: new HttpsProxyAgent(raw),
+      proxy: false,
     }
-  } catch {
-    console.warn('[proxy] PROXY_URL inválida, ignorando:', raw)
-    return undefined
+  } catch (e) {
+    console.warn('[proxy] PROXY_URL inválida ou https-proxy-agent indisponível:', e.message)
+    return {}
   }
 }
 
@@ -107,7 +105,7 @@ router.post('/executar', async (req, res) => {
       data: body || undefined,
       validateStatus: () => true, // nunca lança exceção por status HTTP
       timeout: 30000,
-      proxy: buildProxyConfig(),
+      ...buildProxyConfig(),
     })
 
     statusCode = axiosResponse.status
