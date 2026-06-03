@@ -1,0 +1,218 @@
+const express = require('express')
+const { PrismaClient } = require('@prisma/client')
+const { exigirAdmin } = require('../middleware/autenticar')
+
+const prisma = new PrismaClient()
+const router = express.Router()
+
+// ── GET / — Listar chamados com filtros ──────────────────────────────────────
+router.get('/', async (req, res) => {
+  const { busca, status, classificacao, responsavelId, vertical } = req.query
+  const where = {}
+  if (status) where.status = status
+  if (classificacao) where.classificacao = classificacao
+  if (responsavelId) where.responsavelId = Number(responsavelId)
+  if (vertical) where.vertical = vertical
+  if (busca) {
+    where.OR = [
+      { titulo: { contains: busca } },
+      { descricao: { contains: busca } }
+    ]
+  }
+
+  const chamados = await prisma.chamado.findMany({
+    where,
+    orderBy: { criadoEm: 'desc' },
+    include: {
+      criadoPor: { select: { id: true, nome: true } },
+      responsavel: { select: { id: true, nome: true } },
+      _count: { select: { comentarios: true, anexos: true } }
+    }
+  })
+
+  res.json(chamados.map(c => ({
+    ...c,
+    descricao: c.descricao ? c.descricao.substring(0, 200) : null,
+    descricaoTruncada: c.descricao ? c.descricao.length > 200 : false
+  })))
+})
+
+// ── GET /estatisticas — Contagem por status ──────────────────────────────────
+router.get('/estatisticas', async (req, res) => {
+  const todos = await prisma.chamado.groupBy({
+    by: ['status'],
+    _count: { id: true }
+  })
+  const stats = {}
+  todos.forEach(g => { stats[g.status] = g._count.id })
+  res.json(stats)
+})
+
+// ── POST / — Criar chamado ───────────────────────────────────────────────────
+router.post('/', async (req, res) => {
+  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId } = req.body
+  if (!titulo?.trim()) return res.status(400).json({ error: 'Titulo e obrigatorio' })
+
+  const chamado = await prisma.chamado.create({
+    data: {
+      titulo: titulo.trim(),
+      descricao: descricao?.trim() || null,
+      status: status || 'Nao Analisado',
+      classificacao: classificacao || null,
+      prioridade: prioridade || 'Normal',
+      vertical: vertical || null,
+      sistema: sistema || null,
+      criadoPorId: req.usuario.id,
+      responsavelId: responsavelId ? Number(responsavelId) : null
+    },
+    include: {
+      criadoPor: { select: { id: true, nome: true } },
+      responsavel: { select: { id: true, nome: true } },
+      _count: { select: { comentarios: true, anexos: true } }
+    }
+  })
+  res.status(201).json(chamado)
+})
+
+// ── GET /anexos/:aid — Download anexo ────────────────────────────────────────
+router.get('/anexos/:aid', async (req, res) => {
+  const anexo = await prisma.chamadoAnexo.findUnique({ where: { id: Number(req.params.aid) } })
+  if (!anexo) return res.status(404).json({ error: 'Anexo nao encontrado' })
+
+  const buffer = Buffer.from(anexo.conteudo, 'base64')
+  res.setHeader('Content-Type', anexo.tipo || 'application/octet-stream')
+  res.setHeader('Content-Disposition', `attachment; filename="${anexo.nomeArquivo}"`)
+  res.send(buffer)
+})
+
+// ── DELETE /anexos/:aid — Remover anexo ──────────────────────────────────────
+router.delete('/anexos/:aid', async (req, res) => {
+  try {
+    await prisma.chamadoAnexo.delete({ where: { id: Number(req.params.aid) } })
+    res.json({ ok: true })
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Anexo nao encontrado' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── DELETE /comentarios/:cid — Remover comentário (autor ou admin) ───────────
+router.delete('/comentarios/:cid', async (req, res) => {
+  const cid = Number(req.params.cid)
+  const comentario = await prisma.chamadoComentario.findUnique({ where: { id: cid } })
+  if (!comentario) return res.status(404).json({ error: 'Comentario nao encontrado' })
+
+  if (comentario.autorId !== req.usuario.id && req.usuario.role !== 'admin') {
+    return res.status(403).json({ error: 'Sem permissao' })
+  }
+
+  await prisma.chamadoComentario.delete({ where: { id: cid } })
+  res.json({ ok: true })
+})
+
+// ── GET /:id — Detalhe completo ──────────────────────────────────────────────
+router.get('/:id', async (req, res) => {
+  const chamado = await prisma.chamado.findUnique({
+    where: { id: Number(req.params.id) },
+    include: {
+      criadoPor: { select: { id: true, nome: true } },
+      responsavel: { select: { id: true, nome: true } },
+      comentarios: {
+        orderBy: { criadoEm: 'asc' },
+        include: { autor: { select: { id: true, nome: true } } }
+      },
+      anexos: {
+        select: { id: true, nomeArquivo: true, tipo: true, tamanho: true, criadoEm: true }
+      },
+      _count: { select: { comentarios: true, anexos: true } }
+    }
+  })
+  if (!chamado) return res.status(404).json({ error: 'Chamado nao encontrado' })
+  res.json(chamado)
+})
+
+// ── PUT /:id — Atualizar chamado ─────────────────────────────────────────────
+router.put('/:id', async (req, res) => {
+  const id = Number(req.params.id)
+  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId } = req.body
+
+  try {
+    const chamado = await prisma.chamado.update({
+      where: { id },
+      data: {
+        ...(titulo !== undefined && { titulo: titulo.trim() }),
+        ...(descricao !== undefined && { descricao: descricao?.trim() || null }),
+        ...(status !== undefined && { status }),
+        ...(classificacao !== undefined && { classificacao: classificacao || null }),
+        ...(prioridade !== undefined && { prioridade }),
+        ...(vertical !== undefined && { vertical: vertical || null }),
+        ...(sistema !== undefined && { sistema: sistema || null }),
+        ...(responsavelId !== undefined && { responsavelId: responsavelId ? Number(responsavelId) : null })
+      },
+      include: {
+        criadoPor: { select: { id: true, nome: true } },
+        responsavel: { select: { id: true, nome: true } },
+        _count: { select: { comentarios: true, anexos: true } }
+      }
+    })
+    res.json(chamado)
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Chamado nao encontrado' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── DELETE /:id — Remover chamado (admin only) ───────────────────────────────
+router.delete('/:id', exigirAdmin, async (req, res) => {
+  try {
+    await prisma.chamado.delete({ where: { id: Number(req.params.id) } })
+    res.json({ ok: true })
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Chamado nao encontrado' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── POST /:id/comentarios — Adicionar comentário ─────────────────────────────
+router.post('/:id/comentarios', async (req, res) => {
+  const chamadoId = Number(req.params.id)
+  const { conteudo } = req.body
+  if (!conteudo?.trim()) return res.status(400).json({ error: 'Conteudo e obrigatorio' })
+
+  const chamado = await prisma.chamado.findUnique({ where: { id: chamadoId } })
+  if (!chamado) return res.status(404).json({ error: 'Chamado nao encontrado' })
+
+  const comentario = await prisma.chamadoComentario.create({
+    data: {
+      conteudo: conteudo.trim(),
+      chamadoId,
+      autorId: req.usuario.id
+    },
+    include: { autor: { select: { id: true, nome: true } } }
+  })
+  res.status(201).json(comentario)
+})
+
+// ── POST /:id/anexos — Upload anexo ──────────────────────────────────────────
+router.post('/:id/anexos', async (req, res) => {
+  const chamadoId = Number(req.params.id)
+  const { nomeArquivo, tipo, conteudo, tamanho } = req.body
+  if (!nomeArquivo || !conteudo) return res.status(400).json({ error: 'nomeArquivo e conteudo sao obrigatorios' })
+
+  const chamado = await prisma.chamado.findUnique({ where: { id: chamadoId } })
+  if (!chamado) return res.status(404).json({ error: 'Chamado nao encontrado' })
+
+  const anexo = await prisma.chamadoAnexo.create({
+    data: {
+      nomeArquivo,
+      tipo: tipo || null,
+      conteudo,
+      tamanho: tamanho ? Number(tamanho) : null,
+      chamadoId
+    },
+    select: { id: true, nomeArquivo: true, tipo: true, tamanho: true, criadoEm: true }
+  })
+  res.status(201).json(anexo)
+})
+
+module.exports = router

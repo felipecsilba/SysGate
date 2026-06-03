@@ -165,4 +165,18 @@ export const catalogoApi = {
   deletar:   (id)       => api.delete(`/catalogo/${id}`),
 }
 
+// Chamados (Tickets)
+export const chamadosApi = {
+  listar:            (params) => api.get('/chamados', { params }).then(r => r.data),
+  obter:             (id) => api.get(`/chamados/${id}`).then(r => r.data),
+  criar:             (data) => api.post('/chamados', data).then(r => r.data),
+  atualizar:         (id, data) => api.put(`/chamados/${id}`, data).then(r => r.data),
+  deletar:           (id) => api.delete(`/chamados/${id}`).then(r => r.data),
+  estatisticas:      () => api.get('/chamados/estatisticas').then(r => r.data),
+  criarComentario:   (id, data) => api.post(`/chamados/${id}/comentarios`, data).then(r => r.data),
+  deletarComentario: (cid) => api.delete(`/chamados/comentarios/${cid}`).then(r => r.data),
+  criarAnexo:        (id, data) => api.post(`/chamados/${id}/anexos`, data).then(r => r.data),
+  deletarAnexo:      (aid) => api.delete(`/chamados/anexos/${aid}`).then(r => r.data),
+}
+
 export default api

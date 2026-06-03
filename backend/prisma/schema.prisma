@@ -136,6 +136,9 @@ model Usuario {
   tentativasLogin  Int         @default(0)
   bloqueadoAte     DateTime?
   municipios       Municipio[]
+  chamadosCriados      Chamado[]           @relation("chamadosCriados")
+  chamadosResponsavel  Chamado[]           @relation("chamadosResponsavel")
+  comentariosChamado   ChamadoComentario[] @relation("comentariosChamado")
   criadoEm         DateTime    @default(now())
   atualizadoEm     DateTime    @updatedAt
 }
@@ -201,6 +204,48 @@ model StakeholderSistema {
   entidadeSistema   EntidadeSistema @relation(fields: [entidadeSistemaId], references: [id], onDelete: Cascade)
 
   @@id([stakeholderId, entidadeSistemaId])
+}
+
+// ── Módulo Chamados ─────────────────────────────────────────────────────────
+
+model Chamado {
+  id              Int                @id @default(autoincrement())
+  titulo          String
+  descricao       String?
+  status          String             @default("Nao Analisado")
+  classificacao   String?
+  prioridade      String             @default("Normal")
+  vertical        String?
+  sistema         String?
+  criadoPorId     Int
+  criadoPor       Usuario            @relation("chamadosCriados", fields: [criadoPorId], references: [id])
+  responsavelId   Int?
+  responsavel     Usuario?           @relation("chamadosResponsavel", fields: [responsavelId], references: [id])
+  comentarios     ChamadoComentario[]
+  anexos          ChamadoAnexo[]
+  criadoEm        DateTime           @default(now())
+  atualizadoEm    DateTime           @updatedAt
+}
+
+model ChamadoComentario {
+  id          Int      @id @default(autoincrement())
+  conteudo    String
+  chamadoId   Int
+  chamado     Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
+  autorId     Int
+  autor       Usuario  @relation("comentariosChamado", fields: [autorId], references: [id])
+  criadoEm    DateTime @default(now())
+}
+
+model ChamadoAnexo {
+  id          Int      @id @default(autoincrement())
+  nomeArquivo String
+  tipo        String?
+  conteudo    String
+  tamanho     Int?
+  chamadoId   Int
+  chamado     Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
+  criadoEm    DateTime @default(now())
 }
 
 model CatalogoVertical {

@@ -59,12 +59,21 @@ const ICONS = {
       <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
     </Icon>
   ),
+  chamados: (
+    <Icon>
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <line x1="9" y1="12" x2="15" y2="12" />
+      <line x1="9" y1="16" x2="13" y2="16" />
+    </Icon>
+  ),
 }
 
 const BASE_NAV_ITEMS = [
   { to: '/',            label: 'Dashboard',         icon: ICONS.dashboard,  exact: true },
   { to: '/municipios',  label: 'Municípios',        icon: ICONS.municipios },
   { to: '/portfolio',   label: 'Portfólio',         icon: ICONS.portfolio },
+  { to: '/chamados',    label: 'Chamados',           icon: ICONS.chamados },
   { to: '/sistemas',    label: 'Sistemas',          icon: ICONS.sistemas },
   { to: '/sandbox',     label: 'Sandbox',            icon: ICONS.sandbox },
   { to: '/envio-lote',  label: 'Envio em Lote',     icon: ICONS.envioLote },
