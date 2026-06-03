@@ -34,6 +34,10 @@ function diasDesde(data) {
   return Math.floor((Date.now() - new Date(data).getTime()) / 86400000)
 }
 
+function formatData(data) {
+  return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 function tempoRelativo(data) {
   const diff = Date.now() - new Date(data).getTime()
   const min = Math.floor(diff / 60000)
@@ -96,6 +100,8 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
   const [form, setForm] = useState({
     titulo:        chamado?.titulo        || '',
     descricao:     chamado?.descricao     || '',
+    municipio:     chamado?.municipio     || '',
+    entidade:      chamado?.entidade      || '',
     classificacao: chamado?.classificacao || '',
     prioridade:    chamado?.prioridade    || 'Normal',
     vertical:      chamado?.vertical      || '',
@@ -122,6 +128,8 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
       const payload = {
         titulo:        form.titulo.trim(),
         descricao:     form.descricao.trim() || null,
+        municipio:     form.municipio.trim() || null,
+        entidade:      form.entidade.trim() || null,
         classificacao: form.classificacao || null,
         prioridade:    form.prioridade,
         vertical:      form.vertical || null,
@@ -185,6 +193,17 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
           <div>
             <label className="label">Descrição</label>
             <textarea className="input min-h-[80px]" value={form.descricao} onChange={e => setField('descricao', e.target.value)} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Município</label>
+              <input className="input" placeholder="Nome do município" value={form.municipio} onChange={e => setField('municipio', e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Entidade</label>
+              <input className="input" placeholder="Nome da entidade" value={form.entidade} onChange={e => setField('entidade', e.target.value)} />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -410,11 +429,6 @@ export default function Chamados() {
     } catch (e) { console.error(e) }
   }
 
-  // ── Sistemas da vertical (detalhe) ────────────────────────────────────────
-  const sistemasDaVertical = detalhe?.vertical
-    ? (catalogo.find(v => v.nome === detalhe.vertical)?.sistemas || [])
-    : []
-
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
@@ -580,70 +594,49 @@ export default function Chamados() {
                   </div>
                 </div>
 
-                {/* Metadados em grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1">Criado por</p>
-                    <p className="text-sm text-gray-700">{detalhe.criadoPor?.nome}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1">Responsável</p>
-                    <select
-                      className="input text-sm py-1"
-                      value={detalhe.responsavelId || ''}
-                      onChange={e => atualizarCampo('responsavelId', e.target.value ? Number(e.target.value) : null)}
-                    >
-                      <option value="">— Sem responsável —</option>
-                      {usuarios.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1">Classificação</p>
-                    <select
-                      className="input text-sm py-1"
-                      value={detalhe.classificacao || ''}
-                      onChange={e => atualizarCampo('classificacao', e.target.value)}
-                    >
-                      {CLASSIF_OPTS.map(c => <option key={c} value={c}>{c || '— Sem classificação —'}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1">Prioridade</p>
-                    <select
-                      className="input text-sm py-1"
-                      value={detalhe.prioridade}
-                      onChange={e => atualizarCampo('prioridade', e.target.value)}
-                    >
-                      {PRIORIDADE_OPTS.map(p => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1">Vertical</p>
-                    <select
-                      className="input text-sm py-1"
-                      value={detalhe.vertical || ''}
-                      onChange={e => { atualizarCampo('vertical', e.target.value); atualizarCampo('sistema', '') }}
-                    >
-                      <option value="">— Selecione —</option>
-                      {catalogo.map(v => <option key={v.id} value={v.nome}>{v.nome}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1">Sistema</p>
-                    <select
-                      className="input text-sm py-1"
-                      value={detalhe.sistema || ''}
-                      onChange={e => atualizarCampo('sistema', e.target.value)}
-                      disabled={!detalhe.vertical}
-                    >
-                      <option value="">— Selecione —</option>
-                      {sistemasDaVertical.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                {/* Info card — read-only */}
+                <div className="bg-gray-50 rounded-lg p-4 mt-2">
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Município</p>
+                      <p className="text-gray-800 font-medium">{detalhe.municipio || <span className="text-gray-400 font-normal">—</span>}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Entidade</p>
+                      <p className="text-gray-800 font-medium">{detalhe.entidade || <span className="text-gray-400 font-normal">—</span>}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Criado por</p>
+                      <p className="text-gray-700">{detalhe.criadoPor?.nome}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Responsável</p>
+                      <p className="text-gray-700">{detalhe.responsavel?.nome || <span className="text-gray-400">—</span>}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Data de abertura</p>
+                      <p className="text-gray-700">{formatData(detalhe.criadoEm)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Classificação</p>
+                      {detalhe.classificacao
+                        ? <Badge label={detalhe.classificacao} cor={CLASSIF_CORES[detalhe.classificacao]} />
+                        : <span className="text-gray-400 text-xs">—</span>}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Prioridade</p>
+                      <Badge label={detalhe.prioridade} cor={PRIORIDADE_CORES[detalhe.prioridade]} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Vertical</p>
+                      <p className="text-gray-700">{detalhe.vertical || <span className="text-gray-400">—</span>}</p>
+                    </div>
+                    {detalhe.sistema && (
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5">Sistema</p>
+                        <p className="text-gray-700">{detalhe.sistema}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

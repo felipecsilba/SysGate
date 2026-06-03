@@ -217,6 +217,8 @@ model Chamado {
   prioridade      String             @default("Normal")
   vertical        String?
   sistema         String?
+  municipio       String?
+  entidade        String?
   criadoPorId     Int
   criadoPor       Usuario            @relation("chamadosCriados", fields: [criadoPorId], references: [id])
   responsavelId   Int?

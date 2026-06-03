@@ -50,7 +50,7 @@ router.get('/estatisticas', async (req, res) => {
 
 // ── POST / — Criar chamado ───────────────────────────────────────────────────
 router.post('/', async (req, res) => {
-  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId } = req.body
+  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade } = req.body
   if (!titulo?.trim()) return res.status(400).json({ error: 'Titulo e obrigatorio' })
 
   const chamado = await prisma.chamado.create({
@@ -62,6 +62,8 @@ router.post('/', async (req, res) => {
       prioridade: prioridade || 'Normal',
       vertical: vertical || null,
       sistema: sistema || null,
+      municipio: municipio?.trim() || null,
+      entidade: entidade?.trim() || null,
       criadoPorId: req.usuario.id,
       responsavelId: responsavelId ? Number(responsavelId) : null
     },
@@ -134,7 +136,7 @@ router.get('/:id', async (req, res) => {
 // ── PUT /:id — Atualizar chamado ─────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   const id = Number(req.params.id)
-  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId } = req.body
+  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade } = req.body
 
   try {
     const chamado = await prisma.chamado.update({
@@ -147,7 +149,9 @@ router.put('/:id', async (req, res) => {
         ...(prioridade !== undefined && { prioridade }),
         ...(vertical !== undefined && { vertical: vertical || null }),
         ...(sistema !== undefined && { sistema: sistema || null }),
-        ...(responsavelId !== undefined && { responsavelId: responsavelId ? Number(responsavelId) : null })
+        ...(responsavelId !== undefined && { responsavelId: responsavelId ? Number(responsavelId) : null }),
+        ...(municipio !== undefined && { municipio: municipio?.trim() || null }),
+        ...(entidade !== undefined && { entidade: entidade?.trim() || null }),
       },
       include: {
         criadoPor: { select: { id: true, nome: true } },
