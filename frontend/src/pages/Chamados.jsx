@@ -25,15 +25,11 @@ const PRIORIDADE_CORES = {
   'Urgente': '#EF4444',
 }
 
-const STATUS_OPTS = ['Nao Analisado', 'Em Analise', 'Em Atendimento', 'Aguardando Retorno', 'Concluido']
-const CLASSIF_OPTS = ['', 'Pendencia de Migracao', 'Configuracao', 'Bug', 'Duvida']
+const STATUS_OPTS    = ['Nao Analisado', 'Em Analise', 'Em Atendimento', 'Aguardando Retorno', 'Concluido']
+const CLASSIF_OPTS   = ['', 'Pendencia de Migracao', 'Configuracao', 'Bug', 'Duvida']
 const PRIORIDADE_OPTS = ['Baixa', 'Normal', 'Alta', 'Urgente']
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function diasDesde(data) {
-  return Math.floor((Date.now() - new Date(data).getTime()) / 86400000)
-}
-
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function formatData(data) {
   return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
@@ -41,11 +37,11 @@ function formatData(data) {
 function tempoRelativo(data) {
   const diff = Date.now() - new Date(data).getTime()
   const min = Math.floor(diff / 60000)
-  const h = Math.floor(diff / 3600000)
-  const d = Math.floor(diff / 86400000)
+  const h   = Math.floor(diff / 3600000)
+  const d   = Math.floor(diff / 86400000)
   if (min < 1) return 'agora'
   if (min < 60) return `há ${min}min`
-  if (h < 24) return `há ${h}h`
+  if (h < 24)  return `há ${h}h`
   if (d === 1) return 'há 1 dia'
   return `há ${d} dias`
 }
@@ -59,9 +55,9 @@ function formatBytes(bytes) {
 
 function iniciais(nome) {
   if (!nome) return '?'
-  const partes = nome.trim().split(' ')
-  if (partes.length === 1) return partes[0][0].toUpperCase()
-  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+  const p = nome.trim().split(' ')
+  if (p.length === 1) return p[0][0].toUpperCase()
+  return (p[0][0] + p[p.length - 1][0]).toUpperCase()
 }
 
 function iconeAnexo(tipo) {
@@ -71,7 +67,11 @@ function iconeAnexo(tipo) {
   return '📎'
 }
 
-// ── Badge colorido ────────────────────────────────────────────────────────────
+function ticketNum(c) {
+  return `#CH-${new Date(c.criadoEm).getFullYear()}-${String(c.id).padStart(4, '0')}`
+}
+
+// ── Badge colorido ─────────────────────────────────────────────────────────────
 function Badge({ label, cor, className = '' }) {
   if (!label) return null
   return (
@@ -84,13 +84,12 @@ function Badge({ label, cor, className = '' }) {
   )
 }
 
-// ── Dot de status ─────────────────────────────────────────────────────────────
-function StatusDot({ status }) {
+// ── Avatar com iniciais ────────────────────────────────────────────────────────
+function Avatar({ nome, size = 7 }) {
   return (
-    <span
-      className="inline-block w-2 h-2 rounded-full shrink-0"
-      style={{ backgroundColor: STATUS_CORES[status] || '#94A3B8' }}
-    />
+    <div className={`w-${size} h-${size} rounded-full bg-sysgate-100 text-sysgate-700 flex items-center justify-center text-xs font-bold shrink-0`}>
+      {iniciais(nome)}
+    </div>
   )
 }
 
@@ -108,9 +107,9 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
     sistema:       chamado?.sistema       || '',
     responsavelId: chamado?.responsavelId || '',
   })
-  const [arquivos, setArquivos] = useState([])
-  const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState('')
+  const [arquivos, setArquivos]   = useState([])
+  const [salvando, setSalvando]   = useState(false)
+  const [erro, setErro]           = useState('')
   const fileRef = useRef()
 
   const sistemasDaVertical = form.vertical
@@ -122,8 +121,7 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.titulo.trim()) { setErro('Título é obrigatório'); return }
-    setSalvando(true)
-    setErro('')
+    setSalvando(true); setErro('')
     try {
       const payload = {
         titulo:        form.titulo.trim(),
@@ -141,10 +139,7 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
         criado = await chamadosApi.atualizar(chamado.id, payload)
       } else {
         criado = await chamadosApi.criar(payload)
-        // Upload de anexos
-        for (const arq of arquivos) {
-          await chamadosApi.criarAnexo(criado.id, arq)
-        }
+        for (const arq of arquivos) await chamadosApi.criarAnexo(criado.id, arq)
       }
       onSalvo(criado)
     } catch (e) {
@@ -155,16 +150,12 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
   }
 
   const handleFiles = (e) => {
-    const files = Array.from(e.target.files)
-    files.forEach(file => {
+    Array.from(e.target.files).forEach(file => {
       const reader = new FileReader()
       reader.onload = (ev) => {
-        const base64 = ev.target.result.split(',')[1]
         setArquivos(prev => [...prev, {
-          nomeArquivo: file.name,
-          tipo: file.type,
-          conteudo: base64,
-          tamanho: file.size,
+          nomeArquivo: file.name, tipo: file.type,
+          conteudo: ev.target.result.split(',')[1], tamanho: file.size,
         }])
       }
       reader.readAsDataURL(file)
@@ -174,7 +165,6 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">
             {isEdicao ? 'Editar Chamado' : 'Novo Chamado'}
@@ -211,10 +201,7 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
               <label className="label">Classificação</label>
               <select className="input" value={form.classificacao} onChange={e => setField('classificacao', e.target.value)}>
                 <option value="">— Sem classificação —</option>
-                <option>Pendencia de Migracao</option>
-                <option>Configuracao</option>
-                <option>Bug</option>
-                <option>Duvida</option>
+                {CLASSIF_OPTS.filter(Boolean).map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div>
@@ -237,7 +224,7 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
               <label className="label">Sistema</label>
               <select className="input" value={form.sistema} onChange={e => setField('sistema', e.target.value)} disabled={!form.vertical}>
                 <option value="">— Selecione —</option>
-                {sistemasDaVertical.map(s => <option key={s} value={s}>{s}</option>)}
+                {sistemasDaVertical.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
           </div>
@@ -254,8 +241,7 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
             <div>
               <label className="label">Anexos</label>
               <input type="file" multiple ref={fileRef} onChange={handleFiles} className="hidden" />
-              <button type="button" onClick={() => fileRef.current?.click()}
-                className="text-sm text-sysgate-600 hover:underline">
+              <button type="button" onClick={() => fileRef.current?.click()} className="text-sm text-sysgate-600 hover:underline">
                 + Selecionar arquivos
               </button>
               {arquivos.length > 0 && (
@@ -275,7 +261,6 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
           )}
         </form>
 
-        {/* Footer */}
         <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
           <button type="button" onClick={onFechar} className="btn btn-ghost text-sm">Cancelar</button>
           <button onClick={handleSubmit} disabled={salvando} className="btn text-sm">
@@ -292,33 +277,40 @@ export default function Chamados() {
   const usuario = useAuthStore(s => s.usuario)
   const isAdmin = usuario?.role === 'admin'
 
-  const [chamados, setChamados]           = useState([])
-  const [chamadoSelId, setChamadoSelId]   = useState(null)
-  const [detalhe, setDetalhe]             = useState(null)
-  const [busca, setBusca]                 = useState('')
-  const [filtroStatus, setFiltroStatus]   = useState('')
-  const [filtroClassif, setFiltroClassif] = useState('')
-  const [carregando, setCarregando]       = useState(true)
-  const [modalNovo, setModalNovo]         = useState(false)
-  const [modalEditar, setModalEditar]     = useState(false)
-  const [usuarios, setUsuarios]           = useState([])
-  const [catalogo, setCatalogo]           = useState([])
-  const [novoComentario, setNovoComentario] = useState('')
-  const [enviandoComent, setEnviandoComent] = useState(false)
-  const [uploadAnexo, setUploadAnexo]     = useState(false)
-  const [mostrarLista, setMostrarLista]   = useState(true)
+  const [chamados, setChamados]               = useState([])
+  const [chamadoSelId, setChamadoSelId]       = useState(null)
+  const [detalhe, setDetalhe]                 = useState(null)
+  const [busca, setBusca]                     = useState('')
+  const [filtroStatus, setFiltroStatus]       = useState('')
+  const [filtroClassif, setFiltroClassif]     = useState('')
+  const [filtroMeusChamados, setFiltroMeus]   = useState(false)
+  const [mostrarFiltros, setMostrarFiltros]   = useState(false)
+  const [carregando, setCarregando]           = useState(true)
+  const [modalNovo, setModalNovo]             = useState(false)
+  const [modalEditar, setModalEditar]         = useState(false)
+  const [usuarios, setUsuarios]               = useState([])
+  const [catalogo, setCatalogo]               = useState([])
+  const [novoComentario, setNovoComentario]   = useState('')
+  const [enviandoComent, setEnviandoComent]   = useState(false)
+  const [uploadAnexo, setUploadAnexo]         = useState(false)
+  const [mostrarLista, setMostrarLista]       = useState(true)
+  const [dragOver, setDragOver]               = useState(false)
   const fileAnexoRef = useRef()
 
-  // ── Carregar lista ────────────────────────────────────────────────────────
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const chamadosFiltrados = filtroMeusChamados
+    ? chamados.filter(c => c.criadoPor?.id === usuario?.id)
+    : chamados
+
+  // ── Carregar lista ─────────────────────────────────────────────────────────
   const carregar = async () => {
     setCarregando(true)
     try {
       const params = {}
-      if (busca) params.busca = busca
-      if (filtroStatus) params.status = filtroStatus
+      if (busca)        params.busca         = busca
+      if (filtroStatus) params.status        = filtroStatus
       if (filtroClassif) params.classificacao = filtroClassif
-      const data = await chamadosApi.listar(params)
-      setChamados(data)
+      setChamados(await chamadosApi.listar(params))
     } catch (e) { console.error(e) }
     finally { setCarregando(false) }
   }
@@ -330,14 +322,11 @@ export default function Chamados() {
     catalogoApi.listar().then(setCatalogo).catch(() => {})
   }, [])
 
-  // ── Selecionar chamado ────────────────────────────────────────────────────
+  // ── Selecionar chamado ─────────────────────────────────────────────────────
   const selecionarChamado = async (id) => {
     setChamadoSelId(id)
     setMostrarLista(false)
-    try {
-      const data = await chamadosApi.obter(id)
-      setDetalhe(data)
-    } catch (e) { console.error(e) }
+    try { setDetalhe(await chamadosApi.obter(id)) } catch (e) { console.error(e) }
   }
 
   const recarregarDetalhe = async () => {
@@ -349,7 +338,7 @@ export default function Chamados() {
     } catch (e) { console.error(e) }
   }
 
-  // ── Atualizar campo direto (inline) ───────────────────────────────────────
+  // ── Atualizar campo (status inline) ───────────────────────────────────────
   const atualizarCampo = async (campo, valor) => {
     try {
       const atualizado = await chamadosApi.atualizar(chamadoSelId, { [campo]: valor || null })
@@ -358,7 +347,7 @@ export default function Chamados() {
     } catch (e) { console.error(e) }
   }
 
-  // ── Comentários ──────────────────────────────────────────────────────────
+  // ── Comentários ────────────────────────────────────────────────────────────
   const enviarComentario = async () => {
     if (!novoComentario.trim()) return
     setEnviandoComent(true)
@@ -372,15 +361,11 @@ export default function Chamados() {
 
   const deletarComentario = async (cid) => {
     if (!confirm('Remover comentário?')) return
-    try {
-      await chamadosApi.deletarComentario(cid)
-      await recarregarDetalhe()
-    } catch (e) { console.error(e) }
+    try { await chamadosApi.deletarComentario(cid); await recarregarDetalhe() } catch (e) { console.error(e) }
   }
 
-  // ── Anexos ────────────────────────────────────────────────────────────────
-  const handleAnexoUpload = (e) => {
-    const files = Array.from(e.target.files)
+  // ── Anexos ─────────────────────────────────────────────────────────────────
+  const processarArquivos = (files) => {
     if (!files.length) return
     setUploadAnexo(true)
     Promise.all(files.map(file => new Promise((resolve) => {
@@ -388,23 +373,27 @@ export default function Chamados() {
       reader.onload = (ev) => {
         const base64 = ev.target.result.split(',')[1]
         resolve(chamadosApi.criarAnexo(chamadoSelId, {
-          nomeArquivo: file.name,
-          tipo: file.type,
-          conteudo: base64,
-          tamanho: file.size,
+          nomeArquivo: file.name, tipo: file.type, conteudo: base64, tamanho: file.size,
         }))
       }
       reader.readAsDataURL(file)
     }))).then(() => recarregarDetalhe()).finally(() => setUploadAnexo(false))
+  }
+
+  const handleAnexoUpload = (e) => {
+    processarArquivos(Array.from(e.target.files))
     e.target.value = ''
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    processarArquivos(Array.from(e.dataTransfer.files))
   }
 
   const deletarAnexo = async (aid) => {
     if (!confirm('Remover anexo?')) return
-    try {
-      await chamadosApi.deletarAnexo(aid)
-      await recarregarDetalhe()
-    } catch (e) { console.error(e) }
+    try { await chamadosApi.deletarAnexo(aid); await recarregarDetalhe() } catch (e) { console.error(e) }
   }
 
   const downloadAnexo = async (aid, nome) => {
@@ -417,26 +406,24 @@ export default function Chamados() {
     } catch (e) { console.error(e) }
   }
 
-  // ── Deletar chamado ───────────────────────────────────────────────────────
+  // ── Deletar chamado ────────────────────────────────────────────────────────
   const deletarChamado = async () => {
     if (!confirm('Remover chamado permanentemente? Esta ação não pode ser desfeita.')) return
     try {
       await chamadosApi.deletar(chamadoSelId)
       setChamados(prev => prev.filter(c => c.id !== chamadoSelId))
-      setChamadoSelId(null)
-      setDetalhe(null)
-      setMostrarLista(true)
+      setChamadoSelId(null); setDetalhe(null); setMostrarLista(true)
     } catch (e) { console.error(e) }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
-      {/* Header da página */}
+      {/* ── Page Header ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-white shrink-0">
         <div className="w-1 h-6 rounded-full bg-sysgate-600" />
         <h1 className="text-base font-semibold text-gray-900">Chamados</h1>
-        <span className="text-xs text-gray-400 ml-1">{chamados.length} chamado{chamados.length !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-gray-400">| {chamados.length} chamado{chamados.length !== 1 ? 's' : ''}</span>
         <button
           onClick={() => setModalNovo(true)}
           className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-sysgate-600 hover:bg-sysgate-700 text-white transition-colors"
@@ -448,211 +435,241 @@ export default function Chamados() {
         </button>
       </div>
 
-      {/* Corpo — duas colunas */}
+      {/* ── Corpo — duas colunas ─────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
 
-        {/* ── Painel esquerdo — Lista ─────────────────────────────────────── */}
-        <div className={`w-80 shrink-0 flex flex-col border-r border-gray-100 bg-gray-50 ${!mostrarLista && 'hidden md:flex'}`}>
+        {/* ── Painel esquerdo ──────────────────────────────────────────── */}
+        <div className={`w-80 shrink-0 flex flex-col border-r border-gray-100 ${!mostrarLista && 'hidden md:flex'}`}>
 
-          {/* Filtros */}
-          <div className="p-3 space-y-2 border-b border-gray-100 bg-white">
-            <input
-              className="input text-sm w-full"
-              placeholder="Buscar chamados…"
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-            />
-            <div className="flex gap-2">
-              <select className="input text-xs flex-1" value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
-                <option value="">Todos os status</option>
-                {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <select className="input text-xs flex-1" value={filtroClassif} onChange={e => setFiltroClassif(e.target.value)}>
-                <option value="">Todas as classif.</option>
-                {CLASSIF_OPTS.filter(Boolean).map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+          {/* Abas de filtro rápido */}
+          <div className="flex gap-0.5 px-2 pt-2.5 pb-2 bg-white border-b border-gray-100">
+            {[
+              { label: 'Todos',     ativo: !filtroMeusChamados && !filtroStatus,
+                onClick: () => { setFiltroStatus(''); setFiltroMeus(false) },
+                icon: <path d="M4 6h16M4 12h16M4 18h16"/> },
+              { label: 'Meus',      ativo: filtroMeusChamados,
+                onClick: () => { setFiltroMeus(true); setFiltroStatus('') },
+                icon: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></> },
+              { label: 'Aguardando', ativo: !filtroMeusChamados && filtroStatus === 'Aguardando Retorno',
+                onClick: () => { setFiltroStatus('Aguardando Retorno'); setFiltroMeus(false) },
+                icon: <><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></> },
+            ].map(({ label, ativo, onClick, icon }) => (
+              <button key={label} onClick={onClick}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex-1 justify-center ${
+                  ativo ? 'bg-sysgate-100 text-sysgate-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">{icon}</svg>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Busca */}
+          <div className="px-3 py-2 bg-white border-b border-gray-100">
+            <div className="relative">
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input
+                className="input text-sm w-full pl-7"
+                placeholder="Buscar chamados..."
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+              />
             </div>
           </div>
 
           {/* Lista de chamados */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto bg-gray-50/50">
             {carregando ? (
-              <div className="p-6 text-center text-sm text-gray-400">Carregando…</div>
-            ) : chamados.length === 0 ? (
-              <div className="p-6 text-center text-sm text-gray-400">Nenhum chamado encontrado.</div>
+              <div className="p-8 text-center text-sm text-gray-400">Carregando…</div>
+            ) : chamadosFiltrados.length === 0 ? (
+              <div className="p-8 text-center text-sm text-gray-400">Nenhum chamado encontrado.</div>
             ) : (
-              chamados.map(c => (
+              chamadosFiltrados.map(c => (
                 <button
                   key={c.id}
                   onClick={() => selecionarChamado(c.id)}
-                  className={`w-full text-left px-3 py-3 border-b border-gray-100 hover:bg-sysgate-50 transition-colors ${
-                    chamadoSelId === c.id ? 'bg-sysgate-50 border-l-2 border-sysgate-500' : ''
+                  className={`w-full text-left p-3 border-b border-gray-100 transition-colors ${
+                    chamadoSelId === c.id
+                      ? 'bg-white border-l-2 border-l-sysgate-500 shadow-sm'
+                      : 'hover:bg-white/80'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <StatusDot status={c.status} />
-                    <span className="text-sm font-medium text-gray-900 truncate flex-1">{c.titulo}</span>
-                  </div>
-                  <div className="flex items-center gap-1 mb-1">
+                  <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug mb-2">
+                    {c.titulo}
+                  </p>
+                  <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                     {c.classificacao && (
                       <Badge label={c.classificacao} cor={CLASSIF_CORES[c.classificacao]} />
                     )}
-                    <Badge
-                      label={c.prioridade !== 'Normal' ? c.prioridade : null}
-                      cor={PRIORIDADE_CORES[c.prioridade]}
-                    />
+                    <span className="text-xs text-gray-400">• {formatData(c.criadoEm)}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-400 flex-wrap">
-                    <span>{c.criadoPor?.nome}</span>
-                    <span>·</span>
-                    <span>há {diasDesde(c.criadoEm)}d</span>
-                    {c.responsavel && (
-                      <>
-                        <span>·</span>
-                        <span className="text-sysgate-600">{c.responsavel.nome}</span>
-                      </>
+                  <div className="flex items-center gap-1.5">
+                    <Avatar nome={c.criadoPor?.nome} size={5} />
+                    <span className="text-xs text-gray-500 truncate flex-1">{c.criadoPor?.nome}</span>
+                    {(c._count?.comentarios > 0 || c._count?.anexos > 0) && (
+                      <div className="flex gap-2 shrink-0">
+                        {c._count.comentarios > 0 && <span className="text-[10px] text-gray-400">💬 {c._count.comentarios}</span>}
+                        {c._count.anexos > 0 && <span className="text-[10px] text-gray-400">📎 {c._count.anexos}</span>}
+                      </div>
                     )}
                   </div>
-                  {(c._count?.comentarios > 0 || c._count?.anexos > 0) && (
-                    <div className="flex gap-2 mt-1">
-                      {c._count.comentarios > 0 && (
-                        <span className="text-xs text-gray-400">💬 {c._count.comentarios}</span>
-                      )}
-                      {c._count.anexos > 0 && (
-                        <span className="text-xs text-gray-400">📎 {c._count.anexos}</span>
-                      )}
-                    </div>
-                  )}
                 </button>
               ))
             )}
           </div>
 
+          {/* Filtros avançados */}
+          <div className="border-t border-gray-100 bg-white">
+            <button
+              onClick={() => setMostrarFiltros(f => !f)}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              Filtros Avançados
+              <svg className={`w-3 h-3 transition-transform ${mostrarFiltros ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+            {mostrarFiltros && (
+              <div className="px-3 pb-3 space-y-2 border-t border-gray-100 pt-2">
+                <select className="input text-xs w-full" value={filtroStatus}
+                  onChange={e => { setFiltroStatus(e.target.value); setFiltroMeus(false) }}>
+                  <option value="">Todos os status</option>
+                  {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <select className="input text-xs w-full" value={filtroClassif}
+                  onChange={e => setFiltroClassif(e.target.value)}>
+                  <option value="">Todas as classificações</option>
+                  {CLASSIF_OPTS.filter(Boolean).map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* ── Painel direito — Detalhe ────────────────────────────────────── */}
-        <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto ${mostrarLista && !detalhe ? 'hidden md:flex' : ''}`}>
+        {/* ── Painel direito — Detalhe ─────────────────────────────────── */}
+        <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto bg-white ${mostrarLista && !detalhe ? 'hidden md:flex' : ''}`}>
           {!detalhe ? (
-            <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-              Selecione um chamado para ver os detalhes
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-400">
+              <svg className="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                <rect x="9" y="3" width="6" height="4" rx="1"/>
+                <line x1="9" y1="12" x2="15" y2="12"/>
+                <line x1="9" y1="16" x2="13" y2="16"/>
+              </svg>
+              <p className="text-sm">Selecione um chamado para ver os detalhes</p>
             </div>
           ) : (
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 max-w-4xl w-full">
 
               {/* Botão voltar (mobile) */}
-              <button
-                className="md:hidden text-sm text-sysgate-600 mb-2"
-                onClick={() => { setMostrarLista(true); setChamadoSelId(null); setDetalhe(null) }}
-              >
+              <button className="md:hidden text-sm text-sysgate-600"
+                onClick={() => { setMostrarLista(true); setChamadoSelId(null); setDetalhe(null) }}>
                 ← Voltar
               </button>
 
-              {/* Header do chamado */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-start gap-2 flex-wrap">
-                  <h2 className="text-lg font-semibold text-gray-900 flex-1">{detalhe.titulo}</h2>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {/* Dropdown status */}
-                    <div className="flex items-center gap-1.5 border border-gray-200 rounded px-2 py-1 bg-white">
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0 transition-colors duration-200"
-                        style={{ backgroundColor: STATUS_CORES[detalhe.status] || '#94A3B8' }}
-                      />
+              {/* ── Cabeçalho do chamado ─────────────────────────────── */}
+              <div>
+                <div className="flex items-start gap-3 mb-3">
+                  <h2 className="text-xl font-bold text-gray-900 flex-1 leading-snug">{detalhe.titulo}</h2>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Status selector */}
+                    <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white shadow-sm">
+                      <span className="w-2 h-2 rounded-full shrink-0 transition-colors duration-200"
+                        style={{ backgroundColor: STATUS_CORES[detalhe.status] || '#94A3B8' }} />
                       <select
-                        className="text-xs font-medium text-gray-700 border-0 outline-none bg-transparent cursor-pointer pr-1"
+                        className="text-xs font-medium text-gray-700 border-0 outline-none bg-transparent cursor-pointer"
                         value={detalhe.status}
                         onChange={e => atualizarCampo('status', e.target.value)}
                       >
                         {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                      há {diasDesde(detalhe.criadoEm)}d
-                    </span>
-                    <button
-                      onClick={() => setModalEditar(true)}
-                      className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
-                      title="Editar"
-                    >
+                    <button onClick={() => setModalEditar(true)}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors" title="Editar">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
                     {isAdmin && (
-                      <button
-                        onClick={deletarChamado}
-                        className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"
-                        title="Deletar chamado"
-                      >
+                      <button onClick={deletarChamado}
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Deletar">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                          <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                          <path d="M10 11v6M14 11v6"/>
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                         </svg>
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Info card — read-only */}
-                <div className="bg-gray-50 rounded-lg p-4 mt-2">
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Município</p>
-                      <p className="text-gray-800 font-medium">{detalhe.municipio || <span className="text-gray-400 font-normal">—</span>}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Entidade</p>
-                      <p className="text-gray-800 font-medium">{detalhe.entidade || <span className="text-gray-400 font-normal">—</span>}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Criado por</p>
-                      <p className="text-gray-700">{detalhe.criadoPor?.nome}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Responsável</p>
-                      <p className="text-gray-700">{detalhe.responsavel?.nome || <span className="text-gray-400">—</span>}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Data de abertura</p>
-                      <p className="text-gray-700">{formatData(detalhe.criadoEm)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Classificação</p>
-                      {detalhe.classificacao
-                        ? <Badge label={detalhe.classificacao} cor={CLASSIF_CORES[detalhe.classificacao]} />
-                        : <span className="text-gray-400 text-xs">—</span>}
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Prioridade</p>
-                      <Badge label={detalhe.prioridade} cor={PRIORIDADE_CORES[detalhe.prioridade]} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Vertical</p>
-                      <p className="text-gray-700">{detalhe.vertical || <span className="text-gray-400">—</span>}</p>
-                    </div>
-                    {detalhe.sistema && (
-                      <div>
-                        <p className="text-xs text-gray-400 mb-0.5">Sistema</p>
-                        <p className="text-gray-700">{detalhe.sistema}</p>
-                      </div>
-                    )}
-                  </div>
+                {/* Status pill + número do chamado */}
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{
+                      backgroundColor: (STATUS_CORES[detalhe.status] || '#94A3B8') + '20',
+                      color: STATUS_CORES[detalhe.status] || '#94A3B8',
+                    }}>
+                    <span className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: STATUS_CORES[detalhe.status] || '#94A3B8' }} />
+                    {detalhe.status}
+                  </span>
+                  <span className="text-xs text-gray-400 font-mono tracking-wide">{ticketNum(detalhe)}</span>
                 </div>
               </div>
 
-              {/* Descrição */}
+              {/* ── Grid de informações (4 colunas) ─────────────────── */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-5 py-5 border-t border-b border-gray-100">
+                {[
+                  { label: 'MUNICÍPIO',       val: detalhe.municipio,          bold: true },
+                  { label: 'ENTIDADE',        val: detalhe.entidade,           bold: true },
+                  { label: 'CRIADO POR',      val: detalhe.criadoPor?.nome,    avatar: true },
+                  { label: 'RESPONSÁVEL',     val: detalhe.responsavel?.nome },
+                  { label: 'DATA DE ABERTURA', val: formatData(detalhe.criadoEm) },
+                  { label: 'CLASSIFICAÇÃO',   badge: { label: detalhe.classificacao, cor: CLASSIF_CORES[detalhe.classificacao] } },
+                  { label: 'PRIORIDADE',      badge: { label: detalhe.prioridade, cor: PRIORIDADE_CORES[detalhe.prioridade] } },
+                  { label: 'VERTICAL',        val: detalhe.vertical },
+                  detalhe.sistema ? { label: 'SISTEMA', val: detalhe.sistema, highlight: true } : null,
+                ].filter(Boolean).map(item => (
+                  <div key={item.label}>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{item.label}</p>
+                    {item.badge ? (
+                      item.badge.label
+                        ? <Badge label={item.badge.label} cor={item.badge.cor} />
+                        : <span className="text-sm text-gray-400">—</span>
+                    ) : item.avatar ? (
+                      <div className="flex items-center gap-1.5">
+                        <Avatar nome={item.val} size={5} />
+                        <span className="text-sm text-gray-700">{item.val || '—'}</span>
+                      </div>
+                    ) : (
+                      <p className={`text-sm ${item.bold ? 'text-gray-900 font-semibold' : item.highlight ? 'text-sysgate-600 font-medium' : 'text-gray-700'}`}>
+                        {item.val || <span className="text-gray-400 font-normal">—</span>}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Descrição ────────────────────────────────────────── */}
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Descrição</h3>
-                <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-700 whitespace-pre-wrap min-h-[48px]">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Descrição</h3>
+                <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700 whitespace-pre-wrap min-h-[52px] leading-relaxed">
                   {detalhe.descricao || <span className="text-gray-400">Sem descrição</span>}
                 </div>
               </div>
 
-              {/* Anexos */}
+              {/* ── Anexos ───────────────────────────────────────────── */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                     Anexos ({detalhe.anexos?.length || 0})
                   </h3>
                   <div>
@@ -660,62 +677,75 @@ export default function Chamados() {
                     <button
                       onClick={() => fileAnexoRef.current?.click()}
                       disabled={uploadAnexo}
-                      className="text-xs text-sysgate-600 hover:underline"
+                      className="flex items-center gap-1 text-xs text-sysgate-600 font-medium hover:underline disabled:opacity-50"
                     >
-                      {uploadAnexo ? 'Enviando…' : '+ Anexar'}
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                      </svg>
+                      {uploadAnexo ? 'Enviando…' : 'Anexar Arquivo'}
                     </button>
                   </div>
                 </div>
+
                 {detalhe.anexos?.length === 0 ? (
-                  <p className="text-xs text-gray-400">Nenhum anexo.</p>
+                  <div
+                    onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileAnexoRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center gap-2 cursor-pointer transition-colors ${
+                      dragOver ? 'border-sysgate-400 bg-sysgate-50/50' : 'border-gray-200 hover:border-sysgate-300 hover:bg-gray-50/50'
+                    }`}
+                  >
+                    <svg className={`w-8 h-8 ${dragOver ? 'text-sysgate-400' : 'text-gray-300'}`} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <polyline points="16 16 12 12 8 16"/>
+                      <line x1="12" y1="12" x2="12" y2="21"/>
+                      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                    </svg>
+                    <p className="text-sm text-gray-400">Nenhum anexo. Arraste arquivos aqui ou clique para selecionar.</p>
+                  </div>
                 ) : (
-                  <ul className="space-y-1">
+                  <div
+                    onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    className={`space-y-1.5 rounded-xl p-2 transition-colors ${dragOver ? 'bg-sysgate-50/50 border border-dashed border-sysgate-300' : ''}`}
+                  >
                     {detalhe.anexos.map(a => (
-                      <li key={a.id} className="flex items-center gap-2 bg-gray-50 rounded px-3 py-2 text-sm">
-                        <span>{iconeAnexo(a.tipo)}</span>
-                        <span className="flex-1 truncate text-gray-700">{a.nomeArquivo}</span>
-                        {a.tamanho && <span className="text-xs text-gray-400">{formatBytes(a.tamanho)}</span>}
-                        <button
-                          onClick={() => downloadAnexo(a.id, a.nomeArquivo)}
-                          className="text-sysgate-600 hover:underline text-xs"
-                        >↓ Baixar</button>
-                        <button
-                          onClick={() => deletarAnexo(a.id)}
-                          className="text-red-400 hover:text-red-600 text-xs"
-                        >×</button>
-                      </li>
+                      <div key={a.id} className="flex items-center gap-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg px-3 py-2.5 text-sm transition-colors">
+                        <span className="text-base">{iconeAnexo(a.tipo)}</span>
+                        <span className="flex-1 truncate text-gray-700 font-medium">{a.nomeArquivo}</span>
+                        {a.tamanho && <span className="text-xs text-gray-400 shrink-0">{formatBytes(a.tamanho)}</span>}
+                        <button onClick={() => downloadAnexo(a.id, a.nomeArquivo)}
+                          className="text-sysgate-600 hover:text-sysgate-700 text-xs font-medium shrink-0">↓ Baixar</button>
+                        <button onClick={() => deletarAnexo(a.id)}
+                          className="text-gray-300 hover:text-red-400 text-sm leading-none shrink-0">×</button>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
 
-              {/* Comentários */}
+              {/* ── Comentários ──────────────────────────────────────── */}
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
                   Comentários ({detalhe.comentarios?.length || 0})
                 </h3>
 
-                {/* Timeline */}
-                <div className="space-y-3 mb-4">
+                <div className="space-y-4 mb-5">
                   {detalhe.comentarios?.length === 0 && (
-                    <p className="text-xs text-gray-400">Nenhum comentário ainda.</p>
+                    <p className="text-sm text-gray-400">Nenhum comentário ainda.</p>
                   )}
                   {detalhe.comentarios?.map(c => (
                     <div key={c.id} className="flex gap-3">
-                      {/* Avatar */}
-                      <div className="w-8 h-8 rounded-full bg-sysgate-100 text-sysgate-600 flex items-center justify-center text-xs font-semibold shrink-0">
-                        {iniciais(c.autor?.nome)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
+                      <Avatar nome={c.autor?.nome} size={8} />
+                      <div className="flex-1 min-w-0 bg-gray-50 rounded-xl px-4 py-3">
+                        <div className="flex items-center gap-2 mb-1.5">
                           <span className="text-sm font-semibold text-gray-900">{c.autor?.nome}</span>
                           <span className="text-xs text-gray-400">{tempoRelativo(c.criadoEm)}</span>
                           {(c.autorId === usuario?.id || isAdmin) && (
-                            <button
-                              onClick={() => deletarComentario(c.id)}
-                              className="ml-auto text-gray-300 hover:text-red-400 text-xs"
-                              title="Remover comentário"
-                            >×</button>
+                            <button onClick={() => deletarComentario(c.id)}
+                              className="ml-auto text-gray-300 hover:text-red-400 text-sm leading-none" title="Remover">×</button>
                           )}
                         </div>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.conteudo}</p>
@@ -725,23 +755,22 @@ export default function Chamados() {
                 </div>
 
                 {/* Novo comentário */}
-                <div className="flex gap-2">
-                  <div className="w-8 h-8 rounded-full bg-sysgate-100 text-sysgate-600 flex items-center justify-center text-xs font-semibold shrink-0">
-                    {iniciais(usuario?.nome)}
-                  </div>
-                  <div className="flex-1">
+                <div className="flex gap-3">
+                  <Avatar nome={usuario?.nome} size={8} />
+                  <div className="flex-1 border border-gray-200 rounded-xl overflow-hidden focus-within:border-sysgate-400 focus-within:ring-1 focus-within:ring-sysgate-300 transition-all">
                     <textarea
-                      className="input text-sm w-full min-h-[60px] resize-none"
+                      className="w-full px-4 py-3 text-sm text-gray-700 border-0 outline-none resize-none bg-transparent min-h-[64px]"
                       placeholder="Escreva um comentário…"
                       value={novoComentario}
                       onChange={e => setNovoComentario(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) enviarComentario() }}
                     />
-                    <div className="flex justify-end mt-1">
+                    <div className="flex items-center justify-between px-3 pb-2.5">
+                      <span className="text-xs text-gray-400">Ctrl+Enter para enviar</span>
                       <button
                         onClick={enviarComentario}
                         disabled={enviandoComent || !novoComentario.trim()}
-                        className="btn text-sm"
+                        className="px-3 py-1 text-xs font-semibold bg-sysgate-600 hover:bg-sysgate-700 text-white rounded-lg disabled:opacity-40 transition-colors"
                       >
                         {enviandoComent ? 'Enviando…' : 'Comentar'}
                       </button>
@@ -755,25 +784,17 @@ export default function Chamados() {
         </div>
       </div>
 
-      {/* Modais */}
+      {/* ── Modais ──────────────────────────────────────────────────────── */}
       {modalNovo && (
         <ModalChamado
-          usuarios={usuarios}
-          catalogo={catalogo}
-          onSalvo={(c) => {
-            setChamados(prev => [c, ...prev])
-            setModalNovo(false)
-            selecionarChamado(c.id)
-          }}
+          usuarios={usuarios} catalogo={catalogo}
+          onSalvo={(c) => { setChamados(prev => [c, ...prev]); setModalNovo(false); selecionarChamado(c.id) }}
           onFechar={() => setModalNovo(false)}
         />
       )}
-
       {modalEditar && detalhe && (
         <ModalChamado
-          chamado={detalhe}
-          usuarios={usuarios}
-          catalogo={catalogo}
+          chamado={detalhe} usuarios={usuarios} catalogo={catalogo}
           onSalvo={(c) => {
             setDetalhe(prev => ({ ...prev, ...c }))
             setChamados(prev => prev.map(x => x.id === c.id ? { ...x, ...c } : x))
