@@ -52,7 +52,7 @@ sysgate/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
 │   ├── prisma/
-│   │   ├── schema.prisma      # 15 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ municipios[]), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical
+│   │   ├── schema.prisma      # 15 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ municipios[]), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical — MunicipioSistema inclui dataVencimento DateTime?
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -403,6 +403,7 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Zustand persist**: município ativo persiste em `localStorage` (key: `sysgate-municipio`)
 - **Município sem codigoIBGE**: campo removido do schema, validação e UI — apenas `nome` e `observacoes`
 - **Tokens por município**: painel lateral em `Municipios.jsx` — abre ao clicar na linha da tabela; um token por par (município × sistema). Campo `ambiente` removido da UI (default `"producao"` no banco). Painel exibe token mascarado (primeiros 8 chars + `••••`) com botão de olho para revelar e botão de copiar. Backend retorna token real (sem mascaramento). Tokens isolados por usuário — o proxy verifica `usuarioId` antes de executar
+- **Validade do token (`dataVencimento`)**: campo `DateTime?` opcional em `MunicipioSistema`. Cadastrado no modal "Adicionar token" com `<input type="date">` (min = hoje, max = hoje + 15 dias — duração máxima real de um token Betha). Exibe badge colorido abaixo do nome do sistema no painel de tokens: verde (> 30 dias), amarelo (8–30 dias), laranja (1–7 dias / "Vence hoje"), vermelho ("Expirado há X dias"). Apenas informativo — não bloqueia uso do token. Tokens sem data não exibem badge. Para atualizar a data de um token existente: re-salvar o mesmo sistema via "+ Adicionar sistema" (upsert).
 - **Municípios isolados por usuário**: campo `usuarioId Int?` em `Municipio`; queries sempre filtradas por `req.usuario.id`. Municípios de outros usuários são invisíveis e inacessíveis (404 em vez de 403 para não vazar informação de existência)
 - **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (ClienteAPI.jsx)` não tem mais esse botão; botões de importação visíveis **apenas para admin**
 - **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema); ações de escrita visíveis **apenas para admin** (`isAdmin = useAuthStore(state => state.usuario)?.role === 'admin'`)
