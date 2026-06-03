@@ -63,14 +63,15 @@ router.post('/:id/tokens', async (req, res) => {
   try {
     const municipio = await verificarDono(req.params.id, req.usuario.id)
     if (!municipio) return res.status(404).json({ error: 'Município não encontrado' })
-    const { sistemaId, token } = req.body
+    const { sistemaId, token, dataVencimento } = req.body
     if (!sistemaId || !token) {
       return res.status(400).json({ error: 'Campos obrigatórios: sistemaId, token' })
     }
+    const vencimento = dataVencimento ? new Date(dataVencimento) : null
     const vinculo = await prisma.municipioSistema.upsert({
       where: { municipioId_sistemaId: { municipioId: municipio.id, sistemaId: Number(sistemaId) } },
-      update: { token },
-      create: { municipioId: municipio.id, sistemaId: Number(sistemaId), token },
+      update: { token, dataVencimento: vencimento },
+      create: { municipioId: municipio.id, sistemaId: Number(sistemaId), token, dataVencimento: vencimento },
       include: { sistema: { select: { id: true, nome: true, urlBase: true } } },
     })
     res.json(vinculo)

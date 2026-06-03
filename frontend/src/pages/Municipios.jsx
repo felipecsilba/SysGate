@@ -3,7 +3,54 @@ import { municipiosApi, sistemasApi } from '../lib/api'
 import useMunicipioStore from '../stores/municipioStore'
 
 const VAZIO_MUN = { nome: '', observacoes: '' }
-const VAZIO_TOKEN = { sistemaId: '', token: '' }
+const VAZIO_TOKEN = { sistemaId: '', token: '', dataVencimento: '' }
+
+function diasRestantes(dataVencimento) {
+  if (!dataVencimento) return null
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const venc = new Date(dataVencimento)
+  venc.setHours(0, 0, 0, 0)
+  return Math.round((venc - hoje) / (1000 * 60 * 60 * 24))
+}
+
+function BadgeVencimento({ dataVencimento }) {
+  const dias = diasRestantes(dataVencimento)
+  if (dias === null) return null
+  if (dias < 0) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-200">
+        Expirado há {Math.abs(dias)} dia{Math.abs(dias) !== 1 ? 's' : ''}
+      </span>
+    )
+  }
+  if (dias === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-50 text-orange-600 border border-orange-200">
+        Vence hoje
+      </span>
+    )
+  }
+  if (dias <= 7) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-50 text-orange-600 border border-orange-200">
+        {dias} dia{dias !== 1 ? 's' : ''} restante{dias !== 1 ? 's' : ''}
+      </span>
+    )
+  }
+  if (dias <= 30) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-50 text-yellow-700 border border-yellow-200">
+        {dias} dias restantes
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200">
+      {dias} dias restantes
+    </span>
+  )
+}
 
 function IconEdit() {
   return (
@@ -154,6 +201,7 @@ export default function Municipios() {
       await municipiosApi.salvarToken(municipioSel.id, {
         sistemaId: Number(formToken.sistemaId),
         token: formToken.token,
+        dataVencimento: formToken.dataVencimento || null,
       })
       await carregarTokens(municipioSel.id)
       await carregar()
@@ -322,7 +370,14 @@ export default function Municipios() {
                   return (
                     <div key={v.id} className="bg-gray-50 rounded-lg px-3 py-2.5 space-y-1.5 border border-gray-100">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-gray-800 truncate">{v.sistema.nome}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-800 truncate">{v.sistema.nome}</p>
+                          {v.dataVencimento && (
+                            <div className="mt-0.5">
+                              <BadgeVencimento dataVencimento={v.dataVencimento} />
+                            </div>
+                          )}
+                        </div>
                         <button
                           onClick={() => removerToken(v.sistema.id)}
                           className="p-1 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0 ml-1"
@@ -462,6 +517,17 @@ export default function Municipios() {
                     {mostrarToken ? 'Ocultar' : 'Mostrar'}
                   </button>
                 </div>
+              </div>
+              <div>
+                <label className="label">Validade do token <span className="text-xs text-gray-400">(opcional · máx. 15 dias)</span></label>
+                <input
+                  type="date"
+                  value={formToken.dataVencimento}
+                  onChange={(e) => setFormToken((f) => ({ ...f, dataVencimento: e.target.value }))}
+                  className="input"
+                  min={new Date().toISOString().slice(0, 10)}
+                  max={new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+                />
               </div>
               {erroToken && (
                 <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{erroToken}</div>

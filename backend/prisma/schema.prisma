@@ -35,13 +35,14 @@ model Municipio {
 }
 
 model MunicipioSistema {
-  id          Int       @id @default(autoincrement())
-  municipioId Int
-  sistemaId   Int
-  token       String
-  ambiente    String    @default("producao")
-  municipio   Municipio @relation(fields: [municipioId], references: [id], onDelete: Cascade)
-  sistema     Sistema   @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+  id              Int       @id @default(autoincrement())
+  municipioId     Int
+  sistemaId       Int
+  token           String
+  ambiente        String    @default("producao")
+  dataVencimento  DateTime?
+  municipio       Municipio @relation(fields: [municipioId], references: [id], onDelete: Cascade)
+  sistema         Sistema   @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
 
   @@unique([municipioId, sistemaId])
 }
