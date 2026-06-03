@@ -5,6 +5,23 @@ const { exigirAdmin } = require('../middleware/autenticar')
 const router = express.Router()
 const prisma = new PrismaClient()
 
+function buildProxyConfig() {
+  const raw = process.env.PROXY_URL
+  if (!raw) return undefined
+  try {
+    const u = new URL(raw)
+    return {
+      protocol: u.protocol.replace(':', ''),
+      host: u.hostname,
+      port: Number(u.port) || (u.protocol === 'https:' ? 443 : 80),
+      ...(u.username ? { auth: { username: decodeURIComponent(u.username), password: decodeURIComponent(u.password) } } : {}),
+    }
+  } catch {
+    console.warn('[endpoints] PROXY_URL inválida, ignorando:', raw)
+    return undefined
+  }
+}
+
 // GET /api/endpoints — lista todos, opcionalmente filtrados por módulo
 router.get('/', async (req, res) => {
   try {
@@ -394,6 +411,7 @@ router.post('/fetch-swagger', exigirAdmin, async (req, res) => {
       headers: headersBase,
       timeout: 15000,
       validateStatus: () => true,
+      proxy: buildProxyConfig(),
     })
 
     // ── Detecta página HTML do Swagger UI e tenta extrair o URL do JSON ──
@@ -409,6 +427,7 @@ router.post('/fetch-swagger', exigirAdmin, async (req, res) => {
           headers: headersBase,
           timeout: 15000,
           validateStatus: () => true,
+          proxy: buildProxyConfig(),
         })
         if (r2.status === 200) {
           fetchUrl = specUrl
