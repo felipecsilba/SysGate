@@ -6,11 +6,12 @@ Ferramenta interna fullstack para implantadores da SysGate. Gerencia municípios
 
 | Camada    | Tecnologia                                                                        |
 |-----------|-----------------------------------------------------------------------------------|
-| Frontend  | React 18 + Vite + Tailwind CSS 3 + Zustand 4 + React Router 6                    |
+| Frontend  | React 18 + Vite + Tailwind CSS 3 + Zustand 4 + React Router 6 + Recharts         |
 | Backend   | Node.js + Express 4 + Prisma ORM + SQLite                                         |
 | Segurança | Helmet.js + express-rate-limit + bcryptjs + jsonwebtoken + hCaptcha               |
 | CSV       | Papa Parse (parsing de CSV no frontend)                                           |
 | HTTP      | Axios (frontend→backend e backend→APIs)                                           |
+| Gráficos  | Recharts (BarChart, PieChart, AreaChart — usado no Dashboard de Chamados)         |
 | Docker    | docker-compose com 2 serviços (backend + frontend)                                |
 
 ## Skills de Desenvolvimento (Superpowers)
@@ -52,7 +53,7 @@ sysgate/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
 │   ├── prisma/
-│   │   ├── schema.prisma      # 15 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ municipios[]), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical — MunicipioSistema inclui dataVencimento DateTime?
+│   │   ├── schema.prisma      # 20 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario, PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado, ChamadoComentario, ChamadoAnexo, ChamadoHistorico
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -70,7 +71,8 @@ sysgate/
 │           ├── scripts.js     # CRUD com tags (categoria: script|formula|anotacao) + importar JSON
 │           ├── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
 │           ├── portfolio.js   # CRUD Portfólio — PortfolioMunicipio + Entidade + EntidadeSistema + Stakeholder (M2M) — leitura pública; escrita/exclusão somente admin
-│           └── catalogo.js   # CRUD CatalogoVertical — verticais Betha com nome/cor/sistemas/ordem; seed automático na 1ª chamada GET — leitura pública; escrita somente admin
+│           ├── catalogo.js   # CRUD CatalogoVertical — verticais Betha com nome/cor/sistemas/ordem; seed automático na 1ª chamada GET — leitura pública; escrita somente admin
+│           └── chamados.js   # CRUD Chamados + comentários + anexos + histórico de alterações + dashboard agregado; acesso público (autenticados); DELETE somente admin
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
@@ -84,7 +86,7 @@ sysgate/
         ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute (todas as rotas autenticadas)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
-        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi e catalogoApi
+        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi e chamadosApi
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: sysgate-municipio)
         │   └── authStore.js       # Zustand + persist (sysgate-auth) — token + usuario; suporta lembrar (30d); logout limpa sysgate-municipio do localStorage
@@ -104,7 +106,8 @@ sysgate/
             ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin
             ├── ClienteAPI.jsx     # Rota: /sandbox — Seletor endpoint + CodeBlock JSON + body editor + proxy
             ├── EnvioLote.jsx      # Upload CSV + toggle sem cabeçalho + mapeamento colunas 2 colunas + envio em lote (array body) + IDs gerados + consulta GET por ID + exportar CSV com IDs
-            └── Scripts.jsx        # 4 abas: Scripts BFC / Fórmulas BFC / Anotações / Relatórios (JRXML + fonte dinâmica)
+            ├── Scripts.jsx        # 4 abas: Scripts BFC / Fórmulas BFC / Anotações / Relatórios (JRXML + fonte dinâmica)
+            └── Chamados.jsx       # Rota: /chamados — sub-abas Gestão (lista+detalhe) e Dashboard (gráficos Recharts); histórico lateral por chamado
 ```
 
 ## Comandos
@@ -250,6 +253,25 @@ docker-compose up --build
 | POST   | /api/catalogo     | Cria vertical (nome, cor hex, sistemas[], ordem) — **somente admin**              |
 | PUT    | /api/catalogo/:id | Atualiza vertical — **somente admin**                                             |
 | DELETE | /api/catalogo/:id | Remove vertical — retorna 409 se há `EntidadeSistema` vinculados — **somente admin** |
+
+### Chamados
+> Acesso público (qualquer autenticado). `DELETE /:id` somente admin. Sem isolamento por usuário — todos veem todos.
+
+| Método | Rota                          | Descrição                                                                             |
+|--------|-------------------------------|---------------------------------------------------------------------------------------|
+| GET    | /api/chamados                 | Lista chamados (filtros ?busca=, ?status=, ?classificacao=, ?responsavelId=, ?vertical=) |
+| GET    | /api/chamados/estatisticas    | Contagem por status (objeto `{ status: count }`)                                      |
+| GET    | /api/chamados/dashboard       | Dados agregados: resumo, porStatus, porMunicipio, porVertical, porClassificacao, porPrioridade, semResponsavel, porDia (14 dias) |
+| POST   | /api/chamados                 | Cria chamado + registra entrada `criacao` no histórico                                |
+| GET    | /api/chamados/anexos/:aid     | Download de anexo (base64 → buffer, Content-Disposition: attachment)                  |
+| DELETE | /api/chamados/anexos/:aid     | Remove anexo                                                                          |
+| DELETE | /api/chamados/comentarios/:cid | Remove comentário — somente autor ou admin                                           |
+| GET    | /api/chamados/:id/historico   | Histórico de alterações do chamado (ordenado por criadoEm desc)                       |
+| GET    | /api/chamados/:id             | Detalhe completo com comentários, anexos e contagens                                  |
+| PUT    | /api/chamados/:id             | Atualiza campos + detecta alterações e registra no histórico automaticamente          |
+| DELETE | /api/chamados/:id             | Remove chamado (cascade) — **somente admin**                                          |
+| POST   | /api/chamados/:id/comentarios | Adiciona comentário                                                                   |
+| POST   | /api/chamados/:id/anexos      | Upload de anexo (base64 no body: nomeArquivo, tipo, conteudo, tamanho)               |
 
 ### Outros
 | Método | Rota                  | Descrição                                                                     |
@@ -423,6 +445,63 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Portfólio — cores de verticais**: mapa `CORES_VERTICAIS` em `Portfolio.jsx` (hardcoded, cores oficiais Betha) mapeia nome → hex. `corVertical(v)` faz lookup e retorna `COR_OUTROS_HEX = '#94A3B8'` para verticais não mapeadas. `hexToRgb(hex)` converte para `"r, g, b"` usado em `rgba(...)` para fundos com opacidade. Cabeçalhos de cards usam cor sólida + texto branco; fundos de cards usam `rgba(..., 0.05/0.15)`.
 - **Portfólio — modal picker (ModalGerenciarSistemas)**: aceita prop `catalogo` (array da API). Chips de sistemas usam `getChipStyle(vertical, sis)` que retorna `{ cls, sty }` — chips ativos têm cor da vertical (inline style), chips fantasma têm borda pontilhada cinza, chips pendentes de ativação têm fundo sólido da vertical + texto branco. A API retorna `nome` (não `vertical`) — desestruturar como `{ nome: vertical, sistemas }`.
 - **Portfólio — modal catálogo (ModalCatalogo)**: admin only, acessível pelo botão de engrenagem no header. Lista cards editáveis: nome (input), cor (`<input type="color">`), sistemas (chips com × para remover + input Enter para adicionar). "+ Nova vertical" adiciona entrada com `_novo: true`. Ao salvar: itera `deletados[]` (DELETE), depois itera `itens` (POST para `_novo`, PUT para existentes). `onSaved()` recarrega o catálogo no componente pai via `catalogoApi.listar().then(setCatalogo)`.
+
+## Módulo Chamados — padrões e decisões
+
+### Modelos de dados
+- **`Chamado`**: campos `titulo`, `descricao`, `status`, `classificacao`, `prioridade`, `vertical`, `sistema`, `municipio` (texto livre), `entidade` (texto livre), `criadoPorId`, `responsavelId`. Sem isolamento por usuário (dados globais).
+- **`ChamadoComentario`**: vínculo com `Chamado` (cascade delete) e `Usuario` (autor).
+- **`ChamadoAnexo`**: armazena arquivo como base64 em `conteudo String`. Download via `GET /api/chamados/anexos/:aid` — converte `Buffer.from(base64)` e envia como `application/octet-stream`.
+- **`ChamadoHistorico`**: registra cada alteração relevante. Campos: `tipo` (string), `valorAntes` (String?), `valorDepois` (String?), `usuarioId`, `chamadoId`, `criadoEm`. Sempre ordenado `desc` na listagem.
+
+### Histórico automático de alterações
+- Tipos rastreados: `criacao`, `status`, `responsavel`, `classificacao`, `prioridade`, `titulo`, `vertical`
+- `POST /` cria entrada `criacao` após criar o chamado
+- `PUT /:id` busca o estado atual ANTES do update, compara campo a campo, cria entradas via `createMany` para cada campo que mudou
+- Para `responsavel`: faz lookup do nome do novo usuário para armazenar o nome legível (não só o ID) em `valorDepois`
+- `valorAntes`/`valorDepois` armazenam `null` quando campo era/ficou sem valor — exibidos como "removido" no frontend
+
+### Painel de histórico (PainelHistorico)
+- Componente interno de `Chamados.jsx`, lazy — só busca dados quando aberto (`useEffect` no mount)
+- Toggle via botão de relógio no cabeçalho do detalhe — estado `mostrarHistorico` (boolean)
+- Aparece como coluna lateral direita (`w-72`) dentro do painel de detalhe (flex row)
+- `historicoKey` (counter) é incrementado após qualquer atualização — passado como `key` ao componente para forçar re-fetch
+- Timeline com linha vertical cinza + dot colorido por tipo + descrição + nome do usuário + data/hora completa
+- Cores por tipo: `criacao`=#22C55E, `status`=#3B82F6, `responsavel`=#8B5CF6, `classificacao`=#6366f1, `prioridade`=#F59E0B, `titulo`=#64748B, `vertical`=#EC4899
+
+### Sub-abas do módulo (Gestão | Dashboard)
+- Estado `aba` no componente principal: `'lista'` ou `'dashboard'`
+- Toggle estilo pill/tab no header, junto ao título — não substitui o botão "Novo Chamado"
+- Ao criar um chamado via modal, `onSalvo` força `setAba('lista')` para o usuário ver o chamado criado
+
+### Dashboard de chamados
+- Componente `Dashboard` dentro de `Chamados.jsx` — busca `chamadosApi.dashboard()` no mount
+- Endpoint `GET /api/chamados/dashboard` usa `Promise.all` com 10 queries paralelas: porStatus, porMunicipio (top 10), porVertical, porClassificacao, porPrioridade, semResponsavel (abertos, limit 8), criadosHoje, criadosMes, concluidosMes, porDia (raw SQL SQLite, últimos 14 dias)
+- `porDia` usa `prisma.$queryRaw` com template literal — retorna BigInt; convertido com `Number(r.total)` antes de serializar
+- Gráficos Recharts: `AreaChart` (por dia), `PieChart` (por status, por classificação), `BarChart` horizontal (por município, por vertical), `BarChart` vertical (por prioridade)
+- Cores dos gráficos reutilizam `STATUS_CORES`, `CLASSIF_CORES`, `PRIORIDADE_CORES` + paleta `PALETTE` para séries sem cor semântica
+- `CustomTooltip`: componente único de tooltip para todos os gráficos (fundo branco, borda cinza, fonte xs)
+- Tabela "Abertos sem responsável": exibe chamados com `responsavelId = null` e `status ≠ 'Concluido'` com dot pulsante laranja no header
+
+### Campos do chamado — origem dos dados
+- `municipio` e `entidade`: texto livre no banco, mas o modal busca opções do portfólio via `portfolioApi.listar()` e `portfolioApi.entidades(id)` para oferecer selects dinâmicos. O usuário pode selecionar ou digitar livremente.
+- `vertical` e `sistema`: dropdown populado pelo catálogo (`catalogoApi.listar()`). Sistema dependente da vertical selecionada — filtrado por `catalogo.find(v => v.nome === form.vertical)?.sistemas`.
+- `responsavelId`: lista de usuários ativos buscados de `GET /api/usuarios`.
+
+### Numeração de chamados
+- Formato: `#CH-{ano}-{id com 4 zeros}` — ex: `#CH-2026-0042`
+- Calculado no frontend via função `ticketNum(c)` (sem campo dedicado no banco)
+
+### Ordem das rotas em chamados.js
+Rotas literais registradas ANTES de `/:id`:
+1. `GET /estatisticas`
+2. `GET /dashboard`
+3. `GET /anexos/:aid`
+4. `DELETE /anexos/:aid`
+5. `DELETE /comentarios/:cid`
+6. `GET /:id/historico` ← sub-rota de `:id`, não conflita
+7. `GET /:id`, `PUT /:id`, `DELETE /:id`
+8. `POST /:id/comentarios`, `POST /:id/anexos`
 
 ## UI — Sandbox e EnvioLote (padrões compartilhados)
 
