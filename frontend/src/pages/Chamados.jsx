@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import api, { chamadosApi, catalogoApi } from '../lib/api'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import api, { chamadosApi, catalogoApi, portfolioApi } from '../lib/api'
 import useAuthStore from '../stores/authStore'
 
 // ── Constantes de cores ──────────────────────────────────────────────────────
@@ -107,10 +107,38 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
     sistema:       chamado?.sistema       || '',
     responsavelId: chamado?.responsavelId || '',
   })
-  const [arquivos, setArquivos]   = useState([])
-  const [salvando, setSalvando]   = useState(false)
-  const [erro, setErro]           = useState('')
+  const [arquivos, setArquivos]             = useState([])
+  const [salvando, setSalvando]             = useState(false)
+  const [erro, setErro]                     = useState('')
+  const [portMunicipios, setPortMunicipios] = useState([])
+  const [portEntidades, setPortEntidades]   = useState([])
+  const [carregandoEnt, setCarregandoEnt]   = useState(false)
   const fileRef = useRef()
+
+  // Carrega municípios do portfólio e, se editando, pré-carrega entidades
+  useEffect(() => {
+    portfolioApi.listar().then(data => {
+      setPortMunicipios(data)
+      if (chamado?.municipio) {
+        const mun = data.find(m => m.nome === chamado.municipio)
+        if (mun) portfolioApi.entidades(mun.id).then(setPortEntidades).catch(() => {})
+      }
+    }).catch(() => {})
+  }, [])
+
+  const handleMunicipioChange = (nome) => {
+    setField('municipio', nome)
+    setField('entidade', '')
+    setPortEntidades([])
+    if (!nome) return
+    const mun = portMunicipios.find(m => m.nome === nome)
+    if (!mun) return
+    setCarregandoEnt(true)
+    portfolioApi.entidades(mun.id)
+      .then(setPortEntidades)
+      .catch(() => {})
+      .finally(() => setCarregandoEnt(false))
+  }
 
   const sistemasDaVertical = form.vertical
     ? (catalogo.find(v => v.nome === form.vertical)?.sistemas || [])
@@ -188,11 +216,20 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Município</label>
-              <input className="input" placeholder="Nome do município" value={form.municipio} onChange={e => setField('municipio', e.target.value)} />
+              <select className="input" value={form.municipio} onChange={e => handleMunicipioChange(e.target.value)}>
+                <option value="">— Selecione —</option>
+                {portMunicipios.map(m => <option key={m.id} value={m.nome}>{m.nome}</option>)}
+              </select>
             </div>
             <div>
               <label className="label">Entidade</label>
-              <input className="input" placeholder="Nome da entidade" value={form.entidade} onChange={e => setField('entidade', e.target.value)} />
+              <select className="input" value={form.entidade} onChange={e => setField('entidade', e.target.value)}
+                disabled={!form.municipio || (portEntidades.length === 0 && !carregandoEnt)}>
+                <option value="">
+                  {carregandoEnt ? 'Carregando…' : portEntidades.length === 0 && form.municipio ? 'Nenhuma entidade' : '— Selecione —'}
+                </option>
+                {portEntidades.map(e => <option key={e.id} value={e.nome}>{e.nome}</option>)}
+              </select>
             </div>
           </div>
 
