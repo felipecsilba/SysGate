@@ -67,14 +67,21 @@ const ICONS = {
       <line x1="9" y1="16" x2="13" y2="16" />
     </Icon>
   ),
+  analisadorJson: (
+    <Icon>
+      <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/>
+      <path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/>
+    </Icon>
+  ),
 }
 
 const BASE_NAV_ITEMS = [
   { to: '/',            label: 'Dashboard',         icon: ICONS.dashboard,  exact: true },
   { to: '/municipios',  label: 'Municípios',        icon: ICONS.municipios },
   { to: '/portfolio',   label: 'Portfólio',         icon: ICONS.portfolio },
-  { to: '/chamados',    label: 'Chamados',           icon: ICONS.chamados },
-  { to: '/sistemas',    label: 'Sistemas',          icon: ICONS.sistemas },
+  { to: '/chamados',       label: 'Chamados',          icon: ICONS.chamados },
+  { to: '/analisador-json', label: 'Analisador JSON',  icon: ICONS.analisadorJson },
+  { to: '/sistemas',       label: 'Sistemas',          icon: ICONS.sistemas },
   { to: '/sandbox',     label: 'Sandbox',            icon: ICONS.sandbox },
   { to: '/envio-lote',  label: 'Envio em Lote',     icon: ICONS.envioLote },
   { to: '/scripts',     label: 'Scripts & Ferramentas', icon: ICONS.scripts },
