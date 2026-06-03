@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
 import useAuthStore from '../stores/authStore'
 import api from '../lib/api'
+import { confirmClose } from '../lib/formGuard'
 
 const HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITEKEY || '10000000-ffff-ffff-ffff-000000000001'
 
@@ -68,6 +69,10 @@ function EtapaDados({ onSucesso, onClose }) {
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
+  const fecharComGuard = () => confirmClose(
+    !!(nome || login || senha), onClose
+  )
+
   const handleRegistrar = async (e) => {
     e.preventDefault()
     setErro('')
@@ -97,7 +102,7 @@ function EtapaDados({ onSucesso, onClose }) {
           <h2 className="text-lg font-bold text-gray-900">Criar conta</h2>
           <p className="text-xs text-gray-500 mt-0.5">Preencha seus dados para solicitar acesso</p>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+        <button onClick={fecharComGuard} className="text-gray-400 hover:text-gray-600 transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>

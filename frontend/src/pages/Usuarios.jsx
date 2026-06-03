@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usuariosApi } from '../lib/api'
 import useAuthStore from '../stores/authStore'
+import { confirmClose, isFormDirty } from '../lib/formGuard'
 
 const ROLE_LABELS = { admin: 'Admin', operador: 'Operador' }
 const ROLE_COLORS = { admin: 'bg-purple-100 text-purple-700', operador: 'bg-blue-100 text-blue-700' }
@@ -31,6 +32,8 @@ export default function Usuarios() {
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
 
+  const formInicialRef = useRef(null)
+
   const carregar = async () => {
     try {
       setCarregando(true)
@@ -48,34 +51,31 @@ export default function Usuarios() {
 
 
   const abrirNovo = () => {
-    setEditando(null)
-    setModoSenha(false)
-    setForm({ login: '', senha: '', nome: '', role: 'operador', ativo: true })
-    setErroForm('')
-    setPainelAberto(true)
+    const v = { login: '', senha: '', nome: '', role: 'operador', ativo: true }
+    formInicialRef.current = { form: v, novaSenha: '' }
+    setEditando(null); setModoSenha(false); setForm(v); setNovaSenha(''); setErroForm(''); setPainelAberto(true)
   }
 
   const abrirEditar = (u) => {
-    setEditando(u)
-    setModoSenha(false)
-    setForm({ login: u.login, nome: u.nome, role: u.role, ativo: u.ativo, senha: '' })
-    setErroForm('')
-    setPainelAberto(true)
+    const v = { login: u.login, nome: u.nome, role: u.role, ativo: u.ativo, senha: '' }
+    formInicialRef.current = { form: v, novaSenha: '' }
+    setEditando(u); setModoSenha(false); setForm(v); setNovaSenha(''); setErroForm(''); setPainelAberto(true)
   }
 
   const abrirSenha = (u) => {
-    setEditando(u)
-    setModoSenha(true)
-    setNovaSenha('')
-    setErroForm('')
-    setPainelAberto(true)
+    formInicialRef.current = { form: null, novaSenha: '' }
+    setEditando(u); setModoSenha(true); setNovaSenha(''); setErroForm(''); setPainelAberto(true)
   }
 
   const fecharPainel = () => {
-    setPainelAberto(false)
-    setEditando(null)
-    setModoSenha(false)
-    setErroForm('')
+    setPainelAberto(false); setEditando(null); setModoSenha(false); setErroForm('')
+  }
+
+  const fecharPainelComGuard = () => {
+    const dirty = formInicialRef.current
+      ? isFormDirty(formInicialRef.current, { form: modoSenha ? null : form, novaSenha })
+      : false
+    confirmClose(dirty, fecharPainel)
   }
 
   const salvar = async () => {
@@ -177,7 +177,7 @@ export default function Usuarios() {
                 <h2 className="font-semibold text-gray-900">
                   {modoSenha ? 'Alterar Minha Senha' : 'Editar Meu Nome'}
                 </h2>
-                <button onClick={fecharPainel} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+                <button onClick={fecharPainelComGuard} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
               </div>
 
               {modoSenha ? (
@@ -207,7 +207,7 @@ export default function Usuarios() {
                     <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
                       {salvando ? 'Salvando...' : 'Alterar Senha'}
                     </button>
-                    <button onClick={fecharPainel} className="btn btn-secondary text-sm">Cancelar</button>
+                    <button onClick={fecharPainelComGuard} className="btn btn-secondary text-sm">Cancelar</button>
                   </div>
                 </div>
               ) : (
@@ -227,7 +227,7 @@ export default function Usuarios() {
                     <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
                       {salvando ? 'Salvando...' : 'Salvar'}
                     </button>
-                    <button onClick={fecharPainel} className="btn btn-secondary text-sm">Cancelar</button>
+                    <button onClick={fecharPainelComGuard} className="btn btn-secondary text-sm">Cancelar</button>
                   </div>
                 </div>
               )}
@@ -341,7 +341,7 @@ export default function Usuarios() {
                   ? `Editar — ${editando.login}`
                   : 'Novo Usuário'}
               </h2>
-              <button onClick={fecharPainel} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+              <button onClick={fecharPainelComGuard} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
             </div>
 
             {modoSenha ? (
@@ -377,7 +377,7 @@ export default function Usuarios() {
                   <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
                     {salvando ? 'Salvando...' : 'Alterar Senha'}
                   </button>
-                  <button onClick={fecharPainel} className="btn btn-secondary text-sm">Cancelar</button>
+                  <button onClick={fecharPainelComGuard} className="btn btn-secondary text-sm">Cancelar</button>
                 </div>
               </div>
             ) : (
@@ -466,7 +466,7 @@ export default function Usuarios() {
                   <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
                     {salvando ? 'Salvando...' : editando ? 'Salvar' : 'Criar Usuário'}
                   </button>
-                  <button onClick={fecharPainel} className="btn btn-secondary text-sm">Cancelar</button>
+                  <button onClick={fecharPainelComGuard} className="btn btn-secondary text-sm">Cancelar</button>
                 </div>
               </div>
             )}

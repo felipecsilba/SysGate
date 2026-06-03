@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { municipiosApi, sistemasApi } from '../lib/api'
 import useMunicipioStore from '../stores/municipioStore'
+import { confirmClose, isFormDirty } from '../lib/formGuard'
 
 const VAZIO_MUN = { nome: '', observacoes: '' }
 const VAZIO_TOKEN = { sistemaId: '', token: '', dataVencimento: '' }
@@ -98,6 +99,9 @@ export default function Municipios() {
   const [salvandoToken, setSalvandoToken] = useState(false)
   const [mostrarToken, setMostrarToken] = useState(false)
   const [tokenRevelado, setTokenRevelado] = useState(null)
+
+  const formInicialRef = useRef(VAZIO_MUN)
+  const formTokenInicialRef = useRef(VAZIO_TOKEN)
   const [sistemas, setSistemas] = useState([])
 
   const { carregarMunicipios: recarregarStore, ativarMunicipio } = useMunicipioStore()
@@ -136,12 +140,18 @@ export default function Municipios() {
 
   const fecharPainel = () => { setMunicipioSel(null); setTokens([]) }
 
-  const abrirCriar = () => { setForm(VAZIO_MUN); setEditando(null); setErroForm(''); setModalAberto(true) }
+  const abrirCriar = () => {
+    formInicialRef.current = VAZIO_MUN
+    setForm(VAZIO_MUN); setEditando(null); setErroForm(''); setModalAberto(true)
+  }
   const abrirEditar = (m) => {
-    setForm({ nome: m.nome, observacoes: m.observacoes || '' })
+    const v = { nome: m.nome, observacoes: m.observacoes || '' }
+    formInicialRef.current = v
+    setForm(v)
     setEditando(m); setErroForm(''); setModalAberto(true)
   }
   const fecharModal = () => { setModalAberto(false); setEditando(null) }
+  const fecharModalComGuard = () => confirmClose(isFormDirty(formInicialRef.current, form), fecharModal)
 
   const salvar = async (e) => {
     e.preventDefault()
@@ -185,6 +195,7 @@ export default function Municipios() {
   }
 
   const abrirModalToken = async () => {
+    formTokenInicialRef.current = VAZIO_TOKEN
     setFormToken(VAZIO_TOKEN); setErroToken(''); setMostrarToken(false)
     const lista = await sistemasApi.listar()
     setSistemas(lista)
@@ -192,6 +203,7 @@ export default function Municipios() {
   }
 
   const fecharModalToken = () => { setModalToken(false) }
+  const fecharModalTokenComGuard = () => confirmClose(isFormDirty(formTokenInicialRef.current, formToken), fecharModalToken)
 
   const salvarToken = async (e) => {
     e.preventDefault()
@@ -429,7 +441,7 @@ export default function Municipios() {
               <h2 className="text-lg font-semibold text-gray-900">
                 {editando ? 'Editar município' : 'Novo município'}
               </h2>
-              <button onClick={fecharModal} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+              <button onClick={fecharModalComGuard} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
                 <IconX />
               </button>
             </div>
@@ -460,7 +472,7 @@ export default function Municipios() {
                 <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{erroForm}</div>
               )}
               <div className="flex gap-2 pt-1">
-                <button type="button" onClick={fecharModal} className="btn-secondary flex-1">Cancelar</button>
+                <button type="button" onClick={fecharModalComGuard} className="btn-secondary flex-1">Cancelar</button>
                 <button type="submit" className="btn-primary flex-1" disabled={salvando}>
                   {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Criar município'}
                 </button>
@@ -479,7 +491,7 @@ export default function Municipios() {
                 <h2 className="text-lg font-semibold text-gray-900">Adicionar token</h2>
                 <p className="text-xs text-gray-400">{municipioSel?.nome}</p>
               </div>
-              <button onClick={fecharModalToken} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+              <button onClick={fecharModalTokenComGuard} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
                 <IconX />
               </button>
             </div>
@@ -533,7 +545,7 @@ export default function Municipios() {
                 <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{erroToken}</div>
               )}
               <div className="flex gap-2 pt-1">
-                <button type="button" onClick={fecharModalToken} className="btn-secondary flex-1">Cancelar</button>
+                <button type="button" onClick={fecharModalTokenComGuard} className="btn-secondary flex-1">Cancelar</button>
                 <button type="submit" className="btn-primary flex-1" disabled={salvandoToken}>
                   {salvandoToken ? 'Salvando...' : 'Salvar token'}
                 </button>

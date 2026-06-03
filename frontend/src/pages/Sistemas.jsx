@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { sistemasApi, endpointsApi } from '../lib/api'
 import SwaggerImport from '../components/SwaggerImport'
 import useAuthStore from '../stores/authStore'
+import { confirmClose, isFormDirty } from '../lib/formGuard'
 
 const METODO_COLORS = {
   GET: 'bg-blue-100 text-blue-800',
@@ -51,6 +52,8 @@ function ModalSistema({ sistema, onSalvar, onFechar }) {
   const [descricao, setDescricao] = useState(sistema?.descricao || '')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const inicial = useRef({ nome: sistema?.nome || '', urlBase: sistema?.urlBase || '', descricao: sistema?.descricao || '' })
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, { nome, urlBase, descricao }), onFechar)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -71,7 +74,7 @@ function ModalSistema({ sistema, onSalvar, onFechar }) {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">{sistema ? 'Editar Sistema' : 'Novo Sistema'}</h2>
-          <button onClick={onFechar} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+          <button onClick={fecharComGuard} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
             <IconX />
           </button>
         </div>
@@ -92,7 +95,7 @@ function ModalSistema({ sistema, onSalvar, onFechar }) {
           </div>
           {erro && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{erro}</div>}
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onFechar} className="btn-secondary flex-1">Cancelar</button>
+            <button type="button" onClick={fecharComGuard} className="btn-secondary flex-1">Cancelar</button>
             <button type="submit" disabled={salvando} className="btn-primary flex-1">
               {salvando ? 'Salvando...' : sistema ? 'Salvar' : 'Criar Sistema'}
             </button>
@@ -111,6 +114,8 @@ function ModalEndpoint({ endpoint, onSalvar, onFechar }) {
   const [descricao, setDescricao] = useState(endpoint?.descricao || '')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const inicial = useRef({ modulo: endpoint?.modulo || '', nome: endpoint?.nome || '', path: endpoint?.path || '', metodo: endpoint?.metodo || 'GET', descricao: endpoint?.descricao || '' })
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, { modulo, nome, path, metodo, descricao }), onFechar)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -130,7 +135,7 @@ function ModalEndpoint({ endpoint, onSalvar, onFechar }) {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Editar Endpoint</h2>
-          <button onClick={onFechar} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+          <button onClick={fecharComGuard} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
             <IconX />
           </button>
         </div>
@@ -163,7 +168,7 @@ function ModalEndpoint({ endpoint, onSalvar, onFechar }) {
           </div>
           {erro && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{erro}</div>}
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onFechar} className="btn-secondary flex-1">Cancelar</button>
+            <button type="button" onClick={fecharComGuard} className="btn-secondary flex-1">Cancelar</button>
             <button type="submit" disabled={salvando} className="btn-primary flex-1">
               {salvando ? 'Salvando...' : 'Salvar endpoint'}
             </button>

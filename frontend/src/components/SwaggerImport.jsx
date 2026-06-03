@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { endpointsApi } from '../lib/api'
+import { confirmClose } from '../lib/formGuard'
 
 const METODO_COLORS = {
   GET: 'bg-blue-100 text-blue-800', POST: 'bg-green-100 text-green-800',
@@ -179,6 +180,11 @@ export default function SwaggerImport({ onClose, onImportado, sistemaId = null }
     setHeaderKey(''); setHeaderVal('')
   }
 
+  const fecharComGuard = () => {
+    const tocou = !sucesso && !!(swaggerUrl.trim() || specTexto.trim() || nomeFriendly.trim() || Object.keys(headersExtras).length > 0)
+    confirmClose(tocou, onClose)
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col max-h-[90vh]">
@@ -188,7 +194,7 @@ export default function SwaggerImport({ onClose, onImportado, sistemaId = null }
             <h2 className="text-lg font-semibold text-gray-900">Importar Swagger / OpenAPI</h2>
             <p className="text-xs text-gray-500 mt-0.5">Popula todos os endpoints e body schemas automaticamente</p>
           </div>
-          <button onClick={onClose} className="btn-ghost text-gray-500 px-2">✕</button>
+          <button onClick={fecharComGuard} className="btn-ghost text-gray-500 px-2">✕</button>
         </div>
 
         {/* Abas do modal */}

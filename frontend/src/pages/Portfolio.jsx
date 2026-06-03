@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { portfolioApi, catalogoApi } from '../lib/api'
 import useAuthStore from '../stores/authStore'
+import { confirmClose, isFormDirty } from '../lib/formGuard'
 
 // ── Cores oficiais Betha por vertical ────────────────────────────────────────
 
@@ -145,6 +146,8 @@ function ModalMunicipio({ editando, onSalvar, onClose }) {
   const [form, setForm] = useState(editando ? { nome: editando.nome, estado: editando.estado || '', observacoes: editando.observacoes || '' } : VAZIO_MUN)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const inicial = useRef({ ...form })
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, form), onClose)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -162,7 +165,7 @@ function ModalMunicipio({ editando, onSalvar, onClose }) {
   }
 
   return (
-    <Modal titulo={editando ? 'Editar Município' : 'Novo Município'} onClose={onClose}>
+    <Modal titulo={editando ? 'Editar Município' : 'Novo Município'} onClose={fecharComGuard}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="label">Nome do município *</label>
@@ -181,7 +184,7 @@ function ModalMunicipio({ editando, onSalvar, onClose }) {
         </div>
         {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{erro}</p>}
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose} className="btn btn-ghost">Cancelar</button>
+          <button type="button" onClick={fecharComGuard} className="btn btn-ghost">Cancelar</button>
           <button type="submit" disabled={salvando} className="btn btn-primary">{salvando ? 'Salvando...' : 'Salvar'}</button>
         </div>
       </form>
@@ -208,6 +211,8 @@ function ModalEntidade({ editando, onSalvar, onClose }) {
   const [form, setForm] = useState(editando ? { nome: editando.nome, tipo: editando.tipo, observacoes: editando.observacoes || '' } : VAZIO_ENT)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const inicial = useRef({ ...form })
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, form), onClose)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -226,7 +231,7 @@ function ModalEntidade({ editando, onSalvar, onClose }) {
   }
 
   return (
-    <Modal titulo={editando ? 'Editar Entidade' : 'Nova Entidade'} onClose={onClose}>
+    <Modal titulo={editando ? 'Editar Entidade' : 'Nova Entidade'} onClose={fecharComGuard}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="label">Nome da entidade *</label>
@@ -251,7 +256,7 @@ function ModalEntidade({ editando, onSalvar, onClose }) {
         </div>
         {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{erro}</p>}
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose} className="btn btn-ghost">Cancelar</button>
+          <button type="button" onClick={fecharComGuard} className="btn btn-ghost">Cancelar</button>
           <button type="submit" disabled={salvando} className="btn btn-primary">{salvando ? 'Salvando...' : 'Salvar'}</button>
         </div>
       </form>
@@ -268,6 +273,8 @@ function ModalSistema({ editando, catalogo, onSalvar, onClose }) {
     ? { nome: editando.nome, vertical: editando.vertical || '', ativo: editando.ativo, observacoes: editando.observacoes || '' }
     : VAZIO_SIS)
   const [salvando, setSalvando] = useState(false)
+  const inicial = useRef({ ...form })
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, form), onClose)
   const [erro, setErro] = useState('')
 
   const handleSubmit = async (e) => {
@@ -286,7 +293,7 @@ function ModalSistema({ editando, catalogo, onSalvar, onClose }) {
   }
 
   return (
-    <Modal titulo={editando ? 'Editar Sistema' : 'Novo Sistema Personalizado'} onClose={onClose}>
+    <Modal titulo={editando ? 'Editar Sistema' : 'Novo Sistema Personalizado'} onClose={fecharComGuard}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="label">Nome do sistema *</label>
@@ -315,7 +322,7 @@ function ModalSistema({ editando, catalogo, onSalvar, onClose }) {
         </div>
         {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{erro}</p>}
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose} className="btn btn-ghost">Cancelar</button>
+          <button type="button" onClick={fecharComGuard} className="btn btn-ghost">Cancelar</button>
           <button type="submit" disabled={salvando} className="btn btn-primary">{salvando ? 'Salvando...' : 'Salvar'}</button>
         </div>
       </form>
@@ -416,7 +423,7 @@ function ModalGerenciarSistemas({ entidade, catalogo, onClose, onSaved }) {
             <h2 className="text-base font-bold text-gray-900">Gerenciar Sistemas</h2>
             <p className="text-xs text-gray-500 mt-0.5">{entidade.nome}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={() => confirmClose(pendentes.size > 0, onClose)} className="text-gray-400 hover:text-gray-600 transition-colors">
             <IconX />
           </button>
         </div>
@@ -472,7 +479,7 @@ function ModalGerenciarSistemas({ entidade, catalogo, onClose, onSaved }) {
           </p>
           {erro && <p className="text-sm text-red-600">{erro}</p>}
           <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="btn btn-ghost">Cancelar</button>
+            <button type="button" onClick={() => confirmClose(pendentes.size > 0, onClose)} className="btn btn-ghost">Cancelar</button>
             <button
               type="button"
               onClick={salvar}
@@ -493,23 +500,24 @@ function ModalGerenciarSistemas({ entidade, catalogo, onClose, onSaved }) {
 const VAZIO_SH = { nome: '', cargo: '', telefone: '', email: '', descricao: '', horarioAtendimento: '', ativo: true, sistemas: [] }
 
 function ModalStakeholder({ editando, sistemasEntidade, onSalvar, onClose }) {
-  const [form, setForm] = useState(() => {
-    if (editando) {
-      return {
-        nome: editando.nome,
-        cargo: editando.cargo || '',
-        telefone: editando.telefone || '',
-        email: editando.email || '',
-        descricao: editando.descricao || '',
-        horarioAtendimento: editando.horarioAtendimento || '',
-        ativo: editando.ativo,
-        sistemas: editando.sistemas.map((v) => v.entidadeSistemaId),
-      }
-    }
-    return { ...VAZIO_SH }
-  })
+  const inicial = useRef(
+    editando
+      ? {
+          nome: editando.nome,
+          cargo: editando.cargo || '',
+          telefone: editando.telefone || '',
+          email: editando.email || '',
+          descricao: editando.descricao || '',
+          horarioAtendimento: editando.horarioAtendimento || '',
+          ativo: editando.ativo,
+          sistemas: editando.sistemas.map((v) => v.entidadeSistemaId),
+        }
+      : { ...VAZIO_SH }
+  )
+  const [form, setForm] = useState(() => ({ ...inicial.current }))
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, form), onClose)
 
   const toggleSistema = (sid) => {
     setForm((f) => ({
@@ -534,7 +542,7 @@ function ModalStakeholder({ editando, sistemasEntidade, onSalvar, onClose }) {
   }
 
   return (
-    <Modal titulo={editando ? 'Editar Contato' : 'Novo Contato'} onClose={onClose}>
+    <Modal titulo={editando ? 'Editar Contato' : 'Novo Contato'} onClose={fecharComGuard}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
@@ -593,7 +601,7 @@ function ModalStakeholder({ editando, sistemasEntidade, onSalvar, onClose }) {
 
         {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{erro}</p>}
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose} className="btn btn-ghost">Cancelar</button>
+          <button type="button" onClick={fecharComGuard} className="btn btn-ghost">Cancelar</button>
           <button type="submit" disabled={salvando} className="btn btn-primary">{salvando ? 'Salvando...' : 'Salvar'}</button>
         </div>
       </form>
@@ -610,9 +618,14 @@ function ModalCatalogo({ onClose, onSaved }) {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(true)
+  const iniciaisRef = useRef(null)
+  const fecharComGuard = () => {
+    const dirty = deletados.length > 0 || (iniciaisRef.current !== null && JSON.stringify(iniciaisRef.current) !== JSON.stringify(itens))
+    confirmClose(dirty, onClose)
+  }
 
   useEffect(() => {
-    catalogoApi.listar().then((data) => { setItens(data); setCarregando(false) })
+    catalogoApi.listar().then((data) => { setItens(data); iniciaisRef.current = data; setCarregando(false) })
   }, [])
 
   const atualizarItem = (idx, campo, valor) =>
@@ -684,7 +697,7 @@ function ModalCatalogo({ onClose, onSaved }) {
             <h2 className="text-base font-bold text-gray-900">Configurar Catálogo Betha</h2>
             <p className="text-xs text-gray-500 mt-0.5">Gerencie as verticais e seus sistemas</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><IconX /></button>
+          <button onClick={fecharComGuard} className="text-gray-400 hover:text-gray-600 transition-colors"><IconX /></button>
         </div>
 
         {/* Lista de verticais */}
@@ -769,7 +782,7 @@ function ModalCatalogo({ onClose, onSaved }) {
             }
           </div>
           <div className="flex gap-2 shrink-0">
-            <button type="button" onClick={onClose} className="btn btn-ghost">Cancelar</button>
+            <button type="button" onClick={fecharComGuard} className="btn btn-ghost">Cancelar</button>
             <button type="button" onClick={salvar} disabled={salvando} className="btn btn-primary">
               {salvando ? 'Salvando...' : 'Salvar alterações'}
             </button>

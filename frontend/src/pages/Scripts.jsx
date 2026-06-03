@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { scriptsApi, relatoriosApi, municipiosApi } from '../lib/api'
 import useAuthStore from '../stores/authStore'
+import { confirmClose, isFormDirty } from '../lib/formGuard'
 
 // Categorias de código (Scripts e Fórmulas usam editor; Anotações usam texto simples)
 const ABAS = [
@@ -301,13 +302,15 @@ const VAZIO_REL = { titulo: '', descricao: '', scriptFonte: '', tags: '', munici
 function ModalScript({ editando, aba, municipios, todasTags, onSalvar, onFechar }) {
   const abaInfo = ABAS.find(a => a.id === aba)
   const isCodigo = aba === 'script' || aba === 'formula'
-  const [form, setForm] = useState(
+  const inicial = useRef(
     editando
       ? { titulo: editando.titulo, conteudo: editando.conteudo, tags: editando.tags?.join(', ') || '', municipioId: editando.municipio?.id ? String(editando.municipio.id) : '' }
-      : VAZIO_SCRIPT
+      : { ...VAZIO_SCRIPT }
   )
+  const [form, setForm] = useState({ ...inicial.current })
   const [erro, setErro] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, form), onFechar)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -340,7 +343,7 @@ function ModalScript({ editando, aba, municipios, todasTags, onSalvar, onFechar 
               {editando ? `Editar ${abaInfo?.label.slice(0, -1)}` : `Novo ${abaInfo?.label.slice(0, -1)}`}
             </h2>
           </div>
-          <button onClick={onFechar} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+          <button onClick={fecharComGuard} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
             <IconX />
           </button>
         </div>
@@ -397,7 +400,7 @@ function ModalScript({ editando, aba, municipios, todasTags, onSalvar, onFechar 
           {erro && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{erro}</div>}
 
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onFechar} className="btn-secondary flex-1">Cancelar</button>
+            <button type="button" onClick={fecharComGuard} className="btn-secondary flex-1">Cancelar</button>
             <button type="submit" disabled={salvando} className="btn-primary flex-1">
               {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Criar'}
             </button>
@@ -409,7 +412,7 @@ function ModalScript({ editando, aba, municipios, todasTags, onSalvar, onFechar 
 }
 
 function ModalRelatorio({ editando, municipios, todasTags, onSalvar, onFechar }) {
-  const [form, setForm] = useState(
+  const inicial = useRef(
     editando
       ? {
           titulo: editando.titulo,
@@ -420,11 +423,13 @@ function ModalRelatorio({ editando, municipios, todasTags, onSalvar, onFechar })
           jxrmlNome: editando.jxrmlNome || '',
           jxrmlConteudo: '',
         }
-      : VAZIO_REL
+      : { ...VAZIO_REL }
   )
+  const [form, setForm] = useState({ ...inicial.current })
   const [erro, setErro] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [nomeArquivoAtual] = useState(editando?.jxrmlNome || '')
+  const fecharComGuard = () => confirmClose(isFormDirty(inicial.current, form), onFechar)
 
   const handleFile = (e) => {
     const file = e.target.files[0]
@@ -471,7 +476,7 @@ function ModalRelatorio({ editando, municipios, todasTags, onSalvar, onFechar })
               {editando ? 'Editar Relatório' : 'Novo Relatório'}
             </h2>
           </div>
-          <button onClick={onFechar} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+          <button onClick={fecharComGuard} className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
             <IconX />
           </button>
         </div>
@@ -552,7 +557,7 @@ function ModalRelatorio({ editando, municipios, todasTags, onSalvar, onFechar })
           {erro && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{erro}</div>}
 
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onFechar} className="btn-secondary flex-1">Cancelar</button>
+            <button type="button" onClick={fecharComGuard} className="btn-secondary flex-1">Cancelar</button>
             <button type="submit" disabled={salvando} className="btn-primary flex-1">
               {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Criar relatório'}
             </button>

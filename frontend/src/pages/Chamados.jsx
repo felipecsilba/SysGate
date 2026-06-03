@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import api, { chamadosApi, catalogoApi, portfolioApi } from '../lib/api'
+import { confirmClose, isFormDirty } from '../lib/formGuard'
 import useAuthStore from '../stores/authStore'
 
 // ── Constantes de cores ──────────────────────────────────────────────────────
@@ -113,7 +114,11 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
   const [portMunicipios, setPortMunicipios] = useState([])
   const [portEntidades, setPortEntidades]   = useState([])
   const [carregandoEnt, setCarregandoEnt]   = useState(false)
-  const fileRef = useRef()
+  const fileRef    = useRef()
+  const initialRef = useRef({ ...form })
+  const fecharComGuard = () => confirmClose(
+    isFormDirty(initialRef.current, form) || arquivos.length > 0, onFechar
+  )
 
   // Carrega municípios do portfólio e, se editando, pré-carrega entidades
   useEffect(() => {
@@ -197,7 +202,7 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
           <h2 className="text-base font-semibold text-gray-900">
             {isEdicao ? 'Editar Chamado' : 'Novo Chamado'}
           </h2>
-          <button onClick={onFechar} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+          <button onClick={fecharComGuard} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
@@ -299,7 +304,7 @@ function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onFechar }) {
         </form>
 
         <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
-          <button type="button" onClick={onFechar} className="btn btn-ghost text-sm">Cancelar</button>
+          <button type="button" onClick={fecharComGuard} className="btn btn-ghost text-sm">Cancelar</button>
           <button onClick={handleSubmit} disabled={salvando} className="btn text-sm">
             {salvando ? 'Salvando…' : isEdicao ? 'Salvar' : 'Criar Chamado'}
           </button>
