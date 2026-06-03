@@ -425,7 +425,7 @@ export default function Chamados() {
         <span className="text-xs text-gray-400 ml-1">{chamados.length} chamado{chamados.length !== 1 ? 's' : ''}</span>
         <button
           onClick={() => setModalNovo(true)}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-sysgate-600 hover:bg-sysgate-700 text-white transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
