@@ -107,7 +107,8 @@ sysgate/
             ├── ClienteAPI.jsx     # Rota: /sandbox — Seletor endpoint + CodeBlock JSON + body editor + proxy
             ├── EnvioLote.jsx      # Upload CSV + toggle sem cabeçalho + mapeamento colunas 2 colunas + envio em lote (array body) + IDs gerados + consulta GET por ID + exportar CSV com IDs
             ├── Scripts.jsx        # 4 abas: Scripts BFC / Fórmulas BFC / Anotações / Relatórios (JRXML + fonte dinâmica)
-            └── Chamados.jsx       # Rota: /chamados — sub-abas Gestão (lista+detalhe) e Dashboard (gráficos Recharts); histórico lateral por chamado
+            ├── Chamados.jsx       # Rota: /chamados — sub-abas Gestão (lista+detalhe) e Dashboard (gráficos Recharts); histórico lateral por chamado
+            └── AnalisadorJson.jsx # Rota: /analisador-json — formatador/visualizador JSON 100% client-side; 5 abas: Formatado, Árvore, Grafo, Tabela, Estatísticas
 ```
 
 ## Comandos
@@ -502,6 +503,142 @@ Rotas literais registradas ANTES de `/:id`:
 6. `GET /:id/historico` ← sub-rota de `:id`, não conflita
 7. `GET /:id`, `PUT /:id`, `DELETE /:id`
 8. `POST /:id/comentarios`, `POST /:id/anexos`
+
+## Módulo Analisador JSON — padrões e decisões
+
+### Visão geral
+- Módulo **100% client-side** — sem rotas de backend, sem banco de dados
+- Rota: `/analisador-json` → `frontend/src/pages/AnalisadorJson.jsx`
+- Item na sidebar após "Chamados", ícone SVG de chaves `{ }` (`ICONS.analisadorJson`)
+- Inspirado no JSON Crack e JSON Formatter
+
+### Layout da página
+- Tema escuro global (`bg-slate-900`) — independente do tema do restante da aplicação
+- Split horizontal: painel esquerdo 34% (entrada) + painel direito 66% (visualizador)
+- Painel de entrada: textarea monoespaçada dark, barra de números de linhas sincronizada, macOS dots decorativos (vermelho=Limpar, amarelo=Minificar, verde=Formatar)
+- Painel de visualizador: toggle dark/light independente + 5 abas de visualização
+
+### Abas do visualizador
+| Aba | Descrição |
+|-----|-----------|
+| `formatado` | JSON formatado com syntax highlight; dark (slate-950) ou light (white) |
+| `arvore` | Árvore colapsável recursiva via `JsonNode`; clicar numa chave copia o JSON path |
+| `grafo` | Visualização estilo JSON Crack — cards conectados por setas SVG bézier, pan/zoom |
+| `tabela` | Tabela responsiva para arrays de objetos; cabeçalho dinâmico com todas as chaves únicas |
+| `stats` | Grid de cards coloridos com métricas: tamanho, profundidade, contagem por tipo |
+
+### Componentes internos (todos em AnalisadorJson.jsx)
+
+**`EditorLinhas`** — número de linhas sincronizado com o textarea
+- `useRef` para `divRef` e `textareaRef`; `onScroll` do textarea atualiza `scrollTop` da div de números
+- Calcula quantidade de linhas a partir de `value.split('\n').length`
+
+**`JsonNode`** — árvore colapsável recursiva
+- Estado local `expanded` (padrão `depth < 2`)
+- Chevron ▶/▼ clicável
+- Linha vertical cinza `border-l border-slate-600` entre pai e filhos
+- Clicar na chave ou valor copia o JSON path no formato `$.user.address.city` / `$.items[0].id`
+- Toast inline "Path copiado!" exibido por 2 s
+
+**`JsonTabela`** — tabela para arrays de objetos
+- Só ativa quando `parsed` é `Array` de objetos no root
+- Coleta todas as chaves únicas como colunas via `flatMap` + `Set`
+- Células com tratamento por tipo: objetos/arrays renderizados como código compacto; booleans coloridos
+- Footer: "N registros · M colunas"
+
+**`JsonEstatisticas`** — painel de métricas
+- Depende de `analyzeJson(parsed)` que percorre o JSON recursivamente
+- Retorna `{ keys, strings, numbers, booleans, nulls, arrays, objects, maxDepth }`
+- Grid 3 colunas com cards coloridos por tipo de dado
+
+**`JsonGrafo`** — visualização tipo grafo (estilo JSON Crack)
+- **Sem bibliotecas externas** (sem react-flow, d3, etc.)
+- Construção do grafo: `gBuild(value, key, depth)` transforma o JSON numa árvore de nós `{ id, label, rows, children }`
+  - `rows`: propriedades/elementos exibidos dentro do card (máx. 8, demais truncados com "…+N")
+  - Nós com filhos: objetos aninhados e arrays se tornam nós filhos conectados por arestas
+- Layout: `gLayout(node, x, y)` — algoritmo Reingold-Tilford simplificado
+  - Posiciona filhos de cima para baixo, calcula span total e centraliza o pai sobre os filhos
+  - `gShift(nodes, dy)` desloca subtrees recursivamente para resolver sobreposições
+  - `gCollect(node, list)` achata a árvore em lista de nós com `{ id, x, y, ... }`
+  - `gHeight(node)` calcula altura do card com base no número de rows
+- Constantes: `GW=230` (largura card), `GHH=34` (altura header), `GRH=24` (altura por row), `GHGAP=90` (gap horizontal), `GVGAP=18` (gap vertical)
+- Arestas: linhas SVG bézier cúbicas (`C`) saindo da direita do card pai para a esquerda do card filho
+- Pan/zoom: `onMouseDown/Move/Up` para arrastar, `onWheel` para zoom (0.2–3×), `transform: translate + scale`
+- Auto-fit no mount: `useEffect` com `getBoundingClientRect()` calcula zoom e offset para encaixar o grafo na viewport
+- Background: grid de pontos com `radial-gradient` CSS
+
+**`DiffViewer`** — painel de resultado da comparação (Modo Comparador)
+- Recebe `parsedA`, `erroA`, `parsedB`, `erroB`
+- Calcula `diffs = diffJson(parsedA, parsedB)` via `useMemo`
+- Estados exibidos: vazio (sem entrada), aguardando (um dos lados faltando), idêntico (0 diffs), diferenças (lista)
+- Barra de resumo: total de diffs + badges coloridos (verde adicionados, vermelho removidos, amarelo modificados)
+- Lista de diferenças: cada item mostra path em roxo + tipo (badge circular) + valor(es)
+  - `added`: badge verde `+`, valor em verde
+  - `removed`: badge vermelho `−`, valor em vermelho
+  - `changed`: badge amarelo `≠`, valor antigo (vermelho) → valor novo (verde)
+- Limite de exibição: 500 diffs — aviso se exceder
+- `fmtDiffVal(v)`: formata valores para exibição (trunca a 80 chars, strings entre aspas, objetos como JSON compacto)
+
+**`diffJson(a, b, path, out)`** — algoritmo de diff estrutural recursivo
+- Fast path: `Object.is(a, b)` retorna sem adicionar nada (idênticos)
+- Tipos incompatíveis (primitivo vs objeto, array vs objeto, null vs valor): adiciona entrada `changed`
+- Objetos/arrays: percorre `Set` de todas as chaves de A e B
+  - Chave só em B → `added`; só em A → `removed`; em ambos → recursão
+- Arrays: paths como `$.items[0]`, objetos como `$.user.nome`
+- Acumula em `out[]` passado por referência para evitar spreads desnecessários
+
+### Estado principal (AnalisadorJson)
+```
+input: string            — texto bruto do JSON A no textarea
+parsed: any | null       — resultado do JSON.parse do JSON A (null = inválido/vazio)
+erro: string | null      — mensagem de erro do JSON.parse do JSON A
+aba: string              — 'formatado' | 'arvore' | 'grafo' | 'tabela' | 'stats'
+pathCopiado: string      — caminho copiado (exibe toast por 2s no JsonNode)
+copiado: boolean         — feedback do botão Copiar na toolbar
+cursor: {line,col}       — posição do cursor no textarea A (barra de status)
+viewerDark: boolean      — toggle dark/light do painel de visualização (persiste em localStorage)
+modo: string             — 'analisar' | 'comparar' — controla o layout principal
+inputB: string           — texto bruto do JSON B (somente no modo comparador)
+parsedB: any | null      — resultado do JSON.parse do JSON B
+erroB: string | null     — mensagem de erro do JSON.parse do JSON B
+```
+
+### Persistência do tema (viewerDark)
+- Inicializado via `useState(() => localStorage.getItem('sysgate-json-viewerDark') === 'true')`
+- Atualizado via `toggleViewerDark()` que chama `localStorage.setItem(...)` antes de mudar o state
+- Chave: `sysgate-json-viewerDark` (string `'true'` ou `'false'`)
+- Persiste entre navegações e recargas de página
+
+### Modo Comparador
+- Toggle no header da página (pill com dois botões: "Analisador" | "Comparador")
+- Layout no modo `comparar`: dois editores (50%/50%) empilhados verticalmente + painel DiffViewer abaixo
+- JSON A reutiliza `input`/`parsed`/`erro`/`taRef` e `processarInput`
+- JSON B usa `inputB`/`parsedB`/`erroB`/`taRefB` e `processarInputB`
+- Cada editor tem seu próprio header com label colorido (A=índigo, B=rosa) + badges Válido/Inválido + dots macOS
+- Toolbar se adapta ao modo: em `comparar` mostra controles de JSON A + controles de JSON B + botão "A ⇄ B"
+- Botão "A ⇄ B": chama `processarInput(inputB)` e `processarInputB(input)` simultaneamente para trocar os lados
+
+### Syntax highlight
+- Duas funções separadas com paletas diferentes:
+  - `highlightJson(str)` — paleta dark: chaves azul-300, strings verde-400, números amarelo-300, booleans roxo-400, null cinza-500
+  - `highlightJsonLight(str)` — paleta light: chaves azul-700, strings verde-700, números âmbar-600, booleans roxo-600, null cinza-400
+- Ambas usam regex com `dangerouslySetInnerHTML` + `pre` para preservar espaçamento
+
+### Toolbar e ações
+| Ação | Comportamento |
+|------|---------------|
+| Exemplo | Carrega JSON de exemplo pré-definido (objeto com arrays aninhados) |
+| Formatar | `JSON.stringify(parsed, null, 2)` → substitui `input` |
+| Minificar | `JSON.stringify(parsed)` → substitui `input` |
+| Copiar | `navigator.clipboard.writeText(formatado \|\| input)`; feedback visual 2s |
+| Baixar | Cria `Blob` JSON e dispara download como `dados.json` |
+| Abrir arquivo | `<input type="file" accept=".json,.txt">` → `FileReader.readAsText` |
+| Limpar | Reseta `input` para `''` |
+| macOS dot vermelho | Atalho para Limpar |
+| macOS dot amarelo | Atalho para Minificar |
+| macOS dot verde | Atalho para Formatar |
+| A ⇄ B (comparador) | Troca os conteúdos do JSON A e JSON B |
+| Exemplo em A (comparador) | Carrega o exemplo pré-definido no JSON A |
 
 ## UI — Sandbox e EnvioLote (padrões compartilhados)
 

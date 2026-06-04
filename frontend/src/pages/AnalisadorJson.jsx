@@ -66,6 +66,46 @@ function analyzeJson(value, depth = 0, stats = null) {
   return stats
 }
 
+// ─── Diff JSON ────────────────────────────────────────────────────────────────
+
+function diffJson(a, b, path = '$', out = []) {
+  if (Object.is(a, b)) return out
+  const aIsObj = a !== null && typeof a === 'object'
+  const bIsObj = b !== null && typeof b === 'object'
+  // Tipos incompatíveis ou primitivos diferentes
+  if (!aIsObj || !bIsObj || Array.isArray(a) !== Array.isArray(b)) {
+    out.push({ path, type: 'changed', from: a, to: b })
+    return out
+  }
+  // Ambos são objetos ou arrays — percorre chaves
+  const keysA   = new Set(Object.keys(a))
+  const keysB   = new Set(Object.keys(b))
+  const allKeys = new Set([...keysA, ...keysB])
+  for (const k of allKeys) {
+    const sub = Array.isArray(a) ? `${path}[${k}]` : `${path}.${k}`
+    if (!keysA.has(k)) {
+      out.push({ path: sub, type: 'added', value: b[k] })
+    } else if (!keysB.has(k)) {
+      out.push({ path: sub, type: 'removed', value: a[k] })
+    } else {
+      diffJson(a[k], b[k], sub, out)
+    }
+  }
+  return out
+}
+
+function fmtDiffVal(v) {
+  if (v === null)      return 'null'
+  if (v === undefined) return '—'
+  if (typeof v === 'object') {
+    const s = JSON.stringify(v)
+    return s.length > 80 ? s.slice(0, 80) + '…' : s
+  }
+  const s = String(v)
+  if (typeof v === 'string') return `"${s.length > 80 ? s.slice(0, 80) + '…' : s}"`
+  return s.length > 80 ? s.slice(0, 80) + '…' : s
+}
+
 // ─── Editor com numeração de linhas ──────────────────────────────────────────
 
 function EditorLinhas({ value, onChange, onCursor, taRef }) {
@@ -370,6 +410,120 @@ function JsonEstatisticas({ parsed, rawText, dark }) {
   )
 }
 
+// ─── Diff Viewer ──────────────────────────────────────────────────────────────
+
+function DiffViewer({ parsedA, erroA, parsedB, erroB }) {
+  const diffs = useMemo(() => {
+    if (parsedA === null || parsedB === null) return null
+    return diffJson(parsedA, parsedB)
+  }, [parsedA, parsedB])
+
+  const added   = diffs ? diffs.filter(d => d.type === 'added').length   : 0
+  const removed = diffs ? diffs.filter(d => d.type === 'removed').length : 0
+  const changed = diffs ? diffs.filter(d => d.type === 'changed').length : 0
+
+  const semEntrada = !parsedA && !parsedB && !erroA && !erroB
+
+  if (semEntrada) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0a0e1a', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 52, color: '#1e293b', marginBottom: 14, userSelect: 'none', fontFamily: 'monospace' }}>⇄</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>Cole os JSONs nos painéis acima</div>
+        <div style={{ fontSize: 12, color: '#1e293b', marginTop: 6 }}>O resultado da comparação aparecerá aqui</div>
+      </div>
+    )
+  }
+
+  if (!parsedA || !parsedB) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0a0e1a', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        {!parsedA && (
+          <div style={{ fontSize: 12, color: '#64748b' }}>
+            {erroA ? `JSON A inválido: ${erroA}` : 'Aguardando JSON A…'}
+          </div>
+        )}
+        {!parsedB && (
+          <div style={{ fontSize: 12, color: '#64748b' }}>
+            {erroB ? `JSON B inválido: ${erroB}` : 'Aguardando JSON B…'}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (diffs.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0a0e1a', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 52, color: '#14532d', marginBottom: 12, userSelect: 'none' }}>✓</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#4ade80' }}>JSONs idênticos</div>
+        <div style={{ fontSize: 12, color: '#64748b', marginTop: 8 }}>Nenhuma diferença estrutural encontrada</div>
+      </div>
+    )
+  }
+
+  const MAX_DIFF = 500
+  const visible  = diffs.slice(0, MAX_DIFF)
+
+  const bgMap  = { added: 'rgba(5,46,22,0.55)',  removed: 'rgba(26,8,8,0.55)',  changed: 'rgba(26,18,0,0.55)' }
+  const bdrClr = { added: '#14532d',              removed: '#7f1d1d',            changed: '#713f12' }
+  const lblClr = { added: '#4ade80',              removed: '#f87171',            changed: '#fbbf24' }
+  const lblTxt = { added: '+',                    removed: '−',                  changed: '≠' }
+  const valClr = { added: '#86efac',              removed: '#fca5a5',            changed: '#fde68a' }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0a0e1a' }}>
+      {/* Barra de resumo */}
+      <div style={{ padding: '9px 16px', borderBottom: '1px solid #1e293b', background: '#0f172a', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginRight: 4 }}>Resultado da comparação</span>
+        <span style={{ fontSize: 12, color: '#64748b' }}>{diffs.length} diferença{diffs.length !== 1 ? 's' : ''}</span>
+        {added   > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: '#4ade80',  background: '#052e16', border: '1px solid #14532d', borderRadius: 6, padding: '2px 10px' }}>+{added} adicionado{added   !== 1 ? 's' : ''}</span>}
+        {removed > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: '#f87171',  background: '#1a0808', border: '1px solid #7f1d1d', borderRadius: 6, padding: '2px 10px' }}>−{removed} removido{removed !== 1 ? 's' : ''}</span>}
+        {changed > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24',  background: '#1a1200', border: '1px solid #713f12', borderRadius: 6, padding: '2px 10px' }}>≠ {changed} modificado{changed !== 1 ? 's' : ''}</span>}
+        {diffs.length > MAX_DIFF && (
+          <span style={{ fontSize: 11, color: '#f59e0b', marginLeft: 'auto' }}>
+            Exibindo primeiros {MAX_DIFF} de {diffs.length}
+          </span>
+        )}
+      </div>
+      {/* Lista de diferenças */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {visible.map((diff, i) => (
+          <div
+            key={i}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 16px', borderBottom: '1px solid #0f172a', background: bgMap[diff.type], borderLeft: `3px solid ${bdrClr[diff.type]}` }}
+          >
+            {/* Ícone de tipo */}
+            <span style={{ width: 18, height: 18, borderRadius: '50%', background: bdrClr[diff.type] + '55', color: lblClr[diff.type], fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+              {lblTxt[diff.type]}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Path */}
+              <div style={{ fontSize: 11, fontFamily: 'monospace', color: '#818cf8', marginBottom: 5, wordBreak: 'break-all', lineHeight: 1.5 }}>{diff.path}</div>
+              {/* Valor(es) */}
+              {diff.type === 'changed' && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <code style={{ fontSize: 12, fontFamily: 'monospace', color: '#fca5a5', background: '#1a0808', border: '1px solid #7f1d1d', borderRadius: 4, padding: '2px 8px', wordBreak: 'break-all' }}>
+                    {fmtDiffVal(diff.from)}
+                  </code>
+                  <span style={{ color: '#475569', fontSize: 12 }}>→</span>
+                  <code style={{ fontSize: 12, fontFamily: 'monospace', color: '#86efac', background: '#052e16', border: '1px solid #14532d', borderRadius: 4, padding: '2px 8px', wordBreak: 'break-all' }}>
+                    {fmtDiffVal(diff.to)}
+                  </code>
+                </div>
+              )}
+              {diff.type !== 'changed' && (
+                <code style={{ fontSize: 12, fontFamily: 'monospace', color: valClr[diff.type], background: bgMap[diff.type], border: `1px solid ${bdrClr[diff.type]}`, borderRadius: 4, padding: '2px 8px', wordBreak: 'break-all', display: 'inline-block' }}>
+                  {fmtDiffVal(diff.value)}
+                </code>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Grafo (JSON Crack style) ────────────────────────────────────────────────
 
 const GW   = 230   // node width
@@ -666,8 +820,19 @@ export default function AnalisadorJson() {
   const [pathCopiado, setPath]    = useState('')
   const [copiado, setCopiado]     = useState(false)
   const [cursor, setCursor]       = useState({ linha: 1, coluna: 1 })
-  const [viewerDark, setViewerDark] = useState(false)  // toggle dark/light no visualizador
+  // Preferência de tema persiste no localStorage
+  const [viewerDark, setViewerDark] = useState(() => {
+    try { return localStorage.getItem('sysgate-json-viewerDark') === 'true' } catch { return false }
+  })
+  // Modo: analisador ou comparador
+  const [modo, setModo]       = useState('analisar')
+  // Estado do JSON B (comparador)
+  const [inputB, setInputB]   = useState('')
+  const [parsedB, setParsedB] = useState(null)
+  const [erroB, setErroB]     = useState(null)
+
   const taRef   = useRef()
+  const taRefB  = useRef()
   const fileRef = useRef()
 
   const processarInput = useCallback((text) => {
@@ -675,6 +840,13 @@ export default function AnalisadorJson() {
     if (!text.trim()) { setParsed(null); setErro(null); return }
     try { setParsed(JSON.parse(text)); setErro(null) }
     catch (e) { setParsed(null); setErro(e.message) }
+  }, [])
+
+  const processarInputB = useCallback((text) => {
+    setInputB(text)
+    if (!text.trim()) { setParsedB(null); setErroB(null); return }
+    try { setParsedB(JSON.parse(text)); setErroB(null) }
+    catch (e) { setParsedB(null); setErroB(e.message) }
   }, [])
 
   const atualizarCursor = useCallback((e) => {
@@ -688,12 +860,28 @@ export default function AnalisadorJson() {
   const highlighted = useMemo(() => formatado ? (viewerDark ? highlightJson(formatado) : highlightJsonLight(formatado)) : '', [formatado, viewerDark])
   const bytes       = useMemo(() => new Blob([input]).size, [input])
 
-  const formatar  = () => { if (parsed !== null) processarInput(formatado) }
-  const minificar = () => { if (parsed !== null) processarInput(JSON.stringify(parsed)) }
+  const formatar  = () => { if (parsed  !== null) processarInput(JSON.stringify(parsed, null, 2)) }
+  const minificar = () => { if (parsed  !== null) processarInput(JSON.stringify(parsed)) }
   const limpar    = () => processarInput('')
+
+  const formatarB  = () => { if (parsedB !== null) processarInputB(JSON.stringify(parsedB, null, 2)) }
+  const minificarB = () => { if (parsedB !== null) processarInputB(JSON.stringify(parsedB)) }
+  const limparB    = () => processarInputB('')
 
   const colar = async () => {
     try { const t = await navigator.clipboard.readText(); processarInput(t) } catch (_) {}
+  }
+
+  const colarB = async () => {
+    try { const t = await navigator.clipboard.readText(); processarInputB(t) } catch (_) {}
+  }
+
+  // Troca JSON A ⇄ JSON B
+  const trocarAB = () => {
+    const tmpInput  = input
+    const tmpInputB = inputB
+    processarInput(tmpInputB)
+    processarInputB(tmpInput)
   }
 
   const copiarResultado = async () => {
@@ -729,14 +917,20 @@ export default function AnalisadorJson() {
     e.target.value = ''
   }
 
+  // Toggle dark/light — salva no localStorage para persistir entre sessões
+  const toggleViewerDark = () => {
+    setViewerDark(v => {
+      const next = !v
+      try { localStorage.setItem('sysgate-json-viewerDark', String(next)) } catch {}
+      return next
+    })
+  }
+
   // Viewer bg e texto dependem do toggle
   const viewerBg   = viewerDark ? '#1e293b' : '#ffffff'
   const viewerText = viewerDark ? '#e2e8f0' : '#1e293b'
 
-  // Cores base dos botões da toolbar (sempre dark)
-  const btnBase = 'font-medium transition-colors rounded'
   const btnGhost = { background: 'transparent', border: '1px solid #334155', color: '#94a3b8', padding: '4px 10px', fontSize: 12, cursor: 'pointer', borderRadius: 6 }
-  const btnGhostHover = { background: '#334155' }
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: DARK.page }}>
@@ -746,18 +940,38 @@ export default function AnalisadorJson() {
         {/* Acento */}
         <div style={{ width: 3, height: 20, borderRadius: 999, background: 'linear-gradient(to bottom, #6366f1, #8b5cf6)', flexShrink: 0 }} />
         <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em' }}>Analisador JSON</span>
-        <span style={{ fontSize: 12, color: '#475569', marginLeft: 2 }}>— Formate, visualize e analise</span>
+        <span style={{ fontSize: 12, color: '#475569', marginLeft: 2 }}>
+          {modo === 'analisar' ? '— Formate, visualize e analise' : '— Compare duas estruturas JSON'}
+        </span>
+
+        {/* Toggle de modo */}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 2, background: '#0f172a', border: '1px solid #334155', borderRadius: 8, padding: 3 }}>
+          <button
+            onClick={() => setModo('analisar')}
+            style={{ padding: '4px 14px', fontSize: 12, fontWeight: modo === 'analisar' ? 700 : 500, background: modo === 'analisar' ? '#4f46e5' : 'transparent', color: modo === 'analisar' ? '#ffffff' : '#64748b', border: 'none', borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s' }}
+          >
+            Analisador
+          </button>
+          <button
+            onClick={() => setModo('comparar')}
+            style={{ padding: '4px 14px', fontSize: 12, fontWeight: modo === 'comparar' ? 700 : 500, background: modo === 'comparar' ? '#4f46e5' : 'transparent', color: modo === 'comparar' ? '#ffffff' : '#64748b', border: 'none', borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s' }}
+          >
+            Comparador
+          </button>
+        </div>
       </div>
 
       {/* ── Toolbar ── */}
       <div style={{ background: DARK.toolbar, borderBottom: `1px solid ${DARK.toolbarBdr}`, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
 
         {/* Grupo: Entrada */}
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>Entrada</span>
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>
+          {modo === 'comparar' ? 'JSON A' : 'Entrada'}
+        </span>
         {[
-          { label: 'Limpar', action: limpar, disabled: !input },
-          { label: 'Colar',  action: colar,  disabled: false  },
-          { label: 'Formatar', action: formatar, disabled: !parsed },
+          { label: 'Limpar',    action: limpar,    disabled: !input },
+          { label: 'Colar',     action: colar,     disabled: false  },
+          { label: 'Formatar',  action: formatar,  disabled: !parsed },
           { label: 'Minificar', action: minificar, disabled: !parsed },
         ].map(({ label, action, disabled }) => (
           <button key={label} onClick={action} disabled={disabled}
@@ -770,199 +984,303 @@ export default function AnalisadorJson() {
         {/* Divisor */}
         <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
 
-        {/* Grupo: Resultado */}
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>Resultado</span>
-        <button onClick={copiarResultado} disabled={!parsed}
-          style={{ ...btnGhost, opacity: !parsed ? 0.35 : 1, cursor: !parsed ? 'not-allowed' : 'pointer',
-            ...(copiado ? { background: '#14532d', border: '1px solid #15803d', color: '#4ade80' } : {}) }}
-          onMouseEnter={(e) => { if (parsed && !copiado) e.currentTarget.style.background = '#334155' }}
-          onMouseLeave={(e) => { if (!copiado) e.currentTarget.style.background = 'transparent' }}
-        >{copiado ? '✓ Copiado' : 'Copiar Resultado'}</button>
-
-        <button onClick={baixar} disabled={!parsed}
-          style={{ ...btnGhost, opacity: !parsed ? 0.35 : 1, cursor: !parsed ? 'not-allowed' : 'pointer' }}
-          onMouseEnter={(e) => { if (parsed) e.currentTarget.style.background = '#334155' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-        >Baixar .json</button>
-
-        <label style={{ ...btnGhost, cursor: 'pointer' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#334155' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-        >
-          Abrir arquivo
-          <input type="file" accept=".json,application/json,text/plain" ref={fileRef} onChange={carregarArquivo} style={{ display: 'none' }} />
-        </label>
-
-        <button onClick={() => processarInput(EXEMPLO_JSON)}
-          style={{ ...btnGhost }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#334155' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-        >Exemplo</button>
-
-        {/* Validar — CTA primário */}
-        <button
-          style={{ background: parsed !== null ? '#4f46e5' : erro ? '#7f1d1d' : '#1e293b', border: 'none', color: '#ffffff', padding: '5px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: 'pointer', marginLeft: 4, transition: 'background 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}
-          onClick={() => {}} disabled
-        >
-          {parsed !== null ? (
-            <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} /> Válido</>
-          ) : erro ? (
-            <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f87171', display: 'inline-block' }} /> Inválido</>
-          ) : (
-            <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#6b7280', display: 'inline-block' }} /> Validar</>
-          )}
-        </button>
-      </div>
-
-      {/* ── Split pane ── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-
-        {/* ── Painel ENTRADA (esquerda) ── */}
-        <div className="flex flex-col shrink-0" style={{ width: '34%', background: DARK.panel, borderRight: `1px solid ${DARK.toolbarBdr}` }}>
-
-          {/* Header da entrada com dots macOS */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', background: DARK.panelHdr, borderBottom: `1px solid #1e293b`, flexShrink: 0 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Entrada Bruta</span>
-            {/* Dots estilo macOS */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57', display: 'inline-block' }} title="Limpar" onClick={limpar} className="cursor-pointer" />
-              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e', display: 'inline-block' }} title="Minificar" onClick={minificar} className="cursor-pointer" />
-              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840', display: 'inline-block' }} title="Formatar" onClick={formatar} className="cursor-pointer" />
-            </div>
-          </div>
-
-          {/* Editor com linhas */}
-          <EditorLinhas
-            value={input}
-            onChange={(e) => processarInput(e.target.value)}
-            onCursor={atualizarCursor}
-            taRef={taRef}
-          />
-
-          {/* Erro inline */}
-          {erro && (
-            <div style={{ padding: '10px 14px', borderTop: '1px solid #450a0a', background: '#1a0808', flexShrink: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Erro de sintaxe</div>
-              <div style={{ fontSize: 12, color: '#fca5a5', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.5 }}>{erro}</div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Painel VISUALIZADOR (direita) ── */}
-        <div className="flex flex-col flex-1 min-w-0" style={{ background: viewerBg }}>
-
-          {/* Tabs + toggle dark/light */}
-          <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: `1px solid ${viewerDark ? '#334155' : '#e2e8f0'}`, background: viewerDark ? '#0f172a' : '#f8fafc', flexShrink: 0 }}>
-            {ABAS.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setAba(a.id)}
-                disabled={parsed === null}
-                style={{
-                  padding: '10px 16px',
-                  fontSize: 12,
-                  fontWeight: aba === a.id ? 700 : 500,
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: aba === a.id ? '2px solid #6366f1' : '2px solid transparent',
-                  color: aba === a.id ? (viewerDark ? '#a5b4fc' : '#4f46e5') : (viewerDark ? '#64748b' : '#94a3b8'),
-                  cursor: parsed === null ? 'not-allowed' : 'pointer',
-                  opacity: parsed === null ? 0.35 : 1,
-                  whiteSpace: 'nowrap',
-                  transition: 'color 0.15s',
-                  marginBottom: -1,
-                }}
-              >{a.label}</button>
+        {modo === 'comparar' ? (
+          /* ── Toolbar específica do comparador ── */
+          <>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>JSON B</span>
+            {[
+              { label: 'Limpar B',    action: limparB,    disabled: !inputB },
+              { label: 'Colar B',     action: colarB,     disabled: false   },
+              { label: 'Formatar B',  action: formatarB,  disabled: !parsedB },
+              { label: 'Minificar B', action: minificarB, disabled: !parsedB },
+            ].map(({ label, action, disabled }) => (
+              <button key={label} onClick={action} disabled={disabled}
+                style={{ ...btnGhost, opacity: disabled ? 0.35 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+                onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = '#334155' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              >{label}</button>
             ))}
 
-            {/* Toggle dark/light do visualizador */}
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: 12, gap: 8 }}>
-              {pathCopiado && (
-                <div style={{ fontSize: 11, color: '#818cf8', background: viewerDark ? '#1e1b4b' : '#eef2ff', border: '1px solid #4338ca', borderRadius: 6, padding: '2px 8px', display: 'flex', gap: 4 }}>
-                  <span style={{ fontWeight: 700 }}>Path:</span>
-                  <span style={{ fontFamily: 'monospace' }}>{pathCopiado}</span>
+            <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
+
+            {/* Trocar A⇄B */}
+            <button
+              onClick={trocarAB}
+              disabled={!input && !inputB}
+              style={{ ...btnGhost, opacity: (!input && !inputB) ? 0.35 : 1, cursor: (!input && !inputB) ? 'not-allowed' : 'pointer' }}
+              onMouseEnter={(e) => { if (input || inputB) e.currentTarget.style.background = '#334155' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              title="Trocar JSON A e JSON B"
+            >A ⇄ B</button>
+
+            <button onClick={() => { processarInput(EXEMPLO_JSON) }}
+              style={{ ...btnGhost }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#334155' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >Exemplo em A</button>
+          </>
+        ) : (
+          /* ── Toolbar do analisador ── */
+          <>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>Resultado</span>
+            <button onClick={copiarResultado} disabled={!parsed}
+              style={{ ...btnGhost, opacity: !parsed ? 0.35 : 1, cursor: !parsed ? 'not-allowed' : 'pointer',
+                ...(copiado ? { background: '#14532d', border: '1px solid #15803d', color: '#4ade80' } : {}) }}
+              onMouseEnter={(e) => { if (parsed && !copiado) e.currentTarget.style.background = '#334155' }}
+              onMouseLeave={(e) => { if (!copiado) e.currentTarget.style.background = 'transparent' }}
+            >{copiado ? '✓ Copiado' : 'Copiar Resultado'}</button>
+
+            <button onClick={baixar} disabled={!parsed}
+              style={{ ...btnGhost, opacity: !parsed ? 0.35 : 1, cursor: !parsed ? 'not-allowed' : 'pointer' }}
+              onMouseEnter={(e) => { if (parsed) e.currentTarget.style.background = '#334155' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >Baixar .json</button>
+
+            <label style={{ ...btnGhost, cursor: 'pointer' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#334155' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              Abrir arquivo
+              <input type="file" accept=".json,application/json,text/plain" ref={fileRef} onChange={carregarArquivo} style={{ display: 'none' }} />
+            </label>
+
+            <button onClick={() => processarInput(EXEMPLO_JSON)}
+              style={{ ...btnGhost }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#334155' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >Exemplo</button>
+
+            {/* Validar — CTA primário */}
+            <button
+              style={{ background: parsed !== null ? '#4f46e5' : erro ? '#7f1d1d' : '#1e293b', border: 'none', color: '#ffffff', padding: '5px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: 'pointer', marginLeft: 4, transition: 'background 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}
+              onClick={() => {}} disabled
+            >
+              {parsed !== null ? (
+                <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} /> Válido</>
+              ) : erro ? (
+                <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f87171', display: 'inline-block' }} /> Inválido</>
+              ) : (
+                <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#6b7280', display: 'inline-block' }} /> Validar</>
+              )}
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* ── Modo ANALISADOR ── */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {modo === 'analisar' && (
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+
+          {/* ── Painel ENTRADA (esquerda) ── */}
+          <div className="flex flex-col shrink-0" style={{ width: '34%', background: DARK.panel, borderRight: `1px solid ${DARK.toolbarBdr}` }}>
+
+            {/* Header da entrada com dots macOS */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', background: DARK.panelHdr, borderBottom: `1px solid #1e293b`, flexShrink: 0 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Entrada Bruta</span>
+              {/* Dots estilo macOS */}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57', display: 'inline-block' }} title="Limpar" onClick={limpar} className="cursor-pointer" />
+                <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e', display: 'inline-block' }} title="Minificar" onClick={minificar} className="cursor-pointer" />
+                <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840', display: 'inline-block' }} title="Formatar" onClick={formatar} className="cursor-pointer" />
+              </div>
+            </div>
+
+            {/* Editor com linhas */}
+            <EditorLinhas
+              value={input}
+              onChange={(e) => processarInput(e.target.value)}
+              onCursor={atualizarCursor}
+              taRef={taRef}
+            />
+
+            {/* Erro inline */}
+            {erro && (
+              <div style={{ padding: '10px 14px', borderTop: '1px solid #450a0a', background: '#1a0808', flexShrink: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Erro de sintaxe</div>
+                <div style={{ fontSize: 12, color: '#fca5a5', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.5 }}>{erro}</div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Painel VISUALIZADOR (direita) ── */}
+          <div className="flex flex-col flex-1 min-w-0" style={{ background: viewerBg }}>
+
+            {/* Tabs + toggle dark/light */}
+            <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: `1px solid ${viewerDark ? '#334155' : '#e2e8f0'}`, background: viewerDark ? '#0f172a' : '#f8fafc', flexShrink: 0 }}>
+              {ABAS.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setAba(a.id)}
+                  disabled={parsed === null}
+                  style={{
+                    padding: '10px 16px',
+                    fontSize: 12,
+                    fontWeight: aba === a.id ? 700 : 500,
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: aba === a.id ? '2px solid #6366f1' : '2px solid transparent',
+                    color: aba === a.id ? (viewerDark ? '#a5b4fc' : '#4f46e5') : (viewerDark ? '#64748b' : '#94a3b8'),
+                    cursor: parsed === null ? 'not-allowed' : 'pointer',
+                    opacity: parsed === null ? 0.35 : 1,
+                    whiteSpace: 'nowrap',
+                    transition: 'color 0.15s',
+                    marginBottom: -1,
+                  }}
+                >{a.label}</button>
+              ))}
+
+              {/* Toggle dark/light do visualizador */}
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: 12, gap: 8 }}>
+                {pathCopiado && (
+                  <div style={{ fontSize: 11, color: '#818cf8', background: viewerDark ? '#1e1b4b' : '#eef2ff', border: '1px solid #4338ca', borderRadius: 6, padding: '2px 8px', display: 'flex', gap: 4 }}>
+                    <span style={{ fontWeight: 700 }}>Path:</span>
+                    <span style={{ fontFamily: 'monospace' }}>{pathCopiado}</span>
+                  </div>
+                )}
+                <button
+                  onClick={toggleViewerDark}
+                  title={viewerDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 6, border: `1px solid ${viewerDark ? '#334155' : '#e2e8f0'}`, background: viewerDark ? '#1e293b' : '#ffffff', color: viewerDark ? '#94a3b8' : '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+                >
+                  {viewerDark ? (
+                    <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Claro</>
+                  ) : (
+                    <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Escuro</>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="flex-1 min-h-0 overflow-hidden">
+
+              {/* Placeholder */}
+              {parsed === null && !erro && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: viewerBg }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 72, fontFamily: 'monospace', color: viewerDark ? '#1e293b' : '#e2e8f0', marginBottom: 16, userSelect: 'none', lineHeight: 1 }}>{'{}'}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: viewerDark ? '#475569' : '#94a3b8' }}>Cole um JSON no painel esquerdo</div>
+                    <div style={{ fontSize: 12, color: viewerDark ? '#334155' : '#cbd5e1', marginTop: 6, marginBottom: 20 }}>ou carregue um arquivo para começar</div>
+                    <button onClick={() => processarInput(EXEMPLO_JSON)}
+                      style={{ background: '#4f46e5', color: '#ffffff', border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                      Carregar exemplo
+                    </button>
+                  </div>
                 </div>
               )}
-              <button
-                onClick={() => setViewerDark(v => !v)}
-                title={viewerDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 6, border: `1px solid ${viewerDark ? '#334155' : '#e2e8f0'}`, background: viewerDark ? '#1e293b' : '#ffffff', color: viewerDark ? '#94a3b8' : '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
-              >
-                {viewerDark ? (
-                  <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Claro</>
-                ) : (
-                  <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Escuro</>
-                )}
-              </button>
+
+              {/* Erro no visualizador */}
+              {parsed === null && erro && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: viewerBg }}>
+                  <div style={{ textAlign: 'center', maxWidth: 380, padding: '0 24px' }}>
+                    <div style={{ fontSize: 48, marginBottom: 16, color: viewerDark ? '#7f1d1d' : '#fca5a5' }}>⚠</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#ef4444', marginBottom: 8 }}>JSON Inválido</div>
+                    <div style={{ fontSize: 12, fontFamily: 'monospace', background: viewerDark ? '#0f172a' : '#f8fafc', border: `1px solid ${viewerDark ? '#7f1d1d' : '#fecaca'}`, borderRadius: 8, padding: 12, color: viewerDark ? '#fca5a5' : '#dc2626', textAlign: 'left', wordBreak: 'break-all', lineHeight: 1.6 }}>{erro}</div>
+                    <div style={{ fontSize: 12, color: viewerDark ? '#475569' : '#94a3b8', marginTop: 10 }}>Corrija a sintaxe no painel esquerdo</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Formatado */}
+              {parsed !== null && aba === 'formatado' && (
+                <pre
+                  className="overflow-auto h-full"
+                  style={{ margin: 0, padding: 20, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
+                  dangerouslySetInnerHTML={{ __html: highlighted }}
+                />
+              )}
+
+              {/* Árvore */}
+              {parsed !== null && aba === 'arvore' && (
+                <div
+                  className="overflow-auto h-full"
+                  style={{ padding: 16, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
+                >
+                  <JsonNode value={parsed} depth={0} path="$" onCopyPath={onCopyPath} dark={viewerDark} />
+                </div>
+              )}
+
+              {/* Grafo */}
+              {parsed !== null && aba === 'grafo' && (
+                <JsonGrafo parsed={parsed} dark={viewerDark} />
+              )}
+
+              {/* Tabela */}
+              {parsed !== null && aba === 'tabela' && (
+                <JsonTabela data={parsed} dark={viewerDark} />
+              )}
+
+              {/* Estatísticas */}
+              {parsed !== null && aba === 'stats' && (
+                <JsonEstatisticas parsed={parsed} rawText={input} dark={viewerDark} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* ── Modo COMPARADOR ── */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {modo === 'comparar' && (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+
+          {/* ── Dois editores lado a lado ── */}
+          <div style={{ display: 'flex', flex: '0 0 46%', borderBottom: `1px solid ${DARK.toolbarBdr}`, minHeight: 0 }}>
+
+            {/* JSON A */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${DARK.toolbarBdr}`, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', background: DARK.panelHdr, borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>JSON A</span>
+                  {parsed  !== null && <span style={{ fontSize: 10, color: '#4ade80', background: '#052e16', border: '1px solid #14532d', borderRadius: 4, padding: '1px 6px' }}>Válido</span>}
+                  {erro                 && <span style={{ fontSize: 10, color: '#f87171', background: '#1a0808', border: '1px solid #7f1d1d', borderRadius: 4, padding: '1px 6px' }}>Inválido</span>}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57', display: 'inline-block', cursor: 'pointer' }} title="Limpar A" onClick={limpar} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e', display: 'inline-block', cursor: 'pointer' }} title="Minificar A" onClick={minificar} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', display: 'inline-block', cursor: 'pointer' }} title="Formatar A" onClick={formatar} />
+                </div>
+              </div>
+              <EditorLinhas value={input} onChange={(e) => processarInput(e.target.value)} onCursor={atualizarCursor} taRef={taRef} />
+              {erro && (
+                <div style={{ padding: '7px 14px', borderTop: '1px solid #450a0a', background: '#1a0808', flexShrink: 0 }}>
+                  <div style={{ fontSize: 11, color: '#fca5a5', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.4 }}>{erro}</div>
+                </div>
+              )}
+            </div>
+
+            {/* JSON B */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', background: DARK.panelHdr, borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#f472b6', textTransform: 'uppercase', letterSpacing: '0.1em' }}>JSON B</span>
+                  {parsedB !== null && <span style={{ fontSize: 10, color: '#4ade80', background: '#052e16', border: '1px solid #14532d', borderRadius: 4, padding: '1px 6px' }}>Válido</span>}
+                  {erroB               && <span style={{ fontSize: 10, color: '#f87171', background: '#1a0808', border: '1px solid #7f1d1d', borderRadius: 4, padding: '1px 6px' }}>Inválido</span>}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57', display: 'inline-block', cursor: 'pointer' }} title="Limpar B" onClick={limparB} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e', display: 'inline-block', cursor: 'pointer' }} title="Minificar B" onClick={minificarB} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', display: 'inline-block', cursor: 'pointer' }} title="Formatar B" onClick={formatarB} />
+                </div>
+              </div>
+              <EditorLinhas value={inputB} onChange={(e) => processarInputB(e.target.value)} onCursor={() => {}} taRef={taRefB} />
+              {erroB && (
+                <div style={{ padding: '7px 14px', borderTop: '1px solid #450a0a', background: '#1a0808', flexShrink: 0 }}>
+                  <div style={{ fontSize: 11, color: '#fca5a5', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.4 }}>{erroB}</div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Conteúdo */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-
-            {/* Placeholder */}
-            {parsed === null && !erro && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: viewerBg }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 72, fontFamily: 'monospace', color: viewerDark ? '#1e293b' : '#e2e8f0', marginBottom: 16, userSelect: 'none', lineHeight: 1 }}>{'{}'}</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: viewerDark ? '#475569' : '#94a3b8' }}>Cole um JSON no painel esquerdo</div>
-                  <div style={{ fontSize: 12, color: viewerDark ? '#334155' : '#cbd5e1', marginTop: 6, marginBottom: 20 }}>ou carregue um arquivo para começar</div>
-                  <button onClick={() => processarInput(EXEMPLO_JSON)}
-                    style={{ background: '#4f46e5', color: '#ffffff', border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                    Carregar exemplo
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Erro no visualizador */}
-            {parsed === null && erro && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: viewerBg }}>
-                <div style={{ textAlign: 'center', maxWidth: 380, padding: '0 24px' }}>
-                  <div style={{ fontSize: 48, marginBottom: 16, color: viewerDark ? '#7f1d1d' : '#fca5a5' }}>⚠</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#ef4444', marginBottom: 8 }}>JSON Inválido</div>
-                  <div style={{ fontSize: 12, fontFamily: 'monospace', background: viewerDark ? '#0f172a' : '#f8fafc', border: `1px solid ${viewerDark ? '#7f1d1d' : '#fecaca'}`, borderRadius: 8, padding: 12, color: viewerDark ? '#fca5a5' : '#dc2626', textAlign: 'left', wordBreak: 'break-all', lineHeight: 1.6 }}>{erro}</div>
-                  <div style={{ fontSize: 12, color: viewerDark ? '#475569' : '#94a3b8', marginTop: 10 }}>Corrija a sintaxe no painel esquerdo</div>
-                </div>
-              </div>
-            )}
-
-            {/* Formatado */}
-            {parsed !== null && aba === 'formatado' && (
-              <pre
-                className="overflow-auto h-full"
-                style={{ margin: 0, padding: 20, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
-                dangerouslySetInnerHTML={{ __html: highlighted }}
-              />
-            )}
-
-            {/* Árvore */}
-            {parsed !== null && aba === 'arvore' && (
-              <div
-                className="overflow-auto h-full"
-                style={{ padding: 16, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
-              >
-                <JsonNode value={parsed} depth={0} path="$" onCopyPath={onCopyPath} dark={viewerDark} />
-              </div>
-            )}
-
-            {/* Grafo */}
-            {parsed !== null && aba === 'grafo' && (
-              <JsonGrafo parsed={parsed} dark={viewerDark} />
-            )}
-
-            {/* Tabela */}
-            {parsed !== null && aba === 'tabela' && (
-              <JsonTabela data={parsed} dark={viewerDark} />
-            )}
-
-            {/* Estatísticas */}
-            {parsed !== null && aba === 'stats' && (
-              <JsonEstatisticas parsed={parsed} rawText={input} dark={viewerDark} />
-            )}
+          {/* ── Resultado do diff ── */}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <DiffViewer parsedA={parsed} erroA={erro} parsedB={parsedB} erroB={erroB} />
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── Status bar ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '5px 16px', borderTop: `1px solid ${DARK.toolbarBdr}`, background: DARK.statusBar, fontSize: 11, flexShrink: 0 }}>
@@ -972,13 +1290,30 @@ export default function AnalisadorJson() {
         ) : parsed !== null ? (
           <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#4ade80', fontWeight: 600 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }} />
-            JSON Válido
+            JSON {modo === 'comparar' ? 'A ' : ''}Válido
           </span>
         ) : (
           <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#f87171', fontWeight: 600 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f87171' }} />
-            JSON Inválido
+            JSON {modo === 'comparar' ? 'A ' : ''}Inválido
           </span>
+        )}
+
+        {modo === 'comparar' && inputB && (
+          <>
+            <span style={{ color: '#334155' }}>|</span>
+            {parsedB !== null ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#4ade80', fontWeight: 600 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }} />
+                JSON B Válido
+              </span>
+            ) : (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#f87171', fontWeight: 600 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f87171' }} />
+                JSON B Inválido
+              </span>
+            )}
+          </>
         )}
 
         {input && <span style={{ color: '#334155' }}>|</span>}
@@ -991,13 +1326,18 @@ export default function AnalisadorJson() {
             <span style={{ color: '#475569' }}>{bytes >= 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${bytes} bytes`}</span>
           </>
         )}
-        {parsed !== null && (
+        {parsed !== null && modo === 'analisar' && (
           <>
             <span style={{ color: '#334155' }}>|</span>
             <span style={{ color: '#475569' }}>{formatado.split('\n').length} linhas formatadas</span>
           </>
         )}
-        <span style={{ marginLeft: 'auto', color: '#475569' }}>{ABAS.find(a => a.id === aba)?.label ?? ''}</span>
+        {modo === 'analisar' && (
+          <span style={{ marginLeft: 'auto', color: '#475569' }}>{ABAS.find(a => a.id === aba)?.label ?? ''}</span>
+        )}
+        {modo === 'comparar' && (
+          <span style={{ marginLeft: 'auto', color: '#475569' }}>Comparador de estruturas</span>
+        )}
       </div>
     </div>
   )
