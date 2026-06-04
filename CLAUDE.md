@@ -76,14 +76,14 @@ sysgate/
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
-    ├── vite.config.js         # Porta 3000, proxy /api → localhost:3001
+    ├── vite.config.js         # Porta 3000, proxy /api → localhost:3001; manualChunks: recharts, papaparse, react-vendor, app-vendor
     ├── tailwind.config.js     # Paleta "sysgate" índigo/violeta Krakion Labs + safelist [/sysgate/] (obrigatório)
     ├── public/
-    │   ├── logo-com-nome.png  # Logo Krakion Labs com nome (uso em dashboards)
-    │   └── logo-sem-nome.png  # Logo Krakion Labs sem nome (usada na tela de login)
+    │   ├── logo-com-nome.webp # Logo Krakion Labs com nome (uso em dashboards) — WebP 500px, 48 KB
+    │   └── logo-sem-nome.webp # Logo Krakion Labs sem nome (usada na tela de login) — WebP 500px, 40 KB
     └── src/
         ├── main.jsx
-        ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute (todas as rotas autenticadas)
+        ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute; todas as páginas carregadas com React.lazy + Suspense (code splitting por rota)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
         │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi e chamadosApi
@@ -96,19 +96,51 @@ sysgate/
         │   ├── PrivateRoute.jsx   # Redireciona para /login se não autenticado; AdminRoute para role
         │   ├── MunicipioBadge.jsx # Badge do município ativo (alerta vermelho para produção)
         │   ├── SwaggerImport.jsx  # Modal: fetch por URL / upload arquivo / specs salvas / limpar tudo
-        │   └── SearchSelect.jsx   # Combobox com busca filtrável (usado em Módulo e Recurso)
+        │   ├── SearchSelect.jsx   # Combobox com busca filtrável (usado em Módulo e Recurso)
+        │   ├── ConfirmDialog.jsx  # Modal de confirmação genérico — substitui window.confirm()
+        │   ├── CopyButton.jsx     # Botão copiar com feedback "Copiado!" por 2s
+        │   ├── JsonHighlight.jsx  # Syntax highlight JSON dark/light; exporta highlightJson e highlightJsonLight
+        │   ├── MethodBadge.jsx    # Badge colorido por método HTTP (GET=azul, POST=verde, PUT=amarelo, PATCH=laranja, DELETE=vermelho)
+        │   ├── StatusBadge.jsx    # Badge colorido por status code HTTP (2xx=verde, 3xx=azul, 4xx=amarelo, 5xx=vermelho)
+        │   └── Toast.jsx          # Notificação inline reutilizável (success/info/warning/error)
         └── pages/
             ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas
             ├── Usuarios.jsx       # Admin: CRUD completo + resetar senha de outros; Não-admin: só próprio perfil (nome + senha)
             ├── Dashboard.jsx      # Cards de módulos com SVG icons + município ativo + últimas requisições
             ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação — dados isolados por usuário
-            ├── Portfolio.jsx      # Rota: /portfolio — CRM de clientes: lista municípios + painel accordion de entidades + sistemas agrupados por vertical (cores oficiais Betha) + modal picker "Catálogo Betha" (chips coloridos por vertical) + modal "Configurar Catálogo" (admin) + contatos com chips — leitura pública; edição somente admin
             ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin
             ├── ClienteAPI.jsx     # Rota: /sandbox — Seletor endpoint + CodeBlock JSON + body editor + proxy
-            ├── EnvioLote.jsx      # Upload CSV + toggle sem cabeçalho + mapeamento colunas 2 colunas + envio em lote (array body) + IDs gerados + consulta GET por ID + exportar CSV com IDs
             ├── Scripts.jsx        # 4 abas: Scripts BFC / Fórmulas BFC / Anotações / Relatórios (JRXML + fonte dinâmica)
-            ├── Chamados.jsx       # Rota: /chamados — sub-abas Gestão (lista+detalhe) e Dashboard (gráficos Recharts); histórico lateral por chamado
-            └── AnalisadorJson.jsx # Rota: /analisador-json — formatador/visualizador JSON 100% client-side; 5 abas: Formatado, Árvore, Grafo, Tabela, Estatísticas
+            ├── Portfolio.jsx      # re-export → Portfolio/index.jsx
+            ├── Portfolio/
+            │   ├── index.jsx               # Componente principal — layout 2 colunas, CRUD, modais inline
+            │   ├── AccordionEntidade.jsx   # Accordion de entidade com sistemas por vertical e stakeholders
+            │   ├── ModalGerenciarSistemas.jsx # Modal picker do Catálogo Betha (chips por vertical)
+            │   ├── ModalCatalogo.jsx       # Modal admin para configurar verticais/sistemas do catálogo
+            │   └── utils.js               # CORES_VERTICAIS, corVertical(), hexToRgb()
+            ├── EnvioLote.jsx      # re-export → EnvioLote/index.jsx
+            ├── EnvioLote/
+            │   ├── index.jsx               # Componente principal — upload CSV, mapeamento, envio em lote
+            │   ├── CsvPreview.jsx          # Tabela de preview do CSV carregado
+            │   ├── BatchProgress.jsx       # Progresso/resultados de lotes + consultas GET por ID
+            │   └── utils.js               # extrairIds(), nomeRecurso(), highlightJson()
+            ├── Chamados.jsx       # re-export → Chamados/index.jsx
+            ├── Chamados/
+            │   ├── index.jsx               # Componente principal — lista, detalhe, filtros
+            │   ├── ChamadosDashboard.jsx   # Dashboard Recharts (AreaChart, PieChart, BarChart)
+            │   ├── PainelHistorico.jsx     # Painel lateral de histórico de alterações (timeline)
+            │   ├── ModalChamado.jsx        # Modal criar/editar chamado
+            │   └── constants.js           # STATUS_CORES, CLASSIF_CORES, PRIORIDADE_CORES, helpers
+            ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
+            └── AnalisadorJson/
+                ├── index.jsx               # Componente principal — EditorLinhas, layout, toolbar
+                ├── JsonGrafo.jsx           # Visualização grafo com pan/zoom e arestas SVG bézier
+                ├── JsonTabela.jsx          # Tabela com ordenação por coluna e exportar CSV
+                ├── JsonNode.jsx            # Árvore colapsável recursiva com cópia de JSON path
+                ├── DiffViewer.jsx          # Painel de diff estrutural (modo Comparador)
+                ├── BuscaResultados.jsx     # Lista de resultados da busca no JSON
+                ├── constants.js           # EXEMPLO_JSON, ABAS
+                └── utils.js               # DARK palette, highlightJson, analyzeJson, diffJson, buscaJson
 ```
 
 ## Comandos
@@ -204,7 +236,7 @@ docker-compose up --build
 ### Scripts
 | Método | Rota                  | Descrição                                    |
 |--------|-----------------------|----------------------------------------------|
-| GET    | /api/scripts          | Lista scripts (filtro ?categoria=, ?tag=)    |
+| GET    | /api/scripts          | Lista scripts (filtro ?categoria=, ?tag=, ?pagina=, ?limite=) — retorna `{ data, total, pagina, limite, totalPaginas }` |
 | GET    | /api/scripts/tags     | Lista tags                                   |
 | POST   | /api/scripts          | Cria script com tags                         |
 | PUT    | /api/scripts/:id      | Atualiza                                     |
@@ -226,7 +258,7 @@ docker-compose up --build
 
 | Método | Rota                                        | Descrição                                                                 |
 |--------|---------------------------------------------|---------------------------------------------------------------------------|
-| GET    | /api/portfolio                              | Lista municípios (filtro ?busca=) com contagem de entidades               |
+| GET    | /api/portfolio                              | Lista municípios (filtro ?busca=, ?pagina=, ?limite=) — retorna `{ data, total, pagina, limite, totalPaginas }` |
 | POST   | /api/portfolio                              | Cria município — **somente admin**                                        |
 | GET    | /api/portfolio/:id                          | Detalhe do município com entidades (contagem sistemas/stakeholders)        |
 | PUT    | /api/portfolio/:id                          | Atualiza município — **somente admin**                                    |
@@ -260,7 +292,7 @@ docker-compose up --build
 
 | Método | Rota                          | Descrição                                                                             |
 |--------|-------------------------------|---------------------------------------------------------------------------------------|
-| GET    | /api/chamados                 | Lista chamados (filtros ?busca=, ?status=, ?classificacao=, ?responsavelId=, ?vertical=) |
+| GET    | /api/chamados                 | Lista chamados (filtros ?busca=, ?status=, ?classificacao=, ?responsavelId=, ?vertical=, ?pagina=, ?limite=) — retorna `{ data, total, pagina, limite, totalPaginas }` |
 | GET    | /api/chamados/estatisticas    | Contagem por status (objeto `{ status: count }`)                                      |
 | GET    | /api/chamados/dashboard       | Dados agregados: resumo, porStatus, porMunicipio, porVertical, porClassificacao, porPrioridade, semResponsavel, porDia (14 dias) |
 | POST   | /api/chamados                 | Cria chamado + registra entrada `criacao` no histórico                                |
@@ -406,7 +438,7 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 | sysgate-100   | `#e0e7ff` | Badges, hover de itens                 |
 | sysgate-50    | `#eef2ff` | Fundos suaves de itens selecionados    |
 
-- **Logos**: `frontend/public/logo-sem-nome.png` (tela de login) e `logo-com-nome.png` (uso geral)
+- **Logos**: `frontend/public/logo-sem-nome.webp` (tela de login) e `logo-com-nome.webp` (uso geral) — formato WebP, ~40-48 KB cada (originais PNG de 5 MB convertidos)
 - **Tela de login**: gradiente `from-indigo-50 via-white to-violet-50`, logo centralizada, card branco com sombra
 - **Modal de cadastro**: 2 etapas — (1) nome/login/senha → POST `/api/auth/registrar` → (2) tela de sucesso informando aguarda ativação
 - A paleta `sysgate` NÃO foi renomeada no Tailwind para não quebrar todos os componentes existentes que usam `sysgate-600`, `sysgate-700` etc.
