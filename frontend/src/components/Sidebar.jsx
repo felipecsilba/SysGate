@@ -180,11 +180,11 @@ export default function Sidebar() {
   return (
     <aside className="w-56 flex flex-col bg-gray-900 text-gray-100 shrink-0">
       {/* Logo */}
-      <div className="flex items-center px-4 py-4 border-b border-white/10">
+      <div className="border-b border-white/10 py-3 px-3">
         <img
           src="/KrakioSuporte.webp"
           alt="Krakion Suporte"
-          className="w-full h-auto max-h-10 object-contain"
+          className="w-full h-auto block"
           onError={(e) => {
             e.target.style.display = 'none'
           }}
