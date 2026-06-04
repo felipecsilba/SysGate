@@ -180,16 +180,15 @@ export default function Sidebar() {
   return (
     <aside className="w-56 flex flex-col bg-gray-900 text-gray-100 shrink-0">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
+      <div className="flex items-center px-4 py-4 border-b border-white/10">
         <img
-          src="/logo-sem-nome.webp"
-          alt="Krakion Labs"
-          className="w-8 h-8 object-contain shrink-0 mix-blend-multiply brightness-200"
+          src="/KrakioSuporte.webp"
+          alt="Krakion Suporte"
+          className="w-full h-auto max-h-10 object-contain"
           onError={(e) => {
             e.target.style.display = 'none'
           }}
         />
-        <div className="font-semibold text-sm leading-tight text-white">Krakion Labs</div>
       </div>
 
       {/* Navegação */}
