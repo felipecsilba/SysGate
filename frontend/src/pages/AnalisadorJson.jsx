@@ -936,25 +936,25 @@ export default function AnalisadorJson() {
     <div className="flex flex-col h-full overflow-hidden" style={{ background: DARK.page }}>
 
       {/* ── Barra de título ── */}
-      <div style={{ background: DARK.toolbar, borderBottom: `1px solid ${DARK.toolbarBdr}`, padding: '0 16px', height: 44, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+      <div style={{ background: DARK.toolbar, borderBottom: `1px solid ${DARK.toolbarBdr}`, padding: '0 16px', height: 44, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, minWidth: 0 }}>
         {/* Acento */}
         <div style={{ width: 3, height: 20, borderRadius: 999, background: 'linear-gradient(to bottom, #6366f1, #8b5cf6)', flexShrink: 0 }} />
-        <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em' }}>Analisador JSON</span>
-        <span style={{ fontSize: 12, color: '#475569', marginLeft: 2 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em', flexShrink: 0, whiteSpace: 'nowrap' }}>Analisador JSON</span>
+        <span style={{ fontSize: 12, color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>
           {modo === 'analisar' ? '— Formate, visualize e analise' : '— Compare duas estruturas JSON'}
         </span>
 
-        {/* Toggle de modo */}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 2, background: '#0f172a', border: '1px solid #334155', borderRadius: 8, padding: 3 }}>
+        {/* Toggle de modo — flexShrink:0 garante que nunca some da tela */}
+        <div style={{ flexShrink: 0, display: 'flex', gap: 2, background: '#0f172a', border: '1px solid #4f46e5', borderRadius: 8, padding: 3 }}>
           <button
             onClick={() => setModo('analisar')}
-            style={{ padding: '4px 14px', fontSize: 12, fontWeight: modo === 'analisar' ? 700 : 500, background: modo === 'analisar' ? '#4f46e5' : 'transparent', color: modo === 'analisar' ? '#ffffff' : '#64748b', border: 'none', borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s' }}
+            style={{ padding: '4px 14px', fontSize: 12, fontWeight: modo === 'analisar' ? 700 : 500, background: modo === 'analisar' ? '#4f46e5' : 'transparent', color: modo === 'analisar' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
           >
             Analisador
           </button>
           <button
             onClick={() => setModo('comparar')}
-            style={{ padding: '4px 14px', fontSize: 12, fontWeight: modo === 'comparar' ? 700 : 500, background: modo === 'comparar' ? '#4f46e5' : 'transparent', color: modo === 'comparar' ? '#ffffff' : '#64748b', border: 'none', borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s' }}
+            style={{ padding: '4px 14px', fontSize: 12, fontWeight: modo === 'comparar' ? 700 : 500, background: modo === 'comparar' ? '#4f46e5' : 'transparent', color: modo === 'comparar' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
           >
             Comparador
           </button>
