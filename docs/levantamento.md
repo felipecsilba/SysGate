@@ -38,15 +38,13 @@
 | `docs/chamados.md` | ✅ criado |
 | `docs/analisador-json.md` | ✅ criado |
 
-### CLAUDE.md está sobrecarregado
+### CLAUDE.md — ✅ reorganizado
 
-Com 70KB descrevendo deployment, segurança, padrões e todos os módulos, o arquivo funciona mas vai ficando difícil de manter conforme o sistema cresce. Estratégia sugerida: migrar seções para os skills específicos e deixar o CLAUDE.md como índice com links.
-
-Seções candidatas a migrar:
-- Seção "Deploy — VPS Hostinger" → `skills/deploy.md`
-- Seção "Segurança — padrões e decisões" → `skills/seguranca.md`
-- Seção "Módulo Analisador JSON" → `docs/analisador-json.md`
-- Seção "Módulo Chamados" → `docs/chamados.md`
+CLAUDE.md foi reduzido de ~70KB para ~46KB. Seções migradas:
+- "Deploy — VPS Hostinger" → `skills/deploy.md` (resumo breve + link no CLAUDE.md)
+- "Segurança — padrões e decisões" → `skills/seguranca.md` (idem)
+- "Módulo Analisador JSON" → removido (já em `docs/analisador-json.md`)
+- "Módulo Chamados" → removido (já em `docs/chamados.md`)
 
 ---
 
@@ -95,10 +93,10 @@ Ainda não se justificam. Os agentes disponíveis (Explore, Plan, Bash, Systemat
 - [x] Criar `docs/chamados.md`
 - [x] Criar `docs/analisador-json.md`
 - [ ] Criar `skills/betha-api.md`
-- [ ] Criar `skills/seguranca.md`
-- [ ] Criar `skills/deploy.md`
+- [x] Criar `skills/seguranca.md`
+- [x] Criar `skills/deploy.md`
 - [ ] Criar `skills/testes.md`
-- [ ] Refatorar CLAUDE.md para ser índice com links
+- [x] Refatorar CLAUDE.md para ser índice com links
 
 ### Features prioritárias
 - [ ] Alerta ativo de tokens próximos de vencer
