@@ -257,7 +257,7 @@ export default function Login() {
           {/* Logo + nome */}
           <div className="text-center mb-8">
             <img
-              src="/logo-sem-nome.webp"
+              src="/nova-logo.webp"
               alt="Krakion Labs"
               className="w-28 h-28 mx-auto mb-3 object-contain mix-blend-multiply"
               onError={(e) => {
