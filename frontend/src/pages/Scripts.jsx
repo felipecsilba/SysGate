@@ -589,7 +589,7 @@ export default function Scripts() {
         const data = await relatoriosApi.listar(busca ? { busca } : {})
         setRelatorios(data)
       } else {
-        const data = await scriptsApi.listar({ categoria: aba, ...(busca && { busca }) })
+        const { data } = await scriptsApi.listar({ categoria: aba, ...(busca && { busca }) })
         setItems(data)
       }
     } catch (e) {

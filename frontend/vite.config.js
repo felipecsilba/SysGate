@@ -12,4 +12,20 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Recharts isolado — usado só em Chamados/Dashboard
+          recharts: ['recharts'],
+          // Papa Parse isolado — usado só em EnvioLote
+          papaparse: ['papaparse'],
+          // React core
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // Zustand + Axios (pequenos mas compartilhados)
+          'app-vendor': ['zustand', 'axios'],
+        },
+      },
+    },
+  },
 })

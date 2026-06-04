@@ -18,9 +18,9 @@ async function registrarHistorico(chamadoId, usuarioId, tipo, valorAntes, valorD
   })
 }
 
-// ── GET / — Listar chamados com filtros ──────────────────────────────────────
+// ── GET / — Listar chamados com filtros e paginação ──────────────────────────
 router.get('/', async (req, res) => {
-  const { busca, status, classificacao, responsavelId, vertical } = req.query
+  const { busca, status, classificacao, responsavelId, vertical, pagina, limite } = req.query
   const where = {}
   if (status) where.status = status
   if (classificacao) where.classificacao = classificacao
@@ -33,21 +33,36 @@ router.get('/', async (req, res) => {
     ]
   }
 
-  const chamados = await prisma.chamado.findMany({
-    where,
-    orderBy: { criadoEm: 'desc' },
-    include: {
-      criadoPor: { select: { id: true, nome: true } },
-      responsavel: { select: { id: true, nome: true } },
-      _count: { select: { comentarios: true, anexos: true } }
-    }
-  })
+  const paginaNum = Math.max(1, parseInt(pagina) || 1)
+  const limiteNum = Math.min(200, Math.max(1, parseInt(limite) || 50))
+  const skip = (paginaNum - 1) * limiteNum
 
-  res.json(chamados.map(c => ({
-    ...c,
-    descricao: c.descricao ? c.descricao.substring(0, 200) : null,
-    descricaoTruncada: c.descricao ? c.descricao.length > 200 : false
-  })))
+  const [chamados, total] = await Promise.all([
+    prisma.chamado.findMany({
+      where,
+      orderBy: { criadoEm: 'desc' },
+      skip,
+      take: limiteNum,
+      include: {
+        criadoPor: { select: { id: true, nome: true } },
+        responsavel: { select: { id: true, nome: true } },
+        _count: { select: { comentarios: true, anexos: true } }
+      }
+    }),
+    prisma.chamado.count({ where })
+  ])
+
+  res.json({
+    data: chamados.map(c => ({
+      ...c,
+      descricao: c.descricao ? c.descricao.substring(0, 200) : null,
+      descricaoTruncada: c.descricao ? c.descricao.length > 200 : false
+    })),
+    total,
+    pagina: paginaNum,
+    limite: limiteNum,
+    totalPaginas: Math.ceil(total / limiteNum)
+  })
 })
 
 // ── GET /estatisticas — Contagem por status ──────────────────────────────────

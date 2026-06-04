@@ -182,7 +182,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
         <img
-          src="/logo-sem-nome.png"
+          src="/logo-sem-nome.webp"
           alt="Krakion Labs"
           className="w-8 h-8 object-contain shrink-0 mix-blend-multiply brightness-200"
           onError={(e) => {

@@ -79,6 +79,8 @@ model Requisicao {
   municipio   Municipio  @relation(fields: [municipioId], references: [id])
   sistema     Sistema?   @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
   endpoint    Endpoint?  @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+
+  @@index([municipioId, criadoEm])
 }
 
 model Script {
@@ -91,6 +93,8 @@ model Script {
   tags         Tag[]
   criadoEm    DateTime    @default(now())
   atualizadoEm DateTime   @updatedAt
+
+  @@index([categoria])
 }
 
 model Tag {
@@ -229,6 +233,10 @@ model Chamado {
   historicos      ChamadoHistorico[]
   criadoEm        DateTime           @default(now())
   atualizadoEm    DateTime           @updatedAt
+
+  @@index([status, criadoEm])
+  @@index([responsavelId])
+  @@index([vertical])
 }
 
 model ChamadoComentario {

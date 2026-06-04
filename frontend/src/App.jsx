@@ -1,18 +1,29 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Municipios from './pages/Municipios'
-import Sistemas from './pages/Sistemas'
-import Sandbox from './pages/ClienteAPI'
-import EnvioLote from './pages/EnvioLote'
-import Scripts from './pages/Scripts'
-import Historico from './pages/Historico'
-import Usuarios from './pages/Usuarios'
-import Portfolio from './pages/Portfolio'
-import Chamados from './pages/Chamados'
-import AnalisadorJson from './pages/AnalisadorJson'
+
+// Carregamento lazy: cada página vira chunk separado no build
+const Dashboard    = lazy(() => import('./pages/Dashboard'))
+const Municipios   = lazy(() => import('./pages/Municipios'))
+const Sistemas     = lazy(() => import('./pages/Sistemas'))
+const Sandbox      = lazy(() => import('./pages/ClienteAPI'))
+const EnvioLote    = lazy(() => import('./pages/EnvioLote'))
+const Scripts      = lazy(() => import('./pages/Scripts'))
+const Historico    = lazy(() => import('./pages/Historico'))
+const Usuarios     = lazy(() => import('./pages/Usuarios'))
+const Portfolio    = lazy(() => import('./pages/Portfolio'))
+const Chamados     = lazy(() => import('./pages/Chamados'))
+const AnalisadorJson = lazy(() => import('./pages/AnalisadorJson'))
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-full min-h-[200px]">
+      <div className="w-6 h-6 border-2 border-sysgate-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
 
 export default function App() {
   return (
@@ -24,20 +35,40 @@ export default function App() {
         {/* Rotas protegidas */}
         <Route element={<PrivateRoute />}>
           <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="municipios" element={<Municipios />} />
-            <Route path="sistemas" element={<Sistemas />} />
-            <Route path="sandbox" element={<Sandbox />} />
-            <Route path="envio-lote" element={<EnvioLote />} />
-            <Route path="scripts" element={<Scripts />} />
-            <Route path="historico" element={<Historico />} />
-
-            <Route path="portfolio" element={<Portfolio />} />
-            <Route path="chamados" element={<Chamados />} />
-            <Route path="analisador-json" element={<AnalisadorJson />} />
-
+            <Route index element={
+              <Suspense fallback={<PageLoader />}><Dashboard /></Suspense>
+            } />
+            <Route path="municipios" element={
+              <Suspense fallback={<PageLoader />}><Municipios /></Suspense>
+            } />
+            <Route path="sistemas" element={
+              <Suspense fallback={<PageLoader />}><Sistemas /></Suspense>
+            } />
+            <Route path="sandbox" element={
+              <Suspense fallback={<PageLoader />}><Sandbox /></Suspense>
+            } />
+            <Route path="envio-lote" element={
+              <Suspense fallback={<PageLoader />}><EnvioLote /></Suspense>
+            } />
+            <Route path="scripts" element={
+              <Suspense fallback={<PageLoader />}><Scripts /></Suspense>
+            } />
+            <Route path="historico" element={
+              <Suspense fallback={<PageLoader />}><Historico /></Suspense>
+            } />
+            <Route path="portfolio" element={
+              <Suspense fallback={<PageLoader />}><Portfolio /></Suspense>
+            } />
+            <Route path="chamados" element={
+              <Suspense fallback={<PageLoader />}><Chamados /></Suspense>
+            } />
+            <Route path="analisador-json" element={
+              <Suspense fallback={<PageLoader />}><AnalisadorJson /></Suspense>
+            } />
             {/* Usuários: admin vê todos; não-admin vê só o próprio perfil */}
-            <Route path="usuarios" element={<Usuarios />} />
+            <Route path="usuarios" element={
+              <Suspense fallback={<PageLoader />}><Usuarios /></Suspense>
+            } />
           </Route>
         </Route>
       </Routes>

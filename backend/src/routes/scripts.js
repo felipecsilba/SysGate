@@ -11,10 +11,10 @@ function parseScript(s) {
   }
 }
 
-// GET /api/scripts
+// GET /api/scripts — lista com filtros e paginação
 router.get('/', async (req, res) => {
   try {
-    const { busca, tag, categoria, municipioId } = req.query
+    const { busca, tag, categoria, municipioId, pagina, limite } = req.query
     const where = {}
 
     if (categoria) where.categoria = categoria
@@ -27,15 +27,31 @@ router.get('/', async (req, res) => {
       ]
     }
 
-    const scripts = await prisma.script.findMany({
-      where,
-      orderBy: { criadoEm: 'desc' },
-      include: {
-        tags: true,
-        municipio: { select: { id: true, nome: true } },
-      },
+    const paginaNum = Math.max(1, parseInt(pagina) || 1)
+    const limiteNum = Math.min(200, Math.max(1, parseInt(limite) || 100))
+    const skip = (paginaNum - 1) * limiteNum
+
+    const [scripts, total] = await Promise.all([
+      prisma.script.findMany({
+        where,
+        orderBy: { criadoEm: 'desc' },
+        skip,
+        take: limiteNum,
+        include: {
+          tags: true,
+          municipio: { select: { id: true, nome: true } },
+        },
+      }),
+      prisma.script.count({ where })
+    ])
+
+    res.json({
+      data: scripts.map(parseScript),
+      total,
+      pagina: paginaNum,
+      limite: limiteNum,
+      totalPaginas: Math.ceil(total / limiteNum)
     })
-    res.json(scripts.map(parseScript))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

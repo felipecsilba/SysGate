@@ -7,19 +7,36 @@ const prisma = new PrismaClient()
 
 // ── Municípios do Portfólio ───────────────────────────────────────────────────
 
-// GET /api/portfolio — lista municípios com contagem de entidades
+// GET /api/portfolio — lista municípios com contagem de entidades e paginação
 router.get('/', async (req, res) => {
   try {
-    const { busca } = req.query
+    const { busca, pagina, limite } = req.query
     const where = busca ? { nome: { contains: busca } } : {}
-    const municipios = await prisma.portfolioMunicipio.findMany({
-      where,
-      orderBy: { nome: 'asc' },
-      include: {
-        _count: { select: { entidades: true } },
-      },
+
+    const paginaNum = Math.max(1, parseInt(pagina) || 1)
+    const limiteNum = Math.min(200, Math.max(1, parseInt(limite) || 50))
+    const skip = (paginaNum - 1) * limiteNum
+
+    const [municipios, total] = await Promise.all([
+      prisma.portfolioMunicipio.findMany({
+        where,
+        orderBy: { nome: 'asc' },
+        skip,
+        take: limiteNum,
+        include: {
+          _count: { select: { entidades: true } },
+        },
+      }),
+      prisma.portfolioMunicipio.count({ where })
+    ])
+
+    res.json({
+      data: municipios,
+      total,
+      pagina: paginaNum,
+      limite: limiteNum,
+      totalPaginas: Math.ceil(total / limiteNum)
     })
-    res.json(municipios)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
