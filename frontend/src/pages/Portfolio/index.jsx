@@ -4,7 +4,6 @@ import useAuthStore from '../../stores/authStore'
 import { confirmClose, isFormDirty } from '../../lib/formGuard'
 import AccordionEntidade from './AccordionEntidade'
 import ModalGerenciarSistemas from './ModalGerenciarSistemas'
-import ModalCatalogo from './ModalCatalogo'
 
 // ── Ícones ────────────────────────────────────────────────────────────────────
 
@@ -407,8 +406,6 @@ export default function Portfolio() {
   const [modalSh, setModalSh] = useState(false)
   const [editandoSh, setEditandoSh] = useState(null)
   const [entidadeParaSh, setEntidadeParaSh] = useState(null)
-  const [modalCatalogo, setModalCatalogo] = useState(false)
-
   // ── Carregamento ────────────────────────────────────────────────────────────
 
   const carregarMunicipios = async () => {
@@ -572,22 +569,9 @@ export default function Portfolio() {
           </div>
         </div>
         {isAdmin && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setModalCatalogo(true)}
-              className="btn btn-ghost flex items-center gap-1.5"
-              title="Configurar catálogo de verticais"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-              <span>Catálogo</span>
-            </button>
-            <button onClick={abrirNovoMunicipio} className="btn btn-primary flex items-center gap-1.5">
-              <IconPlus /><span>Novo Município</span>
-            </button>
-          </div>
+          <button onClick={abrirNovoMunicipio} className="btn btn-primary flex items-center gap-1.5">
+            <IconPlus /><span>Novo Município</span>
+          </button>
         )}
       </div>
 
@@ -749,12 +733,6 @@ export default function Portfolio() {
           catalogo={catalogo}
           onSalvar={salvarSistema}
           onClose={() => setModalSis(false)}
-        />
-      )}
-      {modalCatalogo && (
-        <ModalCatalogo
-          onClose={() => setModalCatalogo(false)}
-          onSaved={() => catalogoApi.listar().then(setCatalogo)}
         />
       )}
       {modalSh && entidadeParaSh && (

@@ -3,6 +3,7 @@ import { sistemasApi, endpointsApi } from '../lib/api'
 import SwaggerImport from '../components/SwaggerImport'
 import useAuthStore from '../stores/authStore'
 import { confirmClose, isFormDirty } from '../lib/formGuard'
+import ModalCatalogo from './Portfolio/ModalCatalogo'
 
 const METODO_COLORS = {
   GET: 'bg-blue-100 text-blue-800',
@@ -192,6 +193,8 @@ export default function Sistemas() {
   const [sistemaEditando, setSistemaEditando] = useState(null)
   const [swaggerAberto, setSwaggerAberto] = useState(false)
 
+  const [modalCatalogo, setModalCatalogo] = useState(false)
+
   const [abaDetalhe, setAbaDetalhe] = useState('info')
   const [endpoints, setEndpoints] = useState([])
   const [carregandoEndpoints, setCarregandoEndpoints] = useState(false)
@@ -292,15 +295,28 @@ export default function Sistemas() {
           <p className="text-sm text-gray-400 ml-3">Gerencie sistemas, importe Swaggers e endpoints</p>
         </div>
         {isAdmin && (
-          <button
-            onClick={() => { setSistemaEditando(null); setModalAberto(true) }}
-            className="btn-primary gap-1.5"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Novo Sistema
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setModalCatalogo(true)}
+              className="btn-secondary gap-1.5"
+              title="Configurar catálogo de verticais Betha"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              Catálogo
+            </button>
+            <button
+              onClick={() => { setSistemaEditando(null); setModalAberto(true) }}
+              className="btn-primary gap-1.5"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Novo Sistema
+            </button>
+          </div>
         )}
       </div>
 
@@ -627,6 +643,13 @@ export default function Sistemas() {
             if (sistemaSel) carregarEndpoints(sistemaSel.id)
           }}
           onFechar={() => { setModalEndpoint(false); setEndpointEditando(null) }}
+        />
+      )}
+
+      {modalCatalogo && (
+        <ModalCatalogo
+          onClose={() => setModalCatalogo(false)}
+          onSaved={() => {}}
         />
       )}
     </div>
