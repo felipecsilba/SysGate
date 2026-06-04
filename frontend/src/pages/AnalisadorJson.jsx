@@ -106,6 +106,28 @@ function fmtDiffVal(v) {
   return s.length > 80 ? s.slice(0, 80) + '…' : s
 }
 
+// ─── Busca no JSON ────────────────────────────────────────────────────────────
+
+function buscaJson(value, termo, path = '$', results = []) {
+  if (!termo || results.length >= 500) return results
+  const t = termo.toLowerCase()
+  if (Array.isArray(value)) {
+    value.forEach((item, i) => buscaJson(item, termo, `${path}[${i}]`, results))
+    return results
+  }
+  if (value !== null && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value)) {
+      const sub = `${path}.${k}`
+      if (k.toLowerCase().includes(t)) results.push({ path: sub, matchIn: 'key', key: k, value: v })
+      buscaJson(v, termo, sub, results)
+    }
+    return results
+  }
+  const s = value === null ? 'null' : String(value)
+  if (s.toLowerCase().includes(t)) results.push({ path, matchIn: 'value', value })
+  return results
+}
+
 // ─── Editor com numeração de linhas ──────────────────────────────────────────
 
 function EditorLinhas({ value, onChange, onCursor, taRef }) {
@@ -268,11 +290,39 @@ function JsonNode({ value, keyName, depth, path, onCopyPath, dark }) {
 // ─── Tabela ───────────────────────────────────────────────────────────────────
 
 function JsonTabela({ data, dark }) {
-  const bg    = dark ? '#1e293b' : '#ffffff'
-  const bgHdr = dark ? '#0f172a' : '#f8fafc'
-  const bdr   = dark ? '#334155' : '#e2e8f0'
-  const txt   = dark ? '#e2e8f0' : '#1e293b'
+  const [sortCol, setSortCol] = useState(null)
+  const [sortDir, setSortDir] = useState('asc')
+
+  const bg     = dark ? '#1e293b' : '#ffffff'
+  const bgHdr  = dark ? '#0f172a' : '#f8fafc'
+  const bdr    = dark ? '#334155' : '#e2e8f0'
+  const txt    = dark ? '#e2e8f0' : '#1e293b'
   const txtSub = dark ? '#94a3b8' : '#64748b'
+
+  const objetos = useMemo(() => {
+    if (!Array.isArray(data)) return []
+    return data.filter((item) => item !== null && typeof item === 'object' && !Array.isArray(item))
+  }, [data])
+
+  const colunas = useMemo(() => [...new Set(objetos.flatMap((o) => Object.keys(o)))], [objetos])
+
+  const objetosOrdenados = useMemo(() => {
+    if (!sortCol) return objetos
+    return [...objetos].sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol]
+      if (av === undefined && bv === undefined) return 0
+      if (av === undefined) return 1
+      if (bv === undefined) return -1
+      if (av === null && bv === null) return 0
+      if (av === null) return 1
+      if (bv === null) return -1
+      const cmp = typeof av === 'number' && typeof bv === 'number'
+        ? av - bv
+        : String(typeof av === 'object' ? JSON.stringify(av) : av)
+            .localeCompare(String(typeof bv === 'object' ? JSON.stringify(bv) : bv), 'pt-BR', { numeric: true, sensitivity: 'base' })
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [objetos, sortCol, sortDir])
 
   if (!Array.isArray(data)) {
     return (
@@ -285,7 +335,6 @@ function JsonTabela({ data, dark }) {
     )
   }
 
-  const objetos = data.filter((item) => item !== null && typeof item === 'object' && !Array.isArray(item))
   if (objetos.length === 0) {
     return (
       <div className="flex items-center justify-center h-full" style={{ background: bg }}>
@@ -297,7 +346,27 @@ function JsonTabela({ data, dark }) {
     )
   }
 
-  const colunas = [...new Set(objetos.flatMap((o) => Object.keys(o)))]
+  const handleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
+
+  const exportarCSV = () => {
+    const escape = (v) => {
+      if (v === null || v === undefined) return ''
+      const s = typeof v === 'object' ? JSON.stringify(v) : String(v)
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const lines = [
+      colunas.map(escape).join(','),
+      ...objetosOrdenados.map(row => colunas.map(col => escape(row[col])).join(',')),
+    ]
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = 'dados.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const renderCell = (value) => {
     if (value === undefined) return <span style={{ color: dark ? '#475569' : '#cbd5e1' }}>—</span>
@@ -318,12 +387,25 @@ function JsonTabela({ data, dark }) {
             <tr>
               <th style={{ background: bgHdr, color: txtSub, borderBottom: `1px solid ${bdr}`, padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, width: 40 }}>#</th>
               {colunas.map((col) => (
-                <th key={col} style={{ background: bgHdr, color: txt, borderBottom: `1px solid ${bdr}`, padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>{col}</th>
+                <th key={col}
+                  onClick={() => handleSort(col)}
+                  style={{ background: bgHdr, color: sortCol === col ? (dark ? '#a5b4fc' : '#4f46e5') : txt, borderBottom: `1px solid ${bdr}`, padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none', transition: 'color 0.15s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = dark ? '#1e293b' : '#f1f5f9' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = bgHdr }}
+                >
+                  {col}
+                  {sortCol === col && (
+                    <span style={{ marginLeft: 5, fontSize: 10, color: dark ? '#818cf8' : '#6366f1' }}>{sortDir === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                  {sortCol !== col && (
+                    <span style={{ marginLeft: 5, fontSize: 10, color: dark ? '#334155' : '#e2e8f0', opacity: 0 }} className="sort-hint">⇅</span>
+                  )}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {objetos.map((row, i) => (
+            {objetosOrdenados.map((row, i) => (
               <tr key={i} style={{ borderBottom: `1px solid ${dark ? '#1e293b' : '#f1f5f9'}` }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = dark ? '#1e293b' : '#f8fafc' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
@@ -337,9 +419,21 @@ function JsonTabela({ data, dark }) {
           </tbody>
         </table>
       </div>
-      <div style={{ padding: '8px 16px', borderTop: `1px solid ${bdr}`, background: bgHdr, fontSize: 11, color: txtSub }}>
-        {objetos.length} registros · {colunas.length} colunas
-        {data.length !== objetos.length && ` · ${data.length - objetos.length} item(ns) não-objeto ignorado(s)`}
+      {/* Footer: info + exportar */}
+      <div style={{ padding: '8px 16px', borderTop: `1px solid ${bdr}`, background: bgHdr, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <span style={{ fontSize: 11, color: txtSub }}>
+          {objetos.length} registros · {colunas.length} colunas
+          {sortCol && <span style={{ marginLeft: 8, color: dark ? '#818cf8' : '#6366f1' }}>· <strong>{sortCol}</strong> {sortDir === 'asc' ? '▲' : '▼'}</span>}
+          {data.length !== objetos.length && ` · ${data.length - objetos.length} item(ns) não-objeto ignorado(s)`}
+        </span>
+        <button
+          onClick={exportarCSV}
+          style={{ background: 'transparent', border: `1px solid ${bdr}`, color: txtSub, padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = dark ? '#1e293b' : '#f1f5f9' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        >
+          ↓ Exportar CSV
+        </button>
       </div>
     </div>
   )
@@ -406,6 +500,74 @@ function JsonEstatisticas({ parsed, rawText, dark }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Resultados de Busca ──────────────────────────────────────────────────────
+
+function BuscaResultados({ results, termo, dark }) {
+  const bg     = dark ? '#0d1117' : '#fafafa'
+  const bdr    = dark ? '#1e293b' : '#f1f5f9'
+  const bgHdr  = dark ? '#0f172a' : '#f8fafc'
+  const hdrBdr = dark ? '#1e293b' : '#e2e8f0'
+  const txtSub = dark ? '#64748b' : '#94a3b8'
+
+  const fmtVal = (v) => {
+    if (v === null) return <span style={{ color: dark ? '#6b7280' : '#9ca3af', fontStyle: 'italic' }}>null</span>
+    if (typeof v === 'boolean') return <span style={{ color: dark ? '#c084fc' : '#7c3aed' }}>{String(v)}</span>
+    if (typeof v === 'number')  return <span style={{ color: dark ? '#facc15' : '#b45309' }}>{v}</span>
+    if (typeof v === 'string')  { const s = v.length > 80 ? v.slice(0, 80) + '…' : v; return <span style={{ color: dark ? '#4ade80' : '#15803d' }}>"{s}"</span> }
+    if (Array.isArray(v)) return <span style={{ color: dark ? '#64748b' : '#94a3b8' }}>[{v.length} itens]</span>
+    if (typeof v === 'object')  return <span style={{ color: dark ? '#64748b' : '#94a3b8' }}>{`{${Object.keys(v).length} chaves}`}</span>
+    return <span>{String(v)}</span>
+  }
+
+  if (results.length === 0) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: bg }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, color: dark ? '#1e293b' : '#e2e8f0', marginBottom: 12, userSelect: 'none', lineHeight: 1 }}>◌</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: dark ? '#475569' : '#94a3b8', marginBottom: 6 }}>Nenhum resultado para "{termo}"</div>
+          <div style={{ fontSize: 12, color: dark ? '#334155' : '#cbd5e1' }}>Tente um termo diferente</div>
+        </div>
+      </div>
+    )
+  }
+
+  const MAX_RESULTS = 300
+  const visible = results.slice(0, MAX_RESULTS)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: bg }}>
+      <div style={{ padding: '7px 16px', borderBottom: `1px solid ${hdrBdr}`, background: bgHdr, fontSize: 11, color: txtSub, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontWeight: 700, color: dark ? '#a5b4fc' : '#4f46e5' }}>{results.length}</span>
+        <span>resultado{results.length !== 1 ? 's' : ''} para</span>
+        <code style={{ background: dark ? '#1e293b' : '#f1f5f9', border: `1px solid ${hdrBdr}`, borderRadius: 4, padding: '1px 6px', fontSize: 11, color: dark ? '#fbbf24' : '#b45309' }}>{termo}</code>
+        {results.length >= 500 && <span style={{ color: '#f59e0b' }}>(máx. 500)</span>}
+        {results.length > MAX_RESULTS && <span style={{ color: txtSub }}>· exibindo {MAX_RESULTS}</span>}
+      </div>
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {visible.map((r, i) => (
+          <div key={i}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 16px', borderBottom: `1px solid ${bdr}` }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = dark ? '#0f172a' : '#f8fafc' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+          >
+            <span style={{
+              fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0, marginTop: 2,
+              color:      r.matchIn === 'key' ? (dark ? '#818cf8' : '#4f46e5') : (dark ? '#4ade80' : '#15803d'),
+              background: r.matchIn === 'key' ? (dark ? '#1e1b4b' : '#eef2ff') : (dark ? '#052e16' : '#f0fdf4'),
+              border: `1px solid ${r.matchIn === 'key' ? (dark ? '#312e81' : '#c7d2fe') : (dark ? '#14532d' : '#bbf7d0')}`,
+              borderRadius: 4, padding: '2px 6px',
+            }}>{r.matchIn === 'key' ? 'chave' : 'valor'}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontFamily: 'monospace', color: dark ? '#818cf8' : '#4338ca', marginBottom: 3, wordBreak: 'break-all', lineHeight: 1.5 }}>{r.path}</div>
+              <div style={{ fontSize: 12, fontFamily: 'monospace' }}>{fmtVal(r.value)}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -826,6 +988,8 @@ export default function AnalisadorJson() {
   })
   // Modo: analisador ou comparador
   const [modo, setModo]       = useState('analisar')
+  // Busca no visualizador
+  const [busca, setBusca]     = useState('')
   // Estado do JSON B (comparador)
   const [inputB, setInputB]   = useState('')
   const [parsedB, setParsedB] = useState(null)
@@ -855,6 +1019,11 @@ export default function AnalisadorJson() {
     const linhas = before.split('\n')
     setCursor({ linha: linhas.length, coluna: linhas[linhas.length - 1].length + 1 })
   }, [])
+
+  const resultadosBusca = useMemo(() => {
+    if (!busca.trim() || parsed === null) return []
+    return buscaJson(parsed, busca.trim())
+  }, [parsed, busca])
 
   const formatado   = useMemo(() => (parsed !== null ? JSON.stringify(parsed, null, 2) : ''), [parsed])
   const highlighted = useMemo(() => formatado ? (viewerDark ? highlightJson(formatado) : highlightJsonLight(formatado)) : '', [formatado, viewerDark])
@@ -1153,6 +1322,28 @@ export default function AnalisadorJson() {
               </div>
             </div>
 
+            {/* Barra de busca */}
+            {parsed !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderBottom: `1px solid ${viewerDark ? '#1e293b' : '#f1f5f9'}`, background: viewerDark ? '#0f172a' : '#f8fafc', flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={viewerDark ? '#475569' : '#94a3b8'} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input
+                  type="text"
+                  placeholder="Buscar chave ou valor…"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 12, color: viewerDark ? '#e2e8f0' : '#1e293b', caretColor: '#818cf8' }}
+                />
+                {busca && (
+                  <>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: viewerDark ? '#818cf8' : '#6366f1', background: viewerDark ? '#1e1b4b' : '#eef2ff', border: `1px solid ${viewerDark ? '#312e81' : '#c7d2fe'}`, borderRadius: 10, padding: '1px 8px' }}>
+                      {resultadosBusca.length}
+                    </span>
+                    <button onClick={() => setBusca('')} style={{ background: 'transparent', border: 'none', color: viewerDark ? '#475569' : '#94a3b8', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 2px' }} title="Limpar busca">✕</button>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Conteúdo */}
             <div className="flex-1 min-h-0 overflow-hidden">
 
@@ -1183,8 +1374,13 @@ export default function AnalisadorJson() {
                 </div>
               )}
 
+              {/* Busca */}
+              {parsed !== null && busca.trim() && (
+                <BuscaResultados results={resultadosBusca} termo={busca.trim()} dark={viewerDark} />
+              )}
+
               {/* Formatado */}
-              {parsed !== null && aba === 'formatado' && (
+              {parsed !== null && !busca.trim() && aba === 'formatado' && (
                 <pre
                   className="overflow-auto h-full"
                   style={{ margin: 0, padding: 20, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
@@ -1193,7 +1389,7 @@ export default function AnalisadorJson() {
               )}
 
               {/* Árvore */}
-              {parsed !== null && aba === 'arvore' && (
+              {parsed !== null && !busca.trim() && aba === 'arvore' && (
                 <div
                   className="overflow-auto h-full"
                   style={{ padding: 16, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.7, background: viewerDark ? '#0d1117' : '#fafafa', color: viewerDark ? '#e2e8f0' : '#1e293b' }}
@@ -1203,17 +1399,17 @@ export default function AnalisadorJson() {
               )}
 
               {/* Grafo */}
-              {parsed !== null && aba === 'grafo' && (
+              {parsed !== null && !busca.trim() && aba === 'grafo' && (
                 <JsonGrafo parsed={parsed} dark={viewerDark} />
               )}
 
               {/* Tabela */}
-              {parsed !== null && aba === 'tabela' && (
+              {parsed !== null && !busca.trim() && aba === 'tabela' && (
                 <JsonTabela data={parsed} dark={viewerDark} />
               )}
 
               {/* Estatísticas */}
-              {parsed !== null && aba === 'stats' && (
+              {parsed !== null && !busca.trim() && aba === 'stats' && (
                 <JsonEstatisticas parsed={parsed} rawText={input} dark={viewerDark} />
               )}
             </div>
