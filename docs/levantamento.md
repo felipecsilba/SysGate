@@ -79,8 +79,14 @@ Ainda não se justificam. Os agentes disponíveis (Explore, Plan, Bash, Systemat
 
 ### Definições (não técnicas)
 - [x] Nome escolhido: **Krakion**
-- [ ] Decidir se vai ser produto externo ou ferramenta interna
-- [ ] Definir quem são os outros usuários além do implantador principal
+- [x] Produto: **ferramenta interna** — não será publicada externamente
+- [x] Perfis de usuário definidos:
+
+| Perfil | Descrição |
+|--------|-----------|
+| **Admin** | Acesso total — gerencia usuários, sistemas, endpoints, portfólio e catálogo |
+| **Analista de Implantação** | Acesso operacional — municípios, sandbox, envio em lote, scripts, chamados |
+| **Suporte** | Acesso de leitura/acompanhamento — chamados e portfólio; sem acesso a sandbox ou tokens |
 
 ### Estrutura de documentação
 - [x] Criar `docs/municipios.md`
