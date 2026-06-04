@@ -41,6 +41,7 @@ krakion/
 ├── deploy.bat                 # Deploy para produção: git pull + build + pm2 restart no servidor
 ├── docs/                      # Documentação por módulo
 │   ├── sandbox-unificado.md   # Plano e registro da unificação Sandbox + EnvioLote
+│   ├── melhorias-futuras.md   # Backlog de sugestões de melhoria (ver antes de planejar novas features)
 │   ├── historico.md
 │   ├── municipios.md
 │   ├── sistemas.md
