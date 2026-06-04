@@ -259,7 +259,7 @@ export default function Login() {
             <img
               src="/nova-logo.webp"
               alt="Krakion Labs"
-              className="w-28 h-28 mx-auto mb-3 object-contain mix-blend-multiply"
+              className="w-48 mx-auto mb-3 object-contain drop-shadow-sm"
               onError={(e) => {
                 e.target.style.display = 'none'
               }}
