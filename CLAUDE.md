@@ -610,13 +610,15 @@ erroB: string | null     — mensagem de erro do JSON.parse do JSON B
 - Persiste entre navegações e recargas de página
 
 ### Modo Comparador
-- Toggle no header da página (pill com dois botões: "Analisador" | "Comparador")
-- Layout no modo `comparar`: dois editores (50%/50%) empilhados verticalmente + painel DiffViewer abaixo
+- Toggle pill no canto superior direito da barra de título: "Analisador" | "Comparador"
+- **Pill sempre visível**: container do toggle tem `flexShrink: 0` + `whiteSpace: nowrap`; subtítulo tem `flex: 1` + `overflow: hidden` + `text-overflow: ellipsis` para ceder espaço ao toggle em telas menores — sem isso, o subtítulo empurrava o toggle para fora da área visível (cortado pelo `overflow-hidden` do container)
+- Borda do pill: `#4f46e5` (índigo) para destacar dos outros elementos da barra
+- Layout no modo `comparar`: dois editores (50%/50%) lado a lado ocupando 46% da altura + painel DiffViewer abaixo (flex-1)
 - JSON A reutiliza `input`/`parsed`/`erro`/`taRef` e `processarInput`
 - JSON B usa `inputB`/`parsedB`/`erroB`/`taRefB` e `processarInputB`
-- Cada editor tem seu próprio header com label colorido (A=índigo, B=rosa) + badges Válido/Inválido + dots macOS
+- Cada editor tem seu próprio header com label colorido (A=índigo `#818cf8`, B=rosa `#f472b6`) + badges Válido/Inválido + dots macOS
 - Toolbar se adapta ao modo: em `comparar` mostra controles de JSON A + controles de JSON B + botão "A ⇄ B"
-- Botão "A ⇄ B": chama `processarInput(inputB)` e `processarInputB(input)` simultaneamente para trocar os lados
+- Botão "A ⇄ B": salva `input` e `inputB` em temporários, chama `processarInput(tmpInputB)` e `processarInputB(tmpInput)` — re-parseia ambos corretamente
 
 ### Syntax highlight
 - Duas funções separadas com paletas diferentes:
