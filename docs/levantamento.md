@@ -5,32 +5,12 @@
 
 ---
 
-## 1. Direção — para onde vai o sistema
+## 1. Pendências de curto prazo
 
-### Curto prazo — completar o que está pela metade
-
-| Item | Situação atual | Ação |
-|------|---------------|------|
-| Alertas de token vencendo | Badge visual existe, sem notificação ativa | Adicionar alerta no Dashboard ou email |
-| Docs de módulos | Apenas 3 de ~10 páginas têm doc em `docs/` | Escrever os 7 faltantes |
-| Testes automatizados | Nenhum teste no projeto | Definir estratégia e cobrir ao menos backend |
-
-### Médio prazo — expandir o valor
-
-| Feature | Descrição |
-|---------|-----------|
-| **Checklist de implantação** | Etapas de configuração inicial por município, progress tracking por entidade/sistema |
-| **Modelos de envio em lote** | Salvar configurações reutilizáveis (endpoint + schema de campos + CSV template) para não reconfigurar do zero |
-| **Histórico cruzado** | No portfólio, exibir chamados abertos vinculados ao município selecionado |
-| **Alertas ativos de vencimento** | Notificação quando token de município vence em X dias (dado já está no banco) |
-
-### Longo prazo — se virar produto
-
-| Feature | Descrição |
-|---------|-----------|
-| Multi-empresa | Tenancy além do usuário (múltiplas empresas de implantação) |
-| Integração Betha OAuth | Autenticação direta sem token manual |
-| Execução agendada | Agendar envios em lote para horário determinado |
+| Item | Situação | Ação |
+|------|----------|------|
+| Docs de módulos | ✅ Concluído | Todos os 8 docs criados em `docs/` |
+| Alertas de token vencendo | Badge visual existe, sem notificação ativa | Adicionar alerta no Dashboard |
 
 ---
 
@@ -45,18 +25,18 @@
 | `skills/testes.md` | Ao escrever qualquer código novo | Estratégia de testes para Express + React, o que cobrir primeiro, ferramentas |
 | `skills/betha-api.md` | Ao trabalhar com proxy, envio em lote, extração de IDs | Quirks da API Betha: formato de IDs, estrutura do Swagger deles, padrões de path `/api/...`, campos idEconomico/idGerado/idLote |
 
-### Docs de páginas faltando
+### Docs de páginas
 
 | Arquivo | Status |
 |---------|--------|
 | `docs/cliente-api.md` | ✅ existe |
 | `docs/envio-lote.md` | ✅ existe |
 | `docs/historico.md` | ✅ existe |
-| `docs/municipios.md` | ❌ faltando |
-| `docs/sistemas.md` | ❌ faltando |
-| `docs/portfolio.md` | ❌ faltando |
-| `docs/chamados.md` | ❌ faltando |
-| `docs/analisador-json.md` | ❌ faltando |
+| `docs/municipios.md` | ✅ criado |
+| `docs/sistemas.md` | ✅ criado |
+| `docs/portfolio.md` | ✅ criado |
+| `docs/chamados.md` | ✅ criado |
+| `docs/analisador-json.md` | ✅ criado |
 
 ### CLAUDE.md está sobrecarregado
 
@@ -103,21 +83,16 @@ Ainda não se justificam. Os agentes disponíveis (Explore, Plan, Bash, Systemat
 - [ ] Definir quem são os outros usuários além do implantador principal
 
 ### Estrutura de documentação
+- [x] Criar `docs/municipios.md`
+- [x] Criar `docs/sistemas.md`
+- [x] Criar `docs/portfolio.md`
+- [x] Criar `docs/chamados.md`
+- [x] Criar `docs/analisador-json.md`
 - [ ] Criar `skills/betha-api.md`
 - [ ] Criar `skills/seguranca.md`
 - [ ] Criar `skills/deploy.md`
 - [ ] Criar `skills/testes.md`
-- [ ] Criar `docs/municipios.md`
-- [ ] Criar `docs/sistemas.md`
-- [ ] Criar `docs/portfolio.md`
-- [ ] Criar `docs/chamados.md`
-- [ ] Criar `docs/analisador-json.md`
 - [ ] Refatorar CLAUDE.md para ser índice com links
-
-### Qualidade técnica
-- [ ] Definir estratégia de testes (Jest + Supertest para backend, Vitest + RTL para frontend)
-- [ ] Escrever primeiros testes para as rotas mais críticas (`/auth`, `/proxy/executar`)
-- [ ] Configurar CI básico (GitHub Actions)
 
 ### Features prioritárias
 - [ ] Alerta ativo de tokens próximos de vencer
