@@ -94,7 +94,7 @@ export default function Dashboard() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Visão geral do SysGate</p>
+          <p className="text-sm text-gray-400 mt-0.5">Visão geral do Krakion</p>
         </div>
         <Link to="/historico" className="text-xs text-sysgate-600 hover:text-sysgate-700 font-medium flex items-center gap-1 hover:underline">
           Ver histórico completo

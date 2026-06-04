@@ -27,7 +27,7 @@ const useAuthStore = create(
 
       logout: () => {
         // Limpa dados do município ao sair para evitar vazamento entre usuários
-        try { localStorage.removeItem('sysgate-municipio') } catch {}
+        try { localStorage.removeItem('krakion-municipio') } catch {}
         set({ token: null, usuario: null })
       },
 
@@ -35,7 +35,7 @@ const useAuthStore = create(
       isAutenticado: () => !!get().token,
     }),
     {
-      name: 'sysgate-auth',
+      name: 'krakion-auth',
       partialize: (state) => ({ token: state.token, usuario: state.usuario }),
     }
   )

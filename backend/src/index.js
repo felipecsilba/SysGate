@@ -69,6 +69,6 @@ app.use((err, req, res, next) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`🚀 SysGate Backend rodando em http://localhost:${PORT}`)
+  console.log(`🚀 Krakion Backend rodando em http://localhost:${PORT}`)
   console.log(`   Banco de dados: ${process.env.DATABASE_URL}`)
 })

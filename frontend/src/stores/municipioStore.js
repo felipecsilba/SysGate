@@ -51,7 +51,7 @@ const useMunicipioStore = create(
       },
     }),
     {
-      name: 'sysgate-municipio',
+      name: 'krakion-municipio',
       partialize: (state) => ({ municipioAtivo: state.municipioAtivo }),
     }
   )

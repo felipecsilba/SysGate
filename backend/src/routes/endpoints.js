@@ -400,7 +400,7 @@ router.post('/fetch-swagger', exigirAdmin, async (req, res) => {
 
     const headersBase = {
       Accept: 'application/json, */*',
-      'User-Agent': 'SysGate/1.0',
+      'User-Agent': 'Krakion/1.0',
       ...(headersExtras || {}),
     }
 

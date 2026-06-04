@@ -72,7 +72,7 @@ export default function AnalisadorJson() {
   const [cursor, setCursor]       = useState({ linha: 1, coluna: 1 })
   // Preferência de tema persiste no localStorage
   const [viewerDark, setViewerDark] = useState(() => {
-    try { return localStorage.getItem('sysgate-json-viewerDark') === 'true' } catch { return false }
+    try { return localStorage.getItem('krakion-json-viewerDark') === 'true' } catch { return false }
   })
   // Modo: analisador ou comparador
   const [modo, setModo]       = useState('analisar')
@@ -178,7 +178,7 @@ export default function AnalisadorJson() {
   const toggleViewerDark = () => {
     setViewerDark(v => {
       const next = !v
-      try { localStorage.setItem('sysgate-json-viewerDark', String(next)) } catch {}
+      try { localStorage.setItem('krakion-json-viewerDark', String(next)) } catch {}
       return next
     })
   }
