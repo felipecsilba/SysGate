@@ -40,8 +40,7 @@ krakion/
 ├── sysgate.bat                # Gerenciador Windows: iniciar/parar/reiniciar backend+frontend
 ├── deploy.bat                 # Deploy para produção: git pull + build + pm2 restart no servidor
 ├── docs/                      # Documentação por módulo
-│   ├── cliente-api.md
-│   ├── envio-lote.md
+│   ├── sandbox-unificado.md   # Plano e registro da unificação Sandbox + EnvioLote
 │   ├── historico.md
 │   ├── municipios.md
 │   ├── sistemas.md
@@ -125,7 +124,13 @@ krakion/
             ├── Dashboard.jsx      # Cards de módulos com SVG icons + município ativo + últimas requisições
             ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação — dados isolados por usuário
             ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin
-            ├── ClienteAPI.jsx     # Rota: /sandbox — Seletor endpoint + CodeBlock JSON + body editor + proxy
+            ├── Sandbox/
+            │   ├── index.jsx               # Rota: /sandbox — container com estado compartilhado + painel esquerdo (cards 1–4) + toggle de abas
+            │   ├── AbaRequisicao.jsx       # Aba "Requisição única" — body editor, executar, resposta, histórico
+            │   ├── AbaEnvioLote.jsx        # Aba "Envio em Lote" — cards 5–6 (CSV + sliders) + mapeamento + BatchProgress
+            │   ├── CsvPreview.jsx          # Tabela de preview do CSV carregado
+            │   ├── BatchProgress.jsx       # Progresso/resultados de lotes + consultas GET por ID
+            │   └── utils.js               # extrairId(), extrairIds(), nomeRecurso(), highlightJson(), METODOS, METODO_COLORS, METODO_ACTIVE, TIPO_COR, tipoCor()
             ├── Scripts.jsx        # 4 abas: Scripts BFC / Fórmulas BFC / Anotações / Relatórios (JRXML + fonte dinâmica)
             ├── Portfolio.jsx      # re-export → Portfolio/index.jsx
             ├── Portfolio/
@@ -134,12 +139,6 @@ krakion/
             │   ├── ModalGerenciarSistemas.jsx # Modal picker do Catálogo Betha (chips por vertical)
             │   ├── ModalCatalogo.jsx       # Modal admin para configurar verticais/sistemas do catálogo
             │   └── utils.js               # CORES_VERTICAIS, corVertical(), hexToRgb()
-            ├── EnvioLote.jsx      # re-export → EnvioLote/index.jsx
-            ├── EnvioLote/
-            │   ├── index.jsx               # Componente principal — upload CSV, mapeamento, envio em lote
-            │   ├── CsvPreview.jsx          # Tabela de preview do CSV carregado
-            │   ├── BatchProgress.jsx       # Progresso/resultados de lotes + consultas GET por ID
-            │   └── utils.js               # extrairIds(), nomeRecurso(), highlightJson()
             ├── Chamados.jsx       # re-export → Chamados/index.jsx
             ├── Chamados/
             │   ├── index.jsx               # Componente principal — lista, detalhe, filtros
@@ -374,7 +373,7 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Tokens por município**: painel lateral em `Municipios.jsx` — abre ao clicar na linha da tabela; um token por par (município × sistema). Campo `ambiente` removido da UI (default `"producao"` no banco). Painel exibe token mascarado (primeiros 8 chars + `••••`) com botão de olho para revelar e botão de copiar. Backend retorna token real (sem mascaramento). Tokens isolados por usuário — o proxy verifica `usuarioId` antes de executar
 - **Validade do token (`dataVencimento`)**: campo `DateTime?` opcional em `MunicipioSistema`. Cadastrado no modal "Adicionar token" com `<input type="date">` (min = hoje, max = hoje + 15 dias — duração máxima real de um token Betha). Exibe badge colorido abaixo do nome do sistema no painel de tokens: verde (> 30 dias), amarelo (8–30 dias), laranja (1–7 dias / "Vence hoje"), vermelho ("Expirado há X dias"). Apenas informativo — não bloqueia uso do token. Tokens sem data não exibem badge. Para atualizar a data de um token existente: re-salvar o mesmo sistema via "+ Adicionar sistema" (upsert).
 - **Municípios isolados por usuário**: campo `usuarioId Int?` em `Municipio`; queries sempre filtradas por `req.usuario.id`. Municípios de outros usuários são invisíveis e inacessíveis (404 em vez de 403 para não vazar informação de existência)
-- **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (ClienteAPI.jsx)` não tem mais esse botão; botões de importação visíveis **apenas para admin**
+- **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (pages/Sandbox/)` não tem esse botão; botões de importação visíveis **apenas para admin**
 - **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema); ações de escrita visíveis **apenas para admin** (`isAdmin = useAuthStore(state => state.usuario)?.role === 'admin'`)
 - **idGerado no proxy**: `proxy.js` extrai `idGerado` de resposta array (mapeia `item.id ?? item.idGerado ?? item.idEconomico ?? item.idLote`, filtra nulos, une com vírgula) e de objeto simples (`.id`, `.idGerado`, `.idEconomico`). Salvo no histórico de requisições.
 - **Relatórios JRXML**: `Relatorio.jxrmlConteudo` armazena o arquivo como base64 no SQLite. A listagem (`GET /`) omite o campo por performance — apenas `temJxrml: bool`. Download via `GET /:id/jxrml` faz `Buffer.from(base64)` → `Content-Type: application/octet-stream`. Frontend faz download via `atob()` → `Uint8Array` → `Blob`.
@@ -398,9 +397,22 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Analisador JSON**: módulo 100% client-side, sem rotas de backend. Ver `docs/analisador-json.md`.
 - **localStorage keys**: `krakion-auth` (authStore), `krakion-municipio` (municipioStore), `krakion-json-viewerDark` (AnalisadorJson)
 
-## UI — Sandbox e EnvioLote (padrões compartilhados)
+## UI — Sandbox (padrões compartilhados entre abas)
 
-Ambas as telas seguem o mesmo padrão de interação para seleção de endpoints e campos:
+A página `/sandbox` tem um **painel esquerdo compartilhado** (cards 1–4: município, sistema, endpoint, método/path) e alterna entre duas abas no painel direito: **Requisição única** (`AbaRequisicao.jsx`) e **Envio em Lote** (`AbaEnvioLote.jsx`). O estado da seleção (município, sistema, módulo, recurso, endpoint, camposSelecionados) vive em `index.jsx` e é passado como props para ambas as abas. Ao trocar de aba, o estado local da aba anterior é descartado (comportamento intencional — CSV e resposta resetam).
+
+### Arquitetura de estado — Sandbox/index.jsx (pai) vs abas (filhos)
+
+| Estado | Dono | Como passa |
+|--------|------|------------|
+| `municipioSel, sistemaSel, moduloSel, recursoSel, endpointSel` | `index.jsx` | props read-only |
+| `metodo, pathCustom` | `index.jsx` | props read-only (editáveis no painel esquerdo) |
+| `camposSelecionados` | `index.jsx` | prop + setter (filhos chamam `setCamposSelecionados` só para eventos de usuário) |
+| `schema, schemaExpanded` | `index.jsx` (useMemo) | props read-only |
+| `valoresCampos, bodyRaw, modoBody, resposta, historico` | `AbaRequisicao` | local |
+| `csvData, csvArquivo, mapeamentoCampo, progresso` | `AbaEnvioLote` | local |
+
+`camposSelecionados` é inicializado pelo pai no `useEffect([endpointSel])`. Os filhos NÃO devem reinicializá-lo ao mudar de endpoint — apenas o pai faz isso. Filhos podem chamar `setCamposSelecionados` para toggles de checkbox (AbaRequisicao) e auto-mapping CSV (AbaEnvioLote).
 
 ### Seleção de Módulo e Recurso — SearchSelect
 - Componente `SearchSelect.jsx` substitui o `<select>` estático
@@ -438,14 +450,14 @@ Ambas as telas seguem o mesmo padrão de interação para seleção de endpoints
 - Auto-switch para "JSON raw": apenas quando há campos `array<...>` (não mais para `object`)
 - Reconstrução do body ao enviar: campos `number`/`integer` → `Number(val)`; campos `_wrapAsIdObject` → `{ id: Number(val) }`; campos `_parent` → `body[_parent][_displayCampo]`
 
-### Auto-mapeamento CSV (EnvioLote)
+### Auto-mapeamento CSV (aba Envio em Lote)
 - Ao fazer upload do CSV, compara `_displayCampo` (nome curto do sub-campo) com o nome da coluna CSV (case-insensitive)
 - Se houver match: pré-seleciona o checkbox e pré-preenche o dropdown
 
-## EnvioLote — padrões específicos
+## Sandbox — aba Envio em Lote (padrões específicos)
 
 ### CSV sem cabeçalho
-- Toggle "Sem cabeçalho" na seção 5 do formulário
+- Toggle "Sem cabeçalho" na seção CSV (card 5 dentro de `AbaEnvioLote.jsx`)
 - Estados: `csvArquivo` (guarda o `File` para re-parse) + `csvSemCabecalho` (boolean)
 - `useEffect` com deps `[csvArquivo, csvSemCabecalho]` re-parseia o arquivo ao mudar o toggle
 - Com `csvSemCabecalho: false` → PapaParse com `header: true`, colunas = `meta.fields`
@@ -455,7 +467,7 @@ Ambas as telas seguem o mesmo padrão de interação para seleção de endpoints
 
 ### Envio em lote (array body)
 - **Não envia uma requisição por linha** — agrupa linhas em batches e envia um array JSON por batch
-- `tamanhoBatch` (state, padrão 50): configurável via slider 1–200 na seção 6
+- `tamanhoBatch` (state, padrão 50): configurável via slider 1–200 no card de configuração (card 6 dentro de `AbaEnvioLote.jsx`)
 - `delayLotes` (state, padrão 0): delay em ms entre batches, configurável via slider
 - `construirBodyLinha(linha)`: função extraída que monta o body de uma linha CSV → objeto JS
 - `iniciarEnvio`: divide `linhas` em grupos de `tamanhoBatch`, envia cada grupo como array `[{...}, {...}, ...]`
