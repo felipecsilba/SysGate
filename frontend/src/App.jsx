@@ -8,8 +8,7 @@ import Login from './pages/Login'
 const Dashboard    = lazy(() => import('./pages/Dashboard'))
 const Municipios   = lazy(() => import('./pages/Municipios'))
 const Sistemas     = lazy(() => import('./pages/Sistemas'))
-const Sandbox      = lazy(() => import('./pages/ClienteAPI'))
-const EnvioLote    = lazy(() => import('./pages/EnvioLote'))
+const Sandbox      = lazy(() => import('./pages/Sandbox'))
 const Scripts      = lazy(() => import('./pages/Scripts'))
 const Historico    = lazy(() => import('./pages/Historico'))
 const Usuarios     = lazy(() => import('./pages/Usuarios'))
@@ -46,9 +45,6 @@ export default function App() {
             } />
             <Route path="sandbox" element={
               <Suspense fallback={<PageLoader />}><Sandbox /></Suspense>
-            } />
-            <Route path="envio-lote" element={
-              <Suspense fallback={<PageLoader />}><EnvioLote /></Suspense>
             } />
             <Route path="scripts" element={
               <Suspense fallback={<PageLoader />}><Scripts /></Suspense>

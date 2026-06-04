@@ -204,12 +204,11 @@ export default function Sidebar() {
         <NavGroup
           label="Ferramentas"
           icon={ICONS.ferramentas}
-          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/envio-lote', '/historico']}
+          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/historico']}
         >
           <NavItem to="/scripts" label="Extensões" icon={ICONS.scripts} />
           <NavItem to="/analisador-json" label="Analisador JSON" icon={ICONS.analisadorJson} />
           <NavItem to="/sandbox" label="Sandbox" icon={ICONS.sandbox} />
-          <NavItem to="/envio-lote" label="Envio em Lote" icon={ICONS.envioLote} />
           <NavItem to="/historico" label="Histórico" icon={ICONS.historico} />
         </NavGroup>
 
