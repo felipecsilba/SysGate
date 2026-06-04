@@ -26,7 +26,7 @@ Workflow de desenvolvimento adaptado do [obra/superpowers](https://github.com/ob
 | Antes de afirmar que algo está funcionando | `skills/superpowers/verification-before-completion.md` |
 | Alterando autenticação, rotas ou permissões | `skills/seguranca.md` |
 | Fazendo deploy ou configurando o tunnel SSH | `skills/deploy.md` |
-| Trabalhando com proxy, envio em lote, IDs Betha | `skills/betha-api.md` (a criar) |
+| Trabalhando com proxy, envio em lote, IDs Betha | `skills/betha-api.md` |
 | Dúvida sobre qual skill usar | `skills/superpowers/using-superpowers.md` |
 
 **Regra geral:** bugs → debug primeiro; nova feature → design primeiro; código → TDD; conclusão → verificar primeiro.
@@ -56,6 +56,7 @@ krakion/
 │   ├── banco-de-dados.md
 │   ├── seguranca.md           # JWT, multi-tenant, rate limit, hCaptcha, lockout
 │   ├── deploy.md              # VPS, PM2, Nginx, tunnel SSH
+│   ├── betha-api.md           # IDs Betha, URL base, Swagger quirks, proxy, envio em lote
 │   └── superpowers/           # Skills de processo (obra/superpowers)
 │       ├── using-superpowers.md
 │       ├── brainstorming.md

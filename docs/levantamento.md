@@ -92,16 +92,11 @@ Ainda não se justificam. Os agentes disponíveis (Explore, Plan, Bash, Systemat
 - [x] Criar `docs/portfolio.md`
 - [x] Criar `docs/chamados.md`
 - [x] Criar `docs/analisador-json.md`
-- [ ] Criar `skills/betha-api.md`
+- [x] Criar `skills/betha-api.md`
 - [x] Criar `skills/seguranca.md`
 - [x] Criar `skills/deploy.md`
 - [ ] Criar `skills/testes.md`
 - [x] Refatorar CLAUDE.md para ser índice com links
-
-### Features prioritárias
-- [ ] Alerta ativo de tokens próximos de vencer
-- [ ] Modelos salvos de envio em lote
-- [ ] Checklist de implantação por município
 
 ---
 
