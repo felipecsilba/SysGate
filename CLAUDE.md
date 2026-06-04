@@ -524,7 +524,7 @@ Rotas literais registradas ANTES de `/:id`:
 | `formatado` | JSON formatado com syntax highlight; dark (slate-950) ou light (white) |
 | `arvore` | Árvore colapsável recursiva via `JsonNode`; clicar numa chave copia o JSON path |
 | `grafo` | Visualização estilo JSON Crack — cards conectados por setas SVG bézier, pan/zoom |
-| `tabela` | Tabela responsiva para arrays de objetos; cabeçalho dinâmico com todas as chaves únicas |
+| `tabela` | Tabela responsiva para arrays de objetos; cabeçalho dinâmico com todas as chaves únicas; ordenação por coluna + exportar CSV |
 | `stats` | Grid de cards coloridos com métricas: tamanho, profundidade, contagem por tipo |
 
 ### Componentes internos (todos em AnalisadorJson.jsx)
@@ -542,14 +542,23 @@ Rotas literais registradas ANTES de `/:id`:
 
 **`JsonTabela`** — tabela para arrays de objetos
 - Só ativa quando `parsed` é `Array` de objetos no root
-- Coleta todas as chaves únicas como colunas via `flatMap` + `Set`
+- `objetos` e `colunas` calculados via `useMemo` (antes dos early returns, para não violar Rules of Hooks)
 - Células com tratamento por tipo: objetos/arrays renderizados como código compacto; booleans coloridos
-- Footer: "N registros · M colunas"
+- **Ordenação por coluna**: `sortCol` + `sortDir` estados locais; clicar no `<th>` alterna asc/desc; segundo clique na mesma coluna inverte direção; `objetosOrdenados` useMemo aplica `localeCompare` pt-BR (numérico) ou comparação numérica direta; coluna ativa destacada em índigo
+- **Exportar CSV**: botão "↓ Exportar CSV" no footer; `escape(v)` lida com vírgulas/aspas/newlines (RFC 4180); BOM `\ufeff` para compatibilidade Excel; exporta na ordem atual (`objetosOrdenados`)
+- Footer: "N registros · M colunas [· sortCol ▲/▼] [· N não-objeto ignorado(s)]"
 
 **`JsonEstatisticas`** — painel de métricas
 - Depende de `analyzeJson(parsed)` que percorre o JSON recursivamente
 - Retorna `{ keys, strings, numbers, booleans, nulls, arrays, objects, maxDepth }`
 - Grid 3 colunas com cards coloridos por tipo de dado
+
+**`BuscaResultados`** — lista de resultados da busca no JSON
+- Recebe `results[]`, `termo` (string) e `dark` (boolean)
+- Cada resultado exibe: badge `chave` (índigo) ou `valor` (verde), path JSONPath completo, preview do valor com cores por tipo
+- Estado vazio: placeholder estilizado "Nenhum resultado para…"
+- Limite de exibição: 300 resultados (a função `buscaJson` já limita coleta a 500)
+- Substitui o conteúdo das abas quando `busca.trim()` é não-vazio (condição `!busca.trim()` adicionada em todos os renders de aba)
 
 **`JsonGrafo`** — visualização tipo grafo (estilo JSON Crack)
 - **Sem bibliotecas externas** (sem react-flow, d3, etc.)
@@ -587,6 +596,14 @@ Rotas literais registradas ANTES de `/:id`:
 - Arrays: paths como `$.items[0]`, objetos como `$.user.nome`
 - Acumula em `out[]` passado por referência para evitar spreads desnecessários
 
+**`buscaJson(value, termo, path, results)`** — busca recursiva em todo o JSON
+- Percorre arrays (paths `[i]`), objetos (paths `.chave`) e primitivos
+- Para cada chave de objeto: se nome da chave contiver o termo → `results.push({ matchIn: 'key', key, value })`
+- Para primitivos: se `String(value)` contiver o termo → `results.push({ matchIn: 'value', value })`
+- Paths no formato JSONPath: `$.usuario.endereco.cidade`, `$.items[0].id`
+- Limite de 500 resultados (`results.length >= 500` short-circuits recursão)
+- `null` é tratado como a string `'null'` para fins de correspondência
+
 ### Estado principal (AnalisadorJson)
 ```
 input: string            — texto bruto do JSON A no textarea
@@ -598,10 +615,19 @@ copiado: boolean         — feedback do botão Copiar na toolbar
 cursor: {line,col}       — posição do cursor no textarea A (barra de status)
 viewerDark: boolean      — toggle dark/light do painel de visualização (persiste em localStorage)
 modo: string             — 'analisar' | 'comparar' — controla o layout principal
+busca: string            — termo de busca no visualizador; '' = busca inativa
 inputB: string           — texto bruto do JSON B (somente no modo comparador)
 parsedB: any | null      — resultado do JSON.parse do JSON B
 erroB: string | null     — mensagem de erro do JSON.parse do JSON B
 ```
+
+### Busca no visualizador
+- Barra de busca aparece entre as abas e o conteúdo, **somente quando `parsed !== null`**
+- Input controlado `busca` + `onChange={(e) => setBusca(e.target.value)}` — sem debounce (busca síncrona)
+- `resultadosBusca` computado via `useMemo([parsed, busca])` chamando `buscaJson(parsed, busca.trim())`
+- Quando `busca.trim()` é não-vazio: renderiza `<BuscaResultados>` em vez do conteúdo da aba ativa (condição `!busca.trim()` em todos os cinco blocos de aba)
+- Badge com contador de resultados (índigo) e botão `✕` para limpar aparecem no input quando há texto
+- A barra de busca **não aparece no modo Comparador** (está dentro do bloco `modo === 'analisar'`)
 
 ### Persistência do tema (viewerDark)
 - Inicializado via `useState(() => localStorage.getItem('sysgate-json-viewerDark') === 'true')`
