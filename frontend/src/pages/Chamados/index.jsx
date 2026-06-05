@@ -40,14 +40,26 @@ function iconeAnexo(tipo) {
   if (tipo === 'application/pdf') return '📄'
   return '📎'
 }
-function ticketNum(c) {
-  return `#CH-${new Date(c.criadoEm).getFullYear()}-${String(c.id).padStart(4, '0')}`
-}
 function prefixoMunicipio(municipio) {
   if (!municipio) return ''
   return municipio
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4)
+}
+// MUNI-YYYY-NNNNN — sequência dentro do mesmo município+ano a partir da lista carregada
+function ticketNum(c, lista) {
+  const ano = new Date(c.criadoEm).getFullYear()
+  const prefixo = c.municipio ? prefixoMunicipio(c.municipio) : 'CH'
+  let seq = 0
+  if (lista && c.municipio) {
+    seq = lista.filter(
+      x => x.municipio === c.municipio &&
+           new Date(x.criadoEm).getFullYear() === ano &&
+           x.id <= c.id
+    ).length
+  }
+  const num = seq > 0 ? String(seq).padStart(5, '0') : String(c.id).padStart(5, '0')
+  return `${prefixo}-${ano}-${num}`
 }
 function linkify(texto) {
   if (!texto) return ''
@@ -406,14 +418,7 @@ export default function Chamados() {
                     }`}
                     style={{ borderLeftColor: chamadoSelId === c.id ? '#6366f1' : (STATUS_CORES[c.status] || '#94A3B8') }}>
                     <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{c.titulo}</p>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="text-[10px] text-gray-400 font-mono">{ticketNum(c)}</span>
-                      {c.municipio && (
-                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 leading-4 uppercase tracking-wide">
-                          {prefixoMunicipio(c.municipio)}
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-[10px] text-gray-400 font-mono mb-2 block">{ticketNum(c, chamados)}</span>
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       {c.classificacao && <Badge label={c.classificacao} cor={CLASSIF_CORES[c.classificacao]} />}
                       <span className="text-xs text-gray-400">• {formatData(c.criadoEm)}</span>
@@ -528,7 +533,7 @@ export default function Chamados() {
                           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: STATUS_CORES[detalhe.status] || '#94A3B8' }} />
                           {detalhe.status}
                         </span>
-                        <span className="text-xs text-gray-400 font-mono tracking-wide">{ticketNum(detalhe)}</span>
+                        <span className="text-xs text-gray-400 font-mono tracking-wide">{ticketNum(detalhe, chamados)}</span>
                       </div>
                     </div>
 
