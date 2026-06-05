@@ -22,7 +22,7 @@ Toggle estilo pill no header:
 
 | Aba | Conteúdo |
 |-----|----------|
-| **Minha Fila** | Visão pessoal: sub-abas Meus, Fila e Sem Dono |
+| **Minha Fila** | Visão pessoal: sub-abas Meus, Fila e Sem Responsável |
 | **Painel** | Tabela densa de todos os chamados com filtros completos (`AbaPainel`) |
 | **Dashboard** | Gráficos analíticos agregados (`ChamadosDashboard`) |
 
@@ -45,7 +45,7 @@ Tela dividida em duas colunas:
 |---------|-----------------|-----------|
 | **Meus** | `responsavelId = usuario.id` + `excluirEncerrados = true` | Chamados atribuídos ao usuário logado, excluindo Concluído e Cancelado |
 | **Fila** | Config salva em `filaFiltro` no servidor | Chamados filtrados pela configuração personalizada do usuário (verticais, sistemas, status) |
-| **Sem Dono** | `semResponsavel = true` + `excluirEncerrados = true` | Chamados sem responsável atribuído; badge laranja com contagem no tab |
+| **Sem Responsável** | `semResponsavel = true` + `excluirEncerrados = true` | Chamados sem responsável atribuído; badge laranja com contagem no tab |
 
 ### Minha Fila — configuração
 
@@ -60,7 +60,7 @@ Tela dividida em duas colunas:
 - Busca com debounce de 400ms — só dispara a query após pausa na digitação
 - Controles de navegação ← → na base do painel esquerdo
 
-### Contagem "Sem Dono"
+### Contagem "Sem Responsável"
 
 - `contSemDono` é buscado separadamente via `carregarContSemDono` (1 request com `limite: 1`)
 - Chamado apenas no mount e após mutações que alteram responsável (`atualizarCampo('responsavelId')`) ou excluem chamado (`deletarChamado`)
@@ -120,8 +120,8 @@ Quando `aba === 'painel'` e não há chamado selecionado, o painel fica oculto (
 - Número do ticket + título
 - Badges de status, classificação e prioridade
 - Botões: editar, histórico, excluir (admin)
-- **Botão Pegar / Delegar para mim** (abaixo dos badges, visível quando o chamado não está encerrado e não pertence ao usuário logado):
-  - Sem responsável → botão verde **"Pegar para mim"** — delega diretamente sem confirmação
+- **Botão "Delegar para mim"** (abaixo dos badges, visível quando o chamado não está encerrado e não pertence ao usuário logado):
+  - Sem responsável → botão verde **"Delegar para mim"** — delega diretamente sem confirmação
   - Com outro responsável → botão âmbar **"Delegar para mim"** — abre `ConfirmDialog` antes de reatribuir
   - Chamado já atribuído ao usuário logado ou status Concluído/Cancelado → botão não exibe
 
