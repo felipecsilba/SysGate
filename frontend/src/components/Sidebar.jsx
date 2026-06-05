@@ -203,7 +203,7 @@ export default function Sidebar() {
           Menu
         </p>
 
-        <NavItem to="/" label="Dashboard" icon={ICONS.dashboard} exact />
+        <NavItem to="/" label="Início" icon={ICONS.dashboard} exact />
         <NavItem to="/portfolio" label="Portfólio" icon={ICONS.portfolio} />
         <NavItem to="/chamados" label="Chamados" icon={ICONS.chamados} />
 
