@@ -120,6 +120,10 @@ Quando `aba === 'painel'` e não há chamado selecionado, o painel fica oculto (
 - Número do ticket + título
 - Badges de status, classificação e prioridade
 - Botões: editar, histórico, excluir (admin)
+- **Botão Pegar / Delegar para mim** (abaixo dos badges, visível quando o chamado não está encerrado e não pertence ao usuário logado):
+  - Sem responsável → botão verde **"Pegar para mim"** — delega diretamente sem confirmação
+  - Com outro responsável → botão âmbar **"Delegar para mim"** — abre `ConfirmDialog` antes de reatribuir
+  - Chamado já atribuído ao usuário logado ou status Concluído/Cancelado → botão não exibe
 
 ### Campos do chamado
 
