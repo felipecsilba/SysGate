@@ -96,6 +96,12 @@ const ICONS = {
       <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
     </SvgIcon>
   ),
+  notas: (
+    <SvgIcon>
+      <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />
+      <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
+    </SvgIcon>
+  ),
 }
 
 // ─── Helpers de estilo ───────────────────────────────────────────────────────
@@ -204,10 +210,11 @@ export default function Sidebar() {
         <NavGroup
           label="Ferramentas"
           icon={ICONS.ferramentas}
-          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/historico']}
+          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/historico', '/notas']}
         >
           <NavItem to="/scripts" label="Extensões" icon={ICONS.scripts} />
           <NavItem to="/analisador-json" label="Analisador JSON" icon={ICONS.analisadorJson} />
+          <NavItem to="/notas" label="Notas" icon={ICONS.notas} />
           <NavItem to="/sandbox" label="Sandbox" icon={ICONS.sandbox} />
           <NavItem to="/historico" label="Histórico" icon={ICONS.historico} />
         </NavGroup>

@@ -18,6 +18,7 @@ const portfolioRouter = require('./routes/portfolio')
 const catalogoRouter = require('./routes/catalogo')
 const chamadosRouter = require('./routes/chamados')
 const solicitantesRouter = require('./routes/solicitantes')
+const notasRouter = require('./routes/notas')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -63,6 +64,7 @@ app.use('/api/portfolio', portfolioRouter)
 app.use('/api/catalogo', catalogoRouter)
 app.use('/api/chamados', chamadosRouter)
 app.use('/api/solicitantes', solicitantesRouter)
+app.use('/api/notas', notasRouter)
 
 // Error handler global
 app.use((err, req, res, next) => {

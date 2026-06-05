@@ -144,6 +144,8 @@ model Usuario {
   chamadosResponsavel  Chamado[]           @relation("chamadosResponsavel")
   comentariosChamado   ChamadoComentario[] @relation("comentariosChamado")
   historicoChamado     ChamadoHistorico[]  @relation("historicoChamado")
+  notasProprietario    Nota[]              @relation("NotasProprietario")
+  notasCompartilhadas  NotaCompartilhamento[] @relation("NotasCompartilhadas")
   criadoEm         DateTime    @default(now())
   atualizadoEm     DateTime    @updatedAt
 }
@@ -284,6 +286,38 @@ model ChamadoHistorico {
   valorAntes  String?
   valorDepois String?
   criadoEm    DateTime @default(now())
+}
+
+// ── Módulo Notas ─────────────────────────────────────────────────────────────
+
+model Nota {
+  id            Int       @id @default(autoincrement())
+  titulo        String    @default("Sem título")
+  tipo          String    @default("texto")   // texto | checklist | lista | codigo
+  conteudo      String    @default("")        // usado por tipo "texto" e "codigo"
+  itens         String    @default("[]")      // JSON: [{texto: string, feito?: boolean}]
+  cor           String    @default("#FFFDE7")
+  fixada        Boolean   @default(false)
+  ordem         Int       @default(0)
+  etiquetas     String    @default("[]")      // JSON: string[]
+  usuarioId     Int
+  usuario       Usuario   @relation("NotasProprietario", fields: [usuarioId], references: [id])
+  compartilhamentos NotaCompartilhamento[]
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+
+  @@index([usuarioId, ordem])
+}
+
+model NotaCompartilhamento {
+  id        Int      @id @default(autoincrement())
+  notaId    Int
+  nota      Nota     @relation(fields: [notaId], references: [id], onDelete: Cascade)
+  usuarioId Int
+  usuario   Usuario  @relation("NotasCompartilhadas", fields: [usuarioId], references: [id])
+  criadoEm  DateTime @default(now())
+
+  @@unique([notaId, usuarioId])
 }
 
 model CatalogoVertical {

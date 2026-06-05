@@ -189,4 +189,17 @@ export const chamadosApi = {
   deletarAnexo:      (aid) => api.delete(`/chamados/anexos/${aid}`).then(r => r.data),
 }
 
+// Notas (estilo Google Keep)
+export const notasApi = {
+  listar: (params) => api.get('/notas', { params }).then(r => r.data),
+  obter: (id) => api.get(`/notas/${id}`).then(r => r.data),
+  criar: (data) => api.post('/notas', data).then(r => r.data),
+  atualizar: (id, data) => api.put(`/notas/${id}`, data).then(r => r.data),
+  deletar: (id) => api.delete(`/notas/${id}`).then(r => r.data),
+  fixar: (id) => api.patch(`/notas/${id}/fixar`).then(r => r.data),
+  reordenar: (itens) => api.patch('/notas/ordem', { itens }).then(r => r.data),
+  compartilhar: (id, usuarioId) => api.post(`/notas/${id}/compartilhar`, { usuarioId }).then(r => r.data),
+  removerCompartilhamento: (id, uid) => api.delete(`/notas/${id}/compartilhar/${uid}`).then(r => r.data),
+}
+
 export default api

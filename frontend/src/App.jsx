@@ -15,6 +15,7 @@ const Usuarios     = lazy(() => import('./pages/Usuarios'))
 const Portfolio    = lazy(() => import('./pages/Portfolio'))
 const Chamados     = lazy(() => import('./pages/Chamados'))
 const AnalisadorJson = lazy(() => import('./pages/AnalisadorJson'))
+const Notas          = lazy(() => import('./pages/Notas'))
 
 function PageLoader() {
   return (
@@ -60,6 +61,9 @@ export default function App() {
             } />
             <Route path="analisador-json" element={
               <Suspense fallback={<PageLoader />}><AnalisadorJson /></Suspense>
+            } />
+            <Route path="notas" element={
+              <Suspense fallback={<PageLoader />}><Notas /></Suspense>
             } />
             {/* Usuários: admin vê todos; não-admin vê só o próprio perfil */}
             <Route path="usuarios" element={
