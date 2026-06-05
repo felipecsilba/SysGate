@@ -436,7 +436,7 @@ export default function Chamados() {
           {aba === 'lista' && (
           <div className={`w-80 shrink-0 flex flex-col border-r border-gray-200 bg-slate-50 ${!mostrarLista && 'hidden md:flex'}`}>
 
-            {/* Sub-abas: Meus / Fila / Sem dono */}
+            {/* Sub-abas: Meus / Fila / Sem responsável */}
             <div className="flex gap-0.5 px-2 pt-2.5 pb-2 bg-slate-50 border-b border-gray-200">
               <button onClick={() => setSubAba('meus')}
                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex-1 justify-center ${
@@ -464,7 +464,7 @@ export default function Chamados() {
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                Sem dono
+                Sem responsável
                 {contSemDono > 0 && (
                   <span className="ml-0.5 bg-orange-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 leading-none">
                     {contSemDono}
@@ -690,7 +690,7 @@ export default function Chamados() {
                               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                               <circle cx="12" cy="7" r="4"/>
                             </svg>
-                            {!detalhe.responsavelId ? 'Pegar para mim' : 'Delegar para mim'}
+                            Delegar para mim
                           </button>
                         </div>
                       )}
