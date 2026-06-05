@@ -20,6 +20,7 @@ Workflow de desenvolvimento adaptado do [obra/superpowers](https://github.com/ob
 
 | Situação | Skill |
 |----------|-------|
+| Trabalhando com backlog de melhorias (ler → planejar → implementar → registrar) | `skills/melhorias.md` |
 | Bug reportado, erro inesperado, teste falhando | `skills/superpowers/systematic-debugging.md` |
 | Nova feature ou mudança significativa | `skills/superpowers/brainstorming.md` → `writing-plans.md` |
 | Implementando qualquer código | `skills/superpowers/test-driven-development.md` |
@@ -41,12 +42,12 @@ krakion/
 ├── deploy.bat                 # Deploy para produção: git pull + build + pm2 restart no servidor
 ├── docs/                      # Documentação por módulo
 │   ├── sandbox-unificado.md   # Plano e registro da unificação Sandbox + EnvioLote
-│   ├── melhorias-futuras.md   # Backlog de sugestões de melhoria (ver antes de planejar novas features)
 │   ├── historico.md
 │   ├── municipios.md
 │   ├── sistemas.md
 │   ├── portfolio.md
 │   ├── chamados.md
+│   ├── notas.md               # Módulo Notas (Google Keep): modelos, API, comportamentos
 │   └── analisador-json.md
 ├── skills/                    # Referências de domínio e processo
 │   ├── backend.md
@@ -68,7 +69,7 @@ krakion/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
 │   ├── prisma/
-│   │   ├── schema.prisma      # 20 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario, PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado, ChamadoComentario, ChamadoAnexo, ChamadoHistorico
+│   │   ├── schema.prisma      # 23 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario, PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -87,7 +88,9 @@ krakion/
 │           ├── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
 │           ├── portfolio.js   # CRUD Portfólio — PortfolioMunicipio + Entidade + EntidadeSistema + Stakeholder (M2M) — leitura pública; escrita/exclusão somente admin
 │           ├── catalogo.js   # CRUD CatalogoVertical — verticais Betha com nome/cor/sistemas/ordem; seed automático na 1ª chamada GET — leitura pública; escrita somente admin
-│           └── chamados.js   # CRUD Chamados + comentários + anexos + histórico de alterações + dashboard agregado; acesso público (autenticados); DELETE somente admin
+│           ├── chamados.js   # CRUD Chamados + comentários + anexos (+ comentarioId) + histórico de alterações + dashboard agregado; acesso público (autenticados); DELETE somente admin
+│           ├── solicitantes.js # CRUD Solicitantes externos (contatos do cliente) — leitura/escrita pública (autenticados); DELETE somente admin
+│           └── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
@@ -102,13 +105,13 @@ krakion/
         ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute; todas as páginas carregadas com React.lazy + Suspense (code splitting por rota)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
-        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi e chamadosApi
+        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi, chamadosApi, solicitantesApi e notasApi
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: krakion-municipio)
         │   └── authStore.js       # Zustand + persist (krakion-auth) — token + usuario; suporta lembrar (30d); logout limpa krakion-municipio do localStorage
         ├── components/
         │   ├── Layout.jsx         # Sidebar + barra acento gradiente no topo + header: chip usuário + botão Sair
-        │   ├── Sidebar.jsx        # NavLinks com SVG icons; entrada "Usuários" (admin) ou "Meu Perfil" (não-admin) sempre visível
+        │   ├── Sidebar.jsx        # NavLinks com SVG icons; grupo Ferramentas: Scripts, Analisador JSON, Notas, Sandbox, Histórico; admin vê grupo "Configuração" completo (Sistemas + Central de Tokens + Usuários); não-admin vê apenas "Central de Tokens" e "Meu Perfil" (sem o grupo)
         │   ├── PrivateRoute.jsx   # Redireciona para /login se não autenticado; AdminRoute para role
         │   ├── MunicipioBadge.jsx # Badge do município ativo (alerta vermelho para produção)
         │   ├── SwaggerImport.jsx  # Modal: fetch por URL / upload arquivo / specs salvas / limpar tudo
@@ -145,8 +148,12 @@ krakion/
             │   ├── index.jsx               # Componente principal — lista, detalhe, filtros
             │   ├── ChamadosDashboard.jsx   # Dashboard Recharts (AreaChart, PieChart, BarChart)
             │   ├── PainelHistorico.jsx     # Painel lateral de histórico de alterações (timeline)
-            │   ├── ModalChamado.jsx        # Modal criar/editar chamado
-            │   └── constants.js           # STATUS_CORES, CLASSIF_CORES, PRIORIDADE_CORES, helpers
+            │   ├── ModalChamado.jsx        # Modal criar/editar chamado; inclui SearchSelect de solicitante + inline-create de novo solicitante
+            │   └── constants.js           # STATUS_CORES (inclui Cancelado=#6B7280), CLASSIF_CORES, PRIORIDADE_CORES, STATUS_OPTS, helpers
+            ├── Notas/
+            │   ├── index.jsx               # Componente principal — grid responsivo, seções Fixadas/Outras, drag & drop HTML5 nativo, filtros por busca/tipo/etiqueta
+            │   ├── NotaCard.jsx            # Card draggable com fundo colorido; ações no hover; renderização por tipo; chips de etiquetas
+            │   └── ModalNota.jsx           # Modal criar/editar; abas de tipo; editor de itens checklist/lista; seletor de 10 cores; compartilhamento por usuário
             ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
             └── AnalisadorJson/
                 ├── index.jsx               # Componente principal — EditorLinhas, layout, toolbar
@@ -319,8 +326,33 @@ docker-compose up --build
 | GET    | /api/chamados/:id             | Detalhe completo com comentários, anexos e contagens                                  |
 | PUT    | /api/chamados/:id             | Atualiza campos + detecta alterações e registra no histórico automaticamente          |
 | DELETE | /api/chamados/:id             | Remove chamado (cascade) — **somente admin**                                          |
-| POST   | /api/chamados/:id/comentarios | Adiciona comentário                                                                   |
-| POST   | /api/chamados/:id/anexos      | Upload de anexo (base64 no body: nomeArquivo, tipo, conteudo, tamanho)               |
+| POST   | /api/chamados/:id/comentarios | Adiciona comentário (aceita `pendingAnexoIds[]` para vincular imagens inline)         |
+| POST   | /api/chamados/:id/anexos      | Upload de anexo (base64 no body: nomeArquivo, tipo, conteudo, tamanho, comentarioId?) |
+
+### Solicitantes
+> Acesso público (qualquer autenticado). `DELETE /:id` somente admin. Sem isolamento por usuário.
+
+| Método | Rota                   | Descrição                                                       |
+|--------|------------------------|-----------------------------------------------------------------|
+| GET    | /api/solicitantes      | Lista (filtros ?busca=, ?municipio=) — retorna array           |
+| POST   | /api/solicitantes      | Cria solicitante externo                                        |
+| PUT    | /api/solicitantes/:id  | Atualiza                                                        |
+| DELETE | /api/solicitantes/:id  | Remove — **somente admin**                                      |
+
+### Notas
+> **Isolamento por usuário**: cada usuário vê apenas suas notas + notas compartilhadas com ele. Ordem das rotas Express: `/ordem` ANTES de `/:id`.
+
+| Método | Rota                              | Descrição                                                                              |
+|--------|-----------------------------------|----------------------------------------------------------------------------------------|
+| GET    | /api/notas                        | Lista notas próprias + compartilhadas; `?busca=`, `?etiqueta=`, `?tipo=`               |
+| POST   | /api/notas                        | Cria nota (`usuarioId = req.usuario.id`)                                               |
+| PATCH  | /api/notas/ordem                  | Reordenação batch: `{ itens: [{id, ordem}] }` — só atualiza notas do usuário           |
+| GET    | /api/notas/:id                    | Detalhe com lista de compartilhamentos                                                 |
+| PUT    | /api/notas/:id                    | Atualiza (dono ou compartilhado com acesso)                                            |
+| DELETE | /api/notas/:id                    | Remove — somente dono                                                                  |
+| PATCH  | /api/notas/:id/fixar              | Toggle `fixada` — somente dono                                                         |
+| POST   | /api/notas/:id/compartilhar       | Compartilha com `{ usuarioId }` (upsert) — somente dono                                |
+| DELETE | /api/notas/:id/compartilhar/:uid  | Remove compartilhamento de um usuário — somente dono                                   |
 
 ### Outros
 | Método | Rota                  | Descrição                                                                     |
@@ -392,11 +424,22 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Portfólio — cores de verticais**: mapa `CORES_VERTICAIS` em `Portfolio.jsx` (hardcoded, cores oficiais Betha) mapeia nome → hex. `corVertical(v)` faz lookup e retorna `COR_OUTROS_HEX = '#94A3B8'` para verticais não mapeadas. `hexToRgb(hex)` converte para `"r, g, b"` usado em `rgba(...)` para fundos com opacidade. Cabeçalhos de cards usam cor sólida + texto branco; fundos de cards usam `rgba(..., 0.05/0.15)`.
 - **Portfólio — modal picker (ModalGerenciarSistemas)**: aceita prop `catalogo` (array da API). Chips de sistemas usam `getChipStyle(vertical, sis)` que retorna `{ cls, sty }` — chips ativos têm cor da vertical (inline style), chips fantasma têm borda pontilhada cinza, chips pendentes de ativação têm fundo sólido da vertical + texto branco. A API retorna `nome` (não `vertical`) — desestruturar como `{ nome: vertical, sistemas }`.
 - **ModalCatalogo (`Portfolio/ModalCatalogo.jsx`)**: admin only, acessível pelo botão "Catálogo" em `Sistemas.jsx` (Configuração → Sistemas). O arquivo do componente permanece em `Portfolio/` por conveniência. Lista cards editáveis: nome (input), cor (`<input type="color">`), sistemas (chips com × para remover + input Enter para adicionar). "+ Nova vertical" adiciona entrada com `_novo: true`. Ao salvar: itera `deletados[]` (DELETE), depois itera `itens` (POST para `_novo`, PUT para existentes). Em `Sistemas.jsx` o `onSaved` é no-op (Sistemas não consome estado do catálogo). Em `Portfolio/index.jsx` o catálogo ainda é lido via `catalogoApi.listar()` para exibição no accordion — apenas o gatilho de edição foi removido.
-- **Chamados — numeração**: formato `#CH-{ano}-{id com 4 zeros}`, calculado no frontend via `ticketNum(c)`. Sem campo no banco.
+- **Chamados — numeração**: formato `MUNI-YYYY-NNNNN`, calculado no frontend via `ticketNum(c, lista)`. Prefixo = 4 primeiras letras do município sem acentos (ex: `RURO`, `BELE`); sequencial reseta a cada virada de ano por município. Sem campo no banco — número muda se chamados forem deletados. Ver `docs/chamados.md`.
+- **Chamados — status Cancelado**: `STATUS_CORES` e `STATUS_OPTS` em `constants.js` incluem `'Cancelado'` (cor `#6B7280`). Aparece no filtro de status e nos badges.
+- **Chamados — solicitante**: modelo `Solicitante` (nome, cargo, email, telefone, municipio) armazena contatos externos do cliente. Campo `solicitanteId Int?` em `Chamado`. Rota `/api/solicitantes` CRUD completo (DELETE somente admin). Exibido como card de metadados no detalhe do chamado.
+- **Chamados — comentários @mention**: ao digitar `@` no textarea de comentário, dropdown lista usuários internos para seleção. `@Nome` inserido no texto fica destacado no comentário publicado (fundo `sysgate-50`). States: `mostrarMention`, `mentionQuery`. Refs: `textareaRef`.
+- **Chamados — imagens inline**: botão de câmera no formulário de comentário faz upload da imagem como anexo com `comentarioId` associado. A imagem é carregada como blob URL (auth header) e exibida abaixo do texto do comentário. `pendingCommentAnexos` guarda IDs de anexos antes de enviar o comentário; ao enviar, `POST /:id/comentarios` recebe `pendingAnexoIds` e faz `updateMany` para vincular. `comentarioImgs` state armazena `{ [comentarioId]: blobUrl }`.
+- **Chamados — auto-linkify**: função `linkify(texto)` escapa HTML e converte URLs em `<a target="_blank">` e `@mentions` em `<span>` destacado. Aplicada na descrição e em cada comentário via `dangerouslySetInnerHTML`.
 - **Chamados — histórico automático**: `PUT /api/chamados/:id` compara estado antes/depois e cria entradas `ChamadoHistorico` via `createMany` para cada campo alterado (`status`, `responsavel`, `classificacao`, `prioridade`, `titulo`, `vertical`). Ver `docs/chamados.md`.
 - **Chamados — ordem das rotas**: `/estatisticas`, `/dashboard`, `/anexos/:aid`, `/comentarios/:cid` registrados ANTES de `/:id`.
 - **Analisador JSON**: módulo 100% client-side, sem rotas de backend. Ver `docs/analisador-json.md`.
 - **localStorage keys**: `krakion-auth` (authStore), `krakion-municipio` (municipioStore), `krakion-json-viewerDark` (AnalisadorJson)
+- **Notas — isolamento e compartilhamento**: `Nota.usuarioId` obrigatório; queries filtram `usuarioId = req.usuario.id OR compartilhamentos.some({ usuarioId })`. Dono pode compartilhar com usuários específicos via `NotaCompartilhamento` (unique por nota+usuário). Notas alheias sem compartilhamento retornam 404.
+- **Notas — itens e etiquetas como JSON String**: `Nota.itens` e `Nota.etiquetas` armazenados como `JSON.stringify(array)` no SQLite (mesmo padrão de `bodySchema`). Helper `parseNota(n)` no backend faz `JSON.parse` antes de retornar.
+- **Notas — drag & drop**: HTML5 Drag and Drop API nativa (sem dependência). Campo `ordem Int` armazena posição. Ao soltar, `index.jsx` reordena o array localmente e persiste via `PATCH /notas/ordem` com debounce de 800ms. Ordenação padrão: `fixada desc, ordem asc, atualizadoEm desc`.
+- **Notas — fixar**: `Nota.fixada Boolean`. Notas fixadas aparecem em seção "Fixadas" acima das demais (ícone pin + label). Toggle via `PATCH /:id/fixar` (só dono).
+- **Notas — tipos**: `texto` (textarea livre), `checklist` (itens com `feito: boolean`), `lista` (bullets), `codigo` (monospace). Ao mudar tipo no modal, conteúdo ↔ itens são convertidos automaticamente (linhas ↔ array de objetos).
+- **Notas — paleta de cores**: 10 cores post-it em hex (amarelo `#FFFDE7` padrão, lilás, verde, azul, salmão, laranja, índigo, rosa, teal, branco). Card usa `style={{ backgroundColor: nota.cor }}` e borda `rgba(0,0,0,0.12)`. Modal tem fundo dinâmico com a cor selecionada.
 
 ## UI — Sandbox (padrões compartilhados entre abas)
 
