@@ -84,6 +84,8 @@ export default function Chamados() {
   const [novoComentario, setNovoComentario]   = useState('')
   const [enviandoComent, setEnviandoComent]   = useState(false)
   const [uploadAnexo, setUploadAnexo]         = useState(false)
+  const [erroAnexo, setErroAnexo]             = useState('')
+  const LIMITE_ARQUIVO_MB = 35
   const [mostrarLista, setMostrarLista]       = useState(true)
   const [dragOver, setDragOver]               = useState(false)
   const [mostrarHistorico, setMostrarHistorico] = useState(false)
@@ -158,8 +160,16 @@ export default function Chamados() {
 
   const processarArquivos = (files) => {
     if (!files.length) return
+    setErroAnexo('')
+    const rejeitados = files.filter(f => f.size > LIMITE_ARQUIVO_MB * 1024 * 1024)
+    const validos    = files.filter(f => f.size <= LIMITE_ARQUIVO_MB * 1024 * 1024)
+    if (rejeitados.length > 0) {
+      const nomes = rejeitados.map(f => `"${f.name}" (${formatBytes(f.size)})`).join(', ')
+      setErroAnexo(`${nomes} ${rejeitados.length === 1 ? 'excede' : 'excedem'} o limite de ${LIMITE_ARQUIVO_MB} MB e ${rejeitados.length === 1 ? 'não foi enviado' : 'não foram enviados'}.`)
+    }
+    if (!validos.length) return
     setUploadAnexo(true)
-    Promise.all(files.map(file => new Promise(resolve => {
+    Promise.all(validos.map(file => new Promise(resolve => {
       const reader = new FileReader()
       reader.onload = (ev) => {
         const base64 = ev.target.result.split(',')[1]
@@ -458,7 +468,7 @@ export default function Chamados() {
                         </h3>
                         <div>
                           <input type="file" multiple ref={fileAnexoRef} onChange={handleAnexoUpload} className="hidden" />
-                          <button onClick={() => fileAnexoRef.current?.click()} disabled={uploadAnexo}
+                          <button onClick={() => { setErroAnexo(''); fileAnexoRef.current?.click() }} disabled={uploadAnexo}
                             className="flex items-center gap-1 text-xs text-sysgate-600 font-medium hover:underline disabled:opacity-50">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
@@ -467,6 +477,9 @@ export default function Chamados() {
                           </button>
                         </div>
                       </div>
+                      {erroAnexo && (
+                        <p className="mb-2 text-xs text-red-600 bg-red-50 rounded px-2 py-1">{erroAnexo}</p>
+                      )}
                       {detalhe.anexos?.length === 0 ? (
                         <div onDragOver={e => { e.preventDefault(); setDragOver(true) }} onDragLeave={() => setDragOver(false)}
                           onDrop={handleDrop} onClick={() => fileAnexoRef.current?.click()}
@@ -478,6 +491,7 @@ export default function Chamados() {
                             <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
                           </svg>
                           <p className="text-sm text-gray-400">Nenhum anexo. Arraste arquivos aqui ou clique para selecionar.</p>
+                          <p className="text-xs text-gray-300">JPG, PNG, PDF e outros · máx. {LIMITE_ARQUIVO_MB} MB por arquivo</p>
                         </div>
                       ) : (
                         <div onDragOver={e => { e.preventDefault(); setDragOver(true) }} onDragLeave={() => setDragOver(false)}
