@@ -23,7 +23,7 @@ git push origin master
 
 # 2. SSH na VPS e atualizar
 ssh root@187.77.230.138
-cd /var/www/krakion && git pull && cd frontend && npm run build && cd ../backend && pm2 restart krakion-backend
+cd /var/www/krakion && git pull && cd backend && npx prisma db push && cd ../frontend && npm run build && cd ../backend && pm2 restart krakion-backend
 ```
 
 ---

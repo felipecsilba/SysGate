@@ -69,7 +69,7 @@ krakion/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
 │   ├── prisma/
-│   │   ├── schema.prisma      # 23 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario, PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento
+│   │   ├── schema.prisma      # 23 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -88,7 +88,7 @@ krakion/
 │           ├── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
 │           ├── portfolio.js   # CRUD Portfólio — PortfolioMunicipio + Entidade + EntidadeSistema + Stakeholder (M2M) — leitura pública; escrita/exclusão somente admin
 │           ├── catalogo.js   # CRUD CatalogoVertical — verticais Betha com nome/cor/sistemas/ordem; seed automático na 1ª chamada GET — leitura pública; escrita somente admin
-│           ├── chamados.js   # CRUD Chamados + comentários + anexos (+ comentarioId) + histórico de alterações + dashboard agregado; acesso público (autenticados); DELETE somente admin
+│           ├── chamados.js   # CRUD Chamados + comentários + anexos (+ comentarioId) + histórico de alterações + dashboard agregado; filtros: semResponsavel, excluirEncerrados, verticais (CSV), sistemas (CSV), prioridade, municipio; acesso público (autenticados); DELETE somente admin
 │           ├── solicitantes.js # CRUD Solicitantes externos (contatos do cliente) — leitura/escrita pública (autenticados); DELETE somente admin
 │           └── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
 └── frontend/
@@ -145,7 +145,9 @@ krakion/
             │   └── utils.js               # CORES_VERTICAIS, corVertical(), hexToRgb()
             ├── Chamados.jsx       # re-export → Chamados/index.jsx
             ├── Chamados/
-            │   ├── index.jsx               # Componente principal — lista, detalhe, filtros
+            │   ├── index.jsx               # Componente principal — 3 abas: Minha Fila (sub-abas Meus/Fila/Sem Dono), Painel, Dashboard; painel de detalhe compartilhado
+            │   ├── AbaPainel.jsx           # Aba Painel — tabela densa de todos os chamados com filtros completos e paginação independente
+            │   ├── ModalFilaConfig.jsx     # Modal de configuração da Fila personalizada (verticais + sistemas + status)
             │   ├── ChamadosDashboard.jsx   # Dashboard Recharts (AreaChart, PieChart, BarChart)
             │   ├── PainelHistorico.jsx     # Painel lateral de histórico de alterações (timeline)
             │   ├── ModalChamado.jsx        # Modal criar/editar chamado; inclui SearchSelect de solicitante + inline-create de novo solicitante
@@ -208,7 +210,7 @@ docker-compose up --build
 |--------|-----------------------------|------------------------------------------------------------------------|
 | GET    | /api/usuarios               | Admin: lista todos; não-admin: retorna apenas o próprio registro       |
 | POST   | /api/usuarios               | Cria usuário inativo — **somente admin**                               |
-| PUT    | /api/usuarios/:id           | Admin: atualiza nome/role/ativo; não-admin: só próprio nome            |
+| PUT    | /api/usuarios/:id           | Admin: atualiza nome/role/ativo; não-admin: só próprio nome + `filaFiltro` |
 | PATCH  | /api/usuarios/:id/senha     | Admin: redefine qualquer senha; não-admin: só a própria                |
 | DELETE | /api/usuarios/:id           | Remove — **somente admin** (impede auto-exclusão e último admin)       |
 
@@ -315,7 +317,7 @@ docker-compose up --build
 
 | Método | Rota                          | Descrição                                                                             |
 |--------|-------------------------------|---------------------------------------------------------------------------------------|
-| GET    | /api/chamados                 | Lista chamados (filtros ?busca=, ?status=, ?classificacao=, ?responsavelId=, ?vertical=, ?pagina=, ?limite=) — retorna `{ data, total, pagina, limite, totalPaginas }` |
+| GET    | /api/chamados                 | Lista chamados (filtros ?busca=, ?status=, ?classificacao=, ?responsavelId=, ?vertical=, ?verticais=, ?sistemas=, ?prioridade=, ?municipio=, ?semResponsavel=, ?excluirEncerrados=, ?pagina=, ?limite=) — retorna `{ data, total, pagina, limite, totalPaginas }` |
 | GET    | /api/chamados/estatisticas    | Contagem por status (objeto `{ status: count }`)                                      |
 | GET    | /api/chamados/dashboard       | Dados agregados: resumo, porStatus, porMunicipio, porVertical, porClassificacao, porPrioridade, semResponsavel, porDia (14 dias) |
 | POST   | /api/chamados                 | Cria chamado + registra entrada `criacao` no histórico                                |
@@ -424,9 +426,14 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Portfólio — cores de verticais**: mapa `CORES_VERTICAIS` em `Portfolio.jsx` (hardcoded, cores oficiais Betha) mapeia nome → hex. `corVertical(v)` faz lookup e retorna `COR_OUTROS_HEX = '#94A3B8'` para verticais não mapeadas. `hexToRgb(hex)` converte para `"r, g, b"` usado em `rgba(...)` para fundos com opacidade. Cabeçalhos de cards usam cor sólida + texto branco; fundos de cards usam `rgba(..., 0.05/0.15)`.
 - **Portfólio — modal picker (ModalGerenciarSistemas)**: aceita prop `catalogo` (array da API). Chips de sistemas usam `getChipStyle(vertical, sis)` que retorna `{ cls, sty }` — chips ativos têm cor da vertical (inline style), chips fantasma têm borda pontilhada cinza, chips pendentes de ativação têm fundo sólido da vertical + texto branco. A API retorna `nome` (não `vertical`) — desestruturar como `{ nome: vertical, sistemas }`.
 - **ModalCatalogo (`Portfolio/ModalCatalogo.jsx`)**: admin only, acessível pelo botão "Catálogo" em `Sistemas.jsx` (Configuração → Sistemas). O arquivo do componente permanece em `Portfolio/` por conveniência. Lista cards editáveis: nome (input), cor (`<input type="color">`), sistemas (chips com × para remover + input Enter para adicionar). "+ Nova vertical" adiciona entrada com `_novo: true`. Ao salvar: itera `deletados[]` (DELETE), depois itera `itens` (POST para `_novo`, PUT para existentes). Em `Sistemas.jsx` o `onSaved` é no-op (Sistemas não consome estado do catálogo). Em `Portfolio/index.jsx` o catálogo ainda é lido via `catalogoApi.listar()` para exibição no accordion — apenas o gatilho de edição foi removido.
-- **Chamados — numeração**: formato `MUNI-YYYY-NNNNN`, calculado no frontend via `ticketNum(c, lista)`. Prefixo = 4 primeiras letras do município sem acentos (ex: `RURO`, `BELE`); sequencial reseta a cada virada de ano por município. Sem campo no banco — número muda se chamados forem deletados. Ver `docs/chamados.md`.
+- **Chamados — numeração**: formato `MUNI-YYYY-NNNNN`, calculado no frontend via `ticketMapMF` (useMemo O(n) em `index.jsx`) e `ticketNum()` (usado em `AbaPainel.jsx`). Prefixo = 4 primeiras letras do município sem acentos (ex: `RURO`, `BELE`); sequencial reseta a cada virada de ano por município. Sem campo no banco — número muda se chamados forem deletados. Ver `docs/chamados.md`.
 - **Chamados — status Cancelado**: `STATUS_CORES` e `STATUS_OPTS` em `constants.js` incluem `'Cancelado'` (cor `#6B7280`). Aparece no filtro de status e nos badges.
 - **Chamados — solicitante**: modelo `Solicitante` (nome, cargo, email, telefone, municipio) armazena contatos externos do cliente. Campo `solicitanteId Int?` em `Chamado`. Rota `/api/solicitantes` CRUD completo (DELETE somente admin). Exibido como card de metadados no detalhe do chamado.
+- **Chamados — Minha Fila / AbaPainel**: módulo tem 3 abas (Minha Fila, Painel, Dashboard). Minha Fila tem 3 sub-abas: Meus (atribuídos ao usuário logado, excluindo encerrados), Fila (filtro personalizado por vertical/sistema/status salvo no servidor) e Sem Dono (sem responsável + excluindo encerrados). Aba Painel usa `AbaPainel.jsx` com estado de filtros independente e limite de 30 por página. Ambas compartilham o mesmo painel de detalhe à direita.
+- **Chamados — filaFiltro**: campo `filaFiltro String?` no modelo `Usuario`. Armazena JSON `{ "verticais": [], "sistemas": [], "status": [] }`. Escrito via `PUT /api/usuarios/:id`; lido via `GET /api/auth/me`. Configurado via `ModalFilaConfig.jsx` (chips de verticais/sistemas/status). Se não configurado, exibe empty state na sub-aba Fila.
+- **Chamados — paginação Minha Fila**: padrão 20 itens por página, opção 50 via botão "Por pág: 20 | 50". Estados `totalMF`, `paginaMF`, `limiteMF`. `ticketMapMF` é useMemo calculado em O(n) uma vez por load — evita O(n²) de calcular por card.
+- **Chamados — contSemDono separado**: `carregarContSemDono` é useCallback próprio, chamado apenas no mount e após mutações que alteram responsável ou excluem chamado — nunca dentro de `carregar()`. Usa `limite: 1` para custo mínimo.
+- **Chamados — busca debounced**: campo `buscaInput` (exibido imediatamente) + `busca` (debounced 400ms via `useRef` + `setTimeout`) — evita requests a cada tecla.
 - **Chamados — comentários @mention**: ao digitar `@` no textarea de comentário, dropdown lista usuários internos para seleção. `@Nome` inserido no texto fica destacado no comentário publicado (fundo `sysgate-50`). States: `mostrarMention`, `mentionQuery`. Refs: `textareaRef`.
 - **Chamados — imagens inline**: botão de câmera no formulário de comentário faz upload da imagem como anexo com `comentarioId` associado. A imagem é carregada como blob URL (auth header) e exibida abaixo do texto do comentário. `pendingCommentAnexos` guarda IDs de anexos antes de enviar o comentário; ao enviar, `POST /:id/comentarios` recebe `pendingAnexoIds` e faz `updateMany` para vincular. `comentarioImgs` state armazena `{ [comentarioId]: blobUrl }`.
 - **Chamados — auto-linkify**: função `linkify(texto)` escapa HTML e converte URLs em `<a target="_blank">` e `@mentions` em `<span>` destacado. Aplicada na descrição e em cada comentário via `dangerouslySetInnerHTML`.
