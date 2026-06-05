@@ -37,6 +37,9 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
   const [arquivos, setArquivos]             = useState([])
   const [salvando, setSalvando]             = useState(false)
   const [erro, setErro]                     = useState('')
+  const [erroAnexo, setErroAnexo]           = useState('')
+
+  const LIMITE_ARQUIVO_MB = 35
   const [portMunicipios, setPortMunicipios] = useState([])
   const [portEntidades, setPortEntidades]   = useState([])
   const [carregandoEnt, setCarregandoEnt]   = useState(false)
@@ -92,7 +95,13 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
   }
 
   const handleFiles = (e) => {
+    setErroAnexo('')
+    const rejeitados = []
     Array.from(e.target.files).forEach(file => {
+      if (file.size > LIMITE_ARQUIVO_MB * 1024 * 1024) {
+        rejeitados.push(`"${file.name}" (${formatBytes(file.size)})`)
+        return
+      }
       const reader = new FileReader()
       reader.onload = (ev) => setArquivos(prev => [...prev, {
         nomeArquivo: file.name, tipo: file.type,
@@ -100,6 +109,9 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
       }])
       reader.readAsDataURL(file)
     })
+    if (rejeitados.length > 0)
+      setErroAnexo(`${rejeitados.join(', ')} ${rejeitados.length === 1 ? 'excede' : 'excedem'} o limite de ${LIMITE_ARQUIVO_MB} MB e ${rejeitados.length === 1 ? 'não foi adicionado' : 'não foram adicionados'}.`)
+    e.target.value = ''
   }
 
   return (
@@ -179,7 +191,14 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
             <div>
               <label className="label">Anexos</label>
               <input type="file" multiple ref={fileRef} onChange={handleFiles} className="hidden" />
-              <button type="button" onClick={() => fileRef.current?.click()} className="text-sm text-sysgate-600 hover:underline">+ Selecionar arquivos</button>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => { setErroAnexo(''); fileRef.current?.click() }}
+                  className="text-sm text-sysgate-600 hover:underline">+ Selecionar arquivos</button>
+                <span className="text-xs text-gray-400">JPG, PNG, PDF e outros · máx. {LIMITE_ARQUIVO_MB} MB por arquivo</span>
+              </div>
+              {erroAnexo && (
+                <p className="mt-1 text-xs text-red-600 bg-red-50 rounded px-2 py-1">{erroAnexo}</p>
+              )}
               {arquivos.length > 0 && (
                 <ul className="mt-1 space-y-1">
                   {arquivos.map((a, i) => (
