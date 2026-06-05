@@ -5,6 +5,7 @@ export const STATUS_CORES = {
   'Em Atendimento':     '#F59E0B',
   'Aguardando Retorno': '#F97316',
   'Concluido':          '#22C55E',
+  'Cancelado':          '#6B7280',
 }
 
 export const CLASSIF_CORES = {
@@ -21,7 +22,7 @@ export const PRIORIDADE_CORES = {
   'Urgente': '#EF4444',
 }
 
-export const STATUS_OPTS    = ['Nao Analisado', 'Em Analise', 'Em Atendimento', 'Aguardando Retorno', 'Concluido']
+export const STATUS_OPTS    = ['Nao Analisado', 'Em Analise', 'Em Atendimento', 'Aguardando Retorno', 'Concluido', 'Cancelado']
 export const CLASSIF_OPTS   = ['', 'Pendencia de Migracao', 'Configuracao', 'Bug', 'Duvida']
 export const PRIORIDADE_OPTS = ['Baixa', 'Normal', 'Alta', 'Urgente']
 

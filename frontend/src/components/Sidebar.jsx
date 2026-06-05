@@ -212,19 +212,22 @@ export default function Sidebar() {
           <NavItem to="/historico" label="Histórico" icon={ICONS.historico} />
         </NavGroup>
 
-        <NavGroup
-          label="Configuração"
-          icon={ICONS.configuracao}
-          childRoutes={['/sistemas', '/municipios', '/usuarios']}
-        >
-          <NavItem to="/sistemas" label="Sistemas" icon={ICONS.sistemas} />
-          <NavItem to="/municipios" label="Central de Tokens" icon={ICONS.municipios} />
-          <NavItem
-            to="/usuarios"
-            label={usuario?.role === 'admin' ? 'Usuários' : 'Meu Perfil'}
-            icon={ICONS.usuarios}
-          />
-        </NavGroup>
+        {usuario?.role === 'admin' ? (
+          <NavGroup
+            label="Configuração"
+            icon={ICONS.configuracao}
+            childRoutes={['/sistemas', '/municipios', '/usuarios']}
+          >
+            <NavItem to="/sistemas" label="Sistemas" icon={ICONS.sistemas} />
+            <NavItem to="/municipios" label="Central de Tokens" icon={ICONS.municipios} />
+            <NavItem to="/usuarios" label="Usuários" icon={ICONS.usuarios} />
+          </NavGroup>
+        ) : (
+          <>
+            <NavItem to="/municipios" label="Central de Tokens" icon={ICONS.municipios} />
+            <NavItem to="/usuarios" label="Meu Perfil" icon={ICONS.usuarios} />
+          </>
+        )}
       </nav>
 
       {/* Footer */}

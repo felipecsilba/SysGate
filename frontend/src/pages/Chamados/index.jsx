@@ -43,6 +43,14 @@ function iconeAnexo(tipo) {
 function ticketNum(c) {
   return `#CH-${new Date(c.criadoEm).getFullYear()}-${String(c.id).padStart(4, '0')}`
 }
+function linkify(texto) {
+  if (!texto) return ''
+  const escaped = texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return escaped.replace(
+    /(https?:\/\/[^\s<>"']+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-sysgate-600 underline hover:text-sysgate-700 break-all">$1</a>'
+  )
+}
 
 // ── Badge colorido ─────────────────────────────────────────────────────────────
 function Badge({ label, cor, className = '' }) {
@@ -302,7 +310,8 @@ export default function Chamados() {
                       chamadoSelId === c.id ? 'bg-white shadow-sm' : 'hover:bg-white/70'
                     }`}
                     style={{ borderLeftColor: chamadoSelId === c.id ? '#6366f1' : (STATUS_CORES[c.status] || '#94A3B8') }}>
-                    <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug mb-2">{c.titulo}</p>
+                    <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{c.titulo}</p>
+                    <span className="text-[10px] text-gray-400 font-mono mb-2 block">{ticketNum(c)}</span>
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       {c.classificacao && <Badge label={c.classificacao} cor={CLASSIF_CORES[c.classificacao]} />}
                       <span className="text-xs text-gray-400">• {formatData(c.criadoEm)}</span>
@@ -456,7 +465,9 @@ export default function Chamados() {
                     <div>
                       <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Descrição</h3>
                       <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700 whitespace-pre-wrap min-h-[52px] leading-relaxed">
-                        {detalhe.descricao || <span className="text-gray-400">Sem descrição</span>}
+                        {detalhe.descricao
+                          ? <span dangerouslySetInnerHTML={{ __html: linkify(detalhe.descricao) }} />
+                          : <span className="text-gray-400">Sem descrição</span>}
                       </div>
                     </div>
 
@@ -532,7 +543,7 @@ export default function Chamados() {
                                     className="ml-auto text-gray-300 hover:text-red-400 text-sm leading-none" title="Remover">×</button>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.conteudo}</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: linkify(c.conteudo) }} />
                             </div>
                           </div>
                         ))}
