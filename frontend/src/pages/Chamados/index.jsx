@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import api, { chamadosApi, catalogoApi } from '../../lib/api'
 import useAuthStore from '../../stores/authStore'
 import {
@@ -105,8 +105,12 @@ export default function Chamados() {
   const [modalFilaConfig, setModalFilaConfig] = useState(false)
   const [contSemDono, setContSemDono]         = useState(0)
   const [chamados, setChamados]               = useState([])
+  const [totalMF, setTotalMF]                 = useState(0)
+  const [paginaMF, setPaginaMF]               = useState(1)
+  const [limiteMF, setLimiteMF]               = useState(20)
   const [chamadoSelId, setChamadoSelId]       = useState(null)
   const [detalhe, setDetalhe]                 = useState(null)
+  const [buscaInput, setBuscaInput]           = useState('')
   const [busca, setBusca]                     = useState('')
   const [carregando, setCarregando]           = useState(true)
   const [modalNovo, setModalNovo]             = useState(false)
@@ -126,19 +130,46 @@ export default function Chamados() {
   const [mentionQuery, setMentionQuery]         = useState('')
   const [pendingCommentAnexos, setPendingCommentAnexos] = useState([])
   const [comentarioImgs, setComentarioImgs]     = useState({})
-  const fileAnexoRef   = useRef()
-  const commentFileRef = useRef()
-  const textareaRef    = useRef()
+  const fileAnexoRef      = useRef()
+  const commentFileRef    = useRef()
+  const textareaRef       = useRef()
+  const buscaDebounceRef  = useRef(null)
 
-  const carregar = async () => {
+  // Pré-computa mapa { [id]: "MUNI-YYYY-NNNNN" } em O(n) ao invés de O(n²) no render
+  const ticketMapMF = useMemo(() => {
+    const sorted = [...chamados].sort((a, b) => a.id - b.id)
+    const counters = {}
+    const map = {}
+    for (const c of sorted) {
+      const ano = new Date(c.criadoEm).getFullYear()
+      const prefixo = c.municipio ? prefixoMunicipio(c.municipio) : 'CH'
+      if (c.municipio) {
+        const key = `${c.municipio}|${ano}`
+        counters[key] = (counters[key] ?? 0) + 1
+        map[c.id] = `${prefixo}-${ano}-${String(counters[key]).padStart(5, '0')}`
+      } else {
+        map[c.id] = `CH-${ano}-${String(c.id).padStart(5, '0')}`
+      }
+    }
+    return map
+  }, [chamados])
+
+  const carregarContSemDono = useCallback(async () => {
+    try {
+      const r = await chamadosApi.listar({ semResponsavel: 'true', excluirEncerrados: 'true', limite: 1 })
+      setContSemDono(r.total ?? 0)
+    } catch {}
+  }, [])
+
+  const carregar = useCallback(async (pag = 1) => {
     setCarregando(true)
     try {
-      const params = { limite: 100 }
+      const params = { limite: limiteMF, pagina: pag }
       if (busca) params.busca = busca
 
       if (subAba === 'meus') {
-        params.responsavelId      = usuario?.id
-        params.excluirEncerrados  = 'true'
+        params.responsavelId     = usuario?.id
+        params.excluirEncerrados = 'true'
       } else if (subAba === 'semdono') {
         params.semResponsavel    = 'true'
         params.excluirEncerrados = 'true'
@@ -151,26 +182,24 @@ export default function Chamados() {
 
       const result = await chamadosApi.listar(params)
       setChamados(result.data ?? result)
-
-      // Contagem sem dono (sempre atualizada, independente da sub-aba)
-      const sdResult = await chamadosApi.listar({ semResponsavel: 'true', excluirEncerrados: 'true', limite: 1 })
-      setContSemDono(sdResult.total ?? 0)
+      setTotalMF(result.total ?? (result.data ?? result).length)
+      setPaginaMF(pag)
     } catch (e) { console.error(e) }
     finally { setCarregando(false) }
-  }
+  }, [subAba, busca, filaConfig, limiteMF, usuario?.id])
 
-  useEffect(() => { carregar() }, [subAba, busca, filaConfig])
+  useEffect(() => { carregar(1) }, [subAba, busca, filaConfig, limiteMF])
 
   useEffect(() => {
     api.get('/usuarios').then(r => setUsuarios(r.data.filter(u => u.ativo))).catch(() => {})
     catalogoApi.listar().then(setCatalogo).catch(() => {})
-    // Carregar filaFiltro atualizado do servidor
     api.get('/auth/me').then(r => {
       if (r.data.filaFiltro) {
         try { setFilaConfig(JSON.parse(r.data.filaFiltro)) } catch {}
       }
     }).catch(() => {})
-  }, [])
+    carregarContSemDono()
+  }, [carregarContSemDono])
 
   const carregarImgsComentarios = async (detalheData) => {
     const imgAnexos = (detalheData.anexos || []).filter(
@@ -218,6 +247,7 @@ export default function Chamados() {
       setDetalhe(prev => ({ ...prev, ...atualizado }))
       setChamados(prev => prev.map(c => c.id === atualizado.id ? { ...c, ...atualizado } : c))
       setHistoricoKey(k => k + 1)
+      if (campo === 'responsavelId') carregarContSemDono()
     } catch (e) { console.error(e) }
   }
 
@@ -337,6 +367,7 @@ export default function Chamados() {
       await chamadosApi.deletar(chamadoSelId)
       setChamados(prev => prev.filter(c => c.id !== chamadoSelId))
       setChamadoSelId(null); setDetalhe(null); setMostrarLista(true); setMostrarHistorico(false)
+      carregarContSemDono()
     } catch (e) { console.error(e) }
   }
 
@@ -447,7 +478,15 @@ export default function Chamados() {
                   <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
                 </svg>
                 <input className="input text-sm w-full pl-7" placeholder="Buscar chamados..."
-                  value={busca} onChange={e => setBusca(e.target.value)} />
+                  value={buscaInput}
+                  onChange={e => {
+                    setBuscaInput(e.target.value)
+                    clearTimeout(buscaDebounceRef.current)
+                    buscaDebounceRef.current = setTimeout(() => {
+                      setBusca(e.target.value)
+                      setPaginaMF(1)
+                    }, 400)
+                  }} />
               </div>
               {subAba === 'fila' && (
                 <button onClick={() => setModalFilaConfig(true)} title="Configurar fila"
@@ -488,7 +527,7 @@ export default function Chamados() {
                     }`}
                     style={{ borderLeftColor: chamadoSelId === c.id ? '#6366f1' : (STATUS_CORES[c.status] || '#94A3B8') }}>
                     <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{c.titulo}</p>
-                    <span className="text-[10px] text-gray-400 font-mono mb-2 block">{ticketNum(c, chamados)}</span>
+                    <span className="text-[10px] text-gray-400 font-mono mb-2 block">{ticketMapMF[c.id]}</span>
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       {c.classificacao && <Badge label={c.classificacao} cor={CLASSIF_CORES[c.classificacao]} />}
                       <span className="text-xs text-gray-400">• {formatData(c.criadoEm)}</span>
@@ -520,6 +559,42 @@ export default function Chamados() {
                 ))
               )}
             </div>
+
+            {/* Rodapé: paginação + seletor por página */}
+            {totalMF > 0 && !(subAba === 'fila' && !filaConfig) && (
+              <div className="border-t border-gray-200 bg-white px-2 py-2 shrink-0">
+                <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <button onClick={() => carregar(paginaMF - 1)} disabled={paginaMF <= 1}
+                    className="p-1 rounded text-gray-400 hover:text-sysgate-600 hover:bg-sysgate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                  </button>
+                  <span className="text-[11px] text-gray-500">
+                    {paginaMF} / {Math.ceil(totalMF / limiteMF)} · {totalMF} chamados
+                  </span>
+                  <button onClick={() => carregar(paginaMF + 1)} disabled={paginaMF >= Math.ceil(totalMF / limiteMF)}
+                    className="p-1 rounded text-gray-400 hover:text-sysgate-600 hover:bg-sysgate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center justify-center gap-1">
+                  <span className="text-[10px] text-gray-400 mr-1">Por pág:</span>
+                  {[20, 50].map(n => (
+                    <button key={n} onClick={() => { setLimiteMF(n); setPaginaMF(1) }}
+                      className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                        limiteMF === n
+                          ? 'bg-sysgate-100 text-sysgate-700'
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
           )} {/* fim aba === 'lista' */}
