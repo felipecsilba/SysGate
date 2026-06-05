@@ -213,6 +213,17 @@ model StakeholderSistema {
 
 // ── Módulo Chamados ─────────────────────────────────────────────────────────
 
+model Solicitante {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  cargo     String?
+  email     String?
+  telefone  String?
+  municipio String?
+  chamados  Chamado[]
+  criadoEm  DateTime  @default(now())
+}
+
 model Chamado {
   id              Int                @id @default(autoincrement())
   titulo          String
@@ -224,6 +235,8 @@ model Chamado {
   sistema         String?
   municipio       String?
   entidade        String?
+  solicitanteId   Int?
+  solicitante     Solicitante?       @relation(fields: [solicitanteId], references: [id])
   criadoPorId     Int
   criadoPor       Usuario            @relation("chamadosCriados", fields: [criadoPorId], references: [id])
   responsavelId   Int?
@@ -250,14 +263,15 @@ model ChamadoComentario {
 }
 
 model ChamadoAnexo {
-  id          Int      @id @default(autoincrement())
-  nomeArquivo String
-  tipo        String?
-  conteudo    String
-  tamanho     Int?
-  chamadoId   Int
-  chamado     Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
-  criadoEm    DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  nomeArquivo  String
+  tipo         String?
+  conteudo     String
+  tamanho      Int?
+  chamadoId    Int
+  chamado      Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
+  comentarioId Int?     // Vincula imagem a comentário específico (para exibição inline)
+  criadoEm     DateTime @default(now())
 }
 
 model ChamadoHistorico {

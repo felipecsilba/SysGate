@@ -197,7 +197,7 @@ router.get('/dashboard', async (req, res) => {
 
 // ── POST / — Criar chamado ───────────────────────────────────────────────────
 router.post('/', async (req, res) => {
-  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade } = req.body
+  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade, solicitanteId } = req.body
   if (!titulo?.trim()) return res.status(400).json({ error: 'Titulo e obrigatorio' })
 
   const chamado = await prisma.chamado.create({
@@ -212,11 +212,13 @@ router.post('/', async (req, res) => {
       municipio: municipio?.trim() || null,
       entidade: entidade?.trim() || null,
       criadoPorId: req.usuario.id,
-      responsavelId: responsavelId ? Number(responsavelId) : null
+      responsavelId: responsavelId ? Number(responsavelId) : null,
+      solicitanteId: solicitanteId ? Number(solicitanteId) : null,
     },
     include: {
       criadoPor: { select: { id: true, nome: true } },
       responsavel: { select: { id: true, nome: true } },
+      solicitante: { select: { id: true, nome: true, cargo: true } },
       _count: { select: { comentarios: true, anexos: true } }
     }
   })
@@ -279,14 +281,15 @@ router.get('/:id', async (req, res) => {
   const chamado = await prisma.chamado.findUnique({
     where: { id: Number(req.params.id) },
     include: {
-      criadoPor: { select: { id: true, nome: true } },
+      criadoPor:  { select: { id: true, nome: true } },
       responsavel: { select: { id: true, nome: true } },
+      solicitante: { select: { id: true, nome: true, cargo: true, email: true, telefone: true } },
       comentarios: {
         orderBy: { criadoEm: 'asc' },
         include: { autor: { select: { id: true, nome: true } } }
       },
       anexos: {
-        select: { id: true, nomeArquivo: true, tipo: true, tamanho: true, criadoEm: true }
+        select: { id: true, nomeArquivo: true, tipo: true, tamanho: true, criadoEm: true, comentarioId: true }
       },
       _count: { select: { comentarios: true, anexos: true } }
     }
@@ -298,7 +301,7 @@ router.get('/:id', async (req, res) => {
 // ── PUT /:id — Atualizar chamado ─────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   const id = Number(req.params.id)
-  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade } = req.body
+  const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade, solicitanteId } = req.body
 
   try {
     // Buscar estado atual para comparar e registrar histórico
@@ -319,12 +322,14 @@ router.put('/:id', async (req, res) => {
         ...(vertical !== undefined && { vertical: vertical || null }),
         ...(sistema !== undefined && { sistema: sistema || null }),
         ...(responsavelId !== undefined && { responsavelId: responsavelId ? Number(responsavelId) : null }),
-        ...(municipio !== undefined && { municipio: municipio?.trim() || null }),
-        ...(entidade !== undefined && { entidade: entidade?.trim() || null }),
+        ...(municipio     !== undefined && { municipio:     municipio?.trim()                          || null }),
+        ...(entidade      !== undefined && { entidade:      entidade?.trim()                           || null }),
+        ...(solicitanteId !== undefined && { solicitanteId: solicitanteId ? Number(solicitanteId) : null }),
       },
       include: {
-        criadoPor: { select: { id: true, nome: true } },
+        criadoPor:   { select: { id: true, nome: true } },
         responsavel: { select: { id: true, nome: true } },
+        solicitante: { select: { id: true, nome: true, cargo: true } },
         _count: { select: { comentarios: true, anexos: true } }
       }
     })
@@ -392,27 +397,32 @@ router.delete('/:id', exigirAdmin, async (req, res) => {
 // ── POST /:id/comentarios — Adicionar comentário ─────────────────────────────
 router.post('/:id/comentarios', async (req, res) => {
   const chamadoId = Number(req.params.id)
-  const { conteudo } = req.body
+  const { conteudo, pendingAnexoIds } = req.body
   if (!conteudo?.trim()) return res.status(400).json({ error: 'Conteudo e obrigatorio' })
 
   const chamado = await prisma.chamado.findUnique({ where: { id: chamadoId } })
   if (!chamado) return res.status(404).json({ error: 'Chamado nao encontrado' })
 
   const comentario = await prisma.chamadoComentario.create({
-    data: {
-      conteudo: conteudo.trim(),
-      chamadoId,
-      autorId: req.usuario.id
-    },
+    data: { conteudo: conteudo.trim(), chamadoId, autorId: req.usuario.id },
     include: { autor: { select: { id: true, nome: true } } }
   })
+
+  // Vincular imagens pré-carregadas ao comentário criado
+  if (Array.isArray(pendingAnexoIds) && pendingAnexoIds.length > 0) {
+    await prisma.chamadoAnexo.updateMany({
+      where: { id: { in: pendingAnexoIds.map(Number) }, chamadoId },
+      data: { comentarioId: comentario.id }
+    })
+  }
+
   res.status(201).json(comentario)
 })
 
 // ── POST /:id/anexos — Upload anexo ──────────────────────────────────────────
 router.post('/:id/anexos', async (req, res) => {
   const chamadoId = Number(req.params.id)
-  const { nomeArquivo, tipo, conteudo, tamanho } = req.body
+  const { nomeArquivo, tipo, conteudo, tamanho, comentarioId } = req.body
   if (!nomeArquivo || !conteudo) return res.status(400).json({ error: 'nomeArquivo e conteudo sao obrigatorios' })
 
   const chamado = await prisma.chamado.findUnique({ where: { id: chamadoId } })
@@ -423,10 +433,11 @@ router.post('/:id/anexos', async (req, res) => {
       nomeArquivo,
       tipo: tipo || null,
       conteudo,
-      tamanho: tamanho ? Number(tamanho) : null,
-      chamadoId
+      tamanho:     tamanho     ? Number(tamanho)     : null,
+      chamadoId,
+      comentarioId: comentarioId ? Number(comentarioId) : null,
     },
-    select: { id: true, nomeArquivo: true, tipo: true, tamanho: true, criadoEm: true }
+    select: { id: true, nomeArquivo: true, tipo: true, tamanho: true, criadoEm: true, comentarioId: true }
   })
   res.status(201).json(anexo)
 })

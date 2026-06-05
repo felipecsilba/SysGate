@@ -43,12 +43,22 @@ function iconeAnexo(tipo) {
 function ticketNum(c) {
   return `#CH-${new Date(c.criadoEm).getFullYear()}-${String(c.id).padStart(4, '0')}`
 }
+function prefixoMunicipio(municipio) {
+  if (!municipio) return ''
+  return municipio
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4)
+}
 function linkify(texto) {
   if (!texto) return ''
   const escaped = texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   return escaped.replace(
-    /(https?:\/\/[^\s<>"']+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-sysgate-600 underline hover:text-sysgate-700 break-all">$1</a>'
+    /(https?:\/\/[^\s<>"']+)|(@[\wÀ-ú]+)/g,
+    (match, url, mention) => {
+      if (url) return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-sysgate-600 underline hover:text-sysgate-700 break-all">${url}</a>`
+      if (mention) return `<span class="text-sysgate-600 font-medium bg-sysgate-50 rounded px-1">${mention}</span>`
+      return match
+    }
   )
 }
 
@@ -97,8 +107,14 @@ export default function Chamados() {
   const [mostrarLista, setMostrarLista]       = useState(true)
   const [dragOver, setDragOver]               = useState(false)
   const [mostrarHistorico, setMostrarHistorico] = useState(false)
-  const [historicoKey, setHistoricoKey]       = useState(0)
-  const fileAnexoRef = useRef()
+  const [historicoKey, setHistoricoKey]         = useState(0)
+  const [mostrarMention, setMostrarMention]     = useState(false)
+  const [mentionQuery, setMentionQuery]         = useState('')
+  const [pendingCommentAnexos, setPendingCommentAnexos] = useState([])
+  const [comentarioImgs, setComentarioImgs]     = useState({})
+  const fileAnexoRef   = useRef()
+  const commentFileRef = useRef()
+  const textareaRef    = useRef()
 
   const chamadosFiltrados = filtroMeusChamados
     ? chamados.filter(c => c.criadoPor?.id === usuario?.id)
@@ -124,11 +140,33 @@ export default function Chamados() {
     catalogoApi.listar().then(setCatalogo).catch(() => {})
   }, [])
 
+  const carregarImgsComentarios = async (detalheData) => {
+    const imgAnexos = (detalheData.anexos || []).filter(
+      a => a.tipo?.startsWith('image/') && a.comentarioId != null
+    )
+    if (!imgAnexos.length) { setComentarioImgs({}); return }
+    const mapa = {}
+    await Promise.all(imgAnexos.map(async a => {
+      try {
+        const resp = await api.get(`/chamados/anexos/${a.id}`, { responseType: 'blob' })
+        const url = URL.createObjectURL(resp.data)
+        if (!mapa[a.comentarioId]) mapa[a.comentarioId] = []
+        mapa[a.comentarioId].push({ id: a.id, url, nomeArquivo: a.nomeArquivo })
+      } catch {}
+    }))
+    setComentarioImgs(mapa)
+  }
+
   const selecionarChamado = async (id) => {
     setChamadoSelId(id)
     setMostrarLista(false)
     setHistoricoKey(k => k + 1)
-    try { setDetalhe(await chamadosApi.obter(id)) } catch (e) { console.error(e) }
+    setPendingCommentAnexos([])
+    try {
+      const data = await chamadosApi.obter(id)
+      setDetalhe(data)
+      carregarImgsComentarios(data)
+    } catch (e) { console.error(e) }
   }
 
   const recarregarDetalhe = async () => {
@@ -138,6 +176,7 @@ export default function Chamados() {
       setDetalhe(data)
       setChamados(prev => prev.map(c => c.id === data.id ? { ...c, ...data } : c))
       setHistoricoKey(k => k + 1)
+      carregarImgsComentarios(data)
     } catch (e) { console.error(e) }
   }
 
@@ -153,13 +192,69 @@ export default function Chamados() {
   const enviarComentario = async () => {
     if (!novoComentario.trim()) return
     setEnviandoComent(true)
+    setMostrarMention(false)
     try {
-      await chamadosApi.criarComentario(chamadoSelId, { conteudo: novoComentario })
+      await chamadosApi.criarComentario(chamadoSelId, {
+        conteudo: novoComentario,
+        pendingAnexoIds: pendingCommentAnexos.map(a => a.id),
+      })
       setNovoComentario('')
+      pendingCommentAnexos.forEach(a => URL.revokeObjectURL(a.previewUrl))
+      setPendingCommentAnexos([])
       await recarregarDetalhe()
     } catch (e) { console.error(e) }
     finally { setEnviandoComent(false) }
   }
+
+  const handleComentarioChange = (e) => {
+    const val = e.target.value
+    setNovoComentario(val)
+    const cursor = e.target.selectionStart
+    const textAte = val.slice(0, cursor)
+    const match = textAte.match(/@(\w*)$/)
+    if (match) {
+      setMentionQuery(match[1].toLowerCase())
+      setMostrarMention(true)
+    } else {
+      setMostrarMention(false)
+      setMentionQuery('')
+    }
+  }
+
+  const inserirMencao = (nomeCompleto) => {
+    const cursor = textareaRef.current?.selectionStart ?? novoComentario.length
+    const textAte = novoComentario.slice(0, cursor)
+    const textDepois = novoComentario.slice(cursor)
+    const semAt = textAte.replace(/@\w*$/, '')
+    setNovoComentario(semAt + `@${nomeCompleto.split(' ')[0]} ` + textDepois)
+    setMostrarMention(false)
+    setMentionQuery('')
+    setTimeout(() => textareaRef.current?.focus(), 0)
+  }
+
+  const uploadCommentImage = (e) => {
+    const file = e.target.files[0]
+    if (!file || !chamadoSelId) return
+    if (!file.type.startsWith('image/')) return
+    if (file.size > LIMITE_ARQUIVO_MB * 1024 * 1024) { setErroAnexo(`Imagem excede ${LIMITE_ARQUIVO_MB} MB.`); return }
+    const previewUrl = URL.createObjectURL(file)
+    setUploadAnexo(true)
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      try {
+        const base64 = ev.target.result.split(',')[1]
+        const anexo = await chamadosApi.criarAnexo(chamadoSelId, { nomeArquivo: file.name, tipo: file.type, conteudo: base64, tamanho: file.size })
+        setPendingCommentAnexos(prev => [...prev, { id: anexo.id, nomeArquivo: file.name, previewUrl }])
+      } catch { URL.revokeObjectURL(previewUrl) }
+      finally { setUploadAnexo(false) }
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const mentionUsuarios = mentionQuery !== undefined
+    ? usuarios.filter(u => u.nome.toLowerCase().includes(mentionQuery)).slice(0, 6)
+    : []
 
   const deletarComentario = async (cid) => {
     if (!confirm('Remover comentário?')) return
@@ -311,7 +406,14 @@ export default function Chamados() {
                     }`}
                     style={{ borderLeftColor: chamadoSelId === c.id ? '#6366f1' : (STATUS_CORES[c.status] || '#94A3B8') }}>
                     <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{c.titulo}</p>
-                    <span className="text-[10px] text-gray-400 font-mono mb-2 block">{ticketNum(c)}</span>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-[10px] text-gray-400 font-mono">{ticketNum(c)}</span>
+                      {c.municipio && (
+                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 leading-4 uppercase tracking-wide">
+                          {prefixoMunicipio(c.municipio)}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       {c.classificacao && <Badge label={c.classificacao} cor={CLASSIF_CORES[c.classificacao]} />}
                       <span className="text-xs text-gray-400">• {formatData(c.criadoEm)}</span>
@@ -442,6 +544,7 @@ export default function Chamados() {
                         { label: 'PRIORIDADE',       badge: { label: detalhe.prioridade, cor: PRIORIDADE_CORES[detalhe.prioridade] } },
                         { label: 'VERTICAL',         val: detalhe.vertical },
                         detalhe.sistema ? { label: 'SISTEMA', val: detalhe.sistema, highlight: true } : null,
+                        detalhe.solicitante ? { label: 'SOLICITANTE', val: detalhe.solicitante.cargo ? `${detalhe.solicitante.nome} · ${detalhe.solicitante.cargo}` : detalhe.solicitante.nome } : null,
                       ].filter(Boolean).map(item => (
                         <div key={item.label} className="bg-slate-50 border border-gray-100 rounded-xl px-3 py-2.5">
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{item.label}</p>
@@ -544,27 +647,82 @@ export default function Chamados() {
                                 )}
                               </div>
                               <p className="text-sm text-gray-700 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: linkify(c.conteudo) }} />
+                              {comentarioImgs[c.id]?.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {comentarioImgs[c.id].map(img => (
+                                    <img key={img.id} src={img.url} alt={img.nomeArquivo}
+                                      className="max-w-xs max-h-48 rounded-lg border border-gray-200 cursor-pointer object-contain bg-gray-50"
+                                      onClick={() => window.open(img.url, '_blank')}
+                                      title={img.nomeArquivo} />
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
                       </div>
                       <div className="flex gap-3">
                         <Avatar nome={usuario?.nome} size={8} />
-                        <div className="flex-1 border border-gray-200 rounded-xl overflow-hidden focus-within:border-sysgate-400 focus-within:ring-1 focus-within:ring-sysgate-300 transition-all">
-                          <textarea
-                            className="w-full px-4 py-3 text-sm text-gray-700 border-0 outline-none resize-none bg-transparent min-h-[64px]"
-                            placeholder="Escreva um comentário…"
-                            value={novoComentario}
-                            onChange={e => setNovoComentario(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) enviarComentario() }}
-                          />
-                          <div className="flex items-center justify-between px-3 pb-2.5">
-                            <span className="text-xs text-gray-400">Ctrl+Enter para enviar</span>
-                            <button onClick={enviarComentario} disabled={enviandoComent || !novoComentario.trim()}
-                              className="px-3 py-1 text-xs font-semibold bg-sysgate-600 hover:bg-sysgate-700 text-white rounded-lg disabled:opacity-40 transition-colors">
-                              {enviandoComent ? 'Enviando…' : 'Comentar'}
-                            </button>
+                        <div className="flex-1 relative">
+                          <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:border-sysgate-400 focus-within:ring-1 focus-within:ring-sysgate-300 transition-all">
+                            <textarea
+                              ref={textareaRef}
+                              className="w-full px-4 py-3 text-sm text-gray-700 border-0 outline-none resize-none bg-transparent min-h-[64px]"
+                              placeholder="Escreva um comentário… (use @ para mencionar)"
+                              value={novoComentario}
+                              onChange={handleComentarioChange}
+                              onKeyDown={e => {
+                                if (e.key === 'Escape') { setMostrarMention(false); return }
+                                if (e.key === 'Enter' && e.ctrlKey) enviarComentario()
+                              }}
+                            />
+                            {pendingCommentAnexos.length > 0 && (
+                              <div className="flex flex-wrap gap-2 px-4 pb-2">
+                                {pendingCommentAnexos.map(a => (
+                                  <div key={a.id} className="relative group">
+                                    <img src={a.previewUrl} alt={a.nomeArquivo}
+                                      className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                                    <button type="button"
+                                      onClick={() => { URL.revokeObjectURL(a.previewUrl); setPendingCommentAnexos(prev => prev.filter(x => x.id !== a.id)) }}
+                                      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between px-3 pb-2.5 gap-2">
+                              <div className="flex items-center gap-2">
+                                <input type="file" accept="image/*" ref={commentFileRef} onChange={uploadCommentImage} className="hidden" />
+                                <button type="button" onClick={() => commentFileRef.current?.click()} disabled={uploadAnexo}
+                                  title="Adicionar imagem ao comentário"
+                                  className="text-gray-400 hover:text-sysgate-600 transition-colors disabled:opacity-40">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <path d="M21 15l-5-5L5 21"/>
+                                  </svg>
+                                </button>
+                                <span className="text-xs text-gray-400">Ctrl+Enter para enviar · @ para mencionar</span>
+                              </div>
+                              <button onClick={enviarComentario} disabled={enviandoComent || (!novoComentario.trim() && pendingCommentAnexos.length === 0)}
+                                className="px-3 py-1 text-xs font-semibold bg-sysgate-600 hover:bg-sysgate-700 text-white rounded-lg disabled:opacity-40 transition-colors">
+                                {enviandoComent ? 'Enviando…' : 'Comentar'}
+                              </button>
+                            </div>
                           </div>
+                          {/* Dropdown @mention */}
+                          {mostrarMention && mentionUsuarios.length > 0 && (
+                            <div className="absolute bottom-full mb-1 left-0 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                              {mentionUsuarios.map(u => (
+                                <button key={u.id} type="button"
+                                  onMouseDown={e => { e.preventDefault(); inserirMencao(u.nome) }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-sysgate-50 transition-colors text-left">
+                                  <div className="w-6 h-6 rounded-full bg-sysgate-100 text-sysgate-700 flex items-center justify-center text-xs font-bold shrink-0">
+                                    {u.nome[0].toUpperCase()}
+                                  </div>
+                                  {u.nome}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

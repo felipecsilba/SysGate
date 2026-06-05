@@ -13,89 +13,6 @@ Não representa comprometimento de prazo — serve como referência para sessõe
 
 ---
 
-### [MELHORIA-002] Novo status "Cancelado"
-
-**Descrição:**
-Adicionar a situação `Cancelado` à lista de status de chamados, para registrar chamados que foram encerrados sem resolução (desistência, duplicata, requisição inválida etc.).
-
-**Complexidade:** Baixa
-
-**Arquivos a alterar:**
-- `frontend/src/pages/Chamados/constants.js`
-  - Inserir `'Cancelado'` em `STATUS_OPTS`
-  - Inserir cor `'Cancelado': '#6B7280'` (cinza neutro) em `STATUS_CORES`
-  - Inserir entrada em `HISTORICO_META` com cor cinza e label "Status"
-- `frontend/src/pages/Chamados/ChamadosDashboard.jsx`
-  - Verificar se o gráfico de pizza/barras por status já é dinâmico (sim — lê do backend). Nenhuma mudança necessária.
-
-**Backend:** Nenhuma mudança — o campo `status` é `String` no banco, sem enum. O backend aceita qualquer valor passado.
-
-**Observação:** Avaliar se chamados `Cancelado` devem ser excluídos dos filtros padrão de listagem (mostrar só quando o filtro de status estiver explicitamente selecionado).
-
----
-
-### [MELHORIA-003] Numeração do chamado na barra lateral esquerda
-
-**Descrição:**
-Exibir o código do chamado (`#CH-2026-0042`) abaixo do título na lista da barra lateral, facilitando a identificação rápida sem precisar abrir o detalhe.
-
-**Complexidade:** Baixa
-
-**Arquivo a alterar:**
-- `frontend/src/pages/Chamados/index.jsx`
-  - Na renderização de cada item da lista (bloco que exibe `c.titulo`), adicionar abaixo do título:
-    ```jsx
-    <span className="text-[10px] text-gray-400 font-mono">{ticketNum(c)}</span>
-    ```
-  - A função `ticketNum` já existe no mesmo arquivo.
-
-**Sem mudanças no backend.**
-
----
-
-### [MELHORIA-004] Usuários externos como solicitantes
-
-**Descrição:**
-Cadastrar pessoas externas (colaboradores da prefeitura) que podem ser vinculados como solicitantes de chamados. Diferente dos usuários internos (implantadores), são contatos do cliente.
-
-**Complexidade:** Alta
-
-**Mudanças no banco (`prisma/schema.prisma`):**
-```prisma
-model Solicitante {
-  id       Int       @id @default(autoincrement())
-  nome     String
-  cargo    String?
-  email    String?
-  telefone String?
-  municipio String?  // município ao qual este contato pertence (texto livre)
-  chamados  Chamado[]
-  criadoEm DateTime  @default(now())
-}
-// Em Chamado: adicionar campo
-solicitanteId Int?
-solicitante   Solicitante? @relation(fields: [solicitanteId], references: [id])
-```
-
-**Backend — nova rota `routes/solicitantes.js`:**
-- `GET /api/solicitantes` — lista (filtro `?municipio=`, `?busca=`)
-- `POST /api/solicitantes` — cria (admin ou qualquer autenticado — definir)
-- `PUT /api/solicitantes/:id` — atualiza
-- `DELETE /api/solicitantes/:id` — remove (somente admin)
-- Registrar em `index.js` e proteger com `autenticar`
-
-**Backend — `routes/chamados.js`:**
-- Incluir `solicitanteId` no `create`/`update`
-- No `GET /:id` incluir `include: { solicitante: true }`
-
-**Frontend:**
-- `ModalChamado.jsx`: adicionar campo `SearchSelect` para buscar/selecionar solicitante
-- `index.jsx`: exibir nome do solicitante no painel de detalhes do chamado
-- Criar página ou modal `Solicitantes.jsx` para CRUD (ou integrar no detalhe do chamado com inline-create)
-- `lib/api.js`: adicionar `solicitantesApi`
-
----
-
 ### [MELHORIA-005] Numeração de chamado por município (prefixo)
 
 **Descrição:**
@@ -170,61 +87,46 @@ Ao digitar `@` em um comentário, exibir dropdown com os usuários internos para
 
 ---
 
-### [MELHORIA-008] Links nos chamados
+### [MELHORIA-004] Usuários externos como solicitantes
 
 **Descrição:**
-URLs em descrições e comentários se tornam clicáveis automaticamente. Opcionalmente, uma seção "Links úteis" no chamado permite adicionar links com título.
+Cadastrar pessoas externas (colaboradores da prefeitura) que podem ser vinculados como solicitantes de chamados. Diferente dos usuários internos (implantadores), são contatos do cliente.
 
-**Complexidade:** Baixa (auto-linkify) / Média (campo estruturado)
+**Complexidade:** Alta
 
-**Opção A — Auto-linkify (simples, sem DB):**
-- Criar função `linkify(texto)` que converte URLs em `<a href="..." target="_blank">`
-- Aplicar na renderização da `descricao` do chamado e no texto dos comentários
-
-**Opção B — Campo "Links" estruturado:**
-- Adicionar `links String?` (JSON array `[{ titulo, url }]`) em `Chamado`
-- Seção "Links" no detalhe do chamado com botão "Adicionar link"
-- Cada link exibe título, URL clicável com ícone de link externo e botão de remover
-
-**Recomendação:** Implementar Opção A primeiro (sem DB, 30 minutos de trabalho) e Opção B depois se houver demanda.
-
----
-
-## Módulo: Configuração / Sidebar
-
----
-
-### [MELHORIA-009] Configuração — restringir visibilidade para não-admin
-
-**Descrição:**
-Usuários que não são admin veem apenas "Central de Tokens" dentro do grupo Configuração. Os itens "Sistemas" e demais opções administrativas ficam ocultos.
-
-**Complexidade:** Baixa
-
-**Arquivo a alterar:**
-- `frontend/src/components/Sidebar.jsx`
-
-**Lógica atual** (linha 215–227): o grupo "Configuração" exibe Sistemas + Central de Tokens + Usuários/Meu Perfil para todos.
-
-**Mudança proposta:**
-```jsx
-// Não-admin: mostrar apenas Central de Tokens sem grupo expansível
-{isAdmin ? (
-  <NavGroup label="Configuração" icon={ICONS.configuracao}
-    childRoutes={['/sistemas', '/municipios', '/usuarios']}>
-    <NavItem to="/sistemas" label="Sistemas" icon={ICONS.sistemas} />
-    <NavItem to="/municipios" label="Central de Tokens" icon={ICONS.municipios} />
-    <NavItem to="/usuarios" label="Usuários" icon={ICONS.usuarios} />
-  </NavGroup>
-) : (
-  <>
-    <NavItem to="/municipios" label="Central de Tokens" icon={ICONS.municipios} />
-    <NavItem to="/usuarios" label="Meu Perfil" icon={ICONS.usuarios} />
-  </>
-)}
+**Mudanças no banco (`prisma/schema.prisma`):**
+```prisma
+model Solicitante {
+  id       Int       @id @default(autoincrement())
+  nome     String
+  cargo    String?
+  email    String?
+  telefone String?
+  municipio String?  // município ao qual este contato pertence (texto livre)
+  chamados  Chamado[]
+  criadoEm DateTime  @default(now())
+}
+// Em Chamado: adicionar campo
+solicitanteId Int?
+solicitante   Solicitante? @relation(fields: [solicitanteId], references: [id])
 ```
 
-**Proteção de rota:** as rotas `/sistemas` e `/usuarios` (admin) já retornam 403 no backend para não-admin. A mudança na Sidebar é apenas cosmética (UX), mas consistente com o princípio de não exibir o que o usuário não pode usar.
+**Backend — nova rota `routes/solicitantes.js`:**
+- `GET /api/solicitantes` — lista (filtro `?municipio=`, `?busca=`)
+- `POST /api/solicitantes` — cria (admin ou qualquer autenticado — definir)
+- `PUT /api/solicitantes/:id` — atualiza
+- `DELETE /api/solicitantes/:id` — remove (somente admin)
+- Registrar em `index.js` e proteger com `autenticar`
+
+**Backend — `routes/chamados.js`:**
+- Incluir `solicitanteId` no `create`/`update`
+- No `GET /:id` incluir `include: { solicitante: true }`
+
+**Frontend:**
+- `ModalChamado.jsx`: adicionar campo `SearchSelect` para buscar/selecionar solicitante
+- `index.jsx`: exibir nome do solicitante no painel de detalhes do chamado
+- Criar página ou modal `Solicitantes.jsx` para CRUD (ou integrar no detalhe do chamado com inline-create)
+- `lib/api.js`: adicionar `solicitantesApi`
 
 ---
 
@@ -234,14 +136,10 @@ Agrupada por esforço × valor:
 
 | Prioridade | ID | Melhoria | Esforço |
 |---|---|---|---|
-| 1 | MELHORIA-003 | Numeração na barra lateral | Baixo |
-| 2 | MELHORIA-009 | Restringir Configuração para não-admin | Baixo |
-| 3 | MELHORIA-002 | Status "Cancelado" | Baixo |
-| 4 | MELHORIA-008 | Links auto-linkify (Opção A) | Baixo |
-| 5 | MELHORIA-005 | Numeração por município (prefixo visual) | Médio |
-| 6 | MELHORIA-007 | Mencionar usuários (@mention) | Médio |
-| 7 | MELHORIA-006 | Imagens inline nos comentários | Médio |
-| 8 | MELHORIA-004 | Usuários externos (solicitantes) | Alto |
+| 1 | MELHORIA-005 | Numeração por município (prefixo visual) | Médio |
+| 2 | MELHORIA-007 | Mencionar usuários (@mention) | Médio |
+| 3 | MELHORIA-006 | Imagens inline nos comentários | Médio |
+| 4 | MELHORIA-004 | Usuários externos (solicitantes) | Alto |
 
 ---
 

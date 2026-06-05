@@ -165,6 +165,14 @@ export const catalogoApi = {
   deletar:   (id)       => api.delete(`/catalogo/${id}`),
 }
 
+// Solicitantes externos
+export const solicitantesApi = {
+  listar:    (params) => api.get('/solicitantes', { params }).then(r => r.data),
+  criar:     (data)   => api.post('/solicitantes', data).then(r => r.data),
+  atualizar: (id, data) => api.put(`/solicitantes/${id}`, data).then(r => r.data),
+  deletar:   (id)     => api.delete(`/solicitantes/${id}`).then(r => r.data),
+}
+
 // Chamados (Tickets)
 export const chamadosApi = {
   listar:            (params) => api.get('/chamados', { params }).then(r => r.data),

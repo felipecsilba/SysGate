@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { chamadosApi, portfolioApi } from '../../lib/api'
+import { chamadosApi, portfolioApi, solicitantesApi } from '../../lib/api'
 import { confirmClose, isFormDirty } from '../../lib/formGuard'
+import SearchSelect from '../../components/SearchSelect'
 import {
   STATUS_OPTS,
   CLASSIF_OPTS,
@@ -33,11 +34,16 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
     vertical:      chamado?.vertical      || '',
     sistema:       chamado?.sistema       || '',
     responsavelId: chamado?.responsavelId || '',
+    solicitanteId: chamado?.solicitanteId || '',
   })
-  const [arquivos, setArquivos]             = useState([])
-  const [salvando, setSalvando]             = useState(false)
-  const [erro, setErro]                     = useState('')
-  const [erroAnexo, setErroAnexo]           = useState('')
+  const [arquivos, setArquivos]                 = useState([])
+  const [salvando, setSalvando]                 = useState(false)
+  const [erro, setErro]                         = useState('')
+  const [erroAnexo, setErroAnexo]               = useState('')
+  const [solicitantes, setSolicitantes]         = useState([])
+  const [novoSol, setNovoSol]                   = useState(false)
+  const [formSol, setFormSol]                   = useState({ nome: '', cargo: '', email: '', telefone: '' })
+  const [criandoSol, setCriandoSol]             = useState(false)
 
   const LIMITE_ARQUIVO_MB = 35
   const [portMunicipios, setPortMunicipios] = useState([])
@@ -55,6 +61,7 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
         if (mun) portfolioApi.entidades(mun.id).then(setPortEntidades).catch(() => {})
       }
     }).catch(() => {})
+    solicitantesApi.listar().then(setSolicitantes).catch(() => {})
   }, [])
 
   const handleMunicipioChange = (nome) => {
@@ -72,6 +79,24 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
 
   const setField = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const criarSolicitante = async () => {
+    if (!formSol.nome.trim()) return
+    setCriandoSol(true)
+    try {
+      const sol = await solicitantesApi.criar({
+        nome: formSol.nome.trim(),
+        cargo: formSol.cargo.trim() || null,
+        email: formSol.email.trim() || null,
+        telefone: formSol.telefone.trim() || null,
+        municipio: form.municipio || null,
+      })
+      setSolicitantes(prev => [...prev, sol])
+      setField('solicitanteId', String(sol.id))
+      setNovoSol(false)
+      setFormSol({ nome: '', cargo: '', email: '', telefone: '' })
+    } catch {} finally { setCriandoSol(false) }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.titulo.trim()) { setErro('Título é obrigatório'); return }
@@ -83,6 +108,7 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
         classificacao: form.classificacao || null, prioridade: form.prioridade,
         vertical: form.vertical || null, sistema: form.sistema || null,
         responsavelId: form.responsavelId ? Number(form.responsavelId) : null,
+        solicitanteId: form.solicitanteId ? Number(form.solicitanteId) : null,
       }
       let criado
       if (isEdicao) { criado = await chamadosApi.atualizar(chamado.id, payload) }
@@ -186,6 +212,36 @@ export default function ModalChamado({ chamado, usuarios, catalogo, onSalvo, onF
               <option value="">— Sem responsável —</option>
               {usuarios.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
             </select>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="label mb-0">Solicitante</label>
+              <button type="button" onClick={() => setNovoSol(v => !v)}
+                className="text-xs text-sysgate-600 hover:underline">
+                {novoSol ? '× Cancelar' : '+ Novo solicitante'}
+              </button>
+            </div>
+            <SearchSelect
+              options={solicitantes.map(s => ({ value: String(s.id), label: s.municipio ? `${s.nome} (${s.municipio})` : s.nome }))}
+              value={String(form.solicitanteId || '')}
+              onChange={v => setField('solicitanteId', v)}
+              placeholder="Buscar solicitante…"
+            />
+            {novoSol && (
+              <div className="mt-2 p-3 bg-slate-50 rounded-xl border border-gray-200 space-y-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Novo Solicitante</p>
+                <input className="input text-sm" placeholder="Nome *" value={formSol.nome} onChange={e => setFormSol(f => ({ ...f, nome: e.target.value }))} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="input text-sm" placeholder="Cargo" value={formSol.cargo} onChange={e => setFormSol(f => ({ ...f, cargo: e.target.value }))} />
+                  <input className="input text-sm" placeholder="Telefone" value={formSol.telefone} onChange={e => setFormSol(f => ({ ...f, telefone: e.target.value }))} />
+                </div>
+                <input className="input text-sm" placeholder="E-mail" value={formSol.email} onChange={e => setFormSol(f => ({ ...f, email: e.target.value }))} />
+                <button type="button" onClick={criarSolicitante} disabled={criandoSol || !formSol.nome.trim()}
+                  className="btn text-xs w-full disabled:opacity-40">
+                  {criandoSol ? 'Criando…' : 'Criar e vincular'}
+                </button>
+              </div>
+            )}
           </div>
           {!isEdicao && (
             <div>
