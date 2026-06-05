@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
 import useAuthStore from '../stores/authStore'
 import api from '../lib/api'
+import { authApi } from '../lib/api'
 import { confirmClose } from '../lib/formGuard'
 
 const HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITEKEY || '10000000-ffff-ffff-ffff-000000000001'
@@ -208,6 +209,96 @@ function ModalCadastro({ onClose }) {
   )
 }
 
+// ─── Modal Esqueceu Senha ─────────────────────────────────────────────────────
+function ModalEsqueceuSenha({ onClose }) {
+  const [loginOuEmail, setLoginOuEmail] = useState('')
+  const [carregando, setCarregando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [enviado, setEnviado] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setErro('')
+    if (!loginOuEmail.trim()) {
+      setErro('Informe seu login ou email.')
+      return
+    }
+    setCarregando(true)
+    try {
+      await authApi.esquecerSenha(loginOuEmail.trim())
+      setEnviado(true)
+    } catch (err) {
+      setErro(err.message)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      {enviado ? (
+        <div className="px-6 py-10 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Email enviado</h2>
+          <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+            Se o login/email informado existir em nosso sistema, você receberá um link de recuperação em instantes.
+            <br /><span className="text-xs text-gray-400 mt-1 block">O link expira em 1 hora.</span>
+          </p>
+          <button onClick={onClose} className="w-full bg-sysgate-600 hover:bg-sysgate-700 text-white font-semibold py-2.5 rounded-lg transition-colors">
+            Voltar ao login
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Recuperar senha</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Informe seu login ou email cadastrado</p>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Login ou email</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="joao.silva ou joao@email.com"
+                value={loginOuEmail}
+                onChange={(e) => setLoginOuEmail(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            {erro && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">
+                {erro}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={carregando}
+              className="w-full bg-sysgate-600 hover:bg-sysgate-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors"
+            >
+              {carregando ? 'Enviando...' : 'Enviar link de recuperação'}
+            </button>
+          </form>
+        </>
+      )}
+    </Modal>
+  )
+}
+
 // ─── Tela de Login ────────────────────────────────────────────────────────────
 export default function Login() {
   const navigate = useNavigate()
@@ -221,6 +312,7 @@ export default function Login() {
   const [falhasConsecutivas, setFalhasConsecutivas] = useState(0)
   const [hcaptchaToken, setHcaptchaToken] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
+  const [modalRecuperacaoAberto, setModalRecuperacaoAberto] = useState(false)
   const captchaRef = useRef(null)
 
   const exibirCaptcha = falhasConsecutivas >= 3
@@ -366,17 +458,26 @@ export default function Login() {
               </button>
             </form>
 
-            {/* Link cadastro */}
-            <p className="text-sm text-center text-gray-400 mt-5">
-              Novo por aqui?{' '}
+            {/* Links abaixo do formulário */}
+            <div className="flex items-center justify-between mt-5">
               <button
                 type="button"
-                onClick={() => setModalAberto(true)}
-                className="font-semibold text-sysgate-600 hover:text-sysgate-700 transition-colors"
+                onClick={() => setModalRecuperacaoAberto(true)}
+                className="text-sm text-gray-400 hover:text-sysgate-600 transition-colors"
               >
-                Criar conta
+                Esqueci minha senha
               </button>
-            </p>
+              <p className="text-sm text-gray-400">
+                Novo?{' '}
+                <button
+                  type="button"
+                  onClick={() => setModalAberto(true)}
+                  className="font-semibold text-sysgate-600 hover:text-sysgate-700 transition-colors"
+                >
+                  Criar conta
+                </button>
+              </p>
+            </div>
           </div>
 
           {/* Rodapé */}
@@ -389,6 +490,11 @@ export default function Login() {
       {/* Modal de cadastro */}
       {modalAberto && (
         <ModalCadastro onClose={() => setModalAberto(false)} />
+      )}
+
+      {/* Modal de recuperação de senha */}
+      {modalRecuperacaoAberto && (
+        <ModalEsqueceuSenha onClose={() => setModalRecuperacaoAberto(false)} />
       )}
     </>
   )

@@ -34,6 +34,8 @@ export const authApi = {
   login: (login, senha) => api.post('/auth/login', { login, senha }).then((r) => r.data),
   logout: () => api.post('/auth/logout').then((r) => r.data),
   me: () => api.get('/auth/me').then((r) => r.data),
+  esquecerSenha: (loginOuEmail) => api.post('/auth/esqueci-senha', { loginOuEmail }).then((r) => r.data),
+  redefinirSenha: (token, novaSenha) => api.post('/auth/redefinir-senha', { token, novaSenha }).then((r) => r.data),
 }
 
 // Usuários (admin)

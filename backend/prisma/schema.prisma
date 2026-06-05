@@ -140,6 +140,11 @@ model Usuario {
   tentativasLogin  Int         @default(0)
   bloqueadoAte     DateTime?
   filaFiltro       String?    // JSON: { verticais[], sistemas[], status[] }
+  email            String?    // email para recuperação de senha
+  funcao           String?    // "Suporte" | "Analista de Implantação" | "Gerente" | "Administrador"
+  ultimoLogin      DateTime?  // última vez que fez login com sucesso
+  recuperacaoToken String?    // token para redefinição de senha
+  recuperacaoExpira DateTime? // expiração do token de recuperação
   municipios       Municipio[]
   chamadosCriados      Chamado[]           @relation("chamadosCriados")
   chamadosResponsavel  Chamado[]           @relation("chamadosResponsavel")

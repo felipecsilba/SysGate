@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { usuariosApi } from '../lib/api'
 import useAuthStore from '../stores/authStore'
 import { confirmClose, isFormDirty } from '../lib/formGuard'
@@ -12,8 +13,14 @@ function formatarData(iso) {
 }
 
 export default function Usuarios() {
+  const navigate = useNavigate()
   const usuarioLogado = useAuthStore((s) => s.usuario)
   const isAdmin = usuarioLogado?.role === 'admin'
+
+  // Não-admin: redirecionar para /perfil
+  useEffect(() => {
+    if (!isAdmin) navigate('/perfil', { replace: true })
+  }, [isAdmin, navigate])
 
   const [usuarios, setUsuarios] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -109,134 +116,22 @@ export default function Usuarios() {
     }
   }
 
-  // ── Visão não-admin: perfil próprio ──────────────────────────────────────
-  if (!isAdmin) {
-    const eu = usuarios[0]
-    return (
-      <div className="flex gap-6 h-full">
-        <div className={`flex flex-col flex-1 min-w-0 transition-all ${painelAberto ? 'max-w-[calc(100%-26rem)]' : ''}`}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Meu Perfil</h1>
-              <p className="text-sm text-gray-500 mt-0.5">
-                Logado como <span className="font-medium">{usuarioLogado?.nome}</span> ({usuarioLogado?.role})
-              </p>
-            </div>
-          </div>
-
-          {erro && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2 mb-4">{erro}</div>
-          )}
-
-          {carregando ? (
-            <div className="card flex items-center justify-center py-12 text-gray-400">Carregando...</div>
-          ) : eu ? (
-            <div className="card p-0 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Login</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Nome</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Membro desde</th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className={`border-b border-gray-100 ${editando?.id === eu.id && painelAberto ? 'bg-sysgate-50' : ''}`}>
-                    <td className="px-4 py-3 font-mono text-gray-800">{eu.login}</td>
-                    <td className="px-4 py-3 text-gray-700">{eu.nome}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ROLE_COLORS[eu.role]}`}>
-                        {ROLE_LABELS[eu.role] || eu.role}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">{formatarData(eu.criadoEm)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button onClick={() => abrirEditar(eu)} className="text-xs text-gray-500 hover:text-sysgate-600 px-2 py-1 rounded hover:bg-gray-100">
-                          Editar nome
-                        </button>
-                        <button onClick={() => abrirSenha(eu)} className="text-xs text-gray-500 hover:text-sysgate-600 px-2 py-1 rounded hover:bg-gray-100">
-                          Alterar Senha
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          ) : null}
-        </div>
-
-        {/* Painel lateral */}
-        {painelAberto && (
-          <div className="w-96 shrink-0">
-            <div className="card h-fit">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="font-semibold text-gray-900">
-                  {modoSenha ? 'Alterar Minha Senha' : 'Editar Meu Nome'}
-                </h2>
-                <button onClick={fecharPainelComGuard} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
-              </div>
-
-              {modoSenha ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="label">Nova Senha *</label>
-                    <div className="relative">
-                      <input
-                        type={mostrarNovaSenha ? 'text' : 'password'}
-                        className="input pr-10"
-                        placeholder="Mínimo 6 caracteres"
-                        value={novaSenha}
-                        onChange={(e) => setNovaSenha(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setMostrarNovaSenha((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        tabIndex={-1}
-                      >
-                        {mostrarNovaSenha ? '🙈' : '👁'}
-                      </button>
-                    </div>
-                  </div>
-                  {erroForm && <p className="text-sm text-red-600">{erroForm}</p>}
-                  <div className="flex gap-2 pt-1">
-                    <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
-                      {salvando ? 'Salvando...' : 'Alterar Senha'}
-                    </button>
-                    <button onClick={fecharPainelComGuard} className="btn btn-secondary text-sm">Cancelar</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="label">Nome *</label>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="Nome de exibição"
-                      value={form.nome}
-                      onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
-                    />
-                  </div>
-                  {erroForm && <p className="text-sm text-red-600">{erroForm}</p>}
-                  <div className="flex gap-2 pt-1">
-                    <button onClick={salvar} disabled={salvando} className="btn btn-primary flex-1 text-sm">
-                      {salvando ? 'Salvando...' : 'Salvar'}
-                    </button>
-                    <button onClick={fecharPainelComGuard} className="btn btn-secondary text-sm">Cancelar</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    )
+  const toggleAdmin = async (u) => {
+    const novaRole = u.role === 'admin' ? 'operador' : 'admin'
+    const msg = novaRole === 'admin'
+      ? `Conceder permissões de administrador para "${u.login}"?`
+      : `Revogar permissões de administrador de "${u.login}"?`
+    if (!window.confirm(msg)) return
+    try {
+      await usuariosApi.atualizar(u.id, { role: novaRole })
+      await carregar()
+    } catch (err) {
+      alert(err.message)
+    }
   }
+
+  // Não-admin: retorna null (redirecionamento acontece no useEffect)
+  if (!isAdmin) return null
 
   // ── Visão admin: CRUD completo ────────────────────────────────────────────
   return (
@@ -308,6 +203,15 @@ export default function Usuarios() {
                       ) : (
                         <button onClick={() => abrirSenha(u)} className="text-xs text-gray-500 hover:text-amber-600 px-2 py-1 rounded hover:bg-amber-50" title="Redefinir senha deste usuário">
                           Resetar Senha
+                        </button>
+                      )}
+                      {u.id !== usuarioLogado?.id && (
+                        <button
+                          onClick={() => toggleAdmin(u)}
+                          title={u.role === 'admin' ? 'Revogar admin' : 'Tornar admin'}
+                          className={`text-xs px-2 py-1 rounded transition-colors ${u.role === 'admin' ? 'text-purple-600 hover:text-purple-800 hover:bg-purple-50' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}
+                        >
+                          {u.role === 'admin' ? 'Revogar Admin' : 'Tornar Admin'}
                         </button>
                       )}
                       <button

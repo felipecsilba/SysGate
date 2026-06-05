@@ -1,7 +1,9 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 const rateLimit = require('express-rate-limit')
+const nodemailer = require('nodemailer')
 const { PrismaClient } = require('@prisma/client')
 const autenticar = require('../middleware/autenticar')
 
@@ -17,6 +19,29 @@ const loginRateLimit = rateLimit({
   legacyHeaders: false,
   message: { error: 'Muitas tentativas de login. Aguarde 15 minutos.' },
 })
+
+// Rate limiter para recuperação de senha: 5 tentativas / 15min por IP
+const recuperacaoRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas. Aguarde 15 minutos.' },
+})
+
+// ── Helper: criar transporter nodemailer ──────────────────────────────────────
+function criarTransporter() {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) return null
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  })
+}
 
 // POST /api/auth/login
 router.post('/login', loginRateLimit, async (req, res) => {
@@ -70,10 +95,10 @@ router.post('/login', loginRateLimit, async (req, res) => {
       return res.status(401).json({ error: 'Usuário inativo. Contate o administrador.' })
     }
 
-    // Login bem-sucedido — resetar contador
+    // Login bem-sucedido — resetar contador + gravar ultimoLogin
     await prisma.usuario.update({
       where: { id: usuario.id },
-      data: { tentativasLogin: 0, bloqueadoAte: null },
+      data: { tentativasLogin: 0, bloqueadoAte: null, ultimoLogin: new Date() },
     })
 
     const expiresIn = lembrar ? '30d' : (process.env.JWT_EXPIRES_IN || '8h')
@@ -99,7 +124,11 @@ router.get('/me', autenticar, async (req, res) => {
   try {
     const usuario = await prisma.usuario.findUnique({
       where: { id: req.usuario.id },
-      select: { id: true, login: true, nome: true, role: true, filaFiltro: true, criadoEm: true },
+      select: {
+        id: true, login: true, nome: true, role: true,
+        email: true, funcao: true, ultimoLogin: true,
+        filaFiltro: true, criadoEm: true,
+      },
     })
     if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' })
     res.json(usuario)
@@ -133,6 +162,119 @@ router.post('/registrar', async (req, res) => {
     if (err.code === 'P2002') {
       return res.status(400).json({ error: `Login "${req.body.login}" já está em uso` })
     }
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/auth/esqueci-senha — solicita link de recuperação
+router.post('/esqueci-senha', recuperacaoRateLimit, async (req, res) => {
+  try {
+    const { loginOuEmail } = req.body
+    if (!loginOuEmail) {
+      return res.status(400).json({ error: 'Login ou email são obrigatórios' })
+    }
+
+    // Busca por login OU email — sempre retorna a mesma resposta para não vazar dados
+    const usuario = await prisma.usuario.findFirst({
+      where: {
+        OR: [
+          { login: loginOuEmail },
+          { email: loginOuEmail },
+        ],
+        ativo: true,
+      },
+    })
+
+    // Resposta genérica mesmo se não encontrado (evita enumeração)
+    const MSG_PADRAO = { ok: true, mensagem: 'Se o login/email existir em nosso sistema, um link de recuperação foi enviado.' }
+
+    if (!usuario) return res.json(MSG_PADRAO)
+    if (!usuario.email) {
+      // Usuário existe mas não tem email cadastrado
+      return res.status(400).json({ error: 'Este usuário não possui email cadastrado. Solicite ao administrador que redefina sua senha.' })
+    }
+
+    // Gerar token seguro (64 hex chars = 32 bytes)
+    const token = crypto.randomBytes(32).toString('hex')
+    const expira = new Date(Date.now() + 60 * 60 * 1000) // 1 hora
+
+    await prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { recuperacaoToken: token, recuperacaoExpira: expira },
+    })
+
+    // Enviar email se SMTP configurado
+    const transporter = criarTransporter()
+    if (transporter) {
+      const appUrl = process.env.APP_URL || 'http://localhost:3000'
+      const link = `${appUrl}/redefinir-senha?token=${token}`
+      const remetente = process.env.SMTP_FROM || process.env.SMTP_USER
+      await transporter.sendMail({
+        from: remetente,
+        to: usuario.email,
+        subject: 'Redefinição de senha — Krakion Labs',
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+            <h2 style="color:#4f46e5">Redefinição de senha</h2>
+            <p>Olá, <strong>${usuario.nome}</strong>!</p>
+            <p>Você solicitou a redefinição de senha. Clique no botão abaixo para criar uma nova senha:</p>
+            <p style="margin:24px 0">
+              <a href="${link}" style="background:#4f46e5;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">
+                Redefinir minha senha
+              </a>
+            </p>
+            <p style="color:#888;font-size:13px">Este link expira em <strong>1 hora</strong>.</p>
+            <p style="color:#888;font-size:13px">Se você não solicitou isso, ignore este email.</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+            <p style="color:#aaa;font-size:11px">Krakion Labs — Sistema Interno</p>
+          </div>
+        `,
+      })
+    }
+
+    res.json(MSG_PADRAO)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/auth/redefinir-senha — valida token e redefine senha
+router.post('/redefinir-senha', recuperacaoRateLimit, async (req, res) => {
+  try {
+    const { token, novaSenha } = req.body
+    if (!token || !novaSenha) {
+      return res.status(400).json({ error: 'Token e nova senha são obrigatórios' })
+    }
+    if (novaSenha.length < 6) {
+      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 6 caracteres' })
+    }
+
+    const usuario = await prisma.usuario.findFirst({
+      where: {
+        recuperacaoToken: token,
+        recuperacaoExpira: { gt: new Date() },
+        ativo: true,
+      },
+    })
+
+    if (!usuario) {
+      return res.status(400).json({ error: 'Link de recuperação inválido ou expirado. Solicite um novo.' })
+    }
+
+    const senhaHash = await bcrypt.hash(novaSenha, 10)
+    await prisma.usuario.update({
+      where: { id: usuario.id },
+      data: {
+        senhaHash,
+        recuperacaoToken: null,
+        recuperacaoExpira: null,
+        tentativasLogin: 0,
+        bloqueadoAte: null,
+      },
+    })
+
+    res.json({ ok: true, mensagem: 'Senha redefinida com sucesso! Faça login com a nova senha.' })
+  } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })

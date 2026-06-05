@@ -7,7 +7,7 @@ const { exigirAdmin } = require('../middleware/autenticar')
 const router = express.Router()
 const prisma = new PrismaClient()
 
-const CAMPOS_PUBLICOS = { id: true, login: true, nome: true, role: true, ativo: true, criadoEm: true, atualizadoEm: true }
+const CAMPOS_PUBLICOS = { id: true, login: true, nome: true, role: true, ativo: true, email: true, funcao: true, ultimoLogin: true, criadoEm: true, atualizadoEm: true }
 
 // Todos os endpoints exigem autenticação
 router.use(autenticar)
@@ -71,15 +71,17 @@ router.put('/:id', async (req, res) => {
       return res.status(403).json({ error: 'Acesso negado' })
     }
 
-    const { nome, role, ativo, filaFiltro } = req.body
+    const { nome, role, ativo, filaFiltro, email, funcao } = req.body
 
     if (!isAdmin) {
-      // Não-admin: só pode alterar o próprio nome e filaFiltro
+      // Não-admin: só pode alterar o próprio nome, email, funcao e filaFiltro
       const usuario = await prisma.usuario.update({
         where: { id },
         data: {
           ...(nome       !== undefined && { nome }),
           ...(filaFiltro !== undefined && { filaFiltro }),
+          ...(email      !== undefined && { email: email || null }),
+          ...(funcao     !== undefined && { funcao: funcao || null }),
         },
         select: { ...CAMPOS_PUBLICOS, filaFiltro: true },
       })
@@ -104,6 +106,8 @@ router.put('/:id', async (req, res) => {
         ...(role       !== undefined && { role }),
         ...(ativo      !== undefined && { ativo }),
         ...(filaFiltro !== undefined && { filaFiltro }),
+        ...(email      !== undefined && { email: email || null }),
+        ...(funcao     !== undefined && { funcao: funcao || null }),
       },
       select: { ...CAMPOS_PUBLICOS, filaFiltro: true },
     })

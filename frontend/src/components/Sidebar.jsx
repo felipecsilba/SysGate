@@ -102,6 +102,12 @@ const ICONS = {
       <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
     </SvgIcon>
   ),
+  perfil: (
+    <SvgIcon>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </SvgIcon>
+  ),
 }
 
 // ─── Helpers de estilo ───────────────────────────────────────────────────────
@@ -230,11 +236,11 @@ export default function Sidebar() {
             <NavItem to="/usuarios" label="Usuários" icon={ICONS.usuarios} />
           </NavGroup>
         ) : (
-          <>
-            <NavItem to="/municipios" label="Central de Tokens" icon={ICONS.municipios} />
-            <NavItem to="/usuarios" label="Meu Perfil" icon={ICONS.usuarios} />
-          </>
+          <NavItem to="/municipios" label="Central de Tokens" icon={ICONS.municipios} />
         )}
+
+        {/* Meu Perfil — visível para todos */}
+        <NavItem to="/perfil" label="Meu Perfil" icon={ICONS.perfil} />
       </nav>
 
       {/* Footer */}
