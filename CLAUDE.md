@@ -125,7 +125,7 @@ krakion/
         └── pages/
             ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas
             ├── Usuarios.jsx       # Admin: CRUD completo + resetar senha de outros; Não-admin: só próprio perfil (nome + senha)
-            ├── Dashboard.jsx      # Cards de módulos com SVG icons + município ativo + últimas requisições
+            ├── Dashboard.jsx      # Tela "Início": saudação personalizada (bom dia/tarde/noite + nome + data) + 4 cards de stats verticais (Minha Fila, Sem Responsável, Em Aberto, Portfólio) + tabela Minha Fila (5 chamados atribuídos ao usuário, com status pill, prioridade, município, tempo relativo) + Acesso Rápido (grade 2x3 com 6 módulos principais) + Notas Fixadas (condicional — exibido apenas se houver notas fixadas); removidos: card município ativo e tabela últimas requisições
             ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação — dados isolados por usuário
             ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin; botão "Catálogo" (admin) abre ModalCatalogo para gerenciar verticais Betha
             ├── Sandbox/
