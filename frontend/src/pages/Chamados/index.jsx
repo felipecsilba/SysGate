@@ -466,7 +466,7 @@ export default function Chamados() {
                         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                           Anexos ({detalhe.anexos?.length || 0})
                         </h3>
-                        <div>
+                        <div className="flex flex-col items-end gap-0.5">
                           <input type="file" multiple ref={fileAnexoRef} onChange={handleAnexoUpload} className="hidden" />
                           <button onClick={() => { setErroAnexo(''); fileAnexoRef.current?.click() }} disabled={uploadAnexo}
                             className="flex items-center gap-1 text-xs text-sysgate-600 font-medium hover:underline disabled:opacity-50">
@@ -475,6 +475,7 @@ export default function Chamados() {
                             </svg>
                             {uploadAnexo ? 'Enviando…' : 'Anexar Arquivo'}
                           </button>
+                          <span className="text-[10px] text-gray-400">JPG, PNG, PDF · máx. {LIMITE_ARQUIVO_MB} MB</span>
                         </div>
                       </div>
                       {erroAnexo && (
