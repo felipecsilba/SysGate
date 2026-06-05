@@ -65,9 +65,10 @@ const IcoClock = () => (
   </svg>
 )
 
-const IcoShield = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+const IcoCamera = () => (
+  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 )
 
@@ -93,6 +94,18 @@ const IcoEye = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+)
+
+const IcoLogin = () => (
+  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+  </svg>
+)
+
+const IcoShield = () => (
+  <svg className="w-12 h-12 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
   </svg>
 )
 
@@ -193,7 +206,7 @@ export default function MeuPerfil() {
   const iniciais = avatarIniciais(perfil?.nome)
 
   return (
-    <div className="max-w-4xl space-y-5">
+    <div className="space-y-5">
 
       {/* ── Cabeçalho ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">
@@ -205,58 +218,63 @@ export default function MeuPerfil() {
       </div>
 
       {/* ── Card de identidade ─────────────────────────────────────────────── */}
-      <div className="card flex items-center gap-5">
+      <div className="card flex items-center gap-6">
 
-        {/* Avatar circular */}
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-sm shrink-0"
-          style={{ backgroundColor: cor }}
-        >
-          {iniciais}
+        {/* Avatar com ícone câmera */}
+        <div className="relative shrink-0">
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-sm"
+            style={{ backgroundColor: cor }}
+          >
+            {iniciais}
+          </div>
+          <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center text-gray-500">
+            <IcoCamera />
+          </div>
         </div>
 
-        {/* Info principal */}
+        {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-lg font-bold text-gray-900 truncate">{perfil?.nome}</span>
+            <span className="text-xl font-bold text-gray-900">{perfil?.nome}</span>
             {perfil?.funcao && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-sysgate-50 text-sysgate-700 border border-sysgate-100 uppercase tracking-wide">
+              <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-sysgate-100 text-sysgate-700 uppercase tracking-wide">
                 {perfil.funcao}
               </span>
             )}
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wide border ${
+            <span className={`px-2 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wide ${
               perfil?.role === 'admin'
-                ? 'bg-purple-50 text-purple-700 border-purple-100'
-                : 'bg-blue-50 text-blue-700 border-blue-100'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-blue-100 text-blue-700'
             }`}>
               {perfil?.role === 'admin' ? 'Administrador' : 'Operador'}
             </span>
           </div>
-          <p className="text-sm text-gray-400 font-mono mt-0.5">@{perfil?.login}</p>
-          <div className="flex items-center gap-5 mt-3">
+          <p className="text-sm text-gray-400 mt-0.5">{perfil?.login}</p>
+
+          <div className="flex items-start gap-8 mt-4">
             <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Membro desde</p>
-              <p className="text-sm font-semibold text-gray-700 mt-0.5">{dataFormatada(perfil?.criadoEm)}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">Membro desde</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">{dataFormatada(perfil?.criadoEm)}</p>
             </div>
-            <div className="w-px h-8 bg-gray-100" />
+            <div className="w-px h-8 bg-gray-150 self-center" />
             <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Último acesso</p>
-              <p className="text-sm font-semibold text-gray-700 mt-0.5">{tempoRelativo(perfil?.ultimoLogin)}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">Último acesso</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">{tempoRelativo(perfil?.ultimoLogin)}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Grid principal — 3 + 2 colunas ────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+      {/* ── Grid 3+2 colunas — full width ──────────────────────────────────── */}
+      <div className="grid grid-cols-5 gap-5 items-start">
 
         {/* ── Coluna esquerda (3/5) — Informações pessoais ─────────────────── */}
-        <div className="lg:col-span-3 card space-y-5">
+        <div className="col-span-3 card space-y-5">
 
-          {/* Cabeçalho da seção */}
           <div className="flex items-center gap-2 pb-4 border-b border-gray-100">
             <span className="text-sysgate-600"><IcoUser /></span>
-            <h2 className="font-semibold text-gray-900 text-sm">Informações pessoais</h2>
+            <h2 className="font-semibold text-gray-900">Informações pessoais</h2>
           </div>
 
           {/* Login + Nome — 2 colunas */}
@@ -315,7 +333,6 @@ export default function MeuPerfil() {
             </select>
           </div>
 
-          {/* Feedback */}
           {erroDados && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">
               {erroDados}
@@ -327,7 +344,6 @@ export default function MeuPerfil() {
             </div>
           )}
 
-          {/* Salvar */}
           <div className="flex justify-end pt-1">
             <button
               onClick={salvarDados}
@@ -340,14 +356,14 @@ export default function MeuPerfil() {
           </div>
         </div>
 
-        {/* ── Coluna direita (2/5) — Segurança + Atividades ────────────────── */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* ── Coluna direita (2/5) ──────────────────────────────────────────── */}
+        <div className="col-span-2 space-y-4">
 
           {/* Card Segurança */}
           <div className="card space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <span className="text-sysgate-600"><IcoLock /></span>
-              <h2 className="font-semibold text-gray-900 text-sm">Segurança</h2>
+              <h2 className="font-semibold text-gray-900">Segurança</h2>
             </div>
 
             {sucessoSenha && (
@@ -416,17 +432,14 @@ export default function MeuPerfil() {
           <div className="card space-y-3">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <span className="text-sysgate-600"><IcoClock /></span>
-              <h2 className="font-semibold text-gray-900 text-sm">Atividades</h2>
+              <h2 className="font-semibold text-gray-900">Atividades</h2>
             </div>
 
-            {/* Último login */}
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-sysgate-50 flex items-center justify-center shrink-0">
-                <svg className="w-3.5 h-3.5 text-sysgate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
+              <div className="w-7 h-7 rounded-full bg-sysgate-50 flex items-center justify-center shrink-0">
+                <IcoLogin />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">Login efetuado</p>
                 <p className="text-xs text-gray-400">{tempoRelativo(perfil?.ultimoLogin)}</p>
               </div>
@@ -434,14 +447,13 @@ export default function MeuPerfil() {
 
             <div className="border-t border-gray-50" />
 
-            {/* Conta criada */}
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-violet-50 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-full bg-violet-50 flex items-center justify-center shrink-0">
                 <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">Conta criada</p>
                 <p className="text-xs text-gray-400">{dataFormatada(perfil?.criadoEm)}</p>
               </div>
@@ -451,14 +463,24 @@ export default function MeuPerfil() {
         </div>
       </div>
 
-      {/* ── Banner proteção de dados — fundo suave ─────────────────────────── */}
-      <div className="rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-violet-50 px-6 py-5 flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-white border border-indigo-100 shadow-sm flex items-center justify-center text-sysgate-600 shrink-0">
+      {/* ── Banner proteção de dados ────────────────────────────────────────── */}
+      <div
+        className="rounded-xl px-8 py-8 flex items-center gap-6 relative overflow-hidden"
+        style={{
+          backgroundImage: [
+            'repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(99,102,241,0.04) 10px, rgba(99,102,241,0.04) 11px)',
+            'linear-gradient(135deg, #f5f3ff 0%, #eef2ff 100%)',
+          ].join(', '),
+        }}
+      >
+        {/* Escudo decorativo no fundo */}
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none select-none text-sysgate-400">
           <IcoShield />
         </div>
+
         <div>
-          <p className="text-sm font-semibold text-gray-900">Proteção de Dados Krakion</p>
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+          <p className="text-lg font-bold text-gray-900">Proteção de Dados Krakion</p>
+          <p className="text-sm text-gray-500 mt-1 leading-relaxed">
             Seu acesso é monitorado e criptografado para garantir a máxima segurança de todas as operações.
           </p>
         </div>
