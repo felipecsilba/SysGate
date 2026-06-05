@@ -48,6 +48,7 @@ krakion/
 │   ├── portfolio.md
 │   ├── chamados.md
 │   ├── notas.md               # Módulo Notas (Google Keep): modelos, API, comportamentos
+│   ├── usuarios.md            # Módulo Usuários e Perfil: schema, rotas, recuperação de senha, MeuPerfil
 │   └── analisador-json.md
 ├── skills/                    # Referências de domínio e processo
 │   ├── backend.md
@@ -67,9 +68,9 @@ krakion/
 │       └── verification-before-completion.md
 ├── backend/
 │   ├── package.json
-│   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET
+│   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL
 │   ├── prisma/
-│   │   ├── schema.prisma      # 23 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento
+│   │   ├── schema.prisma      # 23 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -77,8 +78,8 @@ krakion/
 │       ├── middleware/
 │       │   └── autenticar.js  # Verifica JWT Bearer; injeta req.usuario; exporta exigirAdmin
 │       └── routes/
-│           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha) + /logout + /me + /registrar
-│           ├── usuarios.js    # CRUD usuários — GET/PUT/PATCH permitidos ao próprio usuário; POST/DELETE somente admin
+│           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha + atualiza ultimoLogin) + /logout + /me + /registrar + /esqueci-senha (rate limit 5/15min) + /redefinir-senha
+│           ├── usuarios.js    # CRUD usuários — GET/PUT/PATCH permitidos ao próprio usuário; POST/DELETE somente admin; PUT aceita email/funcao além de nome/filaFiltro
 │           ├── municipios.js  # CRUD (sem codigoIBGE) + PATCH /:id/ativar + tokens por sistema — ESCOPO DO USUÁRIO (cada usuário vê só os seus)
 │           ├── sistemas.js    # CRUD sistemas — leitura pública; escrita/exclusão somente admin
 │           ├── endpoints.js   # CRUD + importar JSON + Swagger parser + fetch-swagger + limpar-tudo — leitura pública; escrita/exclusão somente admin
@@ -102,16 +103,16 @@ krakion/
     │   └── favicon.png        # Favicon 256px gerado da nova-logo
     └── src/
         ├── main.jsx
-        ├── App.jsx            # BrowserRouter: /login pública + PrivateRoute; todas as páginas carregadas com React.lazy + Suspense (code splitting por rota)
+        ├── App.jsx            # BrowserRouter: /login e /redefinir-senha públicas + PrivateRoute; rota /perfil protegida; todas as páginas carregadas com React.lazy + Suspense (code splitting por rota)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
-        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi, chamadosApi, solicitantesApi e notasApi
+        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi, chamadosApi, solicitantesApi e notasApi; authApi inclui esquecerSenha() e redefinirSenha()
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: krakion-municipio)
         │   └── authStore.js       # Zustand + persist (krakion-auth) — token + usuario; suporta lembrar (30d); logout limpa krakion-municipio do localStorage
         ├── components/
         │   ├── Layout.jsx         # Sidebar + barra acento gradiente no topo + header: chip usuário + botão Sair
-        │   ├── Sidebar.jsx        # NavLinks com SVG icons; grupo Ferramentas: Scripts, Analisador JSON, Notas, Sandbox, Histórico; admin vê grupo "Configuração" completo (Sistemas + Central de Tokens + Usuários); não-admin vê apenas "Central de Tokens" e "Meu Perfil" (sem o grupo)
+        │   ├── Sidebar.jsx        # NavLinks com SVG icons; grupo Ferramentas: Scripts, Analisador JSON, Notas, Sandbox, Histórico; admin vê grupo "Configuração" completo (Sistemas + Central de Tokens + Usuários); não-admin vê apenas "Central de Tokens"; "Meu Perfil" visível para todos os usuários (fora do grupo)
         │   ├── PrivateRoute.jsx   # Redireciona para /login se não autenticado; AdminRoute para role
         │   ├── MunicipioBadge.jsx # Badge do município ativo (alerta vermelho para produção)
         │   ├── SwaggerImport.jsx  # Modal: fetch por URL / upload arquivo / specs salvas / limpar tudo
@@ -123,8 +124,10 @@ krakion/
         │   ├── StatusBadge.jsx    # Badge colorido por status code HTTP (2xx=verde, 3xx=azul, 4xx=amarelo, 5xx=vermelho)
         │   └── Toast.jsx          # Notificação inline reutilizável (success/info/warning/error)
         └── pages/
-            ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas
-            ├── Usuarios.jsx       # Admin: CRUD completo + resetar senha de outros; Não-admin: só próprio perfil (nome + senha)
+            ├── Login.jsx          # Layout Krakion Labs; hCaptcha após 3 falhas; modal cadastro 2 etapas; link "Esqueci minha senha" abre ModalEsqueceuSenha (campo loginOuEmail + tela de confirmação)
+            ├── MeuPerfil.jsx      # Tela /perfil — full-width; card de identidade (avatar com iniciais + câmera, nome, badges funcao/role, membro desde, último acesso); form Informações pessoais (Login readonly + Nome / Email / Função); card Segurança (alterar senha inline); card Atividades; banner Proteção de Dados
+            ├── RedefinirSenha.jsx # Rota pública /redefinir-senha?token=... — lê token via useSearchParams, formulário nova senha, tela de sucesso; usa authApi.redefinirSenha()
+            ├── Usuarios.jsx       # Admin: CRUD completo + toggleAdmin (alterna role admin↔operador); Não-admin: redireciona para /perfil via useEffect + useNavigate
             ├── Dashboard.jsx      # Tela "Início": saudação personalizada (bom dia/tarde/noite + nome + data) + 4 cards de stats verticais (Minha Fila, Sem Responsável, Em Aberto, Portfólio) + tabela Minha Fila (5 chamados atribuídos ao usuário, com status pill, prioridade, município, tempo relativo) + Acesso Rápido (grade 2x3 com 6 módulos principais) + Notas Fixadas (condicional — exibido apenas se houver notas fixadas); removidos: card município ativo e tabela últimas requisições
             ├── Municipios.jsx     # CRUD + painel lateral de tokens com gradiente + ícones de ação — dados isolados por usuário
             ├── Sistemas.jsx       # CRUD + painel detalhe com 3 abas + busca de endpoints + ícones de ação — edição/exclusão/import visíveis só para admin; botão "Catálogo" (admin) abre ModalCatalogo para gerenciar verticais Betha
@@ -195,24 +198,26 @@ docker-compose up --build
 > Todas as rotas abaixo de `/api/auth` exigem header `Authorization: Bearer <token>`.
 
 ### Autenticação (públicas)
-| Método | Rota                  | Descrição                                                        |
-|--------|-----------------------|------------------------------------------------------------------|
-| POST   | /api/auth/login       | Login — retorna JWT (rate limit 10/15min + lockout)              |
-| POST   | /api/auth/logout      | Logout (stateless — cliente descarta token)                      |
-| GET    | /api/auth/me          | Retorna dados do usuário logado (requer token)                   |
-| POST   | /api/auth/registrar   | Auto-cadastro: cria conta com `ativo: false`, aguarda aprovação  |
-| GET    | /api/health           | Health check                                                     |
+| Método | Rota                        | Descrição                                                                                      |
+|--------|-----------------------------|-----------------------------------------------------------------------------------------------|
+| POST   | /api/auth/login             | Login — retorna JWT (rate limit 10/15min + lockout); atualiza `ultimoLogin`                   |
+| POST   | /api/auth/logout            | Logout (stateless — cliente descarta token)                                                   |
+| GET    | /api/auth/me                | Retorna dados do usuário logado incl. `email`, `funcao`, `ultimoLogin` (requer token)         |
+| POST   | /api/auth/registrar         | Auto-cadastro: cria conta com `ativo: false`, aguarda aprovação                               |
+| POST   | /api/auth/esqueci-senha     | Gera token de recuperação e envia email (rate limit 5/15min). Sempre retorna sucesso genérico |
+| POST   | /api/auth/redefinir-senha   | Valida token + expiry, atualiza senha, limpa `recuperacaoToken`/`recuperacaoExpira`           |
+| GET    | /api/health                 | Health check                                                                                   |
 
 ### Usuários
 > **Admin**: acesso completo. **Não-admin**: `GET` retorna só si mesmo; `PUT` e `PATCH /senha` permitidos apenas no próprio id; `POST` e `DELETE` bloqueados (403).
 
-| Método | Rota                        | Descrição                                                              |
-|--------|-----------------------------|------------------------------------------------------------------------|
-| GET    | /api/usuarios               | Admin: lista todos; não-admin: retorna apenas o próprio registro       |
-| POST   | /api/usuarios               | Cria usuário inativo — **somente admin**                               |
-| PUT    | /api/usuarios/:id           | Admin: atualiza nome/role/ativo; não-admin: só próprio nome + `filaFiltro` |
-| PATCH  | /api/usuarios/:id/senha     | Admin: redefine qualquer senha; não-admin: só a própria                |
-| DELETE | /api/usuarios/:id           | Remove — **somente admin** (impede auto-exclusão e último admin)       |
+| Método | Rota                        | Descrição                                                                                        |
+|--------|-----------------------------|--------------------------------------------------------------------------------------------------|
+| GET    | /api/usuarios               | Admin: lista todos; não-admin: retorna apenas o próprio registro                                 |
+| POST   | /api/usuarios               | Cria usuário inativo — **somente admin**                                                         |
+| PUT    | /api/usuarios/:id           | Admin: atualiza nome/role/ativo/email/funcao; não-admin: só nome, email, funcao e `filaFiltro` do próprio id |
+| PATCH  | /api/usuarios/:id/senha     | Admin: redefine qualquer senha; não-admin: só a própria                                          |
+| DELETE | /api/usuarios/:id           | Remove — **somente admin** (impede auto-exclusão e último admin)                                 |
 
 ### Sistemas
 > **Leitura pública** (qualquer autenticado), **escrita restrita a admin**.
@@ -374,6 +379,11 @@ docker-compose up --build
 - **Contas novas**: criadas com `ativo: false`; admin ativa via `PUT /api/usuarios/:id`
 - **Logout**: limpa `localStorage.removeItem('krakion-municipio')` para isolar sessões no mesmo browser
 - **Credenciais seed**: `admin / admin123` — trocar após primeiro acesso
+- **Recuperação de senha**: `POST /auth/esqueci-senha` aceita `loginOuEmail`; gera token hex 64 chars com expiry 1h; envia email só se SMTP configurado no `.env`; sempre retorna 200 com mensagem genérica. `POST /auth/redefinir-senha` valida token e expiry, atualiza senha, limpa campos de recuperação.
+- **funcao vs role**: `role` (`admin`/`operador`) controla permissões de acesso; `funcao` (`Suporte`, `Analista de Implantação`, `Gerente`, `Administrador`) é apenas label de exibição, sem efeito em permissões.
+- **ultimoLogin**: atualizado automaticamente em cada `POST /auth/login` com sucesso. Exibido na tela Meu Perfil com tempo relativo.
+- **MeuPerfil.jsx**: tela full-width em `/perfil`, acessível a todos. Avatar gerado com iniciais e cor determinística por hash do nome. Ícone câmera decorativo (sem upload). Alteração de senha inline (expande no card Segurança). Campos `email` e `funcao` editáveis pelo próprio usuário.
+- **toggleAdmin em Usuarios.jsx**: botão "Tornar Admin"/"Revogar Admin" alterna `role` entre `admin` e `operador`. Visível apenas para admin, e não aparece na própria linha do usuário logado.
 
 ## Identidade Visual — Krakion Labs
 
