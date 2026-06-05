@@ -44,7 +44,7 @@ function dataFormatada(iso) {
   return new Date(iso).toLocaleDateString('pt-BR')
 }
 
-// ── Ícones inline ─────────────────────────────────────────────────────────────
+// ── Ícones ────────────────────────────────────────────────────────────────────
 
 const IcoUser = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -66,7 +66,7 @@ const IcoClock = () => (
 )
 
 const IcoShield = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
   </svg>
 )
@@ -87,6 +87,18 @@ const IcoEye = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+)
+
+const IcoCalendar = () => (
+  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+)
+
+const IcoLogin = () => (
+  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
   </svg>
 )
 
@@ -187,7 +199,7 @@ export default function MeuPerfil() {
   const iniciais = avatarIniciais(perfil?.nome)
 
   return (
-    <div className="max-w-5xl space-y-5">
+    <div className="max-w-4xl space-y-5">
 
       {/* ── Cabeçalho ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">
@@ -198,67 +210,79 @@ export default function MeuPerfil() {
         </div>
       </div>
 
-      {/* ── Card de identidade ─────────────────────────────────────────────── */}
-      <div className="card">
-        <div className="flex items-center gap-6">
-          {/* Avatar */}
-          <div className="relative shrink-0">
+      {/* ── Card de identidade (banner + avatar sobreposto) ─────────────────── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* Banner */}
+        <div className="h-20 bg-gradient-to-r from-sysgate-600/20 via-indigo-500/15 to-violet-600/20" />
+
+        {/* Conteúdo */}
+        <div className="px-6 pb-5">
+          {/* Avatar + Info row */}
+          <div className="flex items-start gap-4">
+            {/* Avatar sobrepõe o banner */}
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+              className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold ring-4 ring-white shadow-md shrink-0 -mt-10"
               style={{ backgroundColor: cor }}
             >
               {iniciais}
             </div>
-          </div>
 
-          {/* Nome + badges */}
-          <div className="flex-1 min-w-0">
-            <p className="text-xl font-bold text-gray-900 truncate">{perfil?.nome}</p>
-            <p className="text-sm text-gray-400 font-mono mt-0.5">@{perfil?.login}</p>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {perfil?.funcao && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sysgate-100 text-sysgate-700 uppercase tracking-wide">
-                  {perfil.funcao}
+            {/* Nome + login + badges */}
+            <div className="pt-2 flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-gray-900 truncate leading-tight">{perfil?.nome}</h2>
+              <p className="text-sm text-gray-400 font-mono mt-0.5">@{perfil?.login}</p>
+              <div className="flex items-center gap-2 flex-wrap mt-2">
+                {perfil?.funcao && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sysgate-100 text-sysgate-700 uppercase tracking-wide">
+                    {perfil.funcao}
+                  </span>
+                )}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
+                  perfil?.role === 'admin'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {perfil?.role === 'admin' ? 'Administrador' : 'Operador'}
                 </span>
-              )}
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
-                perfil?.role === 'admin'
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-blue-100 text-blue-700'
-              }`}>
-                {perfil?.role === 'admin' ? 'Administrador' : 'Operador'}
-              </span>
+              </div>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="hidden sm:flex items-center gap-8 shrink-0">
-            <div className="text-center">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Membro desde</p>
-              <p className="text-sm font-semibold text-gray-700 mt-0.5">{dataFormatada(perfil?.criadoEm)}</p>
+          {/* Stats em linha separada */}
+          <div className="grid grid-cols-2 gap-0 mt-5 pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 pr-4">
+              <div className="text-gray-400"><IcoCalendar /></div>
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Membro desde</p>
+                <p className="text-sm font-semibold text-gray-700 mt-0.5">{dataFormatada(perfil?.criadoEm)}</p>
+              </div>
             </div>
-            <div className="w-px h-10 bg-gray-100" />
-            <div className="text-center">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Último acesso</p>
-              <p className="text-sm font-semibold text-gray-700 mt-0.5">{tempoRelativo(perfil?.ultimoLogin)}</p>
+            <div className="flex items-center gap-2 pl-4 border-l border-gray-100">
+              <div className="text-gray-400"><IcoLogin /></div>
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Último acesso</p>
+                <p className="text-sm font-semibold text-gray-700 mt-0.5">{tempoRelativo(perfil?.ultimoLogin)}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Grid de 2 colunas ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+      {/* ── Grid de 2 colunas equilibradas ─────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
-        {/* Coluna esquerda (3/5) — Informações pessoais */}
-        <div className="lg:col-span-3 card">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="text-sysgate-600"><IcoUser /></div>
+        {/* ── Coluna esquerda — Informações pessoais ───────────────────────── */}
+        <div className="card">
+          <div className="flex items-center gap-2 mb-5 pb-4 border-b border-gray-100">
+            <div className="w-7 h-7 rounded-lg bg-sysgate-50 flex items-center justify-center text-sysgate-600">
+              <IcoUser />
+            </div>
             <h2 className="font-semibold text-gray-900">Informações pessoais</h2>
           </div>
 
           <div className="space-y-4">
-            {/* Login + Nome em grid 2 cols */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Login + Nome em 2 colunas */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label">
                   Login
@@ -266,13 +290,13 @@ export default function MeuPerfil() {
                 </label>
                 <input
                   type="text"
-                  className="input bg-gray-50 text-gray-500 cursor-not-allowed font-mono"
+                  className="input bg-gray-50 text-gray-500 cursor-not-allowed font-mono text-sm"
                   value={perfil?.login || ''}
                   readOnly
                 />
               </div>
               <div>
-                <label className="label">Nome completo *</label>
+                <label className="label">Nome completo <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   className="input"
@@ -283,88 +307,91 @@ export default function MeuPerfil() {
               </div>
             </div>
 
-            <div>
-              <label className="label">
-                Email
-                <span className="text-xs text-gray-400 font-normal ml-1">— para recuperação de senha</span>
-              </label>
-              <input
-                type="email"
-                className="input"
-                placeholder="seu@email.com"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              />
-            </div>
-
-            <div>
-              <label className="label">Função</label>
-              <select
-                className="input"
-                value={form.funcao}
-                onChange={(e) => setForm((f) => ({ ...f, funcao: e.target.value }))}
-              >
-                <option value="">— Selecionar função —</option>
-                {FUNCOES.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
+            {/* Email + Função em 2 colunas */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">Email</label>
+                <input
+                  type="email"
+                  className="input"
+                  placeholder="seu@email.com"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label">Função</label>
+                <select
+                  className="input"
+                  value={form.funcao}
+                  onChange={(e) => setForm((f) => ({ ...f, funcao: e.target.value }))}
+                >
+                  <option value="">— Selecionar —</option>
+                  {FUNCOES.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {erroDados && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">
                 {erroDados}
               </div>
             )}
             {sucesso && (
-              <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-3 py-2">
+              <div className="bg-green-50 border border-green-200 text-green-700 text-xs rounded-lg px-3 py-2">
                 {sucesso}
               </div>
             )}
 
-            <button
-              onClick={salvarDados}
-              disabled={salvandoDados}
-              className="btn btn-primary text-sm"
-            >
-              {salvandoDados ? 'Salvando...' : 'Salvar informações'}
-            </button>
+            <div className="pt-1">
+              <button
+                onClick={salvarDados}
+                disabled={salvandoDados}
+                className="btn btn-primary text-sm"
+              >
+                {salvandoDados ? 'Salvando...' : 'Salvar informações'}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Coluna direita (2/5) — Segurança + Atividades */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* ── Coluna direita — Segurança + Atividades ─────────────────────── */}
+        <div className="space-y-4">
 
           {/* Card Segurança */}
           <div className="card">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="text-sysgate-600"><IcoLock /></div>
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100">
+              <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                <IcoLock />
+              </div>
               <h2 className="font-semibold text-gray-900">Segurança</h2>
             </div>
 
             {sucessoSenha && (
-              <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-3 py-2 mb-3">
+              <div className="bg-green-50 border border-green-200 text-green-700 text-xs rounded-lg px-3 py-2 mb-3">
                 Senha alterada com sucesso!
               </div>
             )}
 
             {!senhaAberta ? (
-              <>
-                <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-                  Mantenha sua conta protegida alterando sua senha regularmente.
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Altere sua senha periodicamente para manter a conta segura.
                 </p>
                 <button
                   onClick={() => { setSenhaAberta(true); setErroSenha(''); setNovaSenha('') }}
-                  className="btn btn-secondary text-sm w-full flex items-center justify-center gap-2"
+                  className="btn btn-secondary text-sm shrink-0 flex items-center gap-2"
                 >
                   <IcoKey />
-                  Alterar senha
+                  Alterar
                 </button>
-              </>
+              </div>
             ) : (
               <div className="space-y-3">
                 <div>
-                  <label className="label">Nova senha *</label>
+                  <label className="label">Nova senha <span className="text-red-400">*</span></label>
                   <div className="relative">
                     <input
                       type={mostrarSenha ? 'text' : 'password'}
@@ -385,7 +412,7 @@ export default function MeuPerfil() {
                   </div>
                 </div>
                 {erroSenha && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">
+                  <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">
                     {erroSenha}
                   </div>
                 )}
@@ -406,52 +433,55 @@ export default function MeuPerfil() {
 
           {/* Card Atividades */}
           <div className="card">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="text-sysgate-600"><IcoClock /></div>
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100">
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+                <IcoClock />
+              </div>
               <h2 className="font-semibold text-gray-900">Atividades</h2>
             </div>
 
-            <div className="space-y-3">
-              {/* Login */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-sysgate-50 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="space-y-0">
+              {/* Último login */}
+              <div className="flex items-center gap-3 py-2.5">
+                <div className="w-8 h-8 rounded-full bg-sysgate-50 border border-sysgate-100 flex items-center justify-center shrink-0">
                   <svg className="w-3.5 h-3.5 text-sysgate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700">Login efetuado</p>
-                  <p className="text-xs text-gray-400">{tempoRelativo(perfil?.ultimoLogin)}</p>
+                  <p className="text-sm font-medium text-gray-800">Último login</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{tempoRelativo(perfil?.ultimoLogin)}</p>
                 </div>
               </div>
 
-              <div className="border-t border-gray-50" />
+              <div className="border-t border-gray-50 ml-11" />
 
               {/* Conta criada */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-purple-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="flex items-center gap-3 py-2.5">
+                <div className="w-8 h-8 rounded-full bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0">
+                  <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700">Conta criada</p>
-                  <p className="text-xs text-gray-400">{dataFormatada(perfil?.criadoEm)}</p>
+                  <p className="text-sm font-medium text-gray-800">Conta criada</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{dataFormatada(perfil?.criadoEm)}</p>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
       {/* ── Banner proteção de dados ────────────────────────────────────────── */}
-      <div className="rounded-xl bg-gradient-to-r from-sysgate-600 to-violet-600 p-5 flex items-center gap-4">
-        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-white">
+      <div className="rounded-xl bg-gradient-to-r from-sysgate-600 to-violet-600 px-6 py-4 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 text-white">
           <IcoShield />
         </div>
         <div>
           <p className="text-sm font-semibold text-white">Proteção de Dados Krakion</p>
-          <p className="text-xs text-white/80 mt-0.5 leading-relaxed">
+          <p className="text-xs text-white/75 mt-0.5">
             Seu acesso é monitorado e criptografado para garantir a máxima segurança de todas as operações.
           </p>
         </div>
