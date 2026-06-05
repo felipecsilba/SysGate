@@ -38,7 +38,7 @@ const limiterGeral = rateLimit({
 app.use(limiterGeral)
 
 app.use(cors())
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '50mb' }))
 
 // Rotas PÚBLICAS (antes do middleware global de autenticação)
 app.use('/api/auth', authRouter)
