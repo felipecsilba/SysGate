@@ -12,6 +12,8 @@ import {
 import PainelHistorico from './PainelHistorico'
 import ChamadosDashboard from './ChamadosDashboard'
 import ModalChamado from './ModalChamado'
+import ModalFilaConfig from './ModalFilaConfig'
+import AbaPainel from './AbaPainel'
 
 // ── Helpers (used only in this file) ─────────────────────────────────────────
 function tempoRelativo(data) {
@@ -97,15 +99,15 @@ export default function Chamados() {
   const usuario = useAuthStore(s => s.usuario)
   const isAdmin = usuario?.role === 'admin'
 
-  const [aba, setAba]                         = useState('lista') // 'lista' | 'dashboard'
+  const [aba, setAba]                         = useState('lista') // 'lista' | 'painel' | 'dashboard'
+  const [subAba, setSubAba]                   = useState('meus') // 'meus' | 'fila' | 'semdono'
+  const [filaConfig, setFilaConfig]           = useState(null)   // null = não configurado
+  const [modalFilaConfig, setModalFilaConfig] = useState(false)
+  const [contSemDono, setContSemDono]         = useState(0)
   const [chamados, setChamados]               = useState([])
   const [chamadoSelId, setChamadoSelId]       = useState(null)
   const [detalhe, setDetalhe]                 = useState(null)
   const [busca, setBusca]                     = useState('')
-  const [filtroStatus, setFiltroStatus]       = useState('')
-  const [filtroClassif, setFiltroClassif]     = useState('')
-  const [filtroMeusChamados, setFiltroMeus]   = useState(false)
-  const [mostrarFiltros, setMostrarFiltros]   = useState(false)
   const [carregando, setCarregando]           = useState(true)
   const [modalNovo, setModalNovo]             = useState(false)
   const [modalEditar, setModalEditar]         = useState(false)
@@ -128,28 +130,46 @@ export default function Chamados() {
   const commentFileRef = useRef()
   const textareaRef    = useRef()
 
-  const chamadosFiltrados = filtroMeusChamados
-    ? chamados.filter(c => c.criadoPor?.id === usuario?.id)
-    : chamados
-
   const carregar = async () => {
     setCarregando(true)
     try {
-      const params = {}
-      if (busca)         params.busca          = busca
-      if (filtroStatus)  params.status         = filtroStatus
-      if (filtroClassif) params.classificacao  = filtroClassif
-      const { data: chamadosPaginados } = await chamadosApi.listar(params)
-      setChamados(chamadosPaginados)
+      const params = { limite: 100 }
+      if (busca) params.busca = busca
+
+      if (subAba === 'meus') {
+        params.responsavelId      = usuario?.id
+        params.excluirEncerrados  = 'true'
+      } else if (subAba === 'semdono') {
+        params.semResponsavel    = 'true'
+        params.excluirEncerrados = 'true'
+      } else if (subAba === 'fila' && filaConfig) {
+        if (filaConfig.verticais?.length) params.verticais = filaConfig.verticais.join(',')
+        if (filaConfig.sistemas?.length)  params.sistemas  = filaConfig.sistemas.join(',')
+        if (filaConfig.status?.length === 1) params.status = filaConfig.status[0]
+        else params.excluirEncerrados = 'true'
+      }
+
+      const result = await chamadosApi.listar(params)
+      setChamados(result.data ?? result)
+
+      // Contagem sem dono (sempre atualizada, independente da sub-aba)
+      const sdResult = await chamadosApi.listar({ semResponsavel: 'true', excluirEncerrados: 'true', limite: 1 })
+      setContSemDono(sdResult.total ?? 0)
     } catch (e) { console.error(e) }
     finally { setCarregando(false) }
   }
 
-  useEffect(() => { carregar() }, [busca, filtroStatus, filtroClassif])
+  useEffect(() => { carregar() }, [subAba, busca, filaConfig])
 
   useEffect(() => {
     api.get('/usuarios').then(r => setUsuarios(r.data.filter(u => u.ativo))).catch(() => {})
     catalogoApi.listar().then(setCatalogo).catch(() => {})
+    // Carregar filaFiltro atualizado do servidor
+    api.get('/auth/me').then(r => {
+      if (r.data.filaFiltro) {
+        try { setFilaConfig(JSON.parse(r.data.filaFiltro)) } catch {}
+      }
+    }).catch(() => {})
   }, [])
 
   const carregarImgsComentarios = async (detalheData) => {
@@ -330,15 +350,15 @@ export default function Chamados() {
         <h1 className="text-base font-semibold text-gray-900">Chamados</h1>
         <span className="text-xs text-gray-400">| {chamados.length} chamado{chamados.length !== 1 ? 's' : ''}</span>
 
-        {/* Sub-abas */}
+        {/* Abas principais */}
         <div className="flex items-center gap-0.5 ml-4 bg-slate-100 rounded-lg p-0.5">
           {[
-            { key: 'lista', label: 'Gestão',
-              icon: <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>,
-            },
+            { key: 'lista',     label: 'Minha Fila',
+              icon: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></> },
+            { key: 'painel',    label: 'Painel',
+              icon: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></> },
             { key: 'dashboard', label: 'Dashboard',
-              icon: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></>,
-            },
+              icon: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></> },
           ].map(({ key, label, icon }) => (
             <button key={key} onClick={() => setAba(key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
@@ -366,52 +386,102 @@ export default function Chamados() {
       {/* ── Aba Dashboard ────────────────────────────────────────────────── */}
       {aba === 'dashboard' && <ChamadosDashboard />}
 
-      {/* ── Aba Lista (duas colunas) ──────────────────────────────────────── */}
-      {aba === 'lista' && (
+      {/* ── Abas Minha Fila e Painel (layout compartilhado com painel de detalhe) ── */}
+      {(aba === 'lista' || aba === 'painel') && (
         <div className="flex flex-1 min-h-0">
 
-          {/* Painel esquerdo */}
+          {/* Aba Painel: tabela com todos os chamados */}
+          {aba === 'painel' && (
+            <AbaPainel
+              usuarios={usuarios}
+              chamadoSelId={chamadoSelId}
+              onSelecionarChamado={selecionarChamado}
+            />
+          )}
+
+          {/* Aba Minha Fila: painel esquerdo com sub-abas */}
+          {aba === 'lista' && (
           <div className={`w-80 shrink-0 flex flex-col border-r border-gray-200 bg-slate-50 ${!mostrarLista && 'hidden md:flex'}`}>
 
+            {/* Sub-abas: Meus / Fila / Sem dono */}
             <div className="flex gap-0.5 px-2 pt-2.5 pb-2 bg-slate-50 border-b border-gray-200">
-              {[
-                { label: 'Todos', ativo: !filtroMeusChamados && !filtroStatus,
-                  onClick: () => { setFiltroStatus(''); setFiltroMeus(false) },
-                  icon: <path d="M4 6h16M4 12h16M4 18h16"/> },
-                { label: 'Meus', ativo: filtroMeusChamados,
-                  onClick: () => { setFiltroMeus(true); setFiltroStatus('') },
-                  icon: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></> },
-                { label: 'Aguardando', ativo: !filtroMeusChamados && filtroStatus === 'Aguardando Retorno',
-                  onClick: () => { setFiltroStatus('Aguardando Retorno'); setFiltroMeus(false) },
-                  icon: <><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></> },
-              ].map(({ label, ativo, onClick, icon }) => (
-                <button key={label} onClick={onClick}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex-1 justify-center ${
-                    ativo ? 'bg-sysgate-100 text-sysgate-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                  }`}>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">{icon}</svg>
-                  {label}
-                </button>
-              ))}
+              <button onClick={() => setSubAba('meus')}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex-1 justify-center ${
+                  subAba === 'meus' ? 'bg-sysgate-100 text-sysgate-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                Meus
+              </button>
+              <button onClick={() => setSubAba('fila')}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex-1 justify-center ${
+                  subAba === 'fila' ? 'bg-sysgate-100 text-sysgate-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                Fila
+              </button>
+              <button onClick={() => setSubAba('semdono')}
+                className={`relative flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex-1 justify-center ${
+                  subAba === 'semdono' ? 'bg-orange-50 text-orange-600' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Sem dono
+                {contSemDono > 0 && (
+                  <span className="ml-0.5 bg-orange-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 leading-none">
+                    {contSemDono}
+                  </span>
+                )}
+              </button>
             </div>
 
-            <div className="px-3 py-2 bg-slate-50 border-b border-gray-200">
-              <div className="relative">
+            {/* Barra de busca + ações contextuais */}
+            <div className="px-3 py-2 bg-slate-50 border-b border-gray-200 flex items-center gap-2">
+              <div className="relative flex-1">
                 <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
                 </svg>
                 <input className="input text-sm w-full pl-7" placeholder="Buscar chamados..."
                   value={busca} onChange={e => setBusca(e.target.value)} />
               </div>
+              {subAba === 'fila' && (
+                <button onClick={() => setModalFilaConfig(true)} title="Configurar fila"
+                  className="p-1.5 rounded-md text-gray-400 hover:text-sysgate-600 hover:bg-sysgate-50 transition-colors shrink-0">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {carregando ? (
+              {/* Empty state da sub-aba Fila não configurada */}
+              {subAba === 'fila' && !filaConfig ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 px-5 py-10 text-center">
+                  <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                  </svg>
+                  <p className="text-sm font-medium text-gray-700">Fila não configurada</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Configure filtros de vertical e sistema para montar sua fila de trabalho.
+                  </p>
+                  <button onClick={() => setModalFilaConfig(true)}
+                    className="mt-1 px-4 py-1.5 rounded-lg bg-sysgate-600 hover:bg-sysgate-700 text-white text-xs font-medium transition-colors">
+                    Configurar minha fila
+                  </button>
+                </div>
+              ) : carregando ? (
                 <div className="p-8 text-center text-sm text-gray-400">Carregando…</div>
-              ) : chamadosFiltrados.length === 0 ? (
+              ) : chamados.length === 0 ? (
                 <div className="p-8 text-center text-sm text-gray-400">Nenhum chamado encontrado.</div>
               ) : (
-                chamadosFiltrados.map(c => (
+                chamados.map(c => (
                   <button key={c.id} onClick={() => selecionarChamado(c.id)}
                     className={`w-full text-left p-3 border-b border-gray-100 border-l-[3px] transition-colors ${
                       chamadoSelId === c.id ? 'bg-white shadow-sm' : 'hover:bg-white/70'
@@ -424,8 +494,21 @@ export default function Chamados() {
                       <span className="text-xs text-gray-400">• {formatData(c.criadoEm)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Avatar nome={c.criadoPor?.nome} size={5} />
-                      <span className="text-xs text-gray-500 truncate flex-1">{c.criadoPor?.nome}</span>
+                      {c.responsavel ? (
+                        <>
+                          <Avatar nome={c.responsavel.nome} size={5} />
+                          <span className="text-xs text-gray-500 truncate flex-1">{c.responsavel.nome}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                            <svg className="w-2.5 h-2.5 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                          </span>
+                          <span className="text-xs text-orange-500 truncate flex-1">sem responsável</span>
+                        </>
+                      )}
                       {(c._count?.comentarios > 0 || c._count?.anexos > 0) && (
                         <div className="flex gap-2 shrink-0">
                           {c._count.comentarios > 0 && <span className="text-[10px] text-gray-400">💬 {c._count.comentarios}</span>}
@@ -438,36 +521,15 @@ export default function Chamados() {
               )}
             </div>
 
-            <div className="border-t border-gray-200 bg-white">
-              <button onClick={() => setMostrarFiltros(f => !f)}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-                </svg>
-                Filtros Avançados
-                <svg className={`w-3 h-3 transition-transform ${mostrarFiltros ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M6 9l6 6 6-6"/>
-                </svg>
-              </button>
-              {mostrarFiltros && (
-                <div className="px-3 pb-3 space-y-2 border-t border-gray-100 pt-2">
-                  <select className="input text-xs w-full" value={filtroStatus}
-                    onChange={e => { setFiltroStatus(e.target.value); setFiltroMeus(false) }}>
-                    <option value="">Todos os status</option>
-                    {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select className="input text-xs w-full" value={filtroClassif}
-                    onChange={e => setFiltroClassif(e.target.value)}>
-                    <option value="">Todas as classificações</option>
-                    {CLASSIF_OPTS.filter(Boolean).map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              )}
-            </div>
           </div>
+          )} {/* fim aba === 'lista' */}
 
-          {/* Painel direito */}
-          <div className={`flex-1 flex min-w-0 overflow-hidden bg-white ${mostrarLista && !detalhe ? 'hidden md:flex' : ''}`}>
+          {/* Painel direito (compartilhado entre Minha Fila e Painel) */}
+          <div className={`flex min-w-0 overflow-hidden bg-white ${
+            aba === 'painel'
+              ? detalhe ? 'w-[500px] shrink-0 border-l border-gray-200' : 'hidden'
+              : `flex-1 ${mostrarLista && !detalhe ? 'hidden md:flex' : ''}`
+          }`}>
             {!detalhe ? (
               <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-400">
                 <svg className="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
@@ -759,6 +821,19 @@ export default function Chamados() {
             setModalEditar(false); setHistoricoKey(k => k + 1)
           }}
           onFechar={() => setModalEditar(false)} />
+      )}
+      {modalFilaConfig && (
+        <ModalFilaConfig
+          aberto={modalFilaConfig}
+          onFechar={() => setModalFilaConfig(false)}
+          configAtual={filaConfig}
+          catalogo={catalogo}
+          onSalvar={async (config) => {
+            await api.put(`/usuarios/${usuario.id}`, { filaFiltro: JSON.stringify(config) })
+            setFilaConfig(config)
+            setModalFilaConfig(false)
+          }}
+        />
       )}
     </div>
   )

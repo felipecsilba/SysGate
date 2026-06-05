@@ -20,16 +20,37 @@ async function registrarHistorico(chamadoId, usuarioId, tipo, valorAntes, valorD
 
 // ── GET / — Listar chamados com filtros e paginação ──────────────────────────
 router.get('/', async (req, res) => {
-  const { busca, status, classificacao, responsavelId, vertical, pagina, limite } = req.query
+  const {
+    busca, classificacao, responsavelId, pagina, limite,
+    status, vertical, verticais, sistemas, prioridade, municipio,
+    semResponsavel, excluirEncerrados,
+  } = req.query
   const where = {}
-  if (status) where.status = status
   if (classificacao) where.classificacao = classificacao
   if (responsavelId) where.responsavelId = Number(responsavelId)
-  if (vertical) where.vertical = vertical
+  if (prioridade)    where.prioridade    = prioridade
+  if (semResponsavel === 'true') where.responsavelId = null
+  // status: parâmetro único tem prioridade; excluirEncerrados só aplica se status não for passado
+  if (status) {
+    where.status = status
+  } else if (excluirEncerrados === 'true') {
+    where.status = { notIn: ['Concluido', 'Cancelado'] }
+  }
+  // vertical: param único ou lista comma-separated
+  if (verticais) {
+    where.vertical = { in: verticais.split(',') }
+  } else if (vertical) {
+    where.vertical = vertical
+  }
+  // sistema: lista comma-separated
+  if (sistemas) where.sistema = { in: sistemas.split(',') }
+  // município: filtro por contains
+  if (municipio) where.municipio = { contains: municipio }
   if (busca) {
     where.OR = [
-      { titulo: { contains: busca } },
-      { descricao: { contains: busca } }
+      { titulo:    { contains: busca } },
+      { descricao: { contains: busca } },
+      { municipio: { contains: busca } },
     ]
   }
 

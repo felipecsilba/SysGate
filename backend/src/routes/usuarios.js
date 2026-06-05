@@ -71,14 +71,17 @@ router.put('/:id', async (req, res) => {
       return res.status(403).json({ error: 'Acesso negado' })
     }
 
-    const { nome, role, ativo } = req.body
+    const { nome, role, ativo, filaFiltro } = req.body
 
     if (!isAdmin) {
-      // Não-admin: só pode alterar o próprio nome
+      // Não-admin: só pode alterar o próprio nome e filaFiltro
       const usuario = await prisma.usuario.update({
         where: { id },
-        data: { ...(nome !== undefined && { nome }) },
-        select: CAMPOS_PUBLICOS,
+        data: {
+          ...(nome       !== undefined && { nome }),
+          ...(filaFiltro !== undefined && { filaFiltro }),
+        },
+        select: { ...CAMPOS_PUBLICOS, filaFiltro: true },
       })
       return res.json(usuario)
     }
@@ -96,8 +99,13 @@ router.put('/:id', async (req, res) => {
 
     const usuario = await prisma.usuario.update({
       where: { id },
-      data: { ...(nome !== undefined && { nome }), ...(role !== undefined && { role }), ...(ativo !== undefined && { ativo }) },
-      select: CAMPOS_PUBLICOS,
+      data: {
+        ...(nome       !== undefined && { nome }),
+        ...(role       !== undefined && { role }),
+        ...(ativo      !== undefined && { ativo }),
+        ...(filaFiltro !== undefined && { filaFiltro }),
+      },
+      select: { ...CAMPOS_PUBLICOS, filaFiltro: true },
     })
     res.json(usuario)
   } catch (err) {

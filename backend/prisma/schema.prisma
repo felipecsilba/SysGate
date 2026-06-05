@@ -139,6 +139,7 @@ model Usuario {
   ativo            Boolean     @default(true)
   tentativasLogin  Int         @default(0)
   bloqueadoAte     DateTime?
+  filaFiltro       String?    // JSON: { verticais[], sistemas[], status[] }
   municipios       Municipio[]
   chamadosCriados      Chamado[]           @relation("chamadosCriados")
   chamadosResponsavel  Chamado[]           @relation("chamadosResponsavel")
