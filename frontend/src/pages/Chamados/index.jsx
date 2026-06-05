@@ -14,6 +14,7 @@ import ChamadosDashboard from './ChamadosDashboard'
 import ModalChamado from './ModalChamado'
 import ModalFilaConfig from './ModalFilaConfig'
 import AbaPainel from './AbaPainel'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 // ── Helpers (used only in this file) ─────────────────────────────────────────
 function tempoRelativo(data) {
@@ -126,6 +127,7 @@ export default function Chamados() {
   const [dragOver, setDragOver]               = useState(false)
   const [mostrarHistorico, setMostrarHistorico] = useState(false)
   const [historicoKey, setHistoricoKey]         = useState(0)
+  const [confirmDelegar, setConfirmDelegar]     = useState(false)
   const [mostrarMention, setMostrarMention]     = useState(false)
   const [mentionQuery, setMentionQuery]         = useState('')
   const [pendingCommentAnexos, setPendingCommentAnexos] = useState([])
@@ -672,6 +674,26 @@ export default function Chamados() {
                         </span>
                         <span className="text-xs text-gray-400 font-mono tracking-wide">{ticketNum(detalhe, chamados)}</span>
                       </div>
+
+                      {/* Botão Pegar / Delegar para mim */}
+                      {!['Concluido', 'Cancelado'].includes(detalhe.status) && detalhe.responsavelId !== usuario?.id && (
+                        <div className="mt-2.5 pt-2.5 border-t border-gray-100">
+                          <button
+                            onClick={() => detalhe.responsavelId ? setConfirmDelegar(true) : atualizarCampo('responsavelId', usuario?.id)}
+                            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                              !detalhe.responsavelId
+                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200'
+                            }`}
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                              <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            {!detalhe.responsavelId ? 'Pegar para mim' : 'Delegar para mim'}
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Grid de informações */}
@@ -910,6 +932,15 @@ export default function Chamados() {
           }}
         />
       )}
+      <ConfirmDialog
+        aberto={confirmDelegar}
+        titulo="Delegar para mim"
+        mensagem={`O chamado está atribuído a ${detalhe?.responsavel?.nome}. Deseja reatribuí-lo para você?`}
+        labelConfirmar="Sim, delegar"
+        corConfirmar="bg-sysgate-600 hover:bg-sysgate-700"
+        onConfirmar={() => { setConfirmDelegar(false); atualizarCampo('responsavelId', usuario?.id) }}
+        onCancelar={() => setConfirmDelegar(false)}
+      />
     </div>
   )
 }
