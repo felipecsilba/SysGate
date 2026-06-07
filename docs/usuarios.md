@@ -124,7 +124,7 @@ APP_URL=http://localhost:3000
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `pages/MeuPerfil.jsx` | Tela `/perfil` — identidade (avatar com iniciais, nome, badges), informações pessoais, segurança inline, atividades. Full-width. Acessível a todos os usuários. |
+| `pages/MeuPerfil.jsx` | Tela `/perfil` — card de identidade com banner gradiente (sysgate→violeta) no topo e avatar circular sobrepondo o banner (borda branca, `border-4 border-white`, margem negativa `-mt-10`); nome, badges de função e role, e login abaixo; stats Membro desde / Último acesso com divisor no rodapé do card. Cards Informações pessoais, Segurança e Atividades com `p-5`. Atividades exibe Login efetuado + Perfil atualizado (`atualizadoEm`) + link "Ver histórico completo". Acessível a todos os usuários. |
 | `pages/RedefinirSenha.jsx` | Rota pública `/redefinir-senha?token=...` — formulário de nova senha; tela de sucesso pós-reset. |
 | `pages/Usuarios.jsx` | Admin: CRUD completo + toggleAdmin. Não-admin: redireciona para `/perfil`. |
 | `pages/Login.jsx` | `ModalEsqueceuSenha` — campo loginOuEmail, chamada `authApi.esquecerSenha()`, tela de confirmação. |
@@ -135,6 +135,7 @@ APP_URL=http://localhost:3000
 
 - Cor determinística por hash do nome: `AVATAR_COLORS[hash % 10]` — mesma cor sempre para o mesmo nome
 - Iniciais: primeira letra do primeiro e último nome (ou só primeira letra se nome único)
+- Avatar exibido sobre o banner gradiente do card de identidade: `border-4 border-white` + `shadow-sm`, posicionado com `-mt-10` para sobrepor o banner de `h-20`
 - Ícone câmera decorativo no canto inferior direito do avatar (sem funcionalidade de upload)
 
 ---
