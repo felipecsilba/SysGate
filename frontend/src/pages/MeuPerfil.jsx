@@ -275,7 +275,7 @@ export default function MeuPerfil() {
       <div className="grid grid-cols-5 gap-5 items-start">
 
         {/* ── Coluna esquerda (3/5) — Informações pessoais ─────────────────── */}
-        <div className="col-span-3 card space-y-5">
+        <div className="col-span-3 card p-5 space-y-5">
 
           <div className="flex items-center gap-2 pb-4 border-b border-gray-100">
             <span className="text-sysgate-600"><IcoUser /></span>
@@ -365,7 +365,7 @@ export default function MeuPerfil() {
         <div className="col-span-2 space-y-4">
 
           {/* Card Segurança */}
-          <div className="card space-y-4">
+          <div className="card p-5 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <span className="text-sysgate-600"><IcoLock /></span>
               <h2 className="font-semibold text-gray-900">Segurança</h2>
@@ -434,7 +434,7 @@ export default function MeuPerfil() {
           </div>
 
           {/* Card Atividades */}
-          <div className="card space-y-3">
+          <div className="card p-5 space-y-3">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <span className="text-sysgate-600"><IcoClock /></span>
               <h2 className="font-semibold text-gray-900">Atividades</h2>
