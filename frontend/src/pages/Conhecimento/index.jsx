@@ -67,6 +67,14 @@ function IconBook() {
   )
 }
 
+function IconChevron() {
+  return (
+    <svg className="w-3.5 h-3.5 text-gray-400 pointer-events-none shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
 // ─── Card da lista ────────────────────────────────────────────────────────────
 
 function ArtigoCard({ artigo, ativo, onClick }) {
@@ -324,30 +332,71 @@ export default function Conhecimento() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <div className="relative flex-1 min-w-[180px]">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"><IconSearch /></span>
-            <input type="text" value={buscaInput} onChange={(e) => handleBuscaChange(e.target.value)} placeholder="Buscar artigos..." className="input pl-8 text-sm w-full" />
+        {/* Barra de filtros unificada */}
+        <div className="flex items-center mt-3 border border-gray-200 rounded-xl bg-white shadow-sm divide-x divide-gray-200 overflow-hidden">
+          {/* Busca */}
+          <div className="relative flex-1 min-w-0">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+              <IconSearch />
+            </span>
+            <input
+              type="text"
+              value={buscaInput}
+              onChange={(e) => handleBuscaChange(e.target.value)}
+              placeholder="Buscar artigos por título, conteúdo ou etiqueta..."
+              className="w-full pl-9 pr-3 py-2.5 text-sm bg-transparent outline-none placeholder-gray-400 text-gray-700"
+            />
           </div>
-          <select value={filtroTipo} onChange={(e) => { setFiltroTipo(e.target.value); setPagina(1) }} className="input text-sm py-1.5">
-            <option value="">Todos os tipos</option>
-            {TIPO_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-          <select value={filtroVertical} onChange={(e) => { setFiltroVertical(e.target.value); setFiltroSistema(''); setPagina(1) }} className="input text-sm py-1.5">
-            <option value="">Todas as verticais</option>
-            {catalogo.map((v) => <option key={v.id} value={v.nome}>{v.nome}</option>)}
-          </select>
-          <select value={filtroSistema} onChange={(e) => { setFiltroSistema(e.target.value); setPagina(1) }} className="input text-sm py-1.5">
-            <option value="">Todos os sistemas</option>
-            {(filtroVertical
-              ? (catalogo.find((v) => v.nome === filtroVertical)?.sistemas ?? [])
-              : catalogo.flatMap((v) => v.sistemas)
-            ).map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+
+          {/* Tipo */}
+          <div className="relative flex items-center shrink-0">
+            <select
+              value={filtroTipo}
+              onChange={(e) => { setFiltroTipo(e.target.value); setPagina(1) }}
+              className={`appearance-none pl-3 pr-7 py-2.5 text-sm bg-transparent outline-none cursor-pointer transition-colors ${filtroTipo ? 'text-sysgate-600 font-semibold' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <option value="">Tipo</option>
+              {TIPO_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2"><IconChevron /></span>
+          </div>
+
+          {/* Vertical */}
+          <div className="relative flex items-center shrink-0">
+            <select
+              value={filtroVertical}
+              onChange={(e) => { setFiltroVertical(e.target.value); setFiltroSistema(''); setPagina(1) }}
+              className={`appearance-none pl-3 pr-7 py-2.5 text-sm bg-transparent outline-none cursor-pointer transition-colors ${filtroVertical ? 'text-sysgate-600 font-semibold' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <option value="">Vertical</option>
+              {catalogo.map((v) => <option key={v.id} value={v.nome}>{v.nome}</option>)}
+            </select>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2"><IconChevron /></span>
+          </div>
+
+          {/* Sistema */}
+          <div className="relative flex items-center shrink-0">
+            <select
+              value={filtroSistema}
+              onChange={(e) => { setFiltroSistema(e.target.value); setPagina(1) }}
+              className={`appearance-none pl-3 pr-7 py-2.5 text-sm bg-transparent outline-none cursor-pointer transition-colors ${filtroSistema ? 'text-sysgate-600 font-semibold' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <option value="">Sistema</option>
+              {(filtroVertical
+                ? (catalogo.find((v) => v.nome === filtroVertical)?.sistemas ?? [])
+                : catalogo.flatMap((v) => v.sistemas)
+              ).map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2"><IconChevron /></span>
+          </div>
+
+          {/* Limpar filtros */}
           {filtroAtivo && (
-            <button onClick={() => { setBuscaInput(''); setBusca(''); setFiltroTipo(''); setFiltroVertical(''); setFiltroSistema(''); setPagina(1) }}
-              className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-              Limpar
+            <button
+              onClick={() => { setBuscaInput(''); setBusca(''); setFiltroTipo(''); setFiltroVertical(''); setFiltroSistema(''); setPagina(1) }}
+              className="px-3 py-2.5 text-xs text-sysgate-600 hover:bg-sysgate-50 font-medium transition-colors whitespace-nowrap shrink-0"
+            >
+              Limpar filtros
             </button>
           )}
         </div>
