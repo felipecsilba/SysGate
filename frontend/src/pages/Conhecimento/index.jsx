@@ -82,7 +82,7 @@ function ArtigoCard({ artigo, ativo, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${ativo ? 'bg-sysgate-50 border-l-2 border-sysgate-500' : ''}`}
+      className={`w-full text-left px-4 py-3 border-b border-gray-100 border-l-2 hover:bg-gray-50 transition-colors ${ativo ? 'bg-sysgate-50 border-l-sysgate-500' : 'border-l-transparent'}`}
     >
       <div className="flex items-start gap-2 mb-1">
         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 mt-0.5 ${cfg.cls}`}>
@@ -405,7 +405,7 @@ export default function Conhecimento() {
       {/* Corpo */}
       <div className="flex flex-1 overflow-hidden">
         {/* Lista */}
-        <div className="w-80 shrink-0 flex flex-col border-r border-gray-100 overflow-hidden">
+        <div className="w-80 shrink-0 flex flex-col border-r border-gray-200 bg-white overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             {carregando ? (
               <div className="flex items-center justify-center py-12">
@@ -440,7 +440,7 @@ export default function Conhecimento() {
         </div>
 
         {/* Detalhe */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden bg-white">
           {selecionado ? (
             <PainelDetalhe
               artigo={selecionado}
