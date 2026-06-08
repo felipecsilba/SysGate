@@ -86,7 +86,9 @@ conhecimentoApi.deletar(id)  // somente admin
 
 ### `Conhecimento/index.jsx`
 
-Componente principal. Layout dois painéis: lista esquerda (`w-80`) + detalhe direito (`flex-1`).
+Componente principal. Layout dois painéis: lista esquerda (`w-80`, `bg-gray-50/70`) + detalhe direito (`flex-1`, `bg-white`).
+
+**`ArtigoCard`:** cartão individual com `rounded-xl`, margem lateral (`px-2 pb-1.5`), `shadow-sm` e `border`. Estrutura interna: linha 1 = badge de tipo + tempo relativo (direita); linha 2 = título (`font-semibold`, `line-clamp-2`); linha 3 = chips de vertical/sistema (opcional, só aparece se preenchidos). Ativo: `bg-sysgate-50 border-sysgate-200`. Inativo: `bg-white border-gray-100 hover:shadow hover:border-gray-200`.
 
 **Estado React:**
 

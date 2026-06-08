@@ -162,7 +162,7 @@ krakion/
             │   ├── NotaCard.jsx            # Card draggable com fundo colorido; ações no hover; renderização por tipo; chips de etiquetas
             │   └── ModalNota.jsx           # Modal criar/editar; abas de tipo; editor de itens checklist/lista; seletor de 10 cores; compartilhamento por usuário
             ├── Conhecimento/
-            │   ├── index.jsx               # Componente principal — lista esquerda (w-80) + painel detalhe direito; filtros: busca/tipo/vertical/sistema; paginação; `RenderBlocos` renderiza blocos (texto/subtítulo/código/nota)
+            │   ├── index.jsx               # Componente principal — lista esquerda (w-80, bg-gray-50/70, cards rounded-xl com shadow-sm e margem lateral) + painel detalhe direito (bg-white); filtros busca/tipo/vertical/sistema; paginação; `RenderBlocos` renderiza blocos (texto/subtítulo/código/nota)
             │   ├── constants.js            # TIPO_CONFIG, TIPO_OPTS e `parseConteudo(str)` — detecta JSON de blocos ou texto plano e retorna array de blocos
             │   └── ModalConhecimento.jsx   # Modal criar/editar; editor de blocos (BlocoEditorList + BlocoItem + AddBlocoMenu); suporte a blocos ricos dentro de cada passo (passo-a-passo)
             ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
