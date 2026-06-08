@@ -332,7 +332,7 @@ export default function ModalConhecimento({ artigo, catalogo, onSaved, onClose }
               type="button"
               onClick={salvar}
               disabled={salvando}
-              className="btn text-sm disabled:opacity-60"
+              className="btn-primary text-sm disabled:opacity-60"
             >
               {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Criar artigo'}
             </button>
