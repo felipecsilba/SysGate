@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { conhecimentoApi, catalogoApi, sistemasApi } from '../../lib/api'
+import { conhecimentoApi, catalogoApi } from '../../lib/api'
 import useAuthStore from '../../stores/authStore'
 import ModalConhecimento from './ModalConhecimento'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -97,7 +97,7 @@ function ArtigoCard({ artigo, ativo, onClick }) {
         )}
         {artigo.sistema && (
           <span className="text-[10px] px-1.5 py-0.5 bg-sysgate-100 text-sysgate-600 rounded-full">
-            {artigo.sistema.nome}
+            {artigo.sistema}
           </span>
         )}
         <span className="text-[10px] text-gray-400 ml-auto shrink-0">
@@ -130,7 +130,7 @@ function PainelDetalhe({ artigo, usuario, isAdmin, onEditar, onDeletar, onFechar
               )}
               {artigo.sistema && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-sysgate-100 text-sysgate-600">
-                  {artigo.sistema.nome}
+                  {artigo.sistema}
                 </span>
               )}
             </div>
@@ -232,7 +232,6 @@ export default function Conhecimento() {
   const [toastVisivel, setToastVisivel] = useState(false)
 
   const [catalogo, setCatalogo] = useState([])
-  const [sistemas, setSistemas] = useState([])
 
   const debounceRef = useRef(null)
 
@@ -256,7 +255,7 @@ export default function Conhecimento() {
       if (busca) params.busca = busca
       if (filtroTipo) params.tipo = filtroTipo
       if (filtroVertical) params.vertical = filtroVertical
-      if (filtroSistema) params.sistemaId = filtroSistema
+      if (filtroSistema) params.sistema = filtroSistema
       const r = await conhecimentoApi.listar(params)
       setArtigos(r.data)
       setTotal(r.total)
@@ -275,7 +274,6 @@ export default function Conhecimento() {
 
   useEffect(() => {
     catalogoApi.listar().then(setCatalogo).catch(() => {})
-    sistemasApi.listar().then(setSistemas).catch(() => {})
   }, [])
 
   const handleSaved = async () => {
@@ -335,13 +333,16 @@ export default function Conhecimento() {
             <option value="">Todos os tipos</option>
             {TIPO_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <select value={filtroVertical} onChange={(e) => { setFiltroVertical(e.target.value); setPagina(1) }} className="input text-sm py-1.5">
+          <select value={filtroVertical} onChange={(e) => { setFiltroVertical(e.target.value); setFiltroSistema(''); setPagina(1) }} className="input text-sm py-1.5">
             <option value="">Todas as verticais</option>
             {catalogo.map((v) => <option key={v.id} value={v.nome}>{v.nome}</option>)}
           </select>
           <select value={filtroSistema} onChange={(e) => { setFiltroSistema(e.target.value); setPagina(1) }} className="input text-sm py-1.5">
             <option value="">Todos os sistemas</option>
-            {sistemas.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
+            {(filtroVertical
+              ? (catalogo.find((v) => v.nome === filtroVertical)?.sistemas ?? [])
+              : catalogo.flatMap((v) => v.sistemas)
+            ).map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           {filtroAtivo && (
             <button onClick={() => { setBuscaInput(''); setBusca(''); setFiltroTipo(''); setFiltroVertical(''); setFiltroSistema(''); setPagina(1) }}
@@ -419,7 +420,6 @@ export default function Conhecimento() {
         <ModalConhecimento
           artigo={editando}
           catalogo={catalogo}
-          sistemas={sistemas}
           onSaved={handleSaved}
           onClose={() => { setShowModal(false); setEditando(null) }}
         />

@@ -25,13 +25,13 @@ Todos os usuários autenticados podem **criar** artigos. O próprio autor ou um 
 | conteudo | String | `""` | Conteúdo principal (tipos FAQ, Erro, Dica, Outro) |
 | passos | String | `"[]"` | JSON serializado: `[{texto: string}]` — somente tipo `passo-a-passo` |
 | vertical | String? | null | Nome da vertical (referência ao `CatalogoVertical`) |
-| sistemaId | Int? | null | FK → `Sistema` (onDelete: SetNull) |
+| sistema | String? | null | Nome do sistema Betha (referência a `CatalogoVertical.sistemas`) |
 | etiquetas | String | `"[]"` | JSON serializado: `string[]` |
 | autorId | Int | — | FK → `Usuario` (autor do artigo) |
 | criadoEm | DateTime | now() | — |
 | atualizadoEm | DateTime | updatedAt | — |
 
-**Índices:** `[tipo]`, `[vertical]`, `[sistemaId]`, `[autorId]`
+**Índices:** `[tipo]`, `[vertical]`, `[sistema]`, `[autorId]`
 
 **Notas de serialização:** `passos` e `etiquetas` são armazenados como `JSON.stringify(array)` no SQLite. Helper `parseConhecimento(c)` no backend faz `JSON.parse` antes de retornar.
 
@@ -43,18 +43,18 @@ Base: `/api/conhecimento` — todas as rotas exigem token JWT.
 
 | Método | Rota | Acesso | Descrição |
 |--------|------|--------|-----------|
-| GET | `/api/conhecimento` | Todos autenticados | Lista com paginação; filtros: `busca`, `tipo`, `vertical`, `sistemaId`, `pagina`, `limite` |
-| GET | `/api/conhecimento/:id` | Todos autenticados | Detalhe completo com `autor` e `sistema` |
+| GET | `/api/conhecimento` | Todos autenticados | Lista com paginação; filtros: `busca`, `tipo`, `vertical`, `sistema`, `pagina`, `limite` |
+| GET | `/api/conhecimento/:id` | Todos autenticados | Detalhe completo com `autor` |
 | POST | `/api/conhecimento` | Todos autenticados | Cria artigo (`autorId = req.usuario.id`) |
 | PUT | `/api/conhecimento/:id` | Autor ou admin | Atualiza campos |
 | DELETE | `/api/conhecimento/:id` | Somente admin | Remove artigo |
 
 ```js
-conhecimentoApi.listar({ busca?, tipo?, vertical?, sistemaId?, pagina?, limite? })
+conhecimentoApi.listar({ busca?, tipo?, vertical?, sistema?, pagina?, limite? })
 // retorna { data, total, pagina, limite, totalPaginas }
 
 conhecimentoApi.obter(id)
-conhecimentoApi.criar({ titulo, tipo, descricao?, conteudo, passos, vertical?, sistemaId?, etiquetas })
+conhecimentoApi.criar({ titulo, tipo, descricao?, conteudo, passos, vertical?, sistema?, etiquetas })
 conhecimentoApi.atualizar(id, data)
 conhecimentoApi.deletar(id)  // somente admin
 ```

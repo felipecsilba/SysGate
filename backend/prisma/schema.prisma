@@ -17,7 +17,6 @@ model Sistema {
   swaggerSpecs      SwaggerSpec[]
   municipioSistemas MunicipioSistema[]
   requisicoes       Requisicao[]
-  conhecimentos     Conhecimento[]
 }
 
 model Municipio {
@@ -348,8 +347,7 @@ model Conhecimento {
   conteudo     String   @default("")      // conteúdo principal (texto livre)
   passos       String   @default("[]")   // JSON: [{texto: string}] — tipo passo-a-passo
   vertical     String?                   // nome da vertical (ref. CatalogoVertical)
-  sistemaId    Int?
-  sistema      Sistema? @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
+  sistema      String?                   // nome do sistema Betha (ref. CatalogoVertical.sistemas)
   etiquetas    String   @default("[]")   // JSON: string[]
   autorId      Int
   autor        Usuario  @relation("ConhecimentoAutor", fields: [autorId], references: [id])
@@ -358,6 +356,6 @@ model Conhecimento {
 
   @@index([tipo])
   @@index([vertical])
-  @@index([sistemaId])
+  @@index([sistema])
   @@index([autorId])
 }

@@ -16,7 +16,7 @@ function parseConhecimento(c) {
 // GET /api/conhecimento — lista com filtros e paginação
 router.get('/', async (req, res) => {
   try {
-    const { busca, tipo, vertical, sistemaId, pagina = 1, limite = 20 } = req.query
+    const { busca, tipo, vertical, sistema, pagina = 1, limite = 20 } = req.query
     const skip = (parseInt(pagina) - 1) * parseInt(limite)
 
     const where = {}
@@ -29,14 +29,13 @@ router.get('/', async (req, res) => {
     }
     if (tipo) where.tipo = tipo
     if (vertical) where.vertical = vertical
-    if (sistemaId) where.sistemaId = parseInt(sistemaId)
+    if (sistema) where.sistema = sistema
 
     const [data, total] = await Promise.all([
       prisma.conhecimento.findMany({
         where,
         include: {
           autor: { select: { id: true, nome: true } },
-          sistema: { select: { id: true, nome: true } },
         },
         orderBy: { criadoEm: 'desc' },
         skip,
@@ -64,7 +63,6 @@ router.get('/:id', async (req, res) => {
       where: { id: parseInt(req.params.id) },
       include: {
         autor: { select: { id: true, nome: true } },
-        sistema: { select: { id: true, nome: true } },
       },
     })
     if (!c) return res.status(404).json({ error: 'Artigo não encontrado' })
@@ -77,7 +75,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/conhecimento — qualquer autenticado
 router.post('/', async (req, res) => {
   try {
-    const { titulo, tipo, descricao, conteudo, passos, vertical, sistemaId, etiquetas } = req.body
+    const { titulo, tipo, descricao, conteudo, passos, vertical, sistema, etiquetas } = req.body
     if (!titulo?.trim()) return res.status(400).json({ error: 'Título obrigatório' })
 
     const c = await prisma.conhecimento.create({
@@ -88,13 +86,12 @@ router.post('/', async (req, res) => {
         conteudo: conteudo || '',
         passos: JSON.stringify(passos || []),
         vertical: vertical || null,
-        sistemaId: sistemaId ? parseInt(sistemaId) : null,
+        sistema: sistema || null,
         etiquetas: JSON.stringify(etiquetas || []),
         autorId: req.usuario.id,
       },
       include: {
         autor: { select: { id: true, nome: true } },
-        sistema: { select: { id: true, nome: true } },
       },
     })
     res.status(201).json(parseConhecimento(c))
@@ -115,7 +112,7 @@ router.put('/:id', async (req, res) => {
       return res.status(403).json({ error: 'Sem permissão para editar este artigo' })
     }
 
-    const { titulo, tipo, descricao, conteudo, passos, vertical, sistemaId, etiquetas } = req.body
+    const { titulo, tipo, descricao, conteudo, passos, vertical, sistema, etiquetas } = req.body
 
     const c = await prisma.conhecimento.update({
       where: { id },
@@ -126,12 +123,11 @@ router.put('/:id', async (req, res) => {
         ...(conteudo !== undefined && { conteudo }),
         ...(passos !== undefined && { passos: JSON.stringify(passos) }),
         ...(vertical !== undefined && { vertical: vertical || null }),
-        ...(sistemaId !== undefined && { sistemaId: sistemaId ? parseInt(sistemaId) : null }),
+        ...(sistema !== undefined && { sistema: sistema || null }),
         ...(etiquetas !== undefined && { etiquetas: JSON.stringify(etiquetas) }),
       },
       include: {
         autor: { select: { id: true, nome: true } },
-        sistema: { select: { id: true, nome: true } },
       },
     })
     res.json(parseConhecimento(c))

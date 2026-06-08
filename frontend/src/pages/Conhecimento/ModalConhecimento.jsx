@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { conhecimentoApi } from '../../lib/api'
 import { TIPO_CONFIG, TIPO_OPTS } from './constants'
 
-export default function ModalConhecimento({ artigo, catalogo, sistemas, onSaved, onClose }) {
+export default function ModalConhecimento({ artigo, catalogo, onSaved, onClose }) {
   const editando = Boolean(artigo)
 
   const [titulo, setTitulo]       = useState(artigo?.titulo || '')
@@ -13,11 +13,27 @@ export default function ModalConhecimento({ artigo, catalogo, sistemas, onSaved,
     artigo?.passos?.length > 0 ? artigo.passos : [{ texto: '' }]
   )
   const [vertical, setVertical]   = useState(artigo?.vertical || '')
-  const [sistemaId, setSistemaId] = useState(artigo?.sistemaId || '')
+  const [sistema, setSistema]     = useState(artigo?.sistema || '')
   const [etiquetaInput, setEtiquetaInput] = useState('')
   const [etiquetas, setEtiquetas] = useState(artigo?.etiquetas || [])
   const [salvando, setSalvando]   = useState(false)
   const [erro, setErro]           = useState('')
+
+  // Sistemas disponíveis baseados na vertical selecionada
+  const sistemasDisponiveis = vertical
+    ? (catalogo.find((v) => v.nome === vertical)?.sistemas ?? [])
+    : catalogo.flatMap((v) => v.sistemas)
+
+  // Ao mudar vertical, resetar sistema se ele não estiver na nova lista
+  const handleVerticalChange = (novaVertical) => {
+    setVertical(novaVertical)
+    const disponiveis = novaVertical
+      ? (catalogo.find((v) => v.nome === novaVertical)?.sistemas ?? [])
+      : catalogo.flatMap((v) => v.sistemas)
+    if (sistema && !disponiveis.includes(sistema)) {
+      setSistema('')
+    }
+  }
 
   // Converte conteúdo ao mudar tipo
   const handleTipoChange = (novoTipo) => {
@@ -74,7 +90,7 @@ export default function ModalConhecimento({ artigo, catalogo, sistemas, onSaved,
         conteudo: tipo !== 'passo-a-passo' ? conteudo : '',
         passos: tipo === 'passo-a-passo' ? passos.filter((p) => p.texto.trim()) : [],
         vertical: vertical || null,
-        sistemaId: sistemaId ? parseInt(sistemaId) : null,
+        sistema: sistema || null,
         etiquetas,
       }
       if (editando) {
@@ -179,7 +195,7 @@ export default function ModalConhecimento({ artigo, catalogo, sistemas, onSaved,
               <label className="label">Vertical</label>
               <select
                 value={vertical}
-                onChange={(e) => setVertical(e.target.value)}
+                onChange={(e) => handleVerticalChange(e.target.value)}
                 className="input w-full"
               >
                 <option value="">— Geral (sem vertical) —</option>
@@ -191,13 +207,14 @@ export default function ModalConhecimento({ artigo, catalogo, sistemas, onSaved,
             <div>
               <label className="label">Sistema</label>
               <select
-                value={sistemaId}
-                onChange={(e) => setSistemaId(e.target.value)}
+                value={sistema}
+                onChange={(e) => setSistema(e.target.value)}
                 className="input w-full"
+                disabled={sistemasDisponiveis.length === 0}
               >
                 <option value="">— Sem sistema —</option>
-                {sistemas.map((s) => (
-                  <option key={s.id} value={s.id}>{s.nome}</option>
+                {sistemasDisponiveis.map((s) => (
+                  <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </div>
