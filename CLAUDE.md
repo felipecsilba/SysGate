@@ -162,8 +162,9 @@ krakion/
             │   ├── NotaCard.jsx            # Card draggable com fundo colorido; ações no hover; renderização por tipo; chips de etiquetas
             │   └── ModalNota.jsx           # Modal criar/editar; abas de tipo; editor de itens checklist/lista; seletor de 10 cores; compartilhamento por usuário
             ├── Conhecimento/
-            │   ├── index.jsx               # Componente principal — lista esquerda (w-80) + painel detalhe direito; filtros: busca/tipo/vertical/sistema; paginação; exporta TIPO_CONFIG
-            │   └── ModalConhecimento.jsx   # Modal criar/editar; tipo chips; editor de etapas numeradas (passo-a-passo); select de vertical/sistema; etiquetas inline
+            │   ├── index.jsx               # Componente principal — lista esquerda (w-80) + painel detalhe direito; filtros: busca/tipo/vertical/sistema; paginação
+            │   ├── constants.js            # TIPO_CONFIG e TIPO_OPTS (extraídos para evitar dependência circular com ModalConhecimento)
+            │   └── ModalConhecimento.jsx   # Modal criar/editar; tipo chips; editor de etapas numeradas (passo-a-passo); select vertical filtra sistemas do CatalogoVertical; etiquetas inline
             ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
             └── AnalisadorJson/
                 ├── index.jsx               # Componente principal — EditorLinhas, layout, toolbar
@@ -371,8 +372,8 @@ docker-compose up --build
 
 | Método | Rota                    | Descrição                                                                                  |
 |--------|-------------------------|--------------------------------------------------------------------------------------------|
-| GET    | /api/conhecimento       | Lista (filtros `?busca=`, `?tipo=`, `?vertical=`, `?sistemaId=`, `?pagina=`, `?limite=`) — retorna `{ data, total, pagina, limite, totalPaginas }` |
-| GET    | /api/conhecimento/:id   | Detalhe com `autor` e `sistema`                                                            |
+| GET    | /api/conhecimento       | Lista (filtros `?busca=`, `?tipo=`, `?vertical=`, `?sistema=`, `?pagina=`, `?limite=`) — retorna `{ data, total, pagina, limite, totalPaginas }` |
+| GET    | /api/conhecimento/:id   | Detalhe com `autor`                                                                        |
 | POST   | /api/conhecimento       | Cria artigo (`autorId = req.usuario.id`) — qualquer autenticado                            |
 | PUT    | /api/conhecimento/:id   | Atualiza — somente autor ou admin (403 para outros)                                        |
 | DELETE | /api/conhecimento/:id   | Remove — **somente admin**                                                                 |
@@ -476,8 +477,8 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Notas — paleta de cores**: 10 cores post-it em hex (amarelo `#FFFDE7` padrão, lilás, verde, azul, salmão, laranja, índigo, rosa, teal, branco). Card usa `style={{ backgroundColor: nota.cor }}` e borda `rgba(0,0,0,0.12)`. Modal tem fundo dinâmico com a cor selecionada.
 - **Conhecimento — dados globais (sem isolamento)**: `Conhecimento` não possui `usuarioId`; todos os usuários autenticados veem todos os artigos. Diferente de `Notas` (isolado). `autorId` é só para permissão de edição.
 - **Conhecimento — permissões**: criar = qualquer autenticado; editar = autor (`autorId`) ou admin; deletar = somente admin. Backend verifica `req.usuario.role === 'admin' || existente.autorId === req.usuario.id` no PUT.
-- **Conhecimento — tipos e campos**: `conteudo` (texto livre) usado por FAQ/Erro/Dica/Outro; `passos` (JSON array `[{texto}]`) usado por passo-a-passo. Ao salvar, o campo não usado é sempre zerado (`conteudo: ""` ou `passos: []`). `TIPO_CONFIG` exportado de `index.jsx` mapeia tipo → `{ label, cls }`.
-- **Conhecimento — sistemaId FK real**: diferente de `Chamado.sistema` (texto livre), `Conhecimento.sistemaId` é FK para o modelo `Sistema` (onDelete: SetNull). Dropdown carrega `sistemasApi.listar()`.
+- **Conhecimento — tipos e campos**: `conteudo` (texto livre) usado por FAQ/Erro/Dica/Outro; `passos` (JSON array `[{texto}]`) usado por passo-a-passo. Ao salvar, o campo não usado é sempre zerado (`conteudo: ""` ou `passos: []`). `TIPO_CONFIG` e `TIPO_OPTS` exportados de `constants.js` (extraídos para evitar dependência circular entre `index.jsx` e `ModalConhecimento.jsx`).
+- **Conhecimento — sistema como texto (igual a Chamados)**: `Conhecimento.sistema String?` é texto livre populado do `CatalogoVertical.sistemas`. Diferente de `sistemaId FK` — não há relação com o modelo `Sistema` (sandbox). No modal, ao selecionar vertical o dropdown de sistema filtra automaticamente pelos sistemas daquela vertical no catálogo Betha.
 - **Conhecimento — serialização JSON**: `passos` e `etiquetas` armazenados como `JSON.stringify` no SQLite. Helper `parseConhecimento(c)` no backend faz `JSON.parse` antes de retornar (mesmo padrão de `parseNota`).
 
 ## UI — Sandbox (padrões compartilhados entre abas)

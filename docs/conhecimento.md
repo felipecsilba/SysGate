@@ -92,30 +92,33 @@ Componente principal. Layout dois painéis: lista esquerda (`w-80`) + detalhe di
 | `busca` | string | Valor debounced 400ms enviado à API |
 | `filtroTipo` | string | Filtro de tipo |
 | `filtroVertical` | string | Filtro de vertical |
-| `filtroSistema` | string | ID do sistema filtrado |
+| `filtroSistema` | string | Nome do sistema filtrado |
 | `showModal` | boolean | Modal de criar/editar visível |
 | `editando` | `Conhecimento \| null` | Artigo em edição; null = criação |
 | `confirmDeletar` | `Conhecimento \| null` | Artigo aguardando confirmação de exclusão |
-| `catalogo` | array | Verticais do `CatalogoVertical` |
-| `sistemas` | array | Sistemas do modelo `Sistema` |
+| `catalogo` | array | Verticais do `CatalogoVertical` (usadas tanto para o filtro de vertical quanto para derivar sistemas) |
 
 **Painel de detalhe:** exibe tipo passo-a-passo como lista numerada (etapas com círculos `sysgate-600`). Demais tipos exibem `conteudo` com `whitespace-pre-wrap`. Botões Editar/Excluir visíveis conforme permissão (autor ou admin).
 
+### `Conhecimento/constants.js`
+
+Exporta `TIPO_CONFIG` (mapa `tipo → { label, cls }`) e `TIPO_OPTS` (array para selects). Extraído em arquivo separado para evitar dependência circular entre `index.jsx` e `ModalConhecimento.jsx`.
+
 ### `Conhecimento/ModalConhecimento.jsx`
 
-Modal de criação/edição. Props: `artigo` (null = novo), `catalogo`, `sistemas`, `onSaved`, `onClose`.
+Modal de criação/edição. Props: `artigo` (null = novo), `catalogo`, `onSaved`, `onClose`.
 
 **Campos:**
 - Título (obrigatório)
 - Tipo (chips clicáveis com cores)
 - Descrição curta (opcional)
-- Vertical (select do CatalogoVertical) + Sistema (select do modelo Sistema)
+- Vertical (select do CatalogoVertical) + Sistema (select filtrado pelos sistemas da vertical escolhida via `CatalogoVertical.sistemas`)
 - Conteúdo (textarea para FAQ/Erro/Dica/Outro) ou Editor de Etapas (lista de textareas numerados para passo-a-passo)
 - Etiquetas (input com Enter/vírgula para confirmar, chips removíveis)
 
-**Conversão de tipo:** ao mudar de `passo-a-passo` → outro tipo, os passos são unidos em `conteudo` por `\n`. Ao mudar de outro tipo → `passo-a-passo`, o `conteudo` é dividido por linhas em passos.
+**Filtragem de sistemas:** ao selecionar uma vertical, o dropdown de sistemas mostra apenas os sistemas daquela vertical (`catalogo.find(v => v.nome === vertical)?.sistemas`). Sem vertical selecionada, exibe todos os sistemas de todas as verticais. Ao trocar a vertical, o sistema é resetado se não pertencer à nova lista.
 
-**`TIPO_CONFIG`** exportado de `index.jsx` — mapa `tipo → { label, cls }` usado em ambos os componentes.
+**Conversão de tipo:** ao mudar de `passo-a-passo` → outro tipo, os passos são unidos em `conteudo` por `\n`. Ao mudar de outro tipo → `passo-a-passo`, o `conteudo` é dividido por linhas em passos.
 
 ---
 
@@ -134,7 +137,7 @@ Modal de criação/edição. Props: `artigo` (null = novo), `catalogo`, `sistema
 
 - **Dados globais:** sem isolamento por usuário — todos veem todos os artigos. Diferente de `Municipios` e `Notas`.
 - **`passos` só para `passo-a-passo`:** ao salvar outro tipo, `passos` é sempre `[]`. Ao salvar `passo-a-passo`, `conteudo` é sempre `""`.
-- **`sistemaId` FK real:** diferente de `Chamado.sistema` (texto livre), aqui `sistemaId` é FK para o modelo `Sistema`. Se o sistema for deletado, o campo vira `null` (`onDelete: SetNull`).
+- **`sistema` como texto (igual a Chamados):** `Conhecimento.sistema String?` armazena o nome do produto Betha (ex: `"Tributação e Receitas"`), populado a partir de `CatalogoVertical.sistemas`. Não é FK para o modelo `Sistema` (sandbox de endpoints). O dropdown no modal filtra os sistemas pela vertical selecionada.
 - **Busca textual:** `GET /api/conhecimento?busca=` aplica `contains` em `titulo`, `descricao` e `conteudo`.
 - **Paginação:** 20 artigos por página. Controles ← → aparecem quando há mais de uma página.
 - **Debounce:** campo de busca aplica debounce de 400ms (mesmo padrão do módulo Chamados).
