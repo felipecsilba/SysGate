@@ -7,3 +7,15 @@ export const TIPO_CONFIG = {
 }
 
 export const TIPO_OPTS = Object.entries(TIPO_CONFIG).map(([value, { label }]) => ({ value, label }))
+
+// Converte string de conteúdo (JSON de blocos ou texto plano) para array de blocos
+export function parseConteudo(str) {
+  if (!str || str.trim() === '') return [{ tipo: 'texto', valor: '' }]
+  try {
+    const parsed = JSON.parse(str)
+    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0].tipo === 'string') {
+      return parsed
+    }
+  } catch {}
+  return [{ tipo: 'texto', valor: str }]
+}

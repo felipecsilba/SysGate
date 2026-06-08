@@ -4,7 +4,7 @@ import useAuthStore from '../../stores/authStore'
 import ModalConhecimento from './ModalConhecimento'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Toast from '../../components/Toast'
-import { TIPO_CONFIG } from './constants'
+import { TIPO_CONFIG, parseConteudo } from './constants'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -20,6 +20,41 @@ function tempoRelativo(data) {
   const m = Math.floor(d / 30)
   if (m < 12) return `${m}m atrás`
   return `${Math.floor(m / 12)}a atrás`
+}
+
+// ─── Renderizador de blocos ───────────────────────────────────────────────────
+
+function RenderBlocos({ conteudo }) {
+  const blocos = parseConteudo(conteudo)
+  return (
+    <div className="space-y-2">
+      {blocos.map((b, i) => {
+        if (b.tipo === 'codigo') return (
+          <div key={i} className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900 my-1">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+              <span className="ml-1 text-[10px] font-mono tracking-widest text-gray-500 uppercase">Código</span>
+            </div>
+            <pre className="font-mono text-sm text-green-400 px-3 py-2.5 whitespace-pre-wrap">{b.valor}</pre>
+          </div>
+        )
+        if (b.tipo === 'subtitulo') return (
+          <p key={i} className="text-sm font-bold text-gray-800 mt-1">{b.valor}</p>
+        )
+        if (b.tipo === 'nota') return (
+          <div key={i} className="flex gap-2 items-start pl-1">
+            <div className="w-0.5 self-stretch bg-gray-300 rounded-full shrink-0 mt-0.5" />
+            <p className="text-sm text-gray-500 italic leading-relaxed">{b.valor}</p>
+          </div>
+        )
+        return b.valor ? (
+          <p key={i} className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{b.valor}</p>
+        ) : null
+      })}
+    </div>
+  )
 }
 
 // ─── Ícones ───────────────────────────────────────────────────────────────────
@@ -171,13 +206,15 @@ function PainelDetalhe({ artigo, usuario, isAdmin, onEditar, onDeletar, onFechar
 
         {artigo.tipo === 'passo-a-passo' ? (
           artigo.passos.length > 0 ? (
-            <ol className="space-y-3">
+            <ol className="space-y-4">
               {artigo.passos.map((p, i) => (
-                <li key={i} className="flex gap-3 text-sm text-gray-700">
+                <li key={i} className="flex gap-3">
                   <span className="w-6 h-6 rounded-full bg-sysgate-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-semibold">
                     {i + 1}
                   </span>
-                  <span className="whitespace-pre-wrap leading-relaxed">{p.texto}</span>
+                  <div className="flex-1 min-w-0">
+                    <RenderBlocos conteudo={p.texto} />
+                  </div>
                 </li>
               ))}
             </ol>
@@ -185,8 +222,8 @@ function PainelDetalhe({ artigo, usuario, isAdmin, onEditar, onDeletar, onFechar
             <p className="text-sm text-gray-400 italic">Nenhum passo cadastrado.</p>
           )
         ) : (
-          artigo.conteudo ? (
-            <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{artigo.conteudo}</pre>
+          artigo.conteudo && artigo.conteudo !== '[]' ? (
+            <RenderBlocos conteudo={artigo.conteudo} />
           ) : (
             <p className="text-sm text-gray-400 italic">Sem conteúdo.</p>
           )
