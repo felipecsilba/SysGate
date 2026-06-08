@@ -22,8 +22,8 @@ Todos os usuários autenticados podem **criar** artigos. O próprio autor ou um 
 | titulo | String | — | Título do artigo (obrigatório) |
 | tipo | String | `"faq"` | `faq` \| `erro` \| `passo-a-passo` \| `dica` \| `outro` |
 | descricao | String? | null | Resumo curto exibido nos cards da lista |
-| conteudo | String | `""` | Conteúdo principal (tipos FAQ, Erro, Dica, Outro) |
-| passos | String | `"[]"` | JSON serializado: `[{texto: string}]` — somente tipo `passo-a-passo` |
+| conteudo | String | `"[]"` | JSON serializado: `[{tipo, valor}]` — array de blocos; retrocompatível com texto plano |
+| passos | String | `"[]"` | JSON serializado: `[{texto: string}]` onde `texto` é JSON de blocos — somente tipo `passo-a-passo` |
 | vertical | String? | null | Nome da vertical (referência ao `CatalogoVertical`) |
 | sistema | String? | null | Nome do sistema Betha (referência a `CatalogoVertical.sistemas`) |
 | etiquetas | String | `"[]"` | JSON serializado: `string[]` |
@@ -33,7 +33,16 @@ Todos os usuários autenticados podem **criar** artigos. O próprio autor ou um 
 
 **Índices:** `[tipo]`, `[vertical]`, `[sistema]`, `[autorId]`
 
-**Notas de serialização:** `passos` e `etiquetas` são armazenados como `JSON.stringify(array)` no SQLite. Helper `parseConhecimento(c)` no backend faz `JSON.parse` antes de retornar.
+**Notas de serialização:** `passos`, `etiquetas` e o conteúdo de cada bloco são armazenados como `JSON.stringify(array)` no SQLite. Helper `parseConhecimento(c)` no backend faz `JSON.parse` antes de retornar. No frontend, `parseConteudo(str)` em `constants.js` converte qualquer string (JSON de blocos ou texto plano) para array de blocos.
+
+**Formato de bloco:**
+```js
+{ tipo: 'texto' | 'subtitulo' | 'codigo' | 'nota', valor: string }
+```
+- `texto` — parágrafo comum
+- `subtitulo` — rótulo em negrito (ex: "1° Serviço")
+- `codigo` — bloco escuro monospace (`bg-gray-900 text-green-400`), igual ao Sandbox
+- `nota` — itálico com barra lateral cinza
 
 ---
 
@@ -98,27 +107,40 @@ Componente principal. Layout dois painéis: lista esquerda (`w-80`) + detalhe di
 | `confirmDeletar` | `Conhecimento \| null` | Artigo aguardando confirmação de exclusão |
 | `catalogo` | array | Verticais do `CatalogoVertical` (usadas tanto para o filtro de vertical quanto para derivar sistemas) |
 
-**Painel de detalhe:** exibe tipo passo-a-passo como lista numerada (etapas com círculos `sysgate-600`). Demais tipos exibem `conteudo` com `whitespace-pre-wrap`. Botões Editar/Excluir visíveis conforme permissão (autor ou admin).
+**Painel de detalhe (`PainelDetalhe` + `RenderBlocos`):** usa `RenderBlocos` para renderizar blocos de qualquer tipo. Passo-a-passo exibe lista numerada com círculos `sysgate-600`; cada passo também usa `RenderBlocos` para renderizar seus blocos internos. Botões Editar/Excluir visíveis conforme permissão (autor ou admin).
 
 ### `Conhecimento/constants.js`
 
-Exporta `TIPO_CONFIG` (mapa `tipo → { label, cls }`) e `TIPO_OPTS` (array para selects). Extraído em arquivo separado para evitar dependência circular entre `index.jsx` e `ModalConhecimento.jsx`.
+Exporta:
+- `TIPO_CONFIG` — mapa `tipo → { label, cls }`
+- `TIPO_OPTS` — array para selects/chips
+- `parseConteudo(str)` — converte string (JSON de blocos ou texto plano) para array de blocos; retrocompatível
+
+Extraído em arquivo separado para evitar dependência circular entre `index.jsx` e `ModalConhecimento.jsx`.
 
 ### `Conhecimento/ModalConhecimento.jsx`
 
 Modal de criação/edição. Props: `artigo` (null = novo), `catalogo`, `onSaved`, `onClose`.
+
+**Editor de blocos (`BlocoEditorList`):** substitui os textareas simples de conteúdo. Componentes internos:
+- `BlocoItem` — renderiza o editor de um bloco (textarea, input bold, dark code block, itálico) com ações hover (↑ ↓ ✕)
+- `AddBlocoMenu` — botão "+ Adicionar bloco" com dropdown dos 4 tipos
 
 **Campos:**
 - Título (obrigatório)
 - Tipo (chips clicáveis com cores)
 - Descrição curta (opcional)
 - Vertical (select do CatalogoVertical) + Sistema (select filtrado pelos sistemas da vertical escolhida via `CatalogoVertical.sistemas`)
-- Conteúdo (textarea para FAQ/Erro/Dica/Outro) ou Editor de Etapas (lista de textareas numerados para passo-a-passo)
+- Conteúdo — `BlocoEditorList` para FAQ/Erro/Dica/Outro; lista de passos (cada passo com `BlocoEditorList` interno) para passo-a-passo
 - Etiquetas (input com Enter/vírgula para confirmar, chips removíveis)
 
-**Filtragem de sistemas:** ao selecionar uma vertical, o dropdown de sistemas mostra apenas os sistemas daquela vertical (`catalogo.find(v => v.nome === vertical)?.sistemas`). Sem vertical selecionada, exibe todos os sistemas de todas as verticais. Ao trocar a vertical, o sistema é resetado se não pertencer à nova lista.
+**Filtragem de sistemas:** ao selecionar uma vertical, o dropdown de sistemas mostra apenas os sistemas daquela vertical. Sem vertical selecionada, exibe todos. Ao trocar vertical, sistema é resetado se não pertencer à nova lista.
 
-**Conversão de tipo:** ao mudar de `passo-a-passo` → outro tipo, os passos são unidos em `conteudo` por `\n`. Ao mudar de outro tipo → `passo-a-passo`, o `conteudo` é dividido por linhas em passos.
+**Conversão de tipo:** ao mudar de `passo-a-passo` → outro tipo, textos dos blocos de texto dos passos viram blocos de texto no `BlocoEditorList`. Ao mudar para `passo-a-passo`, os blocos de texto existentes viram passos individuais.
+
+**Serialização ao salvar:**
+- `conteudo = JSON.stringify(blocos)` (não passo-a-passo)
+- `passos = [{ texto: JSON.stringify(passo.blocos) }]` (passo-a-passo)
 
 ---
 
@@ -136,7 +158,8 @@ Modal de criação/edição. Props: `artigo` (null = novo), `catalogo`, `onSaved
 ## Comportamentos importantes
 
 - **Dados globais:** sem isolamento por usuário — todos veem todos os artigos. Diferente de `Municipios` e `Notas`.
-- **`passos` só para `passo-a-passo`:** ao salvar outro tipo, `passos` é sempre `[]`. Ao salvar `passo-a-passo`, `conteudo` é sempre `""`.
+- **`passos` só para `passo-a-passo`:** ao salvar outro tipo, `passos` é sempre `[]`. Ao salvar `passo-a-passo`, `conteudo` é sempre `'[]'`.
+- **Blocos ricos:** tanto `conteudo` quanto `passos[].texto` armazenam JSON de blocos. O bloco `codigo` exibe fundo escuro + fonte verde monospace (mesmo estilo do Sandbox). `parseConteudo` garante retrocompatibilidade com artigos antigos (texto plano).
 - **`sistema` como texto (igual a Chamados):** `Conhecimento.sistema String?` armazena o nome do produto Betha (ex: `"Tributação e Receitas"`), populado a partir de `CatalogoVertical.sistemas`. Não é FK para o modelo `Sistema` (sandbox de endpoints). O dropdown no modal filtra os sistemas pela vertical selecionada.
 - **Busca textual:** `GET /api/conhecimento?busca=` aplica `contains` em `titulo`, `descricao` e `conteudo`.
 - **Paginação:** 20 artigos por página. Controles ← → aparecem quando há mais de uma página.

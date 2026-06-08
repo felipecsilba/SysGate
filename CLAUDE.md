@@ -71,7 +71,7 @@ krakion/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL
 │   ├── prisma/
-│   │   ├── schema.prisma      # 24 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema (+ conhecimentos), Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento, Conhecimento
+│   │   ├── schema.prisma      # 24 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento, Conhecimento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -162,9 +162,9 @@ krakion/
             │   ├── NotaCard.jsx            # Card draggable com fundo colorido; ações no hover; renderização por tipo; chips de etiquetas
             │   └── ModalNota.jsx           # Modal criar/editar; abas de tipo; editor de itens checklist/lista; seletor de 10 cores; compartilhamento por usuário
             ├── Conhecimento/
-            │   ├── index.jsx               # Componente principal — lista esquerda (w-80) + painel detalhe direito; filtros: busca/tipo/vertical/sistema; paginação
-            │   ├── constants.js            # TIPO_CONFIG e TIPO_OPTS (extraídos para evitar dependência circular com ModalConhecimento)
-            │   └── ModalConhecimento.jsx   # Modal criar/editar; tipo chips; editor de etapas numeradas (passo-a-passo); select vertical filtra sistemas do CatalogoVertical; etiquetas inline
+            │   ├── index.jsx               # Componente principal — lista esquerda (w-80) + painel detalhe direito; filtros: busca/tipo/vertical/sistema; paginação; `RenderBlocos` renderiza blocos (texto/subtítulo/código/nota)
+            │   ├── constants.js            # TIPO_CONFIG, TIPO_OPTS e `parseConteudo(str)` — detecta JSON de blocos ou texto plano e retorna array de blocos
+            │   └── ModalConhecimento.jsx   # Modal criar/editar; editor de blocos (BlocoEditorList + BlocoItem + AddBlocoMenu); suporte a blocos ricos dentro de cada passo (passo-a-passo)
             ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
             └── AnalisadorJson/
                 ├── index.jsx               # Componente principal — EditorLinhas, layout, toolbar
@@ -477,7 +477,9 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Notas — paleta de cores**: 10 cores post-it em hex (amarelo `#FFFDE7` padrão, lilás, verde, azul, salmão, laranja, índigo, rosa, teal, branco). Card usa `style={{ backgroundColor: nota.cor }}` e borda `rgba(0,0,0,0.12)`. Modal tem fundo dinâmico com a cor selecionada.
 - **Conhecimento — dados globais (sem isolamento)**: `Conhecimento` não possui `usuarioId`; todos os usuários autenticados veem todos os artigos. Diferente de `Notas` (isolado). `autorId` é só para permissão de edição.
 - **Conhecimento — permissões**: criar = qualquer autenticado; editar = autor (`autorId`) ou admin; deletar = somente admin. Backend verifica `req.usuario.role === 'admin' || existente.autorId === req.usuario.id` no PUT.
-- **Conhecimento — tipos e campos**: `conteudo` (texto livre) usado por FAQ/Erro/Dica/Outro; `passos` (JSON array `[{texto}]`) usado por passo-a-passo. Ao salvar, o campo não usado é sempre zerado (`conteudo: ""` ou `passos: []`). `TIPO_CONFIG` e `TIPO_OPTS` exportados de `constants.js` (extraídos para evitar dependência circular entre `index.jsx` e `ModalConhecimento.jsx`).
+- **Conhecimento — editor de blocos**: `conteudo` e `passos[].texto` armazenam JSON de blocos: `[{tipo: 'texto'|'subtitulo'|'codigo'|'nota', valor: string}]`. O modal usa `BlocoEditorList` (lista editável de blocos com ↑ ↓ ✕ no hover). Bloco `codigo` usa fundo `bg-gray-900` + fonte `text-green-400` monospace, igual ao Sandbox. Cada passo do tipo `passo-a-passo` também suporta blocos ricos internamente.
+- **Conhecimento — retrocompatibilidade de blocos**: `parseConteudo(str)` em `constants.js` tenta `JSON.parse` — se for array de blocos válido usa diretamente; senão envolve o texto plano em `[{tipo:'texto', valor: str}]`. Garante que artigos criados antes dos blocos continuem funcionando.
+- **Conhecimento — tipos e campos**: `conteudo` (JSON de blocos) usado por FAQ/Erro/Dica/Outro; `passos` (JSON array `[{texto: string}]` onde `texto` é JSON de blocos) usado por passo-a-passo. Ao salvar, o campo não usado é sempre zerado. `TIPO_CONFIG`, `TIPO_OPTS` e `parseConteudo` exportados de `constants.js` (extraídos para evitar dependência circular entre `index.jsx` e `ModalConhecimento.jsx`).
 - **Conhecimento — sistema como texto (igual a Chamados)**: `Conhecimento.sistema String?` é texto livre populado do `CatalogoVertical.sistemas`. Diferente de `sistemaId FK` — não há relação com o modelo `Sistema` (sandbox). No modal, ao selecionar vertical o dropdown de sistema filtra automaticamente pelos sistemas daquela vertical no catálogo Betha.
 - **Conhecimento — serialização JSON**: `passos` e `etiquetas` armazenados como `JSON.stringify` no SQLite. Helper `parseConhecimento(c)` no backend faz `JSON.parse` antes de retornar (mesmo padrão de `parseNota`).
 
