@@ -18,6 +18,7 @@ const AnalisadorJson = lazy(() => import('./pages/AnalisadorJson'))
 const Notas          = lazy(() => import('./pages/Notas'))
 const MeuPerfil      = lazy(() => import('./pages/MeuPerfil'))
 const RedefinirSenha = lazy(() => import('./pages/RedefinirSenha'))
+const Conhecimento   = lazy(() => import('./pages/Conhecimento'))
 
 function PageLoader() {
   return (
@@ -69,6 +70,9 @@ export default function App() {
             } />
             <Route path="notas" element={
               <Suspense fallback={<PageLoader />}><Notas /></Suspense>
+            } />
+            <Route path="conhecimento" element={
+              <Suspense fallback={<PageLoader />}><Conhecimento /></Suspense>
             } />
             {/* Usuários: admin vê todos; não-admin é redirecionado para /perfil */}
             <Route path="usuarios" element={

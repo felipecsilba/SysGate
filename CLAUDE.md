@@ -49,6 +49,7 @@ krakion/
 │   ├── chamados.md
 │   ├── notas.md               # Módulo Notas (Google Keep): modelos, API, comportamentos
 │   ├── usuarios.md            # Módulo Usuários e Perfil: schema, rotas, recuperação de senha, MeuPerfil
+│   ├── conhecimento.md        # Módulo Conhecimento: base colaborativa de FAQs, erros, passo a passo
 │   └── analisador-json.md
 ├── skills/                    # Referências de domínio e processo
 │   ├── backend.md
@@ -70,7 +71,7 @@ krakion/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL
 │   ├── prisma/
-│   │   ├── schema.prisma      # 23 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento
+│   │   ├── schema.prisma      # 24 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema (+ conhecimentos), Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento, Conhecimento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
@@ -91,7 +92,8 @@ krakion/
 │           ├── catalogo.js   # CRUD CatalogoVertical — verticais Betha com nome/cor/sistemas/ordem; seed automático na 1ª chamada GET — leitura pública; escrita somente admin
 │           ├── chamados.js   # CRUD Chamados + comentários + anexos (+ comentarioId) + histórico de alterações + dashboard agregado; filtros: semResponsavel, excluirEncerrados, verticais (CSV), sistemas (CSV), prioridade, municipio; acesso público (autenticados); DELETE somente admin
 │           ├── solicitantes.js # CRUD Solicitantes externos (contatos do cliente) — leitura/escrita pública (autenticados); DELETE somente admin
-│           └── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
+│           ├── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
+│           └── conhecimento.js # CRUD Conhecimento — todos criam; autor/admin editam; somente admin deleta; dados globais
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
@@ -106,13 +108,13 @@ krakion/
         ├── App.jsx            # BrowserRouter: /login e /redefinir-senha públicas + PrivateRoute; rota /perfil protegida; todas as páginas carregadas com React.lazy + Suspense (code splitting por rota)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
-        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi, chamadosApi, solicitantesApi e notasApi; authApi inclui esquecerSenha() e redefinirSenha()
+        │   └── api.js         # Axios centralizado + interceptor JWT (Bearer) + interceptor 401→logout; exporta scriptsApi, relatoriosApi, portfolioApi, catalogoApi, chamadosApi, solicitantesApi, notasApi e conhecimentoApi; authApi inclui esquecerSenha() e redefinirSenha()
         ├── stores/
         │   ├── municipioStore.js  # Zustand + persist (localStorage, key: krakion-municipio)
         │   └── authStore.js       # Zustand + persist (krakion-auth) — token + usuario; suporta lembrar (30d); logout limpa krakion-municipio do localStorage
         ├── components/
         │   ├── Layout.jsx         # Sidebar + barra acento gradiente no topo + header: chip usuário + botão Sair
-        │   ├── Sidebar.jsx        # NavLinks com SVG icons; grupo Ferramentas: Scripts, Analisador JSON, Notas, Sandbox, Histórico; admin vê grupo "Configuração" completo (Sistemas + Central de Tokens + Usuários); não-admin vê apenas "Central de Tokens"; "Meu Perfil" visível para todos os usuários (fora do grupo)
+        │   ├── Sidebar.jsx        # NavLinks com SVG icons; grupo Ferramentas: Scripts, Analisador JSON, Notas, Conhecimento, Sandbox, Histórico; admin vê grupo "Configuração" completo (Sistemas + Central de Tokens + Usuários); não-admin vê apenas "Central de Tokens"; "Meu Perfil" visível para todos os usuários (fora do grupo)
         │   ├── PrivateRoute.jsx   # Redireciona para /login se não autenticado; AdminRoute para role
         │   ├── MunicipioBadge.jsx # Badge do município ativo (alerta vermelho para produção)
         │   ├── SwaggerImport.jsx  # Modal: fetch por URL / upload arquivo / specs salvas / limpar tudo
@@ -159,6 +161,9 @@ krakion/
             │   ├── index.jsx               # Componente principal — grid responsivo, seções Fixadas/Outras, drag & drop HTML5 nativo, filtros por busca/tipo/etiqueta
             │   ├── NotaCard.jsx            # Card draggable com fundo colorido; ações no hover; renderização por tipo; chips de etiquetas
             │   └── ModalNota.jsx           # Modal criar/editar; abas de tipo; editor de itens checklist/lista; seletor de 10 cores; compartilhamento por usuário
+            ├── Conhecimento/
+            │   ├── index.jsx               # Componente principal — lista esquerda (w-80) + painel detalhe direito; filtros: busca/tipo/vertical/sistema; paginação; exporta TIPO_CONFIG
+            │   └── ModalConhecimento.jsx   # Modal criar/editar; tipo chips; editor de etapas numeradas (passo-a-passo); select de vertical/sistema; etiquetas inline
             ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
             └── AnalisadorJson/
                 ├── index.jsx               # Componente principal — EditorLinhas, layout, toolbar
@@ -361,6 +366,17 @@ docker-compose up --build
 | POST   | /api/notas/:id/compartilhar       | Compartilha com `{ usuarioId }` (upsert) — somente dono                                |
 | DELETE | /api/notas/:id/compartilhar/:uid  | Remove compartilhamento de um usuário — somente dono                                   |
 
+### Conhecimento
+> Acesso público (qualquer autenticado). Dados globais — sem isolamento por usuário. Edição restrita ao autor ou admin. Exclusão somente admin.
+
+| Método | Rota                    | Descrição                                                                                  |
+|--------|-------------------------|--------------------------------------------------------------------------------------------|
+| GET    | /api/conhecimento       | Lista (filtros `?busca=`, `?tipo=`, `?vertical=`, `?sistemaId=`, `?pagina=`, `?limite=`) — retorna `{ data, total, pagina, limite, totalPaginas }` |
+| GET    | /api/conhecimento/:id   | Detalhe com `autor` e `sistema`                                                            |
+| POST   | /api/conhecimento       | Cria artigo (`autorId = req.usuario.id`) — qualquer autenticado                            |
+| PUT    | /api/conhecimento/:id   | Atualiza — somente autor ou admin (403 para outros)                                        |
+| DELETE | /api/conhecimento/:id   | Remove — **somente admin**                                                                 |
+
 ### Outros
 | Método | Rota                  | Descrição                                                                     |
 |--------|-----------------------|-------------------------------------------------------------------------------|
@@ -458,6 +474,11 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Notas — fixar**: `Nota.fixada Boolean`. Notas fixadas aparecem em seção "Fixadas" acima das demais (ícone pin + label). Toggle via `PATCH /:id/fixar` (só dono).
 - **Notas — tipos**: `texto` (textarea livre), `checklist` (itens com `feito: boolean`), `lista` (bullets), `codigo` (monospace). Ao mudar tipo no modal, conteúdo ↔ itens são convertidos automaticamente (linhas ↔ array de objetos).
 - **Notas — paleta de cores**: 10 cores post-it em hex (amarelo `#FFFDE7` padrão, lilás, verde, azul, salmão, laranja, índigo, rosa, teal, branco). Card usa `style={{ backgroundColor: nota.cor }}` e borda `rgba(0,0,0,0.12)`. Modal tem fundo dinâmico com a cor selecionada.
+- **Conhecimento — dados globais (sem isolamento)**: `Conhecimento` não possui `usuarioId`; todos os usuários autenticados veem todos os artigos. Diferente de `Notas` (isolado). `autorId` é só para permissão de edição.
+- **Conhecimento — permissões**: criar = qualquer autenticado; editar = autor (`autorId`) ou admin; deletar = somente admin. Backend verifica `req.usuario.role === 'admin' || existente.autorId === req.usuario.id` no PUT.
+- **Conhecimento — tipos e campos**: `conteudo` (texto livre) usado por FAQ/Erro/Dica/Outro; `passos` (JSON array `[{texto}]`) usado por passo-a-passo. Ao salvar, o campo não usado é sempre zerado (`conteudo: ""` ou `passos: []`). `TIPO_CONFIG` exportado de `index.jsx` mapeia tipo → `{ label, cls }`.
+- **Conhecimento — sistemaId FK real**: diferente de `Chamado.sistema` (texto livre), `Conhecimento.sistemaId` é FK para o modelo `Sistema` (onDelete: SetNull). Dropdown carrega `sistemasApi.listar()`.
+- **Conhecimento — serialização JSON**: `passos` e `etiquetas` armazenados como `JSON.stringify` no SQLite. Helper `parseConhecimento(c)` no backend faz `JSON.parse` antes de retornar (mesmo padrão de `parseNota`).
 
 ## UI — Sandbox (padrões compartilhados entre abas)
 

@@ -17,6 +17,7 @@ model Sistema {
   swaggerSpecs      SwaggerSpec[]
   municipioSistemas MunicipioSistema[]
   requisicoes       Requisicao[]
+  conhecimentos     Conhecimento[]
 }
 
 model Municipio {
@@ -152,6 +153,7 @@ model Usuario {
   historicoChamado     ChamadoHistorico[]  @relation("historicoChamado")
   notasProprietario    Nota[]              @relation("NotasProprietario")
   notasCompartilhadas  NotaCompartilhamento[] @relation("NotasCompartilhadas")
+  conhecimentosAutor   Conhecimento[]      @relation("ConhecimentoAutor")
   criadoEm         DateTime    @default(now())
   atualizadoEm     DateTime    @updatedAt
 }
@@ -334,4 +336,28 @@ model CatalogoVertical {
   ordem        Int      @default(0)
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
+}
+
+// ── Módulo Conhecimento ───────────────────────────────────────────────────────
+
+model Conhecimento {
+  id           Int      @id @default(autoincrement())
+  titulo       String
+  tipo         String   @default("faq")   // faq | erro | passo-a-passo | dica | outro
+  descricao    String?                    // resumo curto exibido nos cards
+  conteudo     String   @default("")      // conteúdo principal (texto livre)
+  passos       String   @default("[]")   // JSON: [{texto: string}] — tipo passo-a-passo
+  vertical     String?                   // nome da vertical (ref. CatalogoVertical)
+  sistemaId    Int?
+  sistema      Sistema? @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
+  etiquetas    String   @default("[]")   // JSON: string[]
+  autorId      Int
+  autor        Usuario  @relation("ConhecimentoAutor", fields: [autorId], references: [id])
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([tipo])
+  @@index([vertical])
+  @@index([sistemaId])
+  @@index([autorId])
 }

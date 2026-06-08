@@ -191,6 +191,15 @@ export const chamadosApi = {
   deletarAnexo:      (aid) => api.delete(`/chamados/anexos/${aid}`).then(r => r.data),
 }
 
+// Base de Conhecimento
+export const conhecimentoApi = {
+  listar:    (params) => api.get('/conhecimento', { params }).then(r => r.data),
+  obter:     (id)     => api.get(`/conhecimento/${id}`).then(r => r.data),
+  criar:     (data)   => api.post('/conhecimento', data).then(r => r.data),
+  atualizar: (id, data) => api.put(`/conhecimento/${id}`, data).then(r => r.data),
+  deletar:   (id)     => api.delete(`/conhecimento/${id}`).then(r => r.data),
+}
+
 // Notas (estilo Google Keep)
 export const notasApi = {
   listar: (params) => api.get('/notas', { params }).then(r => r.data),

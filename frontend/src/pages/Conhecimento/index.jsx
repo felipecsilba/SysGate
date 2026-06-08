@@ -1,0 +1,555 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { conhecimentoApi, catalogoApi, sistemasApi } from '../../lib/api'
+import useAuthStore from '../../stores/authStore'
+import ModalConhecimento from './ModalConhecimento'
+import ConfirmDialog from '../../components/ConfirmDialog'
+import Toast from '../../components/Toast'
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+export const TIPO_CONFIG = {
+  faq:            { label: 'FAQ',          cls: 'bg-blue-100 text-blue-700' },
+  erro:           { label: 'Erro',         cls: 'bg-red-100 text-red-700' },
+  'passo-a-passo':{ label: 'Passo a Passo',cls: 'bg-green-100 text-green-700' },
+  dica:           { label: 'Dica',         cls: 'bg-amber-100 text-amber-700' },
+  outro:          { label: 'Outro',        cls: 'bg-gray-100 text-gray-600' },
+}
+
+const TIPO_OPTS = Object.entries(TIPO_CONFIG).map(([value, { label }]) => ({ value, label }))
+
+function tempoRelativo(data) {
+  const diff = Date.now() - new Date(data).getTime()
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return 'agora'
+  if (min < 60) return `${min}min atrás`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `${h}h atrás`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d}d atrás`
+  const m = Math.floor(d / 30)
+  if (m < 12) return `${m}m atrás`
+  return `${Math.floor(m / 12)}a atrás`
+}
+
+// ─── Ícones inline ────────────────────────────────────────────────────────────
+
+function IconEdit() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  )
+}
+
+function IconTrash() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  )
+}
+
+function IconClose() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+
+function IconSearch() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  )
+}
+
+function IconBook() {
+  return (
+    <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+      <path d="M12 16v-4M12 8h.01" />
+    </svg>
+  )
+}
+
+// ─── Card de artigo na lista ──────────────────────────────────────────────────
+
+function ArtigoCard({ artigo, ativo, onClick }) {
+  const cfg = TIPO_CONFIG[artigo.tipo] || TIPO_CONFIG.outro
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${ativo ? 'bg-sysgate-50 border-l-2 border-sysgate-500' : ''}`}
+    >
+      <div className="flex items-start gap-2 mb-1">
+        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 mt-0.5 ${cfg.cls}`}>
+          {cfg.label}
+        </span>
+        <span className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug">
+          {artigo.titulo}
+        </span>
+      </div>
+      {artigo.descricao && (
+        <p className="text-xs text-gray-500 line-clamp-1 mb-1.5 ml-[calc(1.5rem+0.5rem)]">
+          {artigo.descricao}
+        </p>
+      )}
+      <div className="flex items-center gap-1.5 flex-wrap ml-[calc(1.5rem+0.5rem)]">
+        {artigo.vertical && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-violet-100 text-violet-600 rounded-full">
+            {artigo.vertical}
+          </span>
+        )}
+        {artigo.sistema && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-sysgate-100 text-sysgate-600 rounded-full">
+            {artigo.sistema.nome}
+          </span>
+        )}
+        <span className="text-[10px] text-gray-400 ml-auto shrink-0">
+          {tempoRelativo(artigo.criadoEm)}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+// ─── Painel de detalhe ────────────────────────────────────────────────────────
+
+function PainelDetalhe({ artigo, usuario, isAdmin, onEditar, onDeletar, onFechar }) {
+  const cfg = TIPO_CONFIG[artigo.tipo] || TIPO_CONFIG.outro
+  const podeEditar = isAdmin || artigo.autorId === usuario?.id
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Cabeçalho */}
+      <div className="px-5 py-4 border-b border-gray-100">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.cls}`}>
+                {cfg.label}
+              </span>
+              {artigo.vertical && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
+                  {artigo.vertical}
+                </span>
+              )}
+              {artigo.sistema && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-sysgate-100 text-sysgate-600">
+                  {artigo.sistema.nome}
+                </span>
+              )}
+            </div>
+            <h2 className="text-base font-semibold text-gray-900 leading-snug">
+              {artigo.titulo}
+            </h2>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {podeEditar && (
+              <button
+                onClick={onEditar}
+                className="p-1.5 text-gray-400 hover:text-sysgate-600 hover:bg-sysgate-50 rounded-lg transition-colors"
+                title="Editar artigo"
+              >
+                <IconEdit />
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={onDeletar}
+                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Excluir artigo"
+              >
+                <IconTrash />
+              </button>
+            )}
+            <button
+              onClick={onFechar}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Fechar"
+            >
+              <IconClose />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Conteúdo */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        {artigo.descricao && (
+          <p className="text-sm text-gray-600 italic border-l-2 border-sysgate-200 pl-3 py-0.5">
+            {artigo.descricao}
+          </p>
+        )}
+
+        {artigo.tipo === 'passo-a-passo' ? (
+          artigo.passos.length > 0 ? (
+            <ol className="space-y-3">
+              {artigo.passos.map((p, i) => (
+                <li key={i} className="flex gap-3 text-sm text-gray-700">
+                  <span className="w-6 h-6 rounded-full bg-sysgate-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-semibold">
+                    {i + 1}
+                  </span>
+                  <span className="whitespace-pre-wrap leading-relaxed">{p.texto}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-sm text-gray-400 italic">Nenhum passo cadastrado.</p>
+          )
+        ) : (
+          artigo.conteudo ? (
+            <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+              {artigo.conteudo}
+            </pre>
+          ) : (
+            <p className="text-sm text-gray-400 italic">Sem conteúdo.</p>
+          )
+        )}
+
+        {artigo.etiquetas?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100">
+            {artigo.etiquetas.map((e) => (
+              <span key={e} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                {e}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Rodapé */}
+      <div className="px-5 py-3 border-t border-gray-100 flex items-center gap-2">
+        <span className="w-6 h-6 rounded-full bg-sysgate-100 text-sysgate-600 text-xs flex items-center justify-center font-semibold shrink-0">
+          {artigo.autor?.nome?.[0]?.toUpperCase() || '?'}
+        </span>
+        <span className="text-xs text-gray-500">{artigo.autor?.nome}</span>
+        <span className="text-xs text-gray-300">·</span>
+        <span className="text-xs text-gray-400">{tempoRelativo(artigo.criadoEm)}</span>
+        {artigo.atualizadoEm !== artigo.criadoEm && (
+          <>
+            <span className="text-xs text-gray-300">·</span>
+            <span className="text-xs text-gray-400">editado {tempoRelativo(artigo.atualizadoEm)}</span>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
+export default function Conhecimento() {
+  const usuario = useAuthStore((s) => s.usuario)
+  const isAdmin = usuario?.role === 'admin'
+
+  const [artigos, setArtigos] = useState([])
+  const [selecionado, setSelecionado] = useState(null)
+  const [carregando, setCarregando] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [pagina, setPagina] = useState(1)
+  const LIMITE = 20
+
+  // Filtros
+  const [buscaInput, setBuscaInput] = useState('')
+  const [busca, setBusca] = useState('')
+  const [filtroTipo, setFiltroTipo] = useState('')
+  const [filtroVertical, setFiltroVertical] = useState('')
+  const [filtroSistema, setFiltroSistema] = useState('')
+
+  // Modal e confirmação
+  const [showModal, setShowModal] = useState(false)
+  const [editando, setEditando] = useState(null)
+  const [confirmDeletar, setConfirmDeletar] = useState(null)
+  const [toast, setToast] = useState(null)
+
+  // Dados de referência
+  const [catalogo, setCatalogo] = useState([])
+  const [sistemas, setSistemas] = useState([])
+
+  // Debounce busca
+  const debounceRef = useRef(null)
+  const handleBuscaChange = (v) => {
+    setBuscaInput(v)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setBusca(v)
+      setPagina(1)
+    }, 400)
+  }
+
+  const mostrarToast = (msg, tipo = 'success') => {
+    setToast({ msg, tipo })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  // Carrega artigos
+  const carregar = useCallback(async () => {
+    setCarregando(true)
+    try {
+      const params = { pagina, limite: LIMITE }
+      if (busca) params.busca = busca
+      if (filtroTipo) params.tipo = filtroTipo
+      if (filtroVertical) params.vertical = filtroVertical
+      if (filtroSistema) params.sistemaId = filtroSistema
+      const r = await conhecimentoApi.listar(params)
+      setArtigos(r.data)
+      setTotal(r.total)
+      // Atualiza o selecionado com dados frescos
+      if (selecionado) {
+        const atualizado = r.data.find((a) => a.id === selecionado.id)
+        if (atualizado) setSelecionado(atualizado)
+      }
+    } catch {
+      mostrarToast('Erro ao carregar artigos', 'error')
+    } finally {
+      setCarregando(false)
+    }
+  }, [pagina, busca, filtroTipo, filtroVertical, filtroSistema]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { carregar() }, [carregar])
+
+  // Carrega dados de referência
+  useEffect(() => {
+    catalogoApi.listar().then(setCatalogo).catch(() => {})
+    sistemasApi.listar().then(setSistemas).catch(() => {})
+  }, [])
+
+  const handleSaved = async () => {
+    setShowModal(false)
+    setEditando(null)
+    await carregar()
+    mostrarToast(editando ? 'Artigo atualizado!' : 'Artigo criado!')
+  }
+
+  const handleDeletar = async () => {
+    if (!confirmDeletar) return
+    try {
+      await conhecimentoApi.deletar(confirmDeletar.id)
+      if (selecionado?.id === confirmDeletar.id) setSelecionado(null)
+      setConfirmDeletar(null)
+      await carregar()
+      mostrarToast('Artigo excluído')
+    } catch {
+      mostrarToast('Erro ao excluir artigo', 'error')
+    }
+  }
+
+  const totalPaginas = Math.ceil(total / LIMITE)
+  const filtroAtivo = filtroTipo || filtroVertical || filtroSistema || busca
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-6 rounded-full bg-sysgate-600" />
+            <h1 className="text-base font-semibold text-gray-800">Conhecimento</h1>
+            {total > 0 && (
+              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                {total} artigo{total !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => { setEditando(null); setShowModal(true) }}
+            className="btn flex items-center gap-1.5 text-sm"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Novo Artigo
+          </button>
+        </div>
+
+        {/* Filtros */}
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          {/* Busca */}
+          <div className="relative flex-1 min-w-[180px]">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+              <IconSearch />
+            </span>
+            <input
+              type="text"
+              value={buscaInput}
+              onChange={(e) => handleBuscaChange(e.target.value)}
+              placeholder="Buscar artigos..."
+              className="input pl-8 text-sm w-full"
+            />
+          </div>
+
+          {/* Tipo */}
+          <select
+            value={filtroTipo}
+            onChange={(e) => { setFiltroTipo(e.target.value); setPagina(1) }}
+            className="input text-sm py-1.5"
+          >
+            <option value="">Todos os tipos</option>
+            {TIPO_OPTS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+
+          {/* Vertical */}
+          <select
+            value={filtroVertical}
+            onChange={(e) => { setFiltroVertical(e.target.value); setPagina(1) }}
+            className="input text-sm py-1.5"
+          >
+            <option value="">Todas as verticais</option>
+            {catalogo.map((v) => (
+              <option key={v.id} value={v.nome}>{v.nome}</option>
+            ))}
+          </select>
+
+          {/* Sistema */}
+          <select
+            value={filtroSistema}
+            onChange={(e) => { setFiltroSistema(e.target.value); setPagina(1) }}
+            className="input text-sm py-1.5"
+          >
+            <option value="">Todos os sistemas</option>
+            {sistemas.map((s) => (
+              <option key={s.id} value={s.id}>{s.nome}</option>
+            ))}
+          </select>
+
+          {filtroAtivo && (
+            <button
+              onClick={() => {
+                setBuscaInput('')
+                setBusca('')
+                setFiltroTipo('')
+                setFiltroVertical('')
+                setFiltroSistema('')
+                setPagina(1)
+              }}
+              className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Limpar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Corpo — lista + detalhe */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Lista */}
+        <div className="w-80 shrink-0 flex flex-col border-r border-gray-100 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            {carregando ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-5 h-5 border-2 border-sysgate-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : artigos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                <div className="text-gray-300 mb-3"><IconBook /></div>
+                <p className="text-sm text-gray-500 font-medium">
+                  {filtroAtivo ? 'Nenhum artigo encontrado' : 'Nenhum artigo ainda'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {filtroAtivo ? 'Tente outros filtros' : 'Clique em "Novo Artigo" para começar'}
+                </p>
+              </div>
+            ) : (
+              artigos.map((a) => (
+                <ArtigoCard
+                  key={a.id}
+                  artigo={a}
+                  ativo={selecionado?.id === a.id}
+                  onClick={() => setSelecionado(a)}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Paginação */}
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 bg-white shrink-0">
+              <button
+                onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                disabled={pagina === 1}
+                className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-400">
+                {pagina} / {totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                disabled={pagina === totalPaginas}
+                className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Painel de detalhe */}
+        <div className="flex-1 overflow-hidden">
+          {selecionado ? (
+            <PainelDetalhe
+              artigo={selecionado}
+              usuario={usuario}
+              isAdmin={isAdmin}
+              onEditar={() => { setEditando(selecionado); setShowModal(true) }}
+              onDeletar={() => setConfirmDeletar(selecionado)}
+              onFechar={() => setSelecionado(null)}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-gray-300 gap-3">
+              <IconBook />
+              <p className="text-sm text-gray-400">Selecione um artigo para ver o conteúdo</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Toast message={toast.msg} type={toast.tipo} onClose={() => setToast(null)} />
+        </div>
+      )}
+
+      {/* Modal criar/editar */}
+      {showModal && (
+        <ModalConhecimento
+          artigo={editando}
+          catalogo={catalogo}
+          sistemas={sistemas}
+          onSaved={handleSaved}
+          onClose={() => { setShowModal(false); setEditando(null) }}
+        />
+      )}
+
+      {/* Confirmar exclusão */}
+      {confirmDeletar && (
+        <ConfirmDialog
+          title="Excluir artigo"
+          message={`Tem certeza que deseja excluir "${confirmDeletar.titulo}"? Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir"
+          confirmClass="btn bg-red-600 hover:bg-red-700 text-white"
+          onConfirm={handleDeletar}
+          onCancel={() => setConfirmDeletar(null)}
+        />
+      )}
+    </div>
+  )
+}

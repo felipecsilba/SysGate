@@ -102,6 +102,12 @@ const ICONS = {
       <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
     </SvgIcon>
   ),
+  conhecimento: (
+    <SvgIcon>
+      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+      <path d="M12 16v-4M12 8h.01" />
+    </SvgIcon>
+  ),
   perfil: (
     <SvgIcon>
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -216,11 +222,12 @@ export default function Sidebar() {
         <NavGroup
           label="Ferramentas"
           icon={ICONS.ferramentas}
-          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/historico', '/notas']}
+          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/historico', '/notas', '/conhecimento']}
         >
           <NavItem to="/scripts" label="Extensões" icon={ICONS.scripts} />
           <NavItem to="/analisador-json" label="Analisador JSON" icon={ICONS.analisadorJson} />
           <NavItem to="/notas" label="Notas" icon={ICONS.notas} />
+          <NavItem to="/conhecimento" label="Conhecimento" icon={ICONS.conhecimento} />
           <NavItem to="/sandbox" label="Sandbox" icon={ICONS.sandbox} />
           <NavItem to="/historico" label="Histórico" icon={ICONS.historico} />
         </NavGroup>
