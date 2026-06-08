@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { conhecimentoApi } from '../../lib/api'
-import { TIPO_CONFIG } from './index'
-
-const TIPO_OPTS = Object.entries(TIPO_CONFIG).map(([value, { label }]) => ({ value, label }))
+import { TIPO_CONFIG, TIPO_OPTS } from './constants'
 
 export default function ModalConhecimento({ artigo, catalogo, sistemas, onSaved, onClose }) {
   const editando = Boolean(artigo)
