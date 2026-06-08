@@ -115,39 +115,43 @@ function IconChevron() {
 function ArtigoCard({ artigo, ativo, onClick }) {
   const cfg = TIPO_CONFIG[artigo.tipo] || TIPO_CONFIG.outro
   return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left px-4 py-3 border-b border-gray-100 border-l-2 hover:bg-gray-50 transition-colors ${ativo ? 'bg-sysgate-50 border-l-sysgate-500' : 'border-l-transparent'}`}
-    >
-      <div className="flex items-start gap-2 mb-1">
-        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 mt-0.5 ${cfg.cls}`}>
-          {cfg.label}
-        </span>
-        <span className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug">
+    <div className="px-2 pb-1.5">
+      <button
+        onClick={onClick}
+        className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all ${
+          ativo
+            ? 'bg-sysgate-50 border-sysgate-200 shadow-sm'
+            : 'bg-white border-gray-100 shadow-sm hover:border-gray-200 hover:shadow'
+        }`}
+      >
+        {/* Linha 1: badge + tempo */}
+        <div className="flex items-center justify-between mb-1.5">
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.cls}`}>
+            {cfg.label}
+          </span>
+          <span className="text-[10px] text-gray-400 shrink-0">{tempoRelativo(artigo.criadoEm)}</span>
+        </div>
+        {/* Linha 2: título */}
+        <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug mb-1.5">
           {artigo.titulo}
-        </span>
-      </div>
-      {artigo.descricao && (
-        <p className="text-xs text-gray-500 line-clamp-1 mb-1.5 ml-[calc(1.5rem+0.5rem)]">
-          {artigo.descricao}
         </p>
-      )}
-      <div className="flex items-center gap-1.5 flex-wrap ml-[calc(1.5rem+0.5rem)]">
-        {artigo.vertical && (
-          <span className="text-[10px] px-1.5 py-0.5 bg-violet-100 text-violet-600 rounded-full">
-            {artigo.vertical}
-          </span>
+        {/* Linha 3: chips vertical/sistema */}
+        {(artigo.vertical || artigo.sistema) && (
+          <div className="flex items-center gap-1 flex-wrap">
+            {artigo.vertical && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-violet-100 text-violet-600 rounded-full">
+                {artigo.vertical}
+              </span>
+            )}
+            {artigo.sistema && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-sysgate-100 text-sysgate-600 rounded-full">
+                {artigo.sistema}
+              </span>
+            )}
+          </div>
         )}
-        {artigo.sistema && (
-          <span className="text-[10px] px-1.5 py-0.5 bg-sysgate-100 text-sysgate-600 rounded-full">
-            {artigo.sistema}
-          </span>
-        )}
-        <span className="text-[10px] text-gray-400 ml-auto shrink-0">
-          {tempoRelativo(artigo.criadoEm)}
-        </span>
-      </div>
-    </button>
+      </button>
+    </div>
   )
 }
 
@@ -442,8 +446,8 @@ export default function Conhecimento() {
       {/* Corpo */}
       <div className="flex flex-1 overflow-hidden">
         {/* Lista */}
-        <div className="w-80 shrink-0 flex flex-col border-r border-gray-200 bg-white overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+        <div className="w-80 shrink-0 flex flex-col border-r border-gray-200 bg-gray-50/70 overflow-hidden">
+          <div className="flex-1 overflow-y-auto pt-1.5">
             {carregando ? (
               <div className="flex items-center justify-center py-12">
                 <div className="w-5 h-5 border-2 border-sysgate-600 border-t-transparent rounded-full animate-spin" />
