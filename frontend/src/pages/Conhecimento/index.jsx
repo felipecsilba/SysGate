@@ -8,6 +8,90 @@ import { TIPO_CONFIG, parseConteudo } from './constants'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Syntax highlight estilo VS Code Dark+ para blocos de código
+function highlightCode(code) {
+  const KEYWORDS = new Set([
+    'if','else','for','while','do','return','function','var','let','const',
+    'new','true','false','null','undefined','import','export','class','extends',
+    'try','catch','finally','throw','switch','case','break','continue','in','of',
+    'typeof','instanceof','this','super','async','await','void','delete','yield',
+    'from','default','static','get','set',
+  ])
+  const tokens = []
+  const src = code
+  let i = 0
+
+  while (i < src.length) {
+    // Comentário multi-linha /* ... */
+    if (src[i] === '/' && src[i + 1] === '*') {
+      const end = src.indexOf('*/', i + 2)
+      const val = end === -1 ? src.slice(i) : src.slice(i, end + 2)
+      tokens.push({ t: 'comment', v: val }); i += val.length; continue
+    }
+    // Comentário de linha //
+    if (src[i] === '/' && src[i + 1] === '/') {
+      const nl = src.indexOf('\n', i)
+      const val = nl === -1 ? src.slice(i) : src.slice(i, nl)
+      tokens.push({ t: 'comment', v: val }); i += val.length; continue
+    }
+    // Comentário shell/Python # (somente no início da linha ou após espaço)
+    if (src[i] === '#' && (i === 0 || /\s/.test(src[i - 1]))) {
+      const nl = src.indexOf('\n', i)
+      const val = nl === -1 ? src.slice(i) : src.slice(i, nl)
+      tokens.push({ t: 'comment', v: val }); i += val.length; continue
+    }
+    // Template literal `...`
+    if (src[i] === '`') {
+      let j = i + 1
+      while (j < src.length) {
+        if (src[j] === '\\') { j += 2; continue }
+        if (src[j] === '`') { j++; break }
+        j++
+      }
+      tokens.push({ t: 'string', v: src.slice(i, j) }); i = j; continue
+    }
+    // Strings com aspas simples ou duplas
+    if (src[i] === '"' || src[i] === "'") {
+      const q = src[i]
+      let j = i + 1
+      while (j < src.length) {
+        if (src[j] === '\\') { j += 2; continue }
+        if (src[j] === q || src[j] === '\n') { if (src[j] === q) j++; break }
+        j++
+      }
+      tokens.push({ t: 'string', v: src.slice(i, j) }); i = j; continue
+    }
+    // Números (hex, float, inteiro)
+    if (/[0-9]/.test(src[i])) {
+      let j = i
+      if (src[j] === '0' && /[xX]/.test(src[j + 1])) {
+        j += 2; while (j < src.length && /[0-9a-fA-F_]/.test(src[j])) j++
+      } else {
+        while (j < src.length && /[0-9_]/.test(src[j])) j++
+        if (src[j] === '.') { j++; while (j < src.length && /[0-9_]/.test(src[j])) j++ }
+        if (/[eE]/.test(src[j])) { j++; if (/[+-]/.test(src[j])) j++; while (j < src.length && /[0-9]/.test(src[j])) j++ }
+      }
+      tokens.push({ t: 'number', v: src.slice(i, j) }); i = j; continue
+    }
+    // Identificadores, keywords e chamadas de função
+    if (/[a-zA-Z_$]/.test(src[i])) {
+      let j = i
+      while (j < src.length && /[a-zA-Z0-9_$]/.test(src[j])) j++
+      const word = src.slice(i, j)
+      const isFunc = src.slice(j).trimStart()[0] === '('
+      tokens.push({ t: KEYWORDS.has(word) ? 'keyword' : isFunc ? 'function' : 'plain', v: word })
+      i = j; continue
+    }
+    tokens.push({ t: 'other', v: src[i] }); i++
+  }
+
+  const C = { comment: '#6a9955', string: '#ce9178', number: '#b5cea8', keyword: '#569cd6', function: '#dcdcaa' }
+  return tokens.map(({ t, v }) => {
+    const esc = v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return C[t] ? `<span style="color:${C[t]}">${esc}</span>` : esc
+  }).join('')
+}
+
 function tempoRelativo(data) {
   const diff = Date.now() - new Date(data).getTime()
   const min = Math.floor(diff / 60000)
@@ -30,14 +114,18 @@ function RenderBlocos({ conteudo }) {
     <div className="space-y-2">
       {blocos.map((b, i) => {
         if (b.tipo === 'codigo') return (
-          <div key={i} className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900 my-1">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10">
+          <div key={i} className="rounded-lg overflow-hidden border border-gray-700 my-1" style={{ background: '#1e1e1e' }}>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10" style={{ background: '#2d2d2d' }}>
               <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
               <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
               <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
               <span className="ml-1 text-[10px] font-mono tracking-widest text-gray-500 uppercase">Código</span>
             </div>
-            <pre className="font-mono text-sm text-green-400 px-3 py-2.5 whitespace-pre-wrap">{b.valor}</pre>
+            <pre
+              className="font-mono text-sm px-3 py-2.5 whitespace-pre-wrap leading-relaxed"
+              style={{ color: '#d4d4d4' }}
+              dangerouslySetInnerHTML={{ __html: highlightCode(b.valor) }}
+            />
           </div>
         )
         if (b.tipo === 'subtitulo') return (

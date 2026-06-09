@@ -41,7 +41,7 @@ Todos os usuários autenticados podem **criar** artigos. O próprio autor ou um 
 ```
 - `texto` — parágrafo comum
 - `subtitulo` — rótulo em negrito (ex: "1° Serviço")
-- `codigo` — bloco escuro monospace (`bg-gray-900 text-green-400`), igual ao Sandbox
+- `codigo` — bloco escuro monospace com syntax highlight estilo VS Code Dark+ (`background: #1e1e1e`); keywords azul, strings salmão, números verde claro, comentários verde suave, funções amarelo; texto padrão `#d4d4d4`; renderizado via `highlightCode()` em `index.jsx` com `dangerouslySetInnerHTML`
 - `nota` — itálico com barra lateral cinza
 
 ---
@@ -161,7 +161,7 @@ Modal de criação/edição. Props: `artigo` (null = novo), `catalogo`, `onSaved
 
 - **Dados globais:** sem isolamento por usuário — todos veem todos os artigos. Diferente de `Municipios` e `Notas`.
 - **`passos` só para `passo-a-passo`:** ao salvar outro tipo, `passos` é sempre `[]`. Ao salvar `passo-a-passo`, `conteudo` é sempre `'[]'`.
-- **Blocos ricos:** tanto `conteudo` quanto `passos[].texto` armazenam JSON de blocos. O bloco `codigo` exibe fundo escuro + fonte verde monospace (mesmo estilo do Sandbox). `parseConteudo` garante retrocompatibilidade com artigos antigos (texto plano).
+- **Blocos ricos:** tanto `conteudo` quanto `passos[].texto` armazenam JSON de blocos. O bloco `codigo` exibe fundo escuro (`#1e1e1e`) com syntax highlight estilo VS Code Dark+ via `highlightCode()` em `index.jsx`. `parseConteudo` garante retrocompatibilidade com artigos antigos (texto plano).
 - **`sistema` como texto (igual a Chamados):** `Conhecimento.sistema String?` armazena o nome do produto Betha (ex: `"Tributação e Receitas"`), populado a partir de `CatalogoVertical.sistemas`. Não é FK para o modelo `Sistema` (sandbox de endpoints). O dropdown no modal filtra os sistemas pela vertical selecionada.
 - **Busca textual:** `GET /api/conhecimento?busca=` aplica `contains` em `titulo`, `descricao` e `conteudo`.
 - **Paginação:** 20 artigos por página. Controles ← → aparecem quando há mais de uma página.

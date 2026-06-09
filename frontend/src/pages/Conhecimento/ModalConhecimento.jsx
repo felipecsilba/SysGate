@@ -27,8 +27,8 @@ function BlocoItem({ bloco, onChange, onRemove, onMoveUp, onMoveDown, canMoveUp,
   return (
     <div className="relative group">
       {bloco.tipo === 'codigo' ? (
-        <div className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10">
+        <div className="rounded-lg overflow-hidden border border-gray-700" style={{ background: '#1e1e1e' }}>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10" style={{ background: '#2d2d2d' }}>
             <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
             <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
             <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
@@ -38,7 +38,8 @@ function BlocoItem({ bloco, onChange, onRemove, onMoveUp, onMoveDown, canMoveUp,
             value={bloco.valor}
             onChange={e => onChange({ ...bloco, valor: e.target.value })}
             rows={Math.max(2, linhas)}
-            className="w-full font-mono text-sm text-green-400 bg-transparent px-3 py-2.5 outline-none resize-none"
+            className="w-full font-mono text-sm bg-transparent px-3 py-2.5 outline-none resize-none"
+            style={{ color: '#d4d4d4', caretColor: '#d4d4d4' }}
             placeholder="/api/endpoint ou comando..."
           />
         </div>
