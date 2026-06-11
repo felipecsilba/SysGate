@@ -41,7 +41,17 @@ const limiterGeral = rateLimit({
 app.use(limiterGeral)
 
 app.use(cors())
-app.use(express.json({ limit: '50mb' }))
+
+// Limite de payload: 1 MB global; apenas a rota de upload de anexos aceita mais.
+// Anexo de 5 MB binário vira ~6.7 MB em base64, então a rota de anexos usa 8 MB.
+const jsonGlobal = express.json({ limit: '1mb' })
+const jsonAnexo = express.json({ limit: '8mb' })
+app.use((req, res, next) => {
+  if (req.method === 'POST' && /^\/api\/chamados\/\d+\/anexos\/?$/.test(req.path)) {
+    return jsonAnexo(req, res, next)
+  }
+  return jsonGlobal(req, res, next)
+})
 
 // Rotas PÚBLICAS (antes do middleware global de autenticação)
 app.use('/api/auth', authRouter)
@@ -70,8 +80,16 @@ app.use('/api/conhecimento', conhecimentoRouter)
 
 // Error handler global
 app.use((err, req, res, next) => {
+  // Erros com status definido (ex.: payload grande do body-parser → 413) preservam o código
+  const status = err.status || err.statusCode || 500
+  if (status === 413) {
+    return res.status(413).json({ error: 'Payload muito grande. Limite excedido.' })
+  }
+  if (status >= 400 && status < 500) {
+    return res.status(status).json({ error: err.message || 'Requisição inválida' })
+  }
   console.error('Erro não tratado:', err)
-  res.status(500).json({ error: 'Erro interno do servidor', detail: err.message })
+  res.status(500).json({ error: 'Erro interno do servidor' })
 })
 
 app.listen(PORT, () => {

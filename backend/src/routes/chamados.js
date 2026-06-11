@@ -1,9 +1,24 @@
 const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const { exigirAdmin } = require('../middleware/autenticar')
+const { gerarNumero } = require('../lib/numeroChamado')
 
 const prisma = new PrismaClient()
 const router = express.Router()
+
+// ── Validação de anexos ──────────────────────────────────────────────────────
+const MIME_PERMITIDOS = new Set([
+  'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'application/pdf',
+])
+const MAX_ANEXO_BYTES = 5 * 1024 * 1024   // 5 MB por anexo
+const MAX_CHAMADO_BYTES = 25 * 1024 * 1024 // 25 MB somados por chamado
+
+// Tamanho real (em bytes) de um conteúdo base64, ignorando prefixo data: e padding
+function bytesDeBase64(base64) {
+  const limpo = String(base64).replace(/^data:[^;]+;base64,/, '').replace(/\s/g, '')
+  const padding = (limpo.endsWith('==') ? 2 : limpo.endsWith('=') ? 1 : 0)
+  return Math.floor(limpo.length * 3 / 4) - padding
+}
 
 // ── Helper: registrar entrada de histórico ───────────────────────────────────
 async function registrarHistorico(chamadoId, usuarioId, tipo, valorAntes, valorDepois) {
@@ -221,28 +236,42 @@ router.post('/', async (req, res) => {
   const { titulo, descricao, status, classificacao, prioridade, vertical, sistema, responsavelId, municipio, entidade, solicitanteId } = req.body
   if (!titulo?.trim()) return res.status(400).json({ error: 'Titulo e obrigatorio' })
 
-  const chamado = await prisma.chamado.create({
-    data: {
-      titulo: titulo.trim(),
-      descricao: descricao?.trim() || null,
-      status: status || 'Nao Analisado',
-      classificacao: classificacao || null,
-      prioridade: prioridade || 'Normal',
-      vertical: vertical || null,
-      sistema: sistema || null,
-      municipio: municipio?.trim() || null,
-      entidade: entidade?.trim() || null,
-      criadoPorId: req.usuario.id,
-      responsavelId: responsavelId ? Number(responsavelId) : null,
-      solicitanteId: solicitanteId ? Number(solicitanteId) : null,
-    },
-    include: {
-      criadoPor: { select: { id: true, nome: true } },
-      responsavel: { select: { id: true, nome: true } },
-      solicitante: { select: { id: true, nome: true, cargo: true } },
-      _count: { select: { comentarios: true, anexos: true } }
+  const municipioNorm = municipio?.trim() || null
+  const dados = {
+    titulo: titulo.trim(),
+    descricao: descricao?.trim() || null,
+    status: status || 'Nao Analisado',
+    classificacao: classificacao || null,
+    prioridade: prioridade || 'Normal',
+    vertical: vertical || null,
+    sistema: sistema || null,
+    municipio: municipioNorm,
+    entidade: entidade?.trim() || null,
+    criadoPorId: req.usuario.id,
+    responsavelId: responsavelId ? Number(responsavelId) : null,
+    solicitanteId: solicitanteId ? Number(solicitanteId) : null,
+  }
+  const include = {
+    criadoPor: { select: { id: true, nome: true } },
+    responsavel: { select: { id: true, nome: true } },
+    solicitante: { select: { id: true, nome: true, cargo: true } },
+    _count: { select: { comentarios: true, anexos: true } }
+  }
+
+  // Gera o número persistido em transação; repete se houver colisão de unicidade
+  let chamado
+  for (let tentativa = 0; tentativa < 5; tentativa++) {
+    try {
+      chamado = await prisma.$transaction(async (tx) => {
+        const numero = await gerarNumero(tx, { municipio: municipioNorm })
+        return tx.chamado.create({ data: { ...dados, numero }, include })
+      })
+      break
+    } catch (err) {
+      if (err.code === 'P2002' && tentativa < 4) continue
+      return res.status(500).json({ error: err.message })
     }
-  })
+  }
 
   // Registrar histórico de criação
   await registrarHistorico(chamado.id, req.usuario.id, 'criacao', null, null)
@@ -443,18 +472,42 @@ router.post('/:id/comentarios', async (req, res) => {
 // ── POST /:id/anexos — Upload anexo ──────────────────────────────────────────
 router.post('/:id/anexos', async (req, res) => {
   const chamadoId = Number(req.params.id)
-  const { nomeArquivo, tipo, conteudo, tamanho, comentarioId } = req.body
+  const { nomeArquivo, tipo, conteudo, comentarioId } = req.body
   if (!nomeArquivo || !conteudo) return res.status(400).json({ error: 'nomeArquivo e conteudo sao obrigatorios' })
+
+  // Whitelist de MIME (imagens + PDF) — não confia no tipo declarado para outros formatos
+  if (!tipo || !MIME_PERMITIDOS.has(tipo)) {
+    return res.status(415).json({ error: 'Tipo de arquivo não permitido. Aceitos: PNG, JPEG, GIF, WebP, PDF.' })
+  }
+
+  // Tamanho real calculado do base64 — não confia no campo `tamanho` enviado pelo cliente
+  const bytes = bytesDeBase64(conteudo)
+  if (bytes <= 0) return res.status(400).json({ error: 'Conteúdo do anexo inválido' })
+  if (bytes > MAX_ANEXO_BYTES) {
+    return res.status(413).json({ error: `Anexo excede o limite de ${MAX_ANEXO_BYTES / 1024 / 1024} MB.` })
+  }
+
+  // Sanitiza o nome do arquivo (remove path traversal e caracteres de controle)
+  const nomeSeguro = String(nomeArquivo).replace(/[\\/]/g, '_').replace(/[\x00-\x1f]/g, '').slice(0, 255).trim() || 'arquivo'
 
   const chamado = await prisma.chamado.findUnique({ where: { id: chamadoId } })
   if (!chamado) return res.status(404).json({ error: 'Chamado nao encontrado' })
 
+  // Limite total acumulado por chamado
+  const usado = await prisma.chamadoAnexo.aggregate({
+    where: { chamadoId },
+    _sum: { tamanho: true },
+  })
+  if ((usado._sum.tamanho || 0) + bytes > MAX_CHAMADO_BYTES) {
+    return res.status(413).json({ error: `Limite total de anexos do chamado (${MAX_CHAMADO_BYTES / 1024 / 1024} MB) excedido.` })
+  }
+
   const anexo = await prisma.chamadoAnexo.create({
     data: {
-      nomeArquivo,
-      tipo: tipo || null,
+      nomeArquivo: nomeSeguro,
+      tipo,
       conteudo,
-      tamanho:     tamanho     ? Number(tamanho)     : null,
+      tamanho: bytes,
       chamadoId,
       comentarioId: comentarioId ? Number(comentarioId) : null,
     },

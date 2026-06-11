@@ -67,6 +67,7 @@ function EtapaDados({ onSucesso, onClose }) {
   const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
+  const [hcaptchaToken, setHcaptchaToken] = useState('')
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
@@ -87,7 +88,7 @@ function EtapaDados({ onSucesso, onClose }) {
     }
     setCarregando(true)
     try {
-      await api.post('/auth/registrar', { nome, login, senha })
+      await api.post('/auth/registrar', { nome, login, senha, ...(hcaptchaToken && { hcaptchaToken }) })
       onSucesso()
     } catch (err) {
       setErro(err.response?.data?.error || 'Erro ao criar conta. Tente novamente.')
@@ -155,6 +156,14 @@ function EtapaDados({ onSucesso, onClose }) {
               {mostrarSenha ? <IconEyeOff /> : <IconEye />}
             </button>
           </div>
+        </div>
+
+        <div className="flex justify-center">
+          <HCaptcha
+            sitekey={HCAPTCHA_SITEKEY}
+            onVerify={(token) => setHcaptchaToken(token)}
+            onExpire={() => setHcaptchaToken('')}
+          />
         </div>
 
         {erro && (

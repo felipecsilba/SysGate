@@ -8,6 +8,10 @@ services:
     container_name: sysgate-backend
     ports:
       - '3001:3001'
+    # Carrega JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_* e APP_URL do .env.
+    # Sem isso o container fica com JWT_SECRET undefined e o login retorna 500.
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: 'file:./dev.db'
       PORT: '3001'

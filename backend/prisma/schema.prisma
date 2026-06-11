@@ -235,6 +235,7 @@ model Solicitante {
 
 model Chamado {
   id              Int                @id @default(autoincrement())
+  numero          String?            @unique  // protocolo persistido PREFIXO-YYYY-NNNNN
   titulo          String
   descricao       String?
   status          String             @default("Nao Analisado")

@@ -68,15 +68,17 @@ Tela dividida em duas colunas:
 
 ### Numeração dos chamados
 
-Formato: `MUNI-YYYY-NNNNN` — calculado no frontend via `ticketMapMF` (useMemo).
+Formato: `PREFIXO-YYYY-NNNNN` — **persistido no banco** no campo `Chamado.numero String? @unique` (Fase 0).
 
-- **Prefixo (`MUNI`)**: primeiras 4 letras do município em maiúsculas, sem acentos (ex: Rurópolis → `RURO`, Belém → `BELE`). Sem município → `CH`.
+- **Prefixo**: primeiras 4 letras do município em maiúsculas, sem acentos (ex: Rurópolis → `RURO`, Belém → `BELE`). Sem município → `CH`.
 - **Ano (`YYYY`)**: ano de `criadoEm`.
-- **Sequencial (`NNNNN`)**: contagem por município+ano, ordenada por `id ASC` (5 dígitos com zeros à esquerda). Reseta a cada virada de ano.
+- **Sequencial (`NNNNN`)**: por **prefixo+ano** (5 dígitos com zeros à esquerda), reseta a cada virada de ano.
 
-**Performance:** `ticketMapMF` é um `useMemo` que itera a lista **uma vez** (O(n)) e retorna `{ [id]: "MUNI-YYYY-NNNNN" }`. Cada card consulta `ticketMapMF[c.id]` em O(1) — em vez do cálculo anterior que era O(n) **por card** (total O(n²)).
+**Geração:** `backend/src/lib/numeroChamado.js` (`prefixoMunicipio`, `gerarNumero`). O `POST /api/chamados` gera o número dentro de `prisma.$transaction`, com retry em colisão `P2002`. Como é persistido, **o número não muda mais** se chamados forem deletados.
 
-**Cuidado:** o número pode mudar se chamados forem deletados (sequência não é persistida no banco).
+**Backfill:** `backend/prisma/backfill-numero.js` numera chamados antigos (idempotente, ordem `id ASC`). Rodar uma vez após o `prisma db push` que adiciona o campo.
+
+**Frontend (legado):** `ticketMapMF` (useMemo O(n)) e `ticketNum()` ainda calculam o número client-side a partir da lista carregada. Devem migrar para consumir `c.numero` do backend (fica para fase posterior); enquanto coexistem, o valor persistido é a fonte de verdade.
 
 ---
 

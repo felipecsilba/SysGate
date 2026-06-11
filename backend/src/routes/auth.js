@@ -29,6 +29,33 @@ const recuperacaoRateLimit = rateLimit({
   message: { error: 'Muitas tentativas. Aguarde 15 minutos.' },
 })
 
+// Rate limiter para auto-cadastro: 5 contas / 15min por IP
+const registroRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas de cadastro. Aguarde 15 minutos.' },
+})
+
+// Hash SHA-256 — usado para armazenar o token de recuperação sem texto puro no banco
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
+// Verifica hCaptcha. Retorna true se o captcha estiver desabilitado (sem secret).
+async function captchaValido(hcaptchaToken) {
+  if (!process.env.HCAPTCHA_SECRET) return true
+  if (!hcaptchaToken) return false
+  const params = new URLSearchParams({
+    secret: process.env.HCAPTCHA_SECRET,
+    response: hcaptchaToken,
+  })
+  const r = await fetch('https://hcaptcha.com/siteverify', { method: 'POST', body: params })
+  const data = await r.json()
+  return !!data.success
+}
+
 // ── Helper: criar transporter nodemailer ──────────────────────────────────────
 function criarTransporter() {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER) return null
@@ -138,15 +165,20 @@ router.get('/me', autenticar, async (req, res) => {
 })
 
 // POST /api/auth/registrar — cria conta (aguarda ativação pelo admin)
-router.post('/registrar', async (req, res) => {
+router.post('/registrar', registroRateLimit, async (req, res) => {
   try {
-    const { nome, login, senha } = req.body
+    const { nome, login, senha, hcaptchaToken } = req.body
 
     if (!nome || !login || !senha) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios' })
     }
     if (senha.length < 6) {
       return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' })
+    }
+
+    // Em produção (com HCAPTCHA_SECRET configurado) o captcha é obrigatório
+    if (!(await captchaValido(hcaptchaToken))) {
+      return res.status(400).json({ error: 'CAPTCHA inválido. Tente novamente.' })
     }
 
     const senhaHash = await bcrypt.hash(senha, 10)
@@ -188,19 +220,17 @@ router.post('/esqueci-senha', recuperacaoRateLimit, async (req, res) => {
     // Resposta genérica mesmo se não encontrado (evita enumeração)
     const MSG_PADRAO = { ok: true, mensagem: 'Se o login/email existir em nosso sistema, um link de recuperação foi enviado.' }
 
-    if (!usuario) return res.json(MSG_PADRAO)
-    if (!usuario.email) {
-      // Usuário existe mas não tem email cadastrado
-      return res.status(400).json({ error: 'Este usuário não possui email cadastrado. Solicite ao administrador que redefina sua senha.' })
-    }
+    // Sem usuário OU sem email: resposta genérica idêntica (não vaza existência da conta)
+    if (!usuario || !usuario.email) return res.json(MSG_PADRAO)
 
-    // Gerar token seguro (64 hex chars = 32 bytes)
+    // Gerar token seguro (64 hex chars = 32 bytes). Armazena apenas o hash SHA-256;
+    // o token em texto puro vai só no email e nunca toca o banco.
     const token = crypto.randomBytes(32).toString('hex')
     const expira = new Date(Date.now() + 60 * 60 * 1000) // 1 hora
 
     await prisma.usuario.update({
       where: { id: usuario.id },
-      data: { recuperacaoToken: token, recuperacaoExpira: expira },
+      data: { recuperacaoToken: hashToken(token), recuperacaoExpira: expira },
     })
 
     // Enviar email se SMTP configurado
@@ -251,7 +281,7 @@ router.post('/redefinir-senha', recuperacaoRateLimit, async (req, res) => {
 
     const usuario = await prisma.usuario.findFirst({
       where: {
-        recuperacaoToken: token,
+        recuperacaoToken: hashToken(token),
         recuperacaoExpira: { gt: new Date() },
         ativo: true,
       },
