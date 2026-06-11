@@ -102,5 +102,6 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Krakion Backend rodando em http://localhost:${PORT}`)
-  console.log(`   Banco de dados: ${process.env.DATABASE_URL}`)
+  // Mascara a credencial da connection string (Postgres) antes de logar
+  console.log(`   Banco de dados: ${(process.env.DATABASE_URL || '').replace(/:\/\/([^:@/]+):[^@/]+@/, '://$1:****@')}`)
 })
