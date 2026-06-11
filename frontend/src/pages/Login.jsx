@@ -82,8 +82,8 @@ function EtapaDados({ onSucesso, onClose }) {
       setErro('Todos os campos são obrigatórios.')
       return
     }
-    if (senha.length < 6) {
-      setErro('A senha deve ter no mínimo 6 caracteres.')
+    if (senha.length < 8) {
+      setErro('A senha deve ter no mínimo 8 caracteres.')
       return
     }
     setCarregando(true)
@@ -142,7 +142,7 @@ function EtapaDados({ onSucesso, onClose }) {
             <input
               type={mostrarSenha ? 'text' : 'password'}
               className="input pr-10"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               autoComplete="new-password"

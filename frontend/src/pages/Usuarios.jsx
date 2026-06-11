@@ -262,7 +262,7 @@ export default function Usuarios() {
                     <input
                       type={mostrarNovaSenha ? 'text' : 'password'}
                       className="input pr-10"
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres"
                       value={novaSenha}
                       onChange={(e) => setNovaSenha(e.target.value)}
                     />
@@ -323,7 +323,7 @@ export default function Usuarios() {
                       <input
                         type={mostrarSenha ? 'text' : 'password'}
                         className="input pr-10"
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="Mínimo 8 caracteres"
                         value={form.senha}
                         onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))}
                       />

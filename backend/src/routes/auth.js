@@ -139,8 +139,8 @@ router.post('/registrar', registroRateLimit, async (req, res) => {
     if (!nome || !login || !senha) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios' })
     }
-    if (senha.length < 6) {
-      return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' })
+    if (senha.length < 8) {
+      return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres' })
     }
 
     // Em produção (com HCAPTCHA_SECRET configurado) o captcha é obrigatório
@@ -242,8 +242,8 @@ router.post('/redefinir-senha', recuperacaoRateLimit, async (req, res) => {
     if (!token || !novaSenha) {
       return res.status(400).json({ error: 'Token e nova senha são obrigatórios' })
     }
-    if (novaSenha.length < 6) {
-      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 6 caracteres' })
+    if (novaSenha.length < 8) {
+      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 8 caracteres' })
     }
 
     const usuario = await prisma.usuario.findFirst({

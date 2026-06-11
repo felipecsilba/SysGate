@@ -20,8 +20,8 @@ export default function RedefinirSenha() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErro('')
-    if (novaSenha.length < 6) {
-      setErro('A senha deve ter no mínimo 6 caracteres.')
+    if (novaSenha.length < 8) {
+      setErro('A senha deve ter no mínimo 8 caracteres.')
       return
     }
     setCarregando(true)
@@ -97,7 +97,7 @@ export default function RedefinirSenha() {
                       <input
                         type={mostrarSenha ? 'text' : 'password'}
                         className="input pr-10"
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="Mínimo 8 caracteres"
                         value={novaSenha}
                         onChange={(e) => setNovaSenha(e.target.value)}
                         autoFocus

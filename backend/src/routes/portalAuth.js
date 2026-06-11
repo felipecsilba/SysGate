@@ -50,8 +50,8 @@ router.post('/registrar', registroRateLimit, async (req, res) => {
     if (!nome?.trim() || !email?.trim() || !senha) {
       return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' })
     }
-    if (senha.length < 6) {
-      return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' })
+    if (senha.length < 8) {
+      return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres' })
     }
     if (!(await captchaValido(hcaptchaToken))) {
       return res.status(400).json({ error: 'CAPTCHA inválido. Tente novamente.' })
@@ -255,8 +255,8 @@ router.post('/redefinir-senha', recuperacaoRateLimit, async (req, res) => {
     if (!token || !novaSenha) {
       return res.status(400).json({ error: 'Token e nova senha são obrigatórios' })
     }
-    if (novaSenha.length < 6) {
-      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 6 caracteres' })
+    if (novaSenha.length < 8) {
+      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 8 caracteres' })
     }
 
     const solicitante = await prisma.solicitante.findFirst({

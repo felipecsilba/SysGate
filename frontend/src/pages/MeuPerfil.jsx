@@ -171,7 +171,7 @@ export default function MeuPerfil() {
 
   const salvarSenha = async () => {
     setErroSenha('')
-    if (novaSenha.length < 6) { setErroSenha('A senha deve ter no mínimo 6 caracteres.'); return }
+    if (novaSenha.length < 8) { setErroSenha('A senha deve ter no mínimo 8 caracteres.'); return }
     setSalvandoSenha(true)
     try {
       await usuariosApi.alterarSenha(perfil.id, novaSenha)
@@ -398,7 +398,7 @@ export default function MeuPerfil() {
                     <input
                       type={mostrarSenha ? 'text' : 'password'}
                       className="input pr-10"
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres"
                       value={novaSenha}
                       onChange={(e) => setNovaSenha(e.target.value)}
                       autoFocus

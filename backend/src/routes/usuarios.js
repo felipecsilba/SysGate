@@ -39,8 +39,8 @@ router.post('/', exigirAdmin, async (req, res) => {
     if (!login || !senha || !nome) {
       return res.status(400).json({ error: 'Login, senha e nome são obrigatórios' })
     }
-    if (senha.length < 6) {
-      return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' })
+    if (senha.length < 8) {
+      return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres' })
     }
     if (role && !['admin', 'operador'].includes(role)) {
       return res.status(400).json({ error: 'Role deve ser "admin" ou "operador"' })
@@ -128,8 +128,8 @@ router.patch('/:id/senha', async (req, res) => {
     }
 
     const { novaSenha } = req.body
-    if (!novaSenha || novaSenha.length < 6) {
-      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 6 caracteres' })
+    if (!novaSenha || novaSenha.length < 8) {
+      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 8 caracteres' })
     }
 
     await prisma.usuario.update({
