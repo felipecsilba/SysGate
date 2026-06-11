@@ -71,7 +71,7 @@ krakion/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL
 │   ├── prisma/
-│   │   ├── schema.prisma      # 24 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento, Conhecimento
+│   │   ├── schema.prisma      # 24 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId, numero), ChamadoComentario, ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante, Nota, NotaCompartilhamento, Conhecimento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/

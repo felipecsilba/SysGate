@@ -159,6 +159,18 @@ Quando `aba === 'painel'` e não há chamado selecionado, o painel fica oculto (
 - Exibição como lista com nome do arquivo, tamanho e botão de download/exclusão
 - Anexos de imagem vinculados a comentários (`comentarioId ≠ null`) são exibidos inline no comentário e também na lista geral de anexos
 
+#### Validação de upload (Fase 0)
+
+`POST /api/chamados/:id/anexos` valida no backend (`chamados.js`):
+
+- **Whitelist de MIME**: apenas `image/png`, `image/jpeg`, `image/jpg`, `image/gif`, `image/webp`, `application/pdf` — outros tipos → **415**.
+- **Tamanho real**: calculado do base64 (`bytesDeBase64`, ignora prefixo `data:` e padding), **não** confia no campo `tamanho` do cliente — que passa a ser sobrescrito pelo valor real.
+- **Limite por anexo**: 5 MB → **413** (`MAX_ANEXO_BYTES`).
+- **Limite por chamado**: soma de todos os anexos ≤ 25 MB → **413** (`MAX_CHAMADO_BYTES`, via `aggregate _sum`).
+- **Nome sanitizado**: remove `/` `\` e caracteres de controle, limita a 255 chars (evita path traversal).
+
+**Limite de payload HTTP** (`index.js`): `express.json` global reduzido para **1 MB**; um parser dedicado de **8 MB** é aplicado só na rota `POST /api/chamados/:id/anexos` (5 MB binário ≈ 6.7 MB em base64). Payload acima do limite → **413** (error handler global respeita `err.status`).
+
 ### Solicitante
 
 - Campo opcional no chamado que vincula um contato externo (colaborador da prefeitura)
@@ -301,6 +313,7 @@ solicitantesApi.deletar(id)   // somente admin
 ```prisma
 model Chamado {
   id             Int                 @id @default(autoincrement())
+  numero         String?             @unique  // protocolo persistido PREFIXO-YYYY-NNNNN (Fase 0)
   titulo         String
   descricao      String?
   status         String              @default("Em Aberto")

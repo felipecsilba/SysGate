@@ -56,7 +56,10 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 
 - **Global**: 50.000 req/15min por IP (todas as rotas)
 - **Login**: 10 tentativas/15min por IP (`skipSuccessfulRequests: true`)
+- **Registro** (`/auth/registrar`): 5/15min por IP (`registroRateLimit`) — Fase 0
+- **Recuperação** (`/auth/esqueci-senha`, `/auth/redefinir-senha`): 5/15min por IP
 - Resposta 429 com mensagem em português
+- **Depende do IP real**: o Nginx de produção repassa `X-Forwarded-For` (ver `skills/deploy.md`) e o Express usa `trust proxy 1`. Sem o header, todos os clientes atrás do proxy compartilham o mesmo bucket de IP.
 
 ---
 
@@ -71,7 +74,8 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 
 ## hCaptcha
 
-- Aparece no **frontend** após 3 falhas consecutivas de login
+- **Login**: aparece no frontend após 3 falhas consecutivas
+- **Registro** (`/auth/registrar`): widget hCaptcha sempre presente no modal de cadastro (Fase 0); backend valida via helper `captchaValido()` — obrigatório quando `HCAPTCHA_SECRET` está configurado, ignorado em dev (secret vazio)
 - Sitekey em `frontend/.env` → `VITE_HCAPTCHA_SITEKEY`
 - Backend verifica token via `fetch('https://hcaptcha.com/siteverify')` — só se `HCAPTCHA_SECRET` estiver no `.env`
 - Sitekey de teste (dev): `10000000-ffff-ffff-ffff-000000000001`
@@ -93,6 +97,35 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 - bcryptjs com salt rounds 10
 - Endpoint separado `PATCH /api/usuarios/:id/senha` para troca de senha
 - Mínimo 6 caracteres validado no backend
+
+---
+
+## Recuperação de senha — token com hash (Fase 0)
+
+- `recuperacaoToken` no `Usuario` armazena o **hash SHA-256** do token (`hashToken()` em `auth.js`), nunca o texto puro. O token puro só viaja no email; o `redefinir-senha` faz lookup por `hashToken(token)`.
+- **Motivo**: leitura do banco (ou backup do `dev.db`) não permite mais forjar um link de reset.
+- `esqueci-senha` retorna **sempre** a mesma resposta genérica (200), inclusive quando o usuário existe mas não tem email cadastrado — antes um `400` distinto vazava a existência da conta.
+
+---
+
+## Hardening de payload e upload (Fase 0)
+
+- **`express.json` global = 1 MB** (`index.js`); parser dedicado de **8 MB** só na rota `POST /api/chamados/:id/anexos`. Antes era 50 MB global — qualquer autenticado podia inflar o SQLite.
+- **Upload de anexos** valida MIME (whitelist imagens + PDF → 415), tamanho real do base64 (5 MB/anexo, 25 MB/chamado → 413) e sanitiza o nome do arquivo. Ver `docs/chamados.md` → Anexos.
+- **Error handler global** (`index.js`) respeita `err.status` (413 do body-parser propaga corretamente) e **não vaza** mais `err.message`/`detail` em respostas 500.
+
+---
+
+## Protocolo de chamado persistido (Fase 0)
+
+- `Chamado.numero String? @unique` — gerado no backend (`backend/src/lib/numeroChamado.js`, em transação). Antes era calculado no frontend e mudava ao deletar chamados; agora é estável. Ver `docs/chamados.md` → Numeração.
+
+---
+
+## Provisionamento de segredos no Docker (Fase 0)
+
+- `docker-compose.yml` usa `env_file: ./backend/.env` no serviço backend — sem isso o container ficava com `JWT_SECRET` undefined e o login retornava 500. **(Produção real usa PM2 + `.env` próprio, não Docker.)**
+- Credenciais Twilio (resíduo) **removidas** do `.env`. Se um token desse tipo já esteve versionado/em backup, considere-o comprometido e **rotacione na origem**.
 
 ---
 

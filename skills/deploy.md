@@ -26,6 +26,15 @@ ssh root@187.77.230.138
 cd /var/www/krakion && git pull && cd backend && npx prisma db push && cd ../frontend && npm run build && cd ../backend && pm2 restart krakion-backend
 ```
 
+> **Acesso SSH:** a chave pública do implantador (`~/.ssh/id_ed25519.pub`) está no `authorized_keys` do servidor — deploys rodam sem senha.
+>
+> **Migração de schema com backfill:** quando o `db push` adiciona uma coluna com constraint (ex.: `Chamado.numero @unique` da Fase 0), o SQLite exige `npx prisma db push --accept-data-loss` (seguro: coluna nova fica toda NULL, sem perda) e é preciso rodar o backfill logo após:
+> ```bash
+> cp prisma/dev.db prisma/dev.db.bak-$(date +%Y%m%d-%H%M%S)   # backup antes
+> npx prisma db push --accept-data-loss
+> node prisma/backfill-numero.js                               # numera registros antigos
+> ```
+
 ---
 
 ## Comandos úteis na VPS
@@ -66,9 +75,12 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;  # Fase 0 — rate limit por IP real
     }
 }
 ```
+
+> **Atenção:** este arquivo (`/etc/nginx/sites-available/krakion`) é o nginx **de produção** (PM2). O `frontend/nginx.conf` do repo só vale para o setup Docker — alterações de proxy precisam ser feitas **aqui no servidor** e seguidas de `nginx -t && systemctl reload nginx`.
 
 ---
 

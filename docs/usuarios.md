@@ -19,7 +19,7 @@ model Usuario {
   email             String?                           // para recuperação de senha
   funcao            String?                           // label exibido: "Suporte" | "Analista de Implantação" | "Gerente" | "Administrador"
   ultimoLogin       DateTime?                         // atualizado no POST /login com sucesso
-  recuperacaoToken  String?                           // token hex 64 chars para reset de senha
+  recuperacaoToken  String?                           // HASH SHA-256 do token de reset (Fase 0) — nunca o token em texto puro
   recuperacaoExpira DateTime?                         // expira 1h após geração
   filaFiltro        String?                           // JSON: { verticais, sistemas, status } para sub-aba Fila em Chamados
   criadoEm         DateTime  @default(now())
@@ -37,7 +37,7 @@ model Usuario {
 - `funcao` — label de exibição apenas (não é permissão). Valores: `Suporte`, `Analista de Implantação`, `Gerente`, `Administrador`.
 - `email` — usado exclusivamente para envio do link de recuperação de senha (SMTP).
 - `ultimoLogin` — atualizado automaticamente a cada login bem-sucedido em `POST /auth/login`.
-- `recuperacaoToken` / `recuperacaoExpira` — gerados em `POST /auth/esqueci-senha`, limpos após uso em `POST /auth/redefinir-senha`.
+- `recuperacaoToken` / `recuperacaoExpira` — gerados em `POST /auth/esqueci-senha`, limpos após uso em `POST /auth/redefinir-senha`. **`recuperacaoToken` guarda o hash SHA-256** do token (Fase 0); o token em texto puro só viaja no email. O `redefinir-senha` faz lookup por `hashToken(token)`.
 
 ---
 
@@ -49,8 +49,9 @@ model Usuario {
 |--------|------|-----------|
 | POST | /api/auth/login | Login — atualiza `ultimoLogin` no sucesso |
 | GET | /api/auth/me | Retorna dados do usuário logado incl. `email`, `funcao`, `ultimoLogin` |
-| POST | /api/auth/esqueci-senha | Gera token de recuperação, envia email (se SMTP configurado). Rate limit 5/15min. Sempre retorna sucesso genérico (evita enumeração) |
-| POST | /api/auth/redefinir-senha | Valida token + expiry, atualiza `senhaHash`, limpa campos de recuperação |
+| POST | /api/auth/registrar | Auto-cadastro (`ativo: false`). **Rate limit 5/15min + hCaptcha** (obrigatório quando `HCAPTCHA_SECRET` configurado) (Fase 0) |
+| POST | /api/auth/esqueci-senha | Gera token de recuperação, envia email (se SMTP configurado). Rate limit 5/15min. **Sempre** retorna sucesso genérico — inclusive quando o usuário existe mas não tem email (Fase 0: removido o 400 que vazava existência da conta) |
+| POST | /api/auth/redefinir-senha | Valida o **hash** do token + expiry, atualiza `senhaHash`, limpa campos de recuperação |
 
 ### Usuários — rotas protegidas
 
@@ -70,11 +71,13 @@ model Usuario {
 
 1. Usuário clica "Esqueci minha senha" na tela de login → `ModalEsqueceuSenha` abre
 2. Informa login ou email → `POST /api/auth/esqueci-senha`
-3. Backend gera `crypto.randomBytes(32).toString('hex')` (64 chars), salva em `recuperacaoToken` + `recuperacaoExpira = now + 1h`
-4. Se SMTP configurado no `.env`, envia email com link `APP_URL/redefinir-senha?token=xxx`
+3. Backend gera `crypto.randomBytes(32).toString('hex')` (64 chars); salva o **hash SHA-256** (`hashToken`) em `recuperacaoToken` + `recuperacaoExpira = now + 1h`. O token em texto puro só vai no email.
+4. Se SMTP configurado no `.env`, envia email com link `APP_URL/redefinir-senha?token=xxx` (token puro)
 5. Usuário acessa `/redefinir-senha?token=xxx` → página pública `RedefinirSenha.jsx`
-6. Informa nova senha → `POST /api/auth/redefinir-senha` → backend valida token e expiry, atualiza senha, limpa token
+6. Informa nova senha → `POST /api/auth/redefinir-senha` → backend faz lookup por `hashToken(token)`, valida expiry, atualiza senha, limpa token
 7. Frontend exibe tela de sucesso com link para login
+
+> **Segurança (Fase 0):** mesmo quem obtiver leitura do banco não consegue gerar um link de reset válido, pois só o hash é armazenado. E a resposta de `esqueci-senha` é sempre genérica (200) — não distingue mais "usuário sem email", que antes vazava a existência da conta via 400.
 
 **SMTP:** configurado via variáveis de ambiente. Se `SMTP_HOST` ou `SMTP_USER` estiver vazio, o backend pula o envio silenciosamente (sem erro).
 
