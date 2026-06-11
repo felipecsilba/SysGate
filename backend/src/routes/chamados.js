@@ -450,14 +450,15 @@ router.delete('/:id', exigirAdmin, async (req, res) => {
 // ── POST /:id/comentarios — Adicionar comentário ─────────────────────────────
 router.post('/:id/comentarios', async (req, res) => {
   const chamadoId = Number(req.params.id)
-  const { conteudo, pendingAnexoIds } = req.body
+  const { conteudo, pendingAnexoIds, interno } = req.body
   if (!conteudo?.trim()) return res.status(400).json({ error: 'Conteudo e obrigatorio' })
 
   const chamado = await prisma.chamado.findUnique({ where: { id: chamadoId } })
   if (!chamado) return res.status(404).json({ error: 'Chamado nao encontrado' })
 
   const comentario = await prisma.chamadoComentario.create({
-    data: { conteudo: conteudo.trim(), chamadoId, autorId: req.usuario.id },
+    // interno: true = nota da equipe, invisível nas rotas /api/portal/* (Fase 2)
+    data: { conteudo: conteudo.trim(), chamadoId, autorId: req.usuario.id, interno: !!interno },
     include: { autor: { select: { id: true, nome: true } } }
   })
 

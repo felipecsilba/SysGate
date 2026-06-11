@@ -20,6 +20,8 @@ const chamadosRouter = require('./routes/chamados')
 const solicitantesRouter = require('./routes/solicitantes')
 const notasRouter = require('./routes/notas')
 const conhecimentoRouter = require('./routes/conhecimento')
+const portalAuthRouter = require('./routes/portalAuth')
+const portalChamadosRouter = require('./routes/portalChamados')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -47,7 +49,7 @@ app.use(cors())
 const jsonGlobal = express.json({ limit: '1mb' })
 const jsonAnexo = express.json({ limit: '8mb' })
 app.use((req, res, next) => {
-  if (req.method === 'POST' && /^\/api\/chamados\/\d+\/anexos\/?$/.test(req.path)) {
+  if (req.method === 'POST' && /^\/api\/(portal\/)?chamados\/\d+\/anexos\/?$/.test(req.path)) {
     return jsonAnexo(req, res, next)
   }
   return jsonGlobal(req, res, next)
@@ -58,6 +60,12 @@ app.use('/api/auth', authRouter)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0', timestamp: new Date().toISOString() })
 })
+
+// PORTAL EXTERNO — trilho de autenticação paralelo (Solicitante).
+// Montado antes do `autenticar` interno: /portal/auth tem rotas públicas próprias
+// e /portal/chamados se protege com autenticarExterno (tokens internos são rejeitados lá).
+app.use('/api/portal/auth', portalAuthRouter)
+app.use('/api/portal/chamados', portalChamadosRouter)
 
 // Middleware global — protege todas as rotas abaixo
 app.use(autenticar)

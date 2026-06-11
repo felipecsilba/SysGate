@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const rateLimit = require('express-rate-limit')
-const nodemailer = require('nodemailer')
 const { PrismaClient } = require('@prisma/client')
 const autenticar = require('../middleware/autenticar')
+const { hashToken, captchaValido, criarTransporter } = require('../lib/authUtils')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -37,38 +37,6 @@ const registroRateLimit = rateLimit({
   legacyHeaders: false,
   message: { error: 'Muitas tentativas de cadastro. Aguarde 15 minutos.' },
 })
-
-// Hash SHA-256 — usado para armazenar o token de recuperação sem texto puro no banco
-function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex')
-}
-
-// Verifica hCaptcha. Retorna true se o captcha estiver desabilitado (sem secret).
-async function captchaValido(hcaptchaToken) {
-  if (!process.env.HCAPTCHA_SECRET) return true
-  if (!hcaptchaToken) return false
-  const params = new URLSearchParams({
-    secret: process.env.HCAPTCHA_SECRET,
-    response: hcaptchaToken,
-  })
-  const r = await fetch('https://hcaptcha.com/siteverify', { method: 'POST', body: params })
-  const data = await r.json()
-  return !!data.success
-}
-
-// ── Helper: criar transporter nodemailer ──────────────────────────────────────
-function criarTransporter() {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) return null
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  })
-}
 
 // POST /api/auth/login
 router.post('/login', loginRateLimit, async (req, res) => {
