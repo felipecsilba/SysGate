@@ -7,7 +7,7 @@ Ferramenta interna fullstack para implantadores Betha. Gerencia municípios, exe
 | Camada    | Tecnologia                                                                        |
 |-----------|-----------------------------------------------------------------------------------|
 | Frontend  | React 18 + Vite + Tailwind CSS 3 + Zustand 4 + React Router 6 + Recharts         |
-| Backend   | Node.js + Express 4 + Prisma ORM + SQLite                                         |
+| Backend   | Node.js + Express 4 + Prisma ORM + PostgreSQL (migrado de SQLite em 2026-06-11)   |
 | Segurança | Helmet.js + express-rate-limit + bcryptjs + jsonwebtoken + hCaptcha               |
 | CSV       | Papa Parse (parsing de CSV no frontend)                                           |
 | HTTP      | Axios (frontend→backend e backend→APIs)                                           |
@@ -72,13 +72,15 @@ krakion/
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL
 │   ├── prisma/
 │   │   ├── schema.prisma      # 24 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId, numero, origem), ChamadoComentario (+ autorId opcional, autorSolicitanteId, interno), ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante (+ email único e credenciais do portal: senhaHash, contaAtiva, emailVerificado, lockout, recuperação), Nota, NotaCompartilhamento, Conhecimento
-│   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123) + usuário-sistema "portal" (inativo, p/ criadoPorId de chamados do portal)
-│   │   └── dev.db             # SQLite (gerado)
+│   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123) + usuário-sistema "portal" (inativo, p/ criadoPorId de chamados do portal) — DESTRUTIVO: apaga municípios/scripts/endpoints
+│   │   ├── migrar-sqlite-postgres.js # Migração de dados dev.db → Postgres preservando IDs (DMMF, pivots M2M, sequences, verificação de contagens) — requer Node ≥ 22.5
+│   │   └── dev.db             # SQLite LEGADO (fallback pré-migração; banco atual é PostgreSQL)
 │   └── src/
 │       ├── index.js           # Express server + Helmet + rate limiter global (50000 req/15min); monta /api/portal/* antes do autenticar global
 │       ├── middleware/
 │       │   └── autenticar.js  # Verifica JWT Bearer; injeta req.usuario; exporta exigirAdmin; rejeita tokens tipo "externo"; exporta autenticarExterno (portal — injeta req.solicitante)
 │       ├── lib/
+│       │   ├── prisma.js      # Instância ÚNICA de PrismaClient — TODA rota usa require('../lib/prisma'); NUNCA new PrismaClient() em rota (esgota pool do Postgres)
 │       │   ├── numeroChamado.js # prefixoMunicipio() + gerarNumero() — protocolo persistido PREFIXO-YYYY-NNNNN em transação
 │       │   └── authUtils.js   # hashToken (SHA-256), captchaValido (hCaptcha), criarTransporter (SMTP) — compartilhados entre auth interno e portal
 │       └── routes/
@@ -188,8 +190,8 @@ krakion/
 # Backend
 cd backend
 npm install
-npx prisma db push          # Cria/atualiza tabelas no SQLite
-node prisma/seed.js         # Popula dados iniciais
+npx prisma db push          # Cria/atualiza tabelas no PostgreSQL
+node prisma/seed.js         # Popula dados iniciais (CUIDADO: destrutivo — apaga municípios/scripts/endpoints)
 npm run dev                 # Inicia com nodemon (porta 3001)
 
 # Frontend
@@ -450,6 +452,7 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 
 ## Padrões importantes
 
+- **Banco PostgreSQL (migrado de SQLite em 2026-06-11)**: regras obrigatórias — (1) toda rota usa `const prisma = require('../lib/prisma')`, **nunca** `new PrismaClient()` (cada instância abre um pool; esgota conexões); (2) todo `contains` de busca leva `mode: 'insensitive'` (Postgres é case-sensitive por padrão; SQLite não era); (3) `$queryRaw` em sintaxe Postgres com identificadores entre aspas (`"Chamado"`, `"criadoEm"`). Campos JSON continuam `String` com parse/stringify manual. Detalhes em `skills/banco-de-dados.md`. O setup Docker (`docker-compose.yml`) ainda **não** foi atualizado para Postgres — produção usa PM2.
 - **Tailwind safelist obrigatório**: `tailwind.config.js` tem `safelist: [{ pattern: /sysgate/ }]` — sem isso, `@apply bg-sysgate-600` falha no `index.css` porque o JIT não gera a classe antes do `@layer components` ser processado. NÃO remover. A paleta `sysgate` usa índigo/violeta Krakion Labs (sysgate-600 = `#4f46e5`).
 - **Rotas nomeadas ANTES de /:id** no Express (ex: `/swagger`, `/limpar-tudo` devem vir antes de `/:id`)
 - **bodySchema** é armazenado como `String` (JSON serializado) no SQLite, parseado/stringificado manualmente

@@ -37,7 +37,8 @@
 
 > **Status pós-Fase 0 (2026-06-10):**
 > - ✅ **Resolvidas:** #1 (Twilio removido — falta rotação manual), #2 (JWT_SECRET no compose), #3 (token de recuperação com hash), #5 (rate limit + captcha no /registrar), #6 (vazamento no /esqueci-senha), #7 (validação de upload), #10 (error handler não vaza `err.message`), #11 (parcial — Nginx repassa X-Forwarded-For).
-> - ⬜ **Pendentes (fora da Fase 0):** #4 (revogação de JWT contra o banco), #8 (CORS aberto), #9 (senha mínima 6), #12 (JWT no localStorage), #13 (instância única de PrismaClient).
+> - ✅ **#13 resolvida (2026-06-11):** instância única de PrismaClient (`src/lib/prisma.js`), junto com a migração para Postgres.
+> - ⬜ **Pendentes (fora da Fase 0):** #4 (revogação de JWT contra o banco), #8 (CORS aberto), #9 (senha mínima 6), #12 (JWT no localStorage).
 
 ### 🔴 Críticas
 
@@ -79,7 +80,7 @@
 
 | Ponto | Impacto |
 |---|---|
-| **SQLite** | Single-writer. Para uso interno com poucos usuários, ok. Abrindo para clientes externos, vira gargalo e risco de `SQLITE_BUSY`. Migração para Postgres é o caminho natural — o Prisma torna isso barato. |
+| **SQLite** | ✅ **Resolvido (2026-06-11):** migrado para PostgreSQL (16 na VPS, 18 no dev local) com dados preservados e contagens verificadas. Ver `skills/banco-de-dados.md`. |
 | **Anexos base64 dentro do banco** | Já infla o `dev.db`; com uploads externos fica insustentável. Mover para filesystem/objeto com referência no banco. |
 | **Número do chamado calculado no frontend** | O número muda se um chamado for deletado. Para uso interno é tolerável; como protocolo exibido a um cliente externo, é inaceitável — precisa ser persistido no banco na criação. |
 | **`ChamadoComentario.autorId` obrigatório → `Usuario`** | O schema não comporta comentário de autor externo. Precisa de ajuste para o portal. |
@@ -149,7 +150,7 @@ model ChamadoComentario {
 
 ### Fase 2 — Backend do portal (`/api/portal/*`) — ✅ CONCLUÍDA (local, commit `3843f4a`, 2026-06-11)
 
-> **Implementado conforme o plano**, com os seguintes detalhes de escopo: helpers de auth (`hashToken`/`captchaValido`/`criarTransporter`) extraídos para `backend/src/lib/authUtils.js` (reuso entre `auth.js` e `portalAuth.js`); upload de anexos do portal (`POST /portal/chamados/:id/anexos`) com a mesma validação da Fase 0 (parser de 8 MB estendido no `index.js`); rota interna `POST /api/chamados/:id/comentarios` já aceita a flag `interno` (suporte antecipado ao toggle da Fase 4); aprovação de contas via `GET /api/solicitantes?contaPendente=true` + `PATCH /api/solicitantes/:id/conta` (admin) — a tela interna fica para a Fase 4. Listagem/detalhe do portal não expõem prioridade/classificação/vertical/responsável. Smoke test local com 33 checks passou (isolamento por solicitante, separação dos trilhos, filtro de comentários internos e de seus anexos, lockout, recuperação). **SQLite mantido** (decisão #1 segue em aberto — migrar para Postgres antes de abrir o portal ao público). Docs em `docs/chamados.md`, `skills/seguranca.md`, `CLAUDE.md`.
+> **Implementado conforme o plano**, com os seguintes detalhes de escopo: helpers de auth (`hashToken`/`captchaValido`/`criarTransporter`) extraídos para `backend/src/lib/authUtils.js` (reuso entre `auth.js` e `portalAuth.js`); upload de anexos do portal (`POST /portal/chamados/:id/anexos`) com a mesma validação da Fase 0 (parser de 8 MB estendido no `index.js`); rota interna `POST /api/chamados/:id/comentarios` já aceita a flag `interno` (suporte antecipado ao toggle da Fase 4); aprovação de contas via `GET /api/solicitantes?contaPendente=true` + `PATCH /api/solicitantes/:id/conta` (admin) — a tela interna fica para a Fase 4. Listagem/detalhe do portal não expõem prioridade/classificação/vertical/responsável. Smoke test local com 33 checks passou (isolamento por solicitante, separação dos trilhos, filtro de comentários internos e de seus anexos, lockout, recuperação). **Postgres migrado na sequência** (mesmo dia, dev + produção — decisão #1 resolvida). Docs em `docs/chamados.md`, `skills/seguranca.md`, `skills/banco-de-dados.md`, `CLAUDE.md`.
 
 - **Middleware `autenticarExterno`:** JWT com claim `tipo: 'externo'` e `sid` (solicitanteId). Crucial: o `autenticar.js` interno passa a rejeitar tokens com `tipo: 'externo'` — sem isso, um externo logado acessaria todas as rotas internas.
 
@@ -192,6 +193,6 @@ model ChamadoComentario {
 
 | # | Decisão | Recomendação |
 |---|---|---|
-| 1 | **SQLite → Postgres** | Migrar junto com a Fase 2 se o portal for público na internet; adiar se o público for pequeno e controlado. |
+| 1 | **SQLite → Postgres** | ✅ **Decidido e executado (2026-06-11):** migrado junto com a Fase 2, em dev e produção, antes de o portal ganhar frontend público. |
 | 2 | **`criadoPorId` obrigatório em `Chamado`** | Usuário-sistema "Portal" (menos invasivo) ou tornar o campo opcional (mais limpo, mais migração). |
 | 3 | **Auto-registro vs convite** | Dado o público (servidores de prefeituras), cadastro por convite/aprovação manual é mais seguro que registro aberto. O plano assume **aprovação manual**. |

@@ -10,6 +10,7 @@
 - **PM2** — gerencia o processo Node.js do backend (reinicia automaticamente)
 - **Nginx** — serve o frontend (`/dist`) e faz proxy `/api` → porta 3001
 - **Let's Encrypt (Certbot)** — certificado SSL gratuito (HTTPS)
+- **PostgreSQL 16** — banco de dados (localhost da VPS, migrado do SQLite em 2026-06-11)
 
 ---
 
@@ -28,12 +29,21 @@ cd /var/www/krakion && git pull && cd backend && npx prisma db push && cd ../fro
 
 > **Acesso SSH:** a chave pública do implantador (`~/.ssh/id_ed25519.pub`) está no `authorized_keys` do servidor — deploys rodam sem senha.
 >
-> **Migração de schema com backfill:** quando o `db push` adiciona uma coluna com constraint (ex.: `Chamado.numero @unique` da Fase 0), o SQLite exige `npx prisma db push --accept-data-loss` (seguro: coluna nova fica toda NULL, sem perda) e é preciso rodar o backfill logo após:
+> **Mudança de schema:** fazer backup antes do `db push`:
 > ```bash
-> cp prisma/dev.db prisma/dev.db.bak-$(date +%Y%m%d-%H%M%S)   # backup antes
-> npx prisma db push --accept-data-loss
-> node prisma/backfill-numero.js                               # numera registros antigos
+> sudo -u postgres pg_dump krakion | gzip > /root/krakion-$(date +%Y%m%d-%H%M%S).sql.gz
+> npx prisma db push
 > ```
+
+---
+
+## PostgreSQL na VPS
+
+- Serviço: `systemctl status postgresql` (PostgreSQL 16, só escuta em localhost)
+- Banco `krakion`, role `krakion` — senha no `DATABASE_URL` do `/var/www/krakion/backend/.env`
+- Console: `sudo -u postgres psql -d krakion`
+- **Backup**: `sudo -u postgres pg_dump krakion | gzip > /root/krakion-DATA.sql.gz`
+- **Migração SQLite → Postgres (2026-06-11)**: dados copiados do `dev.db` com `backend/prisma/migrar-sqlite-postgres.js` (rodado da máquina local via túnel `ssh -L 15432:127.0.0.1:5432`, porque o script exige Node ≥ 22.5 e a VPS tem Node 20). Contagens verificadas tabela a tabela. Os arquivos `prisma/dev.db` e `dev.db.bak-*` foram **mantidos no servidor como fallback** — para rollback de emergência, basta voltar `DATABASE_URL="file:./dev.db"` no `.env`, trocar o provider para `sqlite` no schema e `pm2 restart` (perde os dados criados após a migração).
 
 ---
 
@@ -89,7 +99,7 @@ server {
 Arquivo: `/var/www/krakion/backend/.env`
 
 ```
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://krakion:<senha>@localhost:5432/krakion"
 PORT=3001
 JWT_SECRET=krakion_secret_super_seguro_2026
 JWT_EXPIRES_IN=8h

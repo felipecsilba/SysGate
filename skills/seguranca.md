@@ -154,7 +154,7 @@ Trilho de autenticação paralelo implementado (`routes/portalAuth.js` + `routes
 - **Resposta enxuta**: listagem/detalhe do portal não expõem prioridade, classificação, vertical, responsável nem origem.
 - **Helpers compartilhados**: `hashToken`/`captchaValido`/`criarTransporter` extraídos para `backend/src/lib/authUtils.js` (usados por `auth.js` e `portalAuth.js`).
 - **Erros 500 do portal não vazam `err.message`** — respostas genéricas + `console.error` no servidor.
-- **Pendência (decisão #1 do plano)**: migrar SQLite → Postgres antes de abrir o portal ao público na internet.
+- **Banco migrado para PostgreSQL (2026-06-11, mesmo dia)**: decisão #1 do plano executada antes de o portal ganhar frontend público. PrismaClient único (`lib/prisma.js`) resolveu também a pendência #13. A `DATABASE_URL` agora contém senha — o log de inicialização a mascara (`index.js`). Ver `skills/banco-de-dados.md`.
 
 ---
 

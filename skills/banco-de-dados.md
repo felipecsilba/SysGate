@@ -1,11 +1,20 @@
-# Banco de Dados — Prisma + SQLite
+# Banco de Dados — Prisma + PostgreSQL
 
 ## Configuração
 
 - **ORM**: Prisma 5.x
-- **Provider**: SQLite (`file:./dev.db`)
+- **Provider**: PostgreSQL (migrado do SQLite em 2026-06-11, junto com a Fase 2 do portal externo)
 - **Schema**: `backend/prisma/schema.prisma`
 - **Migrations**: Usa `prisma db push` (sem migrations formais)
+- **Dev local**: PostgreSQL 18 nativo no Windows, porta 5432 — `DATABASE_URL="postgresql://krakion:krakion123@localhost:5432/krakion"` (a porta 5433 é outra instância, de outro projeto — não usar)
+- **Produção**: PostgreSQL 16 na VPS (localhost), credenciais no `.env` do servidor
+
+## Regras pós-migração (IMPORTANTE)
+
+1. **Instância única de PrismaClient**: toda rota usa `const prisma = require('../lib/prisma')`. **NUNCA** criar `new PrismaClient()` em arquivo de rota — no Postgres cada instância abre um pool próprio e esgota o `max_connections`.
+2. **Buscas com `contains`**: sempre incluir `mode: 'insensitive'` — no Postgres o `contains` é case-sensitive por padrão (no SQLite era insensitive; o comportamento foi preservado adicionando o mode em todos os filtros de busca).
+3. **SQL cru (`$queryRaw`)**: sintaxe Postgres. Tabelas e colunas precisam de aspas duplas por causa do case (`"Chamado"`, `"criadoEm"`). Datas: `NOW() - INTERVAL '14 days'`, `to_char(...)`. Nada de `datetime('now')`/`date()` do SQLite.
+4. **Migração de dados**: `backend/prisma/migrar-sqlite-postgres.js` copia um `dev.db` para o Postgres apontado pelo `DATABASE_URL` preservando IDs (converte DateTime epoch-ms e Boolean 0/1 via DMMF, copia as pivots `_ScriptToTag`/`_RelatorioToTag`, ressincroniza sequences e confere contagens). Requer Node ≥ 22.5 (`node:sqlite`) e destino vazio. Os `dev.db.bak-*` no servidor são o fallback pré-migração.
 
 ## Modelos
 
@@ -109,17 +118,28 @@ Specs OpenAPI/Swagger importadas (armazena o JSON bruto completo).
 ## Comandos úteis
 
 ```bash
-npx prisma db push        # Aplica schema no SQLite (sem migration)
+npx prisma db push        # Aplica schema no Postgres (sem migration)
 npx prisma studio         # Interface visual para explorar dados (porta 5555)
 npx prisma generate       # Regenera o Prisma Client
-node prisma/seed.js       # Popula dados iniciais
+node prisma/seed.js       # Popula dados iniciais (CUIDADO: apaga municípios/scripts/endpoints)
 
-# Limpar e recriar do zero:
-rm prisma/dev.db && npx prisma db push && node prisma/seed.js
+# psql local (Windows):
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U krakion -h localhost -p 5432 -d krakion
+
+# psql produção (na VPS):
+sudo -u postgres psql -d krakion
+
+# Recriar banco local do zero:
+# (como superuser postgres) DROP DATABASE krakion; CREATE DATABASE krakion OWNER krakion;
+# depois: npx prisma db push && node prisma/seed.js
+
+# Backup produção:
+sudo -u postgres pg_dump krakion | gzip > /root/krakion-$(date +%Y%m%d).sql.gz
 ```
 
 ## Cuidados
 
 - **Não use `prisma migrate`** — o projeto usa `db push` sem migrations
-- **DLL lock**: Se o Prisma falhar com EPERM, mate o processo do backend antes de rodar `db push` ou `generate`
-- **JSON fields**: SQLite não tem tipo JSON nativo. Todos os campos JSON são `String` e são parseados/stringificados manualmente no código
+- **DLL lock (Windows)**: Se o Prisma falhar com EPERM, mate o processo do backend antes de rodar `db push` ou `generate`
+- **JSON fields**: os campos JSON continuam `String` (parse/stringify manual no código) — padrão herdado do SQLite e mantido na migração
+- **Seed destrutivo**: `seed.js` faz `deleteMany` em requisições/scripts/tags/endpoints/municípios — nunca rodar em produção
