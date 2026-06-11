@@ -1,8 +1,7 @@
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 const { exigirAdmin } = require('../middleware/autenticar')
 
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 const router = express.Router()
 
 // Campos públicos — nunca retornar senhaHash/tokens de recuperação.
@@ -18,7 +17,7 @@ function publico({ senhaHash, ...resto }) {
 router.get('/', async (req, res) => {
   const { busca, municipio, contaPendente } = req.query
   const where = {}
-  if (municipio) where.municipio = { contains: municipio }
+  if (municipio) where.municipio = { contains: municipio, mode: 'insensitive' }
   // Contas do portal aguardando aprovação: registrou (senhaHash) mas não foi ativado
   if (contaPendente === 'true') {
     where.senhaHash = { not: null }
@@ -26,9 +25,9 @@ router.get('/', async (req, res) => {
   }
   if (busca) {
     where.OR = [
-      { nome:      { contains: busca } },
-      { cargo:     { contains: busca } },
-      { municipio: { contains: busca } },
+      { nome:      { contains: busca, mode: 'insensitive' } },
+      { cargo:     { contains: busca, mode: 'insensitive' } },
+      { municipio: { contains: busca, mode: 'insensitive' } },
     ]
   }
   const solicitantes = await prisma.solicitante.findMany({

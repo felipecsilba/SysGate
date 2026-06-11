@@ -1,11 +1,10 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
-const { PrismaClient } = require('@prisma/client')
 const autenticar = require('../middleware/autenticar')
 const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 const CAMPOS_PUBLICOS = { id: true, login: true, nome: true, role: true, ativo: true, email: true, funcao: true, ultimoLogin: true, criadoEm: true, atualizadoEm: true }
 

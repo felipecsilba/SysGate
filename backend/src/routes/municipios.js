@@ -1,8 +1,7 @@
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 // Helper: retorna o município somente se pertencer ao usuário logado
 async function verificarDono(id, usuarioId) {

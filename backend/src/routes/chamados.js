@@ -1,9 +1,8 @@
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 const { exigirAdmin } = require('../middleware/autenticar')
 const { gerarNumero } = require('../lib/numeroChamado')
 
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 const router = express.Router()
 
 // ── Validação de anexos ──────────────────────────────────────────────────────
@@ -60,12 +59,12 @@ router.get('/', async (req, res) => {
   // sistema: lista comma-separated
   if (sistemas) where.sistema = { in: sistemas.split(',') }
   // município: filtro por contains
-  if (municipio) where.municipio = { contains: municipio }
+  if (municipio) where.municipio = { contains: municipio, mode: 'insensitive' }
   if (busca) {
     where.OR = [
-      { titulo:    { contains: busca } },
-      { descricao: { contains: busca } },
-      { municipio: { contains: busca } },
+      { titulo:    { contains: busca, mode: 'insensitive' } },
+      { descricao: { contains: busca, mode: 'insensitive' } },
+      { municipio: { contains: busca, mode: 'insensitive' } },
     ]
   }
 
@@ -180,15 +179,15 @@ router.get('/dashboard', async (req, res) => {
       where: { status: 'Concluido', atualizadoEm: { gte: inicioMes } }
     }),
 
-    // Últimos 14 dias — contagem por dia
+    // Últimos 14 dias — contagem por dia (sintaxe Postgres; tabela/colunas com aspas por causa do case)
     prisma.$queryRaw`
       SELECT
-        date(criadoEm) as dia,
-        COUNT(*) as total
-      FROM Chamado
-      WHERE criadoEm >= datetime('now', '-14 days')
-      GROUP BY date(criadoEm)
-      ORDER BY dia ASC
+        to_char("criadoEm", 'YYYY-MM-DD') as dia,
+        COUNT(*)::int as total
+      FROM "Chamado"
+      WHERE "criadoEm" >= NOW() - INTERVAL '14 days'
+      GROUP BY 1
+      ORDER BY 1 ASC
     `,
   ])
 

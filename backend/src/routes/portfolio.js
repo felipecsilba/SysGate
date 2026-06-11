@@ -1,9 +1,8 @@
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 // ── Municípios do Portfólio ───────────────────────────────────────────────────
 
@@ -11,7 +10,7 @@ const prisma = new PrismaClient()
 router.get('/', async (req, res) => {
   try {
     const { busca, pagina, limite } = req.query
-    const where = busca ? { nome: { contains: busca } } : {}
+    const where = busca ? { nome: { contains: busca, mode: 'insensitive' } } : {}
 
     const paginaNum = Math.max(1, parseInt(pagina) || 1)
     const limiteNum = Math.min(200, Math.max(1, parseInt(limite) || 50))

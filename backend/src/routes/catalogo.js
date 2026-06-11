@@ -1,9 +1,8 @@
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 // Seed inicial com as verticais Betha oficiais
 const SEED_VERTICAIS = [

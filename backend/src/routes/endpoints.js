@@ -1,9 +1,8 @@
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 function buildProxyConfig() {
   const raw = process.env.PROXY_URL

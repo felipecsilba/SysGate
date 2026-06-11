@@ -1,9 +1,8 @@
 const express = require('express')
 const axios = require('axios')
-const { PrismaClient } = require('@prisma/client')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 // Proxy HTTP opcional — configurar PROXY_URL no .env para rotear chamadas externas
 // Formato: http://usuario:senha@host:porta  ou  http://host:porta

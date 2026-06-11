@@ -1,9 +1,8 @@
 const { Router } = require('express')
-const { PrismaClient } = require('@prisma/client')
 const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 function parseConhecimento(c) {
   return {
@@ -22,9 +21,9 @@ router.get('/', async (req, res) => {
     const where = {}
     if (busca) {
       where.OR = [
-        { titulo: { contains: busca } },
-        { descricao: { contains: busca } },
-        { conteudo: { contains: busca } },
+        { titulo: { contains: busca, mode: 'insensitive' } },
+        { descricao: { contains: busca, mode: 'insensitive' } },
+        { conteudo: { contains: busca, mode: 'insensitive' } },
       ]
     }
     if (tipo) where.tipo = tipo

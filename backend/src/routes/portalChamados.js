@@ -4,11 +4,10 @@
 // Comentários com interno: true e seus anexos NUNCA saem por estas rotas.
 
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 const { autenticarExterno } = require('../middleware/autenticar')
 const { gerarNumero } = require('../lib/numeroChamado')
 
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 const router = express.Router()
 
 router.use(autenticarExterno)
@@ -56,9 +55,9 @@ router.get('/', async (req, res) => {
     if (status) where.status = status
     if (busca) {
       where.OR = [
-        { titulo:    { contains: busca } },
-        { descricao: { contains: busca } },
-        { numero:    { contains: busca } },
+        { titulo:    { contains: busca, mode: 'insensitive' } },
+        { descricao: { contains: busca, mode: 'insensitive' } },
+        { numero:    { contains: busca, mode: 'insensitive' } },
       ]
     }
 

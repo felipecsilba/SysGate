@@ -1,8 +1,7 @@
 const express = require('express')
-const { PrismaClient } = require('@prisma/client')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 function parseRelatorio(r) {
   return {
@@ -33,8 +32,8 @@ router.get('/', async (req, res) => {
     if (tag) where.tags = { some: { nome: tag } }
     if (busca) {
       where.OR = [
-        { titulo: { contains: busca } },
-        { descricao: { contains: busca } },
+        { titulo: { contains: busca, mode: 'insensitive' } },
+        { descricao: { contains: busca, mode: 'insensitive' } },
       ]
     }
     const relatorios = await prisma.relatorio.findMany({

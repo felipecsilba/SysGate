@@ -7,12 +7,11 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const rateLimit = require('express-rate-limit')
-const { PrismaClient } = require('@prisma/client')
 const { autenticarExterno } = require('../middleware/autenticar')
 const { hashToken, captchaValido, criarTransporter } = require('../lib/authUtils')
 
 const router = express.Router()
-const prisma = new PrismaClient()
+const prisma = require('../lib/prisma')
 
 // Campos do solicitante expostos ao próprio dono da conta — nunca credenciais
 const SELECT_CONTA = { id: true, nome: true, cargo: true, email: true, telefone: true, municipio: true, contaAtiva: true }
