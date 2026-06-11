@@ -129,6 +129,18 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 
 ---
 
+## Portal externo — Fase 1: modelo de dados (2026-06-11)
+
+Fundação do portal de atendimento para solicitantes externos (plano completo em `krakion-analise-fable5.md`). **Decisão central: externos NÃO entram no modelo `Usuario`** — o trilho de autenticação será paralelo, sobre o `Solicitante`.
+
+- **`Solicitante` com credenciais próprias**: `email @unique` (identifica a conta), `senhaHash` (null = sem conta), `contaAtiva` default `false` (aprovação manual pela equipe), `emailVerificado`, lockout (`tentativasLogin`/`bloqueadoAte`, mesmo padrão do `Usuario`) e recuperação de senha **já nascendo com hash** (`recuperacaoTokenHash`/`recuperacaoExpira`).
+- **A API interna nunca expõe credenciais**: `solicitantes.js` usa `SELECT_PUBLICO` em todas as respostas — `senhaHash` e tokens de recuperação não saem; `contaAtiva` é exposto para a UI. Email duplicado → **409** (P2002 tratado no POST/PUT).
+- **`ChamadoComentario.interno`**: `true` = nota interna invisível no portal. Rotas internas exibem tudo; o filtro obrigatório será nas rotas `/api/portal/*` (Fase 2). Autor duplo: `autorId` (interno, agora opcional) XOR `autorSolicitanteId` (externo).
+- **Usuário-sistema `portal`**: login `portal`, `ativo: false` (não loga), senha aleatória — criado pelo seed (idempotente). Serve só para `criadoPorId` de chamados de origem portal.
+- **Fase 2 (pendente, crítico)**: middleware `autenticarExterno` com claim `tipo: 'externo'`; o `autenticar.js` interno deverá **rejeitar** tokens externos — sem isso, um externo logado acessaria todas as rotas internas.
+
+---
+
 ## Variáveis de ambiente
 
 **backend/.env**

@@ -114,7 +114,9 @@ Helmet, bcrypt cost 10, lockout de login, rate limit no login, isolamento multi-
 
 ---
 
-### Fase 1 — Modelo de dados
+### Fase 1 — Modelo de dados — ✅ CONCLUÍDA (deploy em produção 2026-06-11, commit `04962de`)
+
+> **Decisões tomadas:** `criadoPorId` permanece obrigatório — usuário-sistema **"portal"** (inativo, sem login) criado no seed e nos bancos local/produção (prod: id 5). Escopo incluiu ajustes mínimos: `solicitantes.js` trata email duplicado com **409** (P2002) e usa select público (não vaza `senhaHash`/tokens; expõe `contaAtiva`); `chamados.js` inclui `autorSolicitante` nos comentários do detalhe. Produção verificada antes do `db push`: 0 solicitantes, nenhum email duplicado. Smoke test local passou (P2002, autor externo, default de `origem`). Docs registradas em `docs/chamados.md`, `CLAUDE.md`, `skills/seguranca.md`.
 
 ```prisma
 model Solicitante {

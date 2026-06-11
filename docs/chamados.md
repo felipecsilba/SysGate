@@ -177,7 +177,17 @@ Quando `aba === 'painel'` e não há chamado selecionado, o painel fica oculto (
 - Cadastrado via `SearchSelect` no `ModalChamado` — busca por nome/cargo/município
 - Criação inline no próprio modal (botão "+ Novo Solicitante")
 - Exibido como card de metadados no painel de detalhe: nome, cargo, email, telefone, município
-- Diferente de `responsavelId` (usuário interno): solicitante é um contato do cliente, sem acesso ao sistema
+- Diferente de `responsavelId` (usuário interno): solicitante é um contato do cliente, sem acesso ao sistema interno
+- **Email único (Fase 1)**: `email` tem constraint `@unique` (identifica a futura conta do portal). POST/PUT com email já usado → **409**. As respostas da API usam select público (`SELECT_PUBLICO`) — os campos de credencial (`senhaHash`, tokens de recuperação etc.) nunca são retornados; `contaAtiva` é exposto para a UI indicar se o solicitante tem conta no portal.
+
+### Preparação para o portal externo (Fase 1)
+
+Mudanças de modelo que fundamentam o portal de atendimento (Fases 2–4 do plano em `krakion-analise-fable5.md`):
+
+- **`Chamado.origem`**: `"interno"` (default) ou `"portal"` — chamados abertos pelo cliente no portal serão marcados na criação.
+- **Comentários com autor duplo**: `ChamadoComentario.autorId` passou a ser opcional; `autorSolicitanteId` identifica autor externo. Todo comentário tem exatamente um dos dois. O `GET /api/chamados/:id` já inclui `autorSolicitante { id, nome }` nos comentários.
+- **`ChamadoComentario.interno`**: `true` = nota interna da equipe, invisível no portal. As rotas internas exibem todos os comentários; o filtro será aplicado nas rotas `/api/portal/*` (Fase 2).
+- **Usuário-sistema "portal"**: usuário interno especial (login `portal`, inativo, sem login possível) criado pelo seed — chamados de origem portal usarão o id dele em `criadoPorId`, que continua obrigatório.
 
 ---
 
@@ -323,6 +333,7 @@ model Chamado {
   sistema        String?
   municipio      String?
   entidade       String?
+  origem         String              @default("interno")  // "interno" | "portal" (Fase 1)
   criadoPorId    Int
   responsavelId  Int?
   solicitanteId  Int?
@@ -335,11 +346,13 @@ model Chamado {
 }
 
 model ChamadoComentario {
-  id        Int      @id @default(autoincrement())
-  chamadoId Int
-  usuarioId Int
-  texto     String
-  criadoEm DateTime @default(now())
+  id                 Int          @id @default(autoincrement())
+  conteudo           String
+  chamadoId          Int
+  autorId            Int?         // autor interno (equipe) — null quando autor externo (Fase 1)
+  autorSolicitanteId Int?         // autor externo (portal) — null quando autor interno (Fase 1)
+  interno            Boolean      @default(false)  // true = invisível no portal (Fase 1)
+  criadoEm           DateTime     @default(now())
 }
 
 model ChamadoAnexo {
@@ -367,11 +380,20 @@ model Solicitante {
   id        Int       @id @default(autoincrement())
   nome      String
   cargo     String?
-  email     String?
+  email     String?   @unique   // Fase 1: identifica a conta do portal
   telefone  String?
   municipio String?
-  chamados  Chamado[]
-  criadoEm DateTime  @default(now())
+  // Credenciais do portal externo (Fase 1) — nunca retornadas pela API interna
+  senhaHash            String?    // null = sem conta (cadastrado pela equipe)
+  contaAtiva           Boolean    @default(false)  // aprovação pela equipe
+  emailVerificado      Boolean    @default(false)
+  tentativasLogin      Int        @default(0)
+  bloqueadoAte         DateTime?
+  recuperacaoTokenHash String?
+  recuperacaoExpira    DateTime?
+  chamados     Chamado[]
+  comentarios  ChamadoComentario[]
+  criadoEm  DateTime  @default(now())
 }
 
 // filaFiltro em Usuario:
