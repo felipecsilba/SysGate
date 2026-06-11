@@ -42,7 +42,21 @@ const limiterGeral = rateLimit({
 })
 app.use(limiterGeral)
 
-app.use(cors())
+// CORS restrito: o frontend é servido na mesma origem (Vite proxy em dev, Nginx em produção),
+// então nenhuma origem cross-origin é necessária por padrão. Origens extras (ex.: domínio
+// separado do portal) entram via CORS_ORIGINS no .env (separadas por vírgula).
+const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+app.use(cors({
+  origin: (origin, callback) => {
+    // Sem header Origin = same-origin ou ferramenta direta (curl/Postman) — permite
+    if (!origin || corsOrigins.includes(origin)) return callback(null, true)
+    // Origem não listada: responde sem headers CORS — o browser bloqueia
+    return callback(null, false)
+  },
+}))
 
 // Limite de payload: 1 MB global; apenas a rota de upload de anexos aceita mais.
 // Anexo de 5 MB binário vira ~6.7 MB em base64, então a rota de anexos usa 8 MB.
