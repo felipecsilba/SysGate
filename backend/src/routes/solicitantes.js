@@ -5,6 +5,9 @@ const { exigirAdmin } = require('../middleware/autenticar')
 const prisma = new PrismaClient()
 const router = express.Router()
 
+// Campos públicos — nunca retornar senhaHash/tokens de recuperação
+const SELECT_PUBLICO = { id: true, nome: true, cargo: true, email: true, telefone: true, municipio: true, contaAtiva: true }
+
 // ── GET / — Listar com filtros ────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   const { busca, municipio } = req.query
@@ -20,7 +23,7 @@ router.get('/', async (req, res) => {
   const solicitantes = await prisma.solicitante.findMany({
     where,
     orderBy: { nome: 'asc' },
-    select: { id: true, nome: true, cargo: true, email: true, telefone: true, municipio: true }
+    select: SELECT_PUBLICO
   })
   res.json(solicitantes)
 })
@@ -29,16 +32,22 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { nome, cargo, email, telefone, municipio } = req.body
   if (!nome?.trim()) return res.status(400).json({ error: 'Nome e obrigatorio' })
-  const sol = await prisma.solicitante.create({
-    data: {
-      nome:      nome.trim(),
-      cargo:     cargo?.trim()     || null,
-      email:     email?.trim()     || null,
-      telefone:  telefone?.trim()  || null,
-      municipio: municipio?.trim() || null,
-    }
-  })
-  res.status(201).json(sol)
+  try {
+    const sol = await prisma.solicitante.create({
+      data: {
+        nome:      nome.trim(),
+        cargo:     cargo?.trim()     || null,
+        email:     email?.trim()     || null,
+        telefone:  telefone?.trim()  || null,
+        municipio: municipio?.trim() || null,
+      },
+      select: SELECT_PUBLICO
+    })
+    res.status(201).json(sol)
+  } catch (err) {
+    if (err.code === 'P2002') return res.status(409).json({ error: 'Ja existe um solicitante com este email' })
+    throw err
+  }
 })
 
 // ── PUT /:id — Atualizar ──────────────────────────────────────────────────────
@@ -54,12 +63,14 @@ router.put('/:id', async (req, res) => {
         ...(email     !== undefined && { email:     email?.trim()     || null }),
         ...(telefone  !== undefined && { telefone:  telefone?.trim()  || null }),
         ...(municipio !== undefined && { municipio: municipio?.trim() || null }),
-      }
+      },
+      select: SELECT_PUBLICO
     })
     res.json(sol)
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Solicitante nao encontrado' })
-    res.status(500).json({ error: err.message })
+    if (err.code === 'P2002') return res.status(409).json({ error: 'Ja existe um solicitante com este email' })
+    res.status(500).json({ error: 'Erro ao atualizar solicitante' })
   }
 })
 

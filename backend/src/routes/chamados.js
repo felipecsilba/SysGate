@@ -336,7 +336,10 @@ router.get('/:id', async (req, res) => {
       solicitante: { select: { id: true, nome: true, cargo: true, email: true, telefone: true } },
       comentarios: {
         orderBy: { criadoEm: 'asc' },
-        include: { autor: { select: { id: true, nome: true } } }
+        include: {
+          autor: { select: { id: true, nome: true } },
+          autorSolicitante: { select: { id: true, nome: true } }
+        }
       },
       anexos: {
         select: { id: true, nomeArquivo: true, tipo: true, tamanho: true, criadoEm: true, comentarioId: true }

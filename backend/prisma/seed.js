@@ -20,6 +20,22 @@ async function main() {
     console.log('   👤 Usuário admin criado (login: admin / senha: admin123)')
   }
 
+  // Cria usuário-sistema "Portal" (idempotente) — chamados criados pelo portal
+  // externo usam o id dele em criadoPorId. Inativo: não pode logar.
+  const portalExistente = await prisma.usuario.findUnique({ where: { login: 'portal' } })
+  if (!portalExistente) {
+    await prisma.usuario.create({
+      data: {
+        login: 'portal',
+        senhaHash: await bcrypt.hash(require('crypto').randomBytes(32).toString('hex'), 10),
+        nome: 'Portal do Cliente',
+        role: 'operador',
+        ativo: false,
+      },
+    })
+    console.log('   🌐 Usuário-sistema "portal" criado (inativo, sem login)')
+  }
+
   // Limpa dados existentes
   await prisma.requisicao.deleteMany()
   await prisma.script.deleteMany()

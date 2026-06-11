@@ -226,10 +226,19 @@ model Solicitante {
   id        Int       @id @default(autoincrement())
   nome      String
   cargo     String?
-  email     String?
+  email     String?   @unique
   telefone  String?
   municipio String?
-  chamados  Chamado[]
+  // ── Credenciais do portal externo (Fase 1) ──
+  senhaHash            String?    // null = solicitante sem conta (cadastrado pela equipe)
+  contaAtiva           Boolean    @default(false)  // aprovação pela equipe
+  emailVerificado      Boolean    @default(false)
+  tentativasLogin      Int        @default(0)
+  bloqueadoAte         DateTime?
+  recuperacaoTokenHash String?
+  recuperacaoExpira    DateTime?
+  chamados     Chamado[]
+  comentarios  ChamadoComentario[] @relation("comentariosSolicitante")
   criadoEm  DateTime  @default(now())
 }
 
@@ -245,6 +254,7 @@ model Chamado {
   sistema         String?
   municipio       String?
   entidade        String?
+  origem          String             @default("interno")  // "interno" | "portal"
   solicitanteId   Int?
   solicitante     Solicitante?       @relation(fields: [solicitanteId], references: [id])
   criadoPorId     Int
@@ -263,13 +273,16 @@ model Chamado {
 }
 
 model ChamadoComentario {
-  id          Int      @id @default(autoincrement())
-  conteudo    String
-  chamadoId   Int
-  chamado     Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
-  autorId     Int
-  autor       Usuario  @relation("comentariosChamado", fields: [autorId], references: [id])
-  criadoEm    DateTime @default(now())
+  id                 Int          @id @default(autoincrement())
+  conteudo           String
+  chamadoId          Int
+  chamado            Chamado      @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
+  autorId            Int?         // autor interno (equipe) — null quando autor externo
+  autor              Usuario?     @relation("comentariosChamado", fields: [autorId], references: [id])
+  autorSolicitanteId Int?         // autor externo (portal) — null quando autor interno
+  autorSolicitante   Solicitante? @relation("comentariosSolicitante", fields: [autorSolicitanteId], references: [id])
+  interno            Boolean      @default(false)  // true = invisível no portal
+  criadoEm           DateTime     @default(now())
 }
 
 model ChamadoAnexo {
