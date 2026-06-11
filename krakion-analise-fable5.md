@@ -147,7 +147,9 @@ model ChamadoComentario {
 
 ---
 
-### Fase 2 — Backend do portal (`/api/portal/*`)
+### Fase 2 — Backend do portal (`/api/portal/*`) — ✅ CONCLUÍDA (local, commit `3843f4a`, 2026-06-11)
+
+> **Implementado conforme o plano**, com os seguintes detalhes de escopo: helpers de auth (`hashToken`/`captchaValido`/`criarTransporter`) extraídos para `backend/src/lib/authUtils.js` (reuso entre `auth.js` e `portalAuth.js`); upload de anexos do portal (`POST /portal/chamados/:id/anexos`) com a mesma validação da Fase 0 (parser de 8 MB estendido no `index.js`); rota interna `POST /api/chamados/:id/comentarios` já aceita a flag `interno` (suporte antecipado ao toggle da Fase 4); aprovação de contas via `GET /api/solicitantes?contaPendente=true` + `PATCH /api/solicitantes/:id/conta` (admin) — a tela interna fica para a Fase 4. Listagem/detalhe do portal não expõem prioridade/classificação/vertical/responsável. Smoke test local com 33 checks passou (isolamento por solicitante, separação dos trilhos, filtro de comentários internos e de seus anexos, lockout, recuperação). **SQLite mantido** (decisão #1 segue em aberto — migrar para Postgres antes de abrir o portal ao público). Docs em `docs/chamados.md`, `skills/seguranca.md`, `CLAUDE.md`.
 
 - **Middleware `autenticarExterno`:** JWT com claim `tipo: 'externo'` e `sid` (solicitanteId). Crucial: o `autenticar.js` interno passa a rejeitar tokens com `tipo: 'externo'` — sem isso, um externo logado acessaria todas as rotas internas.
 

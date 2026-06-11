@@ -137,7 +137,24 @@ Fundação do portal de atendimento para solicitantes externos (plano completo e
 - **A API interna nunca expõe credenciais**: `solicitantes.js` usa `SELECT_PUBLICO` em todas as respostas — `senhaHash` e tokens de recuperação não saem; `contaAtiva` é exposto para a UI. Email duplicado → **409** (P2002 tratado no POST/PUT).
 - **`ChamadoComentario.interno`**: `true` = nota interna invisível no portal. Rotas internas exibem tudo; o filtro obrigatório será nas rotas `/api/portal/*` (Fase 2). Autor duplo: `autorId` (interno, agora opcional) XOR `autorSolicitanteId` (externo).
 - **Usuário-sistema `portal`**: login `portal`, `ativo: false` (não loga), senha aleatória — criado pelo seed (idempotente). Serve só para `criadoPorId` de chamados de origem portal.
-- **Fase 2 (pendente, crítico)**: middleware `autenticarExterno` com claim `tipo: 'externo'`; o `autenticar.js` interno deverá **rejeitar** tokens externos — sem isso, um externo logado acessaria todas as rotas internas.
+
+---
+
+## Portal externo — Fase 2: backend `/api/portal/*` (2026-06-11)
+
+Trilho de autenticação paralelo implementado (`routes/portalAuth.js` + `routes/portalChamados.js`, montados no `index.js` ANTES do `autenticar` global):
+
+- **Separação dos trilhos (crítico)**: JWT externo carrega `{ sid, nome, email, tipo: 'externo' }`. O `autenticar.js` interno **rejeita** payload com `tipo: 'externo'` (401); o novo `autenticarExterno` exige `tipo: 'externo'` e injeta `req.solicitante` — token interno é rejeitado nas rotas do portal. Validado por smoke test nos dois sentidos.
+- **Isolamento por solicitante**: toda query de `/api/portal/chamados` usa `where { solicitanteId: req.solicitante.sid }`; chamado/anexo alheio → **404** (nunca 403 — mesmo padrão de municípios).
+- **Comentários internos invisíveis**: detalhe do portal filtra `interno: false` e exclui anexos vinculados a comentários internos (inclusive no download `GET /portal/chamados/anexos/:aid`). Comentário do portal nasce sempre `interno: false` com `autorSolicitanteId`.
+- **Registro/aprovação**: `POST /portal/auth/registrar` (hCaptcha + rate limit 5/15min) cria conta `contaAtiva: false`; login só após admin aprovar via `PATCH /api/solicitantes/:id/conta` (a aprovação zera o lockout). Email que já tem conta → 409.
+- **Login com lockout**: 5 falhas → bloqueio 15min (campos `tentativasLogin`/`bloqueadoAte` do `Solicitante`); rate limit 10/15min; `lembrar` → 30d.
+- **Recuperação de senha**: mesmo padrão da Fase 0 — token hex 64 com hash SHA-256 no banco (`recuperacaoTokenHash`), expiry 1h, resposta sempre genérica, email só com SMTP configurado; link → `/portal/redefinir-senha`.
+- **Uploads do portal**: mesma validação da Fase 0 (whitelist MIME, 5 MB/anexo, 25 MB/chamado, nome sanitizado); parser de 8 MB também em `POST /api/portal/chamados/:id/anexos`; `comentarioId` enviado pelo cliente é ignorado (vínculo só via `pendingAnexoIds`, restrito a anexos soltos do próprio chamado).
+- **Resposta enxuta**: listagem/detalhe do portal não expõem prioridade, classificação, vertical, responsável nem origem.
+- **Helpers compartilhados**: `hashToken`/`captchaValido`/`criarTransporter` extraídos para `backend/src/lib/authUtils.js` (usados por `auth.js` e `portalAuth.js`).
+- **Erros 500 do portal não vazam `err.message`** — respostas genéricas + `console.error` no servidor.
+- **Pendência (decisão #1 do plano)**: migrar SQLite → Postgres antes de abrir o portal ao público na internet.
 
 ---
 

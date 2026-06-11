@@ -75,9 +75,12 @@ krakion/
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123) + usuário-sistema "portal" (inativo, p/ criadoPorId de chamados do portal)
 │   │   └── dev.db             # SQLite (gerado)
 │   └── src/
-│       ├── index.js           # Express server + Helmet + rate limiter global (50000 req/15min)
+│       ├── index.js           # Express server + Helmet + rate limiter global (50000 req/15min); monta /api/portal/* antes do autenticar global
 │       ├── middleware/
-│       │   └── autenticar.js  # Verifica JWT Bearer; injeta req.usuario; exporta exigirAdmin
+│       │   └── autenticar.js  # Verifica JWT Bearer; injeta req.usuario; exporta exigirAdmin; rejeita tokens tipo "externo"; exporta autenticarExterno (portal — injeta req.solicitante)
+│       ├── lib/
+│       │   ├── numeroChamado.js # prefixoMunicipio() + gerarNumero() — protocolo persistido PREFIXO-YYYY-NNNNN em transação
+│       │   └── authUtils.js   # hashToken (SHA-256), captchaValido (hCaptcha), criarTransporter (SMTP) — compartilhados entre auth interno e portal
 │       └── routes/
 │           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha + atualiza ultimoLogin) + /logout + /me + /registrar + /esqueci-senha (rate limit 5/15min) + /redefinir-senha
 │           ├── usuarios.js    # CRUD usuários — GET/PUT/PATCH permitidos ao próprio usuário; POST/DELETE somente admin; PUT aceita email/funcao além de nome/filaFiltro
@@ -90,8 +93,10 @@ krakion/
 │           ├── relatorios.js  # CRUD + GET /:id/jxrml (download base64→buffer) — modelo Relatorio
 │           ├── portfolio.js   # CRUD Portfólio — PortfolioMunicipio + Entidade + EntidadeSistema + Stakeholder (M2M) — leitura pública; escrita/exclusão somente admin
 │           ├── catalogo.js   # CRUD CatalogoVertical — verticais Betha com nome/cor/sistemas/ordem; seed automático na 1ª chamada GET — leitura pública; escrita somente admin
-│           ├── chamados.js   # CRUD Chamados + comentários + anexos (+ comentarioId) + histórico de alterações + dashboard agregado; filtros: semResponsavel, excluirEncerrados, verticais (CSV), sistemas (CSV), prioridade, municipio; acesso público (autenticados); DELETE somente admin
-│           ├── solicitantes.js # CRUD Solicitantes externos (contatos do cliente) — leitura/escrita pública (autenticados); DELETE somente admin; email duplicado → 409; select público (não vaza credenciais do portal)
+│           ├── chamados.js   # CRUD Chamados + comentários (aceita flag interno) + anexos (+ comentarioId) + histórico de alterações + dashboard agregado; filtros: semResponsavel, excluirEncerrados, verticais (CSV), sistemas (CSV), prioridade, municipio; acesso público (autenticados); DELETE somente admin
+│           ├── solicitantes.js # CRUD Solicitantes externos (contatos do cliente) — leitura/escrita pública (autenticados); DELETE somente admin; email duplicado → 409; select público (não vaza credenciais do portal); temConta derivado; ?contaPendente=true; PATCH /:id/conta (admin) aprova conta do portal
+│           ├── portalAuth.js  # Auth do PORTAL EXTERNO (/api/portal/auth) — registrar (hCaptcha + rate limit, contaAtiva: false), login por email (lockout), me, esqueci/redefinir-senha (hash SHA-256); JWT { sid, tipo: 'externo' }
+│           ├── portalChamados.js # Chamados do PORTAL (/api/portal/chamados) — autenticarExterno; sempre where solicitanteId=sid (404 se não dono); criação origem "portal" + numero + histórico; filtra comentários internos e seus anexos; upload validado
 │           ├── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
 │           └── conhecimento.js # CRUD Conhecimento — todos criam; autor/admin editam; somente admin deleta; dados globais
 └── frontend/
@@ -345,12 +350,31 @@ docker-compose up --build
 ### Solicitantes
 > Acesso público (qualquer autenticado). `DELETE /:id` somente admin. Sem isolamento por usuário.
 
-| Método | Rota                   | Descrição                                                       |
-|--------|------------------------|-----------------------------------------------------------------|
-| GET    | /api/solicitantes      | Lista (filtros ?busca=, ?municipio=) — retorna array           |
-| POST   | /api/solicitantes      | Cria solicitante externo — email já usado → 409                |
-| PUT    | /api/solicitantes/:id  | Atualiza — email já usado → 409                                |
-| DELETE | /api/solicitantes/:id  | Remove — **somente admin**                                      |
+| Método | Rota                        | Descrição                                                       |
+|--------|-----------------------------|-----------------------------------------------------------------|
+| GET    | /api/solicitantes           | Lista (filtros ?busca=, ?municipio=, ?contaPendente=true) — retorna array com `temConta` derivado |
+| POST   | /api/solicitantes           | Cria solicitante externo — email já usado → 409                |
+| PUT    | /api/solicitantes/:id       | Atualiza — email já usado → 409                                |
+| PATCH  | /api/solicitantes/:id/conta | Aprova/desativa conta do portal `{ contaAtiva: bool }` (aprovar zera lockout) — **somente admin** |
+| DELETE | /api/solicitantes/:id       | Remove — **somente admin**                                      |
+
+### Portal Externo (`/api/portal/*`) — Fase 2
+> Trilho de autenticação **paralelo e isolado** sobre o modelo `Solicitante`. JWT com claim `tipo: 'externo'` + `sid`; rejeitado nas rotas internas (e vice-versa). Rotas de chamados protegidas por `autenticarExterno` e SEMPRE filtradas por `solicitanteId` do token (não-dono → 404).
+
+| Método | Rota                                   | Descrição                                                                      |
+|--------|----------------------------------------|---------------------------------------------------------------------------------|
+| POST   | /api/portal/auth/registrar             | Cria conta (hCaptcha + rate limit 5/15min); `contaAtiva: false` (aprovação manual); email com conta → 409 |
+| POST   | /api/portal/auth/login                 | Login por email (lockout 5/15min + rate limit 10/15min); conta não aprovada → 401 |
+| POST   | /api/portal/auth/logout                | Stateless                                                                       |
+| GET    | /api/portal/auth/me                    | Dados da própria conta (token externo)                                          |
+| POST   | /api/portal/auth/esqueci-senha         | Token hash SHA-256 + expiry 1h; resposta sempre genérica (rate limit 5/15min)   |
+| POST   | /api/portal/auth/redefinir-senha       | Valida token/expiry, redefine senha, limpa lockout                              |
+| GET    | /api/portal/chamados                   | Lista chamados do solicitante (?busca=, ?status=, paginação) — sem campos internos |
+| GET    | /api/portal/chamados/anexos/:aid       | Download — 404 se não dono ou anexo de comentário interno                       |
+| GET    | /api/portal/chamados/:id               | Detalhe com timeline pública (filtra comentários `interno` e seus anexos)       |
+| POST   | /api/portal/chamados                   | Abre chamado: `origem: 'portal'`, criadoPorId = usuário-sistema portal, numero persistido + histórico |
+| POST   | /api/portal/chamados/:id/comentarios   | Comentário externo (`autorSolicitanteId`, sempre `interno: false`, aceita pendingAnexoIds) |
+| POST   | /api/portal/chamados/:id/anexos        | Upload com validação da Fase 0 (MIME/5MB/25MB); `comentarioId` do cliente ignorado |
 
 ### Notas
 > **Isolamento por usuário**: cada usuário vê apenas suas notas + notas compartilhadas com ele. Ordem das rotas Express: `/ordem` ANTES de `/:id`.
@@ -399,6 +423,7 @@ docker-compose up --build
 - **Fase 0 (hardening de segurança)**: (1) credenciais Twilio removidas do `.env`; `JWT_SECRET` provisionado no container via `env_file: ./backend/.env` no `docker-compose.yml`. (2) `numero` de chamado persistido (ver "Chamados — numeração"). (3) Upload de anexos validado em `chamados.js`: whitelist de MIME (PNG/JPEG/GIF/WebP/PDF → 415), 5 MB/anexo + 25 MB/chamado (tamanho real calculado do base64 → 413), nome sanitizado; `express.json` global reduzido para `1mb`, com parser de `8mb` só na rota de anexos (`index.js`). (4) Token de recuperação armazenado como **hash SHA-256** (`hashToken` em `auth.js`); `/esqueci-senha` sempre retorna resposta genérica (não vaza usuário sem email); `/registrar` com `registroRateLimit` (5/15min) + hCaptcha. (5) Nginx repassa `X-Forwarded-For` para o rate limit por IP. Error handler global respeita `err.status` (413 propaga) e não vaza mais `detail`/`err.message`.
 - **Ação manual pendente**: rotacionar o token Twilio no painel da Twilio (esteve em texto puro no `.env`).
 - **Fase 1 (modelo de dados do portal externo)**: `Solicitante` ganhou credenciais de portal (`email @unique`, `senhaHash`, `contaAtiva` default false, `emailVerificado`, lockout `tentativasLogin`/`bloqueadoAte`, `recuperacaoTokenHash`/`recuperacaoExpira` — já nasce com hash); `Chamado.origem` (`"interno"`/`"portal"`); `ChamadoComentario` com autor duplo (`autorId` opcional XOR `autorSolicitanteId`) + flag `interno` (invisível no portal). Usuário-sistema `portal` (inativo) no seed para `criadoPorId`. A API interna nunca retorna os campos de credencial do Solicitante. Ver `krakion-analise-fable5.md` (plano) e `docs/chamados.md`.
+- **Fase 2 (backend do portal externo)**: rotas `/api/portal/auth` + `/api/portal/chamados` (`portalAuth.js`/`portalChamados.js`) com trilho JWT paralelo (`tipo: 'externo'` + `sid`) — `autenticar.js` interno rejeita tokens externos e `autenticarExterno` rejeita internos. Chamados do portal sempre filtrados por `solicitanteId` do token (404 se não dono); comentários `interno: true` e seus anexos invisíveis no portal; registro com aprovação manual (`PATCH /api/solicitantes/:id/conta`, admin); lockout/rate limit/recuperação com hash iguais ao trilho interno; uploads com validação da Fase 0. Helpers compartilhados em `lib/authUtils.js`. Ver `skills/seguranca.md` e `docs/chamados.md`. **Pendência**: migrar SQLite → Postgres antes de expor o portal publicamente.
 - **Recuperação de senha**: `POST /auth/esqueci-senha` aceita `loginOuEmail`; gera token hex 64 chars com expiry 1h; envia email só se SMTP configurado no `.env`; sempre retorna 200 com mensagem genérica. `POST /auth/redefinir-senha` valida token e expiry, atualiza senha, limpa campos de recuperação.
 - **funcao vs role**: `role` (`admin`/`operador`) controla permissões de acesso; `funcao` (`Suporte`, `Analista de Implantação`, `Gerente`, `Administrador`) é apenas label de exibição, sem efeito em permissões.
 - **ultimoLogin**: atualizado automaticamente em cada `POST /auth/login` com sucesso. Exibido na tela Meu Perfil com tempo relativo.
@@ -459,7 +484,8 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Chamados — numeração**: formato `PREFIXO-YYYY-NNNNN`, **persistido** em `Chamado.numero String? @unique` (Fase 0). Gerado no backend via `backend/src/lib/numeroChamado.js` (`gerarNumero` em `prisma.$transaction`, retry em P2002), sequencial por prefixo+ano. Prefixo = 4 primeiras letras do município sem acentos (ex: `RURO`, `BELE`) ou `CH`. Backfill: `backend/prisma/backfill-numero.js`. Como é persistido, o número **não muda** mais ao deletar chamados. Frontend ainda calcula client-side (`ticketMapMF`/`ticketNum()`) — migração para `c.numero` pendente. Ver `docs/chamados.md`.
 - **Chamados — status Cancelado**: `STATUS_CORES` e `STATUS_OPTS` em `constants.js` incluem `'Cancelado'` (cor `#6B7280`). Aparece no filtro de status e nos badges.
 - **Chamados — solicitante**: modelo `Solicitante` (nome, cargo, email, telefone, municipio) armazena contatos externos do cliente. Campo `solicitanteId Int?` em `Chamado`. Rota `/api/solicitantes` CRUD completo (DELETE somente admin). Exibido como card de metadados no detalhe do chamado. **Fase 1**: `email` é `@unique` (409 em duplicidade) e o modelo carrega credenciais do futuro portal externo — respostas da API usam `SELECT_PUBLICO` (expõe `contaAtiva`, nunca `senhaHash`/tokens).
-- **Chamados — preparação portal (Fase 1)**: `Chamado.origem` (`"interno"` default | `"portal"`); `ChamadoComentario.autorId` opcional + `autorSolicitanteId` (autor externo) + `interno Boolean` (nota da equipe invisível no portal — rotas internas exibem tudo; filtro será nas rotas `/api/portal/*` da Fase 2). `GET /api/chamados/:id` inclui `autorSolicitante { id, nome }` nos comentários. Chamados do portal usarão o usuário-sistema `portal` em `criadoPorId`.
+- **Chamados — preparação portal (Fase 1)**: `Chamado.origem` (`"interno"` default | `"portal"`); `ChamadoComentario.autorId` opcional + `autorSolicitanteId` (autor externo) + `interno Boolean` (nota da equipe invisível no portal — rotas internas exibem tudo; filtro aplicado nas rotas `/api/portal/*` da Fase 2). `GET /api/chamados/:id` inclui `autorSolicitante { id, nome }` nos comentários. Chamados do portal usam o usuário-sistema `portal` em `criadoPorId`.
+- **Chamados — portal externo (Fase 2)**: `POST /api/chamados/:id/comentarios` interno aceita flag `interno` (nota da equipe — toggle de UI fica para a Fase 4). Rotas do portal em `portalChamados.js` reutilizam `gerarNumero` (transação + retry P2002) e a validação de anexos da Fase 0; o parser de 8 MB do `index.js` cobre também `POST /api/portal/chamados/:id/anexos`. Frontend do portal (rotas `/portal/*`, store `krakion-portal-auth`) fica para a Fase 3.
 - **Chamados — Minha Fila / AbaPainel**: módulo tem 3 abas (Minha Fila, Painel, Dashboard). Minha Fila tem 3 sub-abas: Meus (atribuídos ao usuário logado, excluindo encerrados), Fila (filtro personalizado por vertical/sistema/status salvo no servidor) e Sem Responsável (sem responsável + excluindo encerrados). Aba Painel usa `AbaPainel.jsx` com estado de filtros independente e limite de 30 por página. Ambas compartilham o mesmo painel de detalhe à direita.
 - **Chamados — filaFiltro**: campo `filaFiltro String?` no modelo `Usuario`. Armazena JSON `{ "verticais": [], "sistemas": [], "status": [] }`. Escrito via `PUT /api/usuarios/:id`; lido via `GET /api/auth/me`. Configurado via `ModalFilaConfig.jsx` (chips de verticais/sistemas/status). Se não configurado, exibe empty state na sub-aba Fila.
 - **Chamados — paginação Minha Fila**: padrão 20 itens por página, opção 50 via botão "Por pág: 20 | 50". Estados `totalMF`, `paginaMF`, `limiteMF`. `ticketMapMF` é useMemo calculado em O(n) uma vez por load — evita O(n²) de calcular por card.

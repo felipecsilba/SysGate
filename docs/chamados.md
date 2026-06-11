@@ -184,10 +184,42 @@ Quando `aba === 'painel'` e não há chamado selecionado, o painel fica oculto (
 
 Mudanças de modelo que fundamentam o portal de atendimento (Fases 2–4 do plano em `krakion-analise-fable5.md`):
 
-- **`Chamado.origem`**: `"interno"` (default) ou `"portal"` — chamados abertos pelo cliente no portal serão marcados na criação.
+- **`Chamado.origem`**: `"interno"` (default) ou `"portal"` — chamados abertos pelo cliente no portal são marcados na criação.
 - **Comentários com autor duplo**: `ChamadoComentario.autorId` passou a ser opcional; `autorSolicitanteId` identifica autor externo. Todo comentário tem exatamente um dos dois. O `GET /api/chamados/:id` já inclui `autorSolicitante { id, nome }` nos comentários.
-- **`ChamadoComentario.interno`**: `true` = nota interna da equipe, invisível no portal. As rotas internas exibem todos os comentários; o filtro será aplicado nas rotas `/api/portal/*` (Fase 2).
-- **Usuário-sistema "portal"**: usuário interno especial (login `portal`, inativo, sem login possível) criado pelo seed — chamados de origem portal usarão o id dele em `criadoPorId`, que continua obrigatório.
+- **`ChamadoComentario.interno`**: `true` = nota interna da equipe, invisível no portal. As rotas internas exibem todos os comentários; o filtro é aplicado nas rotas `/api/portal/*` (Fase 2).
+- **Usuário-sistema "portal"**: usuário interno especial (login `portal`, inativo, sem login possível) criado pelo seed — chamados de origem portal usam o id dele em `criadoPorId`, que continua obrigatório.
+
+### Portal externo — backend (Fase 2)
+
+Rotas `/api/portal/*` em `backend/src/routes/portalAuth.js` e `portalChamados.js`, protegidas pelo middleware `autenticarExterno` (JWT com claim `tipo: 'externo'` + `sid`). Detalhes de segurança em `skills/seguranca.md`.
+
+**Auth do portal (`/api/portal/auth`)** — trilho paralelo sobre o modelo `Solicitante`:
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/registrar` | Cria conta (hCaptcha + rate limit 5/15min); se o email já existe sem conta, só vincula `senhaHash`; conta nasce `contaAtiva: false` (aprovação manual); email com conta → 409 |
+| POST | `/login` | Login por email (lockout 5 falhas → 15min); conta não aprovada → 401; retorna JWT `{ sid, nome, email, tipo: 'externo' }` |
+| POST | `/logout` | Stateless |
+| GET | `/me` | Dados da própria conta (requer token externo) |
+| POST | `/esqueci-senha` | Token hash SHA-256 + expiry 1h; resposta sempre genérica; link aponta para `/portal/redefinir-senha` |
+| POST | `/redefinir-senha` | Valida token/expiry, redefine senha, limpa lockout |
+
+**Chamados do portal (`/api/portal/chamados`)** — todas as rotas operam SEMPRE com `where { solicitanteId: token.sid }`; não-dono recebe **404** (nunca 403):
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/` | Lista chamados do solicitante (`?busca=`, `?status=`, paginação) — sem campos internos (prioridade/classificação/vertical/responsável/origem) |
+| GET | `/anexos/:aid` | Download — 404 se não for dono ou se o anexo pertencer a comentário interno |
+| GET | `/:id` | Detalhe com timeline pública: comentários `interno: false` e anexos não vinculados a comentários internos |
+| POST | `/` | Abre chamado (`titulo` + `descricao`): `origem: 'portal'`, status `Nao Analisado`, município herdado do solicitante, `criadoPorId` = usuário-sistema portal, número persistido em transação + histórico de criação |
+| POST | `/:id/comentarios` | Comentário com `autorSolicitanteId`, sempre `interno: false`; aceita `pendingAnexoIds` (vincula só anexos soltos do próprio chamado) |
+| POST | `/:id/anexos` | Upload com a mesma validação da Fase 0 (MIME, 5 MB/anexo, 25 MB/chamado, nome sanitizado); `comentarioId` do cliente é ignorado |
+
+**Impactos nas rotas internas:**
+
+- `POST /api/chamados/:id/comentarios` aceita a flag **`interno`** (boolean) — nota da equipe invisível no portal (toggle de UI na Fase 4).
+- `GET /api/solicitantes` retorna **`temConta`** (derivado de `senhaHash`, que nunca sai na resposta) e aceita **`?contaPendente=true`** (registrou mas não foi aprovado).
+- **`PATCH /api/solicitantes/:id/conta`** (somente admin) — body `{ contaAtiva: boolean }`; aprovar também zera o lockout.
 
 ---
 
@@ -271,16 +303,17 @@ chamadosApi.criar(dados)
 chamadosApi.atualizar(id, dados)
 chamadosApi.deletar(id)                  // somente admin
 chamadosApi.historico(id)
-chamadosApi.criarComentario(id, { texto, pendingAnexoIds? })
+chamadosApi.criarComentario(id, { texto, pendingAnexoIds?, interno? })  // interno: nota da equipe (Fase 2)
 chamadosApi.deletarComentario(cid)
 chamadosApi.criarAnexo(id, { nomeArquivo, tipo, conteudo, tamanho, comentarioId? })
 chamadosApi.deletarAnexo(aid)
 
-// Solicitantes externos
-solicitantesApi.listar({ busca?, municipio? })
+// Solicitantes externos — respostas incluem temConta (derivado, sem credenciais)
+solicitantesApi.listar({ busca?, municipio?, contaPendente? })
 solicitantesApi.criar({ nome, cargo?, email?, telefone?, municipio? })
 solicitantesApi.atualizar(id, data)
 solicitantesApi.deletar(id)   // somente admin
+// PATCH /api/solicitantes/:id/conta { contaAtiva } — aprovar conta do portal (admin, Fase 2)
 
 // Fila personalizada — salva em campo filaFiltro do usuário
 // Formato: JSON string '{ "verticais": [], "sistemas": [], "status": [] }'
