@@ -106,6 +106,17 @@ JWT_EXPIRES_IN=8h
 PROXY_URL=http://127.0.0.1:8888
 ```
 
+**Variáveis opcionais NÃO configuradas em produção (verificado 2026-06-12):**
+
+| Variável | Efeito da ausência |
+|----------|--------------------|
+| `HCAPTCHA_SECRET` | Captcha **não é verificado server-side** — registro interno e do portal aceitam qualquer token. Para ligar: copiar do `.env` local + autorizar `krakionlabs.cloud` na sitekey (painel hCaptcha) + criar `frontend/.env` com `VITE_HCAPTCHA_SITEKEY` + rebuildar o frontend (a sitekey entra no bundle no build) |
+| `SMTP_HOST/PORT/SECURE/USER/PASS/FROM` | Emails de recuperação de senha (interno e portal) **não são enviados** — a rota responde a mensagem genérica normalmente |
+| `APP_URL` | Links de recuperação cairiam em `http://localhost:3000` — configurar `https://krakionlabs.cloud` junto com o SMTP |
+| `CORS_ORIGINS` | Nenhuma origem cross-origin permitida (correto — frontend é same-origin via Nginx) |
+
+> **DNS (2026-06-12):** `krakionlabs.cloud` tem registro AAAA (IPv6) que não responde. Browsers caem para IPv4 (Happy Eyeballs), mas ferramentas que preferem IPv6 (ex.: `Invoke-WebRequest`) dão timeout — testar produção com `curl.exe -4`. Correção definitiva: remover o AAAA no painel DNS ou habilitar IPv6 no Nginx.
+
 ---
 
 ## Proxy de saída — túnel SSH pelo PC do implantador

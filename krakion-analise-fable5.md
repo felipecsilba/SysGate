@@ -171,9 +171,14 @@ model ChamadoComentario {
 
 ---
 
-### Fase 3 — Frontend do portal — ✅ CONCLUÍDA (local, commit `0bc153f`, 2026-06-12)
+### Fase 3 — Frontend do portal — ✅ CONCLUÍDA (deploy em produção 2026-06-12, commit `0bc153f`)
 
 > **Implementado conforme o plano.** Rotas `/portal/*` no mesmo SPA com lazy loading; cliente HTTP separado (`lib/portalApi.js`) que injeta apenas o token do solicitante (401 com sessão ativa → logout só do portal); telas Login (hCaptcha após 3 falhas + "Manter conectado" 30d + recuperação de senha), Registro (sucesso informa aprovação pendente), RedefinirSenha, Meus Chamados (busca debounced + filtro de status traduzido + paginação), Novo Chamado (anexos validados client-side espelhando a Fase 0) e Detalhe (timeline "Conversa" com badge Equipe, resposta com `pendingAnexoIds`, chamado encerrado bloqueia resposta). Smoke test de 13 checks contra o backend local passou. **No caminho também foram corrigidas as vulns #8 (CORS allowlist via `CORS_ORIGINS`, commit `e8ac8bf`) e #9 (senha mínima 8, commit `a134bca`).** Docs em `docs/chamados.md` e `CLAUDE.md`.
+>
+> **Deploy verificado em produção (2026-06-12):** portal público em `https://krakionlabs.cloud/portal/login`; health/SPA/APIs respondendo; CORS testado com `Origin` same-origin nos dois trilhos. **Lacunas de configuração da VPS encontradas na verificação** (não bloqueiam, mas devem ser tratadas):
+> 1. Sem `HCAPTCHA_SECRET` no `.env` e sem `frontend/.env` (sitekey) → o captcha do registro **não é verificado server-side** em produção (anti-bot desligado). Ligar = copiar secret/sitekey do `.env` local, autorizar o domínio na sitekey (painel hCaptcha) e rebuildar o frontend.
+> 2. Sem `SMTP_*`/`APP_URL` → emails de recuperação de senha (interno e portal) não são enviados (já era assim antes do portal). `APP_URL=https://krakionlabs.cloud` quando configurar.
+> 3. DNS do domínio tem registro AAAA (IPv6) que não responde — browsers caem para IPv4, mas vale remover o AAAA ou habilitar IPv6 no Nginx.
 
 - Rotas `/portal/login`, `/portal/registro`, `/portal/*` protegidas por um `PortalRoute` com store separado (`krakion-portal-auth`) — sessões interna e externa coexistem sem conflito.
 - **Layout próprio simplificado** (sem sidebar interna):
