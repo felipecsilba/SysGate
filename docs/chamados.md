@@ -221,6 +221,30 @@ Rotas `/api/portal/*` em `backend/src/routes/portalAuth.js` e `portalChamados.js
 - `GET /api/solicitantes` retorna **`temConta`** (derivado de `senhaHash`, que nunca sai na resposta) e aceita **`?contaPendente=true`** (registrou mas não foi aprovado).
 - **`PATCH /api/solicitantes/:id/conta`** (somente admin) — body `{ contaAtiva: boolean }`; aprovar também zera o lockout.
 
+### Portal externo — frontend (Fase 3)
+
+Rotas `/portal/*` no mesmo SPA (App.jsx), com trilho de sessão totalmente separado do interno:
+
+| Arquivo | Papel |
+|---------|-------|
+| `frontend/src/stores/portalAuthStore.js` | Zustand + persist (`krakion-portal-auth`) — `token` + `solicitante`; `login(email, senha, hcaptchaToken, lembrar)` |
+| `frontend/src/lib/portalApi.js` | Axios separado com `baseURL: /api/portal`; injeta só o token do solicitante; 401 com sessão ativa → logout do portal + redirect `/portal/login` (401 sem token só propaga, para a tela de login tratar); exporta `portalAuthApi` e `portalChamadosApi` |
+| `frontend/src/components/PortalRoute.jsx` | Guarda das rotas protegidas — redireciona para `/portal/login` se sem sessão |
+| `frontend/src/pages/Portal/constants.js` | `STATUS_PORTAL` (tradução status interno → linguagem do cliente, ex.: "Nao Analisado" → "Recebido"), `validarArquivo` (espelha MIME/5MB da Fase 0), `arquivoParaBase64`, formatadores |
+| `frontend/src/pages/Portal/Layout.jsx` | Layout simplificado (sem sidebar): header com logo + chip do solicitante + Sair, conteúdo `max-w-4xl` |
+| `frontend/src/pages/Portal/Login.jsx` | Login por email; hCaptcha após 3 falhas; "Manter conectado" (30d); modal Esqueci minha senha |
+| `frontend/src/pages/Portal/Registro.jsx` | Cadastro (nome/email/senha + cargo/telefone/município opcionais) com hCaptcha; tela de sucesso informa aprovação pendente |
+| `frontend/src/pages/Portal/RedefinirSenha.jsx` | Rota pública `/portal/redefinir-senha?token=...` (destino do link do email) |
+| `frontend/src/pages/Portal/MeusChamados.jsx` | Lista com busca debounced 400ms, filtro de status traduzido e paginação (20/pág) |
+| `frontend/src/pages/Portal/NovoChamado.jsx` | Título + descrição + anexos (validados client-side); cria o chamado e sobe os anexos na sequência |
+| `frontend/src/pages/Portal/DetalheChamado.jsx` | Timeline pública ("Conversa") com badge Equipe, resposta com anexos via `pendingAnexoIds`, download por blob; chamado encerrado (Concluído/Cancelado) bloqueia resposta |
+
+Comportamentos importantes:
+
+- **Sessões coexistem**: `krakion-portal-auth` é independente de `krakion-auth` — implantador e solicitante podem estar logados no mesmo browser sem conflito.
+- **Status nunca vazam no vocabulário interno**: toda exibição passa por `statusPortal()`; valores desconhecidos caem em fallback cinza com o texto original.
+- **Validação de anexos espelhada**: o client valida MIME e 5 MB antes do upload (a fonte da verdade continua sendo o backend da Fase 0).
+
 ---
 
 ## Painel de Histórico (`PainelHistorico`)

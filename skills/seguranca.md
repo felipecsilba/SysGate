@@ -96,7 +96,7 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 
 - bcryptjs com salt rounds 10
 - Endpoint separado `PATCH /api/usuarios/:id/senha` para troca de senha
-- Mínimo 6 caracteres validado no backend
+- Mínimo **8 caracteres** validado no backend (vuln #9, 2026-06-12) — em registro interno, redefinição por token, CRUD de usuários e registro/redefinição do portal externo. Senhas antigas mais curtas seguem válidas no login.
 
 ---
 
@@ -158,15 +158,34 @@ Trilho de autenticação paralelo implementado (`routes/portalAuth.js` + `routes
 
 ---
 
+## Portal externo — Fase 3: frontend `/portal/*` (2026-06-12)
+
+- **Store separado**: `portalAuthStore.js` persiste em `krakion-portal-auth` — a sessão do solicitante coexiste com a interna (`krakion-auth`) no mesmo browser, sem compartilhar token.
+- **Axios separado** (`lib/portalApi.js`): injeta apenas o token do solicitante; 401 com sessão ativa desloga **só o portal** (redirect `/portal/login`); 401 sem token (falha de login) apenas propaga.
+- **`PortalRoute`** guarda as rotas protegidas; públicas: `/portal/login`, `/portal/registro`, `/portal/redefinir-senha`.
+- **Vocabulário**: status internos nunca aparecem — `statusPortal()` traduz (ex.: "Nao Analisado" → "Recebido"). Listagem/detalhe consomem só os campos públicos da Fase 2.
+- **Anexos**: validação client-side espelha a Fase 0 (MIME + 5 MB); a fonte da verdade continua sendo o backend.
+- **hCaptcha**: registro sempre exibe; login exibe após 3 falhas consecutivas (mesmo padrão do login interno).
+
+---
+
+## CORS — allowlist (vuln #8, 2026-06-12)
+
+- `app.use(cors())` aberto foi substituído por allowlist: por padrão **nenhuma origem cross-origin** é aceita — o frontend é same-origin (Vite proxy em dev, Nginx em produção).
+- Origens extras via env `CORS_ORIGINS` (separadas por vírgula). Requisições sem header `Origin` (same-origin, curl, server-to-server) seguem permitidas.
+
+---
+
 ## Variáveis de ambiente
 
 **backend/.env**
 ```
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://krakion:<senha>@localhost:5432/krakion"
 PORT=3001
 JWT_SECRET=<string aleatória longa>
 JWT_EXPIRES_IN=8h
 HCAPTCHA_SECRET=<secret hcaptcha.com — vazio = desativa verificação>
+CORS_ORIGINS=<origens cross-origin extras, separadas por vírgula — vazio = só same-origin>
 ```
 
 **frontend/.env** (não vai ao git)

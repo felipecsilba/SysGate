@@ -38,7 +38,8 @@
 > **Status pós-Fase 0 (2026-06-10):**
 > - ✅ **Resolvidas:** #1 (Twilio removido — falta rotação manual), #2 (JWT_SECRET no compose), #3 (token de recuperação com hash), #5 (rate limit + captcha no /registrar), #6 (vazamento no /esqueci-senha), #7 (validação de upload), #10 (error handler não vaza `err.message`), #11 (parcial — Nginx repassa X-Forwarded-For).
 > - ✅ **#13 resolvida (2026-06-11):** instância única de PrismaClient (`src/lib/prisma.js`), junto com a migração para Postgres.
-> - ⬜ **Pendentes (fora da Fase 0):** #4 (revogação de JWT contra o banco), #8 (CORS aberto), #9 (senha mínima 6), #12 (JWT no localStorage).
+> - ✅ **#8 e #9 resolvidas (2026-06-12):** CORS restrito a allowlist via `CORS_ORIGINS` (commit `e8ac8bf`); senha mínima aumentada para 8 caracteres (commit `a134bca`).
+> - ⬜ **Pendentes:** #4 (revogação de JWT contra o banco), #12 (JWT no localStorage).
 
 ### 🔴 Críticas
 
@@ -170,7 +171,9 @@ model ChamadoComentario {
 
 ---
 
-### Fase 3 — Frontend do portal
+### Fase 3 — Frontend do portal — ✅ CONCLUÍDA (local, commit `0bc153f`, 2026-06-12)
+
+> **Implementado conforme o plano.** Rotas `/portal/*` no mesmo SPA com lazy loading; cliente HTTP separado (`lib/portalApi.js`) que injeta apenas o token do solicitante (401 com sessão ativa → logout só do portal); telas Login (hCaptcha após 3 falhas + "Manter conectado" 30d + recuperação de senha), Registro (sucesso informa aprovação pendente), RedefinirSenha, Meus Chamados (busca debounced + filtro de status traduzido + paginação), Novo Chamado (anexos validados client-side espelhando a Fase 0) e Detalhe (timeline "Conversa" com badge Equipe, resposta com `pendingAnexoIds`, chamado encerrado bloqueia resposta). Smoke test de 13 checks contra o backend local passou. **No caminho também foram corrigidas as vulns #8 (CORS allowlist via `CORS_ORIGINS`, commit `e8ac8bf`) e #9 (senha mínima 8, commit `a134bca`).** Docs em `docs/chamados.md` e `CLAUDE.md`.
 
 - Rotas `/portal/login`, `/portal/registro`, `/portal/*` protegidas por um `PortalRoute` com store separado (`krakion-portal-auth`) — sessões interna e externa coexistem sem conflito.
 - **Layout próprio simplificado** (sem sidebar interna):
