@@ -43,6 +43,19 @@ function ticketNum(c, lista) {
   return `${prefixo}-${ano}-${num}`
 }
 
+// Badge "Portal" — chamado aberto pelo cliente no portal externo
+function BadgePortal() {
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700 shrink-0">
+      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      Portal
+    </span>
+  )
+}
+
 function Badge({ label, cor }) {
   if (!label) return null
   return (
@@ -245,7 +258,10 @@ export default function AbaPainel({ usuarios, onSelecionarChamado, chamadoSelId 
                     {ticketNum(c, chamados)}
                   </td>
                   <td className="px-3 py-2.5 max-w-xs">
-                    <p className="line-clamp-1 text-sm text-gray-900">{c.titulo}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="line-clamp-1 text-sm text-gray-900">{c.titulo}</p>
+                      {c.origem === 'portal' && <BadgePortal />}
+                    </div>
                     {c.classificacao && (
                       <span className="text-[10px] text-gray-400">{c.classificacao}</span>
                     )}

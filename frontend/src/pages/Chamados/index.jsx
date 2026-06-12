@@ -86,6 +86,19 @@ function Badge({ label, cor, className = '' }) {
   )
 }
 
+// ── Badge "Portal" (chamado aberto pelo cliente no portal externo) ─────────────
+function BadgePortal({ className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700 ${className}`}>
+      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      Portal
+    </span>
+  )
+}
+
 // ── Avatar com iniciais ────────────────────────────────────────────────────────
 function Avatar({ nome, size = 7 }) {
   return (
@@ -119,6 +132,7 @@ export default function Chamados() {
   const [usuarios, setUsuarios]               = useState([])
   const [catalogo, setCatalogo]               = useState([])
   const [novoComentario, setNovoComentario]   = useState('')
+  const [comentarioInterno, setComentarioInterno] = useState(false)
   const [enviandoComent, setEnviandoComent]   = useState(false)
   const [uploadAnexo, setUploadAnexo]         = useState(false)
   const [erroAnexo, setErroAnexo]             = useState('')
@@ -225,6 +239,7 @@ export default function Chamados() {
     setMostrarLista(false)
     setHistoricoKey(k => k + 1)
     setPendingCommentAnexos([])
+    setComentarioInterno(false)
     try {
       const data = await chamadosApi.obter(id)
       setDetalhe(data)
@@ -261,6 +276,7 @@ export default function Chamados() {
       await chamadosApi.criarComentario(chamadoSelId, {
         conteudo: novoComentario,
         pendingAnexoIds: pendingCommentAnexos.map(a => a.id),
+        interno: comentarioInterno,
       })
       setNovoComentario('')
       pendingCommentAnexos.forEach(a => URL.revokeObjectURL(a.previewUrl))
@@ -529,7 +545,10 @@ export default function Chamados() {
                     }`}
                     style={{ borderLeftColor: chamadoSelId === c.id ? '#6366f1' : (STATUS_CORES[c.status] || '#94A3B8') }}>
                     <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{c.titulo}</p>
-                    <span className="text-[10px] text-gray-400 font-mono mb-2 block">{ticketMapMF[c.id]}</span>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-[10px] text-gray-400 font-mono">{ticketMapMF[c.id]}</span>
+                      {c.origem === 'portal' && <BadgePortal />}
+                    </div>
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       {c.classificacao && <Badge label={c.classificacao} cor={CLASSIF_CORES[c.classificacao]} />}
                       <span className="text-xs text-gray-400">• {formatData(c.criadoEm)}</span>
@@ -673,6 +692,7 @@ export default function Chamados() {
                           {detalhe.status}
                         </span>
                         <span className="text-xs text-gray-400 font-mono tracking-wide">{ticketNum(detalhe, chamados)}</span>
+                        {detalhe.origem === 'portal' && <BadgePortal />}
                       </div>
 
                       {/* Botão Pegar / Delegar para mim */}
@@ -708,7 +728,11 @@ export default function Chamados() {
                         { label: 'PRIORIDADE',       badge: { label: detalhe.prioridade, cor: PRIORIDADE_CORES[detalhe.prioridade] } },
                         { label: 'VERTICAL',         val: detalhe.vertical },
                         detalhe.sistema ? { label: 'SISTEMA', val: detalhe.sistema, highlight: true } : null,
-                        detalhe.solicitante ? { label: 'SOLICITANTE', val: detalhe.solicitante.cargo ? `${detalhe.solicitante.nome} · ${detalhe.solicitante.cargo}` : detalhe.solicitante.nome } : null,
+                        detalhe.solicitante ? {
+                          label: 'SOLICITANTE',
+                          val: detalhe.solicitante.cargo ? `${detalhe.solicitante.nome} · ${detalhe.solicitante.cargo}` : detalhe.solicitante.nome,
+                          contaPortal: detalhe.solicitante.contaAtiva ? 'ativa' : detalhe.solicitante.temConta ? 'pendente' : null,
+                        } : null,
                       ].filter(Boolean).map(item => (
                         <div key={item.label} className="bg-slate-50 border border-gray-100 rounded-xl px-3 py-2.5">
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{item.label}</p>
@@ -723,6 +747,17 @@ export default function Chamados() {
                             <p className={`text-sm ${item.bold ? 'text-gray-900 font-semibold' : item.highlight ? 'text-sysgate-600 font-medium' : 'text-gray-700'}`}>
                               {item.val || <span className="text-gray-400 font-normal">—</span>}
                             </p>
+                          )}
+                          {item.contaPortal && (
+                            <span className={`mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              item.contaPortal === 'ativa' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                              </svg>
+                              {item.contaPortal === 'ativa' ? 'Conta no portal' : 'Conta pendente'}
+                            </span>
                           )}
                         </div>
                       ))}
@@ -800,10 +835,23 @@ export default function Chamados() {
                         {detalhe.comentarios?.length === 0 && <p className="text-sm text-gray-400">Nenhum comentário ainda.</p>}
                         {detalhe.comentarios?.map(c => (
                           <div key={c.id} className="flex gap-3">
-                            <Avatar nome={c.autor?.nome} size={8} />
-                            <div className="flex-1 min-w-0 bg-gray-50 rounded-xl px-4 py-3">
+                            <Avatar nome={c.autor?.nome || c.autorSolicitante?.nome} size={8} />
+                            <div className={`flex-1 min-w-0 rounded-xl px-4 py-3 ${
+                              c.interno ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
+                            }`}>
                               <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-sm font-semibold text-gray-900">{c.autor?.nome}</span>
+                                <span className="text-sm font-semibold text-gray-900">{c.autor?.nome || c.autorSolicitante?.nome}</span>
+                                {c.interno && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">
+                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                    </svg>
+                                    Nota interna
+                                  </span>
+                                )}
+                                {c.autorSolicitanteId && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">Cliente</span>
+                                )}
                                 <span className="text-xs text-gray-400">{tempoRelativo(c.criadoEm)}</span>
                                 {(c.autorId === usuario?.id || isAdmin) && (
                                   <button onClick={() => deletarComentario(c.id)}
@@ -828,11 +876,17 @@ export default function Chamados() {
                       <div className="flex gap-3">
                         <Avatar nome={usuario?.nome} size={8} />
                         <div className="flex-1 relative">
-                          <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:border-sysgate-400 focus-within:ring-1 focus-within:ring-sysgate-300 transition-all">
+                          <div className={`border rounded-xl overflow-hidden transition-all ${
+                            comentarioInterno
+                              ? 'border-amber-300 bg-amber-50/40 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-300'
+                              : 'border-gray-200 focus-within:border-sysgate-400 focus-within:ring-1 focus-within:ring-sysgate-300'
+                          }`}>
                             <textarea
                               ref={textareaRef}
                               className="w-full px-4 py-3 text-sm text-gray-700 border-0 outline-none resize-none bg-transparent min-h-[64px]"
-                              placeholder="Escreva um comentário… (use @ para mencionar)"
+                              placeholder={comentarioInterno
+                                ? 'Escreva uma nota interna… (invisível para o cliente no portal)'
+                                : 'Escreva um comentário… (use @ para mencionar)'}
                               value={novoComentario}
                               onChange={handleComentarioChange}
                               onKeyDown={e => {
@@ -864,11 +918,27 @@ export default function Chamados() {
                                     <path d="M21 15l-5-5L5 21"/>
                                   </svg>
                                 </button>
-                                <span className="text-xs text-gray-400">Ctrl+Enter para enviar · @ para mencionar</span>
+                                <div className="flex items-center rounded-lg bg-gray-100 p-0.5">
+                                  <button type="button" onClick={() => setComentarioInterno(false)}
+                                    className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                                      !comentarioInterno ? 'bg-white text-sysgate-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                    }`}>
+                                    Resposta ao cliente
+                                  </button>
+                                  <button type="button" onClick={() => setComentarioInterno(true)}
+                                    className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                                      comentarioInterno ? 'bg-amber-100 text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                    }`}>
+                                    Nota interna
+                                  </button>
+                                </div>
+                                <span className="text-xs text-gray-400 hidden lg:inline">Ctrl+Enter para enviar</span>
                               </div>
                               <button onClick={enviarComentario} disabled={enviandoComent || (!novoComentario.trim() && pendingCommentAnexos.length === 0)}
-                                className="px-3 py-1 text-xs font-semibold bg-sysgate-600 hover:bg-sysgate-700 text-white rounded-lg disabled:opacity-40 transition-colors">
-                                {enviandoComent ? 'Enviando…' : 'Comentar'}
+                                className={`px-3 py-1 text-xs font-semibold text-white rounded-lg disabled:opacity-40 transition-colors ${
+                                  comentarioInterno ? 'bg-amber-600 hover:bg-amber-700' : 'bg-sysgate-600 hover:bg-sysgate-700'
+                                }`}>
+                                {enviandoComent ? 'Enviando…' : comentarioInterno ? 'Anotar' : 'Comentar'}
                               </button>
                             </div>
                           </div>

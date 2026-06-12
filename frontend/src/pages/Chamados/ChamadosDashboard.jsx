@@ -283,6 +283,9 @@ export default function ChamadosDashboard() {
                 <div key={c.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_CORES[c.status] || '#94A3B8' }} />
                   <span className="flex-1 text-sm text-gray-800 font-medium truncate">{c.titulo}</span>
+                  {c.origem === 'portal' && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700 shrink-0">Portal</span>
+                  )}
                   {c.municipio && <span className="text-xs text-gray-400 shrink-0 hidden sm:block">{c.municipio}</span>}
                   {c.vertical && <Badge label={c.vertical} cor="#6366f1" />}
                   <span className="text-xs text-gray-400 shrink-0 hidden md:block"

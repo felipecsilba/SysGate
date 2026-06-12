@@ -172,6 +172,7 @@ export const solicitantesApi = {
   listar:    (params) => api.get('/solicitantes', { params }).then(r => r.data),
   criar:     (data)   => api.post('/solicitantes', data).then(r => r.data),
   atualizar: (id, data) => api.put(`/solicitantes/${id}`, data).then(r => r.data),
+  atualizarConta: (id, contaAtiva) => api.patch(`/solicitantes/${id}/conta`, { contaAtiva }).then(r => r.data),
   deletar:   (id)     => api.delete(`/solicitantes/${id}`).then(r => r.data),
 }
 

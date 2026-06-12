@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { usuariosApi } from '../lib/api'
+import { usuariosApi, solicitantesApi } from '../lib/api'
 import useAuthStore from '../stores/authStore'
 import { confirmClose, isFormDirty } from '../lib/formGuard'
 
@@ -25,6 +25,9 @@ export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+
+  // Contas do portal externo (solicitantes que se registraram)
+  const [contasPortal, setContasPortal] = useState([])
 
   // Painel lateral
   const [painelAberto, setPainelAberto] = useState(false)
@@ -54,7 +57,27 @@ export default function Usuarios() {
     }
   }
 
-  useEffect(() => { carregar() }, [])
+  const carregarContasPortal = async () => {
+    try {
+      const data = await solicitantesApi.listar()
+      setContasPortal(data.filter((s) => s.temConta))
+    } catch {}
+  }
+
+  useEffect(() => { carregar(); carregarContasPortal() }, [])
+
+  const alterarContaPortal = async (s, contaAtiva) => {
+    const msg = contaAtiva
+      ? `Aprovar o acesso de "${s.nome}" ao portal de chamados?`
+      : `Desativar a conta do portal de "${s.nome}"? O solicitante não conseguirá mais entrar.`
+    if (!window.confirm(msg)) return
+    try {
+      await solicitantesApi.atualizarConta(s.id, contaAtiva)
+      await carregarContasPortal()
+    } catch (err) {
+      alert(err.message)
+    }
+  }
 
 
   const abrirNovo = () => {
@@ -228,6 +251,76 @@ export default function Usuarios() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Contas do Portal (solicitantes externos) ─────────────────────── */}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-base font-bold text-gray-900">Contas do Portal</h2>
+            {contasPortal.filter((s) => !s.contaAtiva).length > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-600">
+                {contasPortal.filter((s) => !s.contaAtiva).length} pendente{contasPortal.filter((s) => !s.contaAtiva).length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Solicitantes externos registrados no portal de chamados. Contas novas precisam de aprovação para acessar.
+          </p>
+
+          <div className="card p-0 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Nome</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Email</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Município</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {contasPortal.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">Nenhuma conta registrada no portal</td></tr>
+                )}
+                {contasPortal.map((s) => (
+                  <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-gray-800 font-medium">
+                      {s.nome}
+                      {s.cargo && <span className="text-xs text-gray-400 font-normal"> · {s.cargo}</span>}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{s.email || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{s.municipio || '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        s.contaAtiva ? 'bg-violet-100 text-violet-700' : 'bg-orange-100 text-orange-600'
+                      }`}>
+                        {s.contaAtiva ? 'Ativa' : 'Aguardando aprovação'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end">
+                        {s.contaAtiva ? (
+                          <button
+                            onClick={() => alterarContaPortal(s, false)}
+                            className="text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50"
+                          >
+                            Desativar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => alterarContaPortal(s, true)}
+                            className="text-xs font-medium text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded hover:bg-emerald-50"
+                          >
+                            Aprovar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

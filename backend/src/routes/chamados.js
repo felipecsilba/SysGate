@@ -163,7 +163,7 @@ router.get('/dashboard', async (req, res) => {
       take: 8,
       select: {
         id: true, titulo: true, status: true, prioridade: true,
-        municipio: true, vertical: true, criadoEm: true,
+        municipio: true, vertical: true, origem: true, criadoEm: true,
         criadoPor: { select: { nome: true } },
       },
     }),
@@ -332,7 +332,8 @@ router.get('/:id', async (req, res) => {
     include: {
       criadoPor:  { select: { id: true, nome: true } },
       responsavel: { select: { id: true, nome: true } },
-      solicitante: { select: { id: true, nome: true, cargo: true, email: true, telefone: true } },
+      // senhaHash entra no select APENAS para derivar temConta — removido antes da resposta
+      solicitante: { select: { id: true, nome: true, cargo: true, email: true, telefone: true, contaAtiva: true, senhaHash: true } },
       comentarios: {
         orderBy: { criadoEm: 'asc' },
         include: {
@@ -347,6 +348,10 @@ router.get('/:id', async (req, res) => {
     }
   })
   if (!chamado) return res.status(404).json({ error: 'Chamado nao encontrado' })
+  if (chamado.solicitante) {
+    const { senhaHash, ...resto } = chamado.solicitante
+    chamado.solicitante = { ...resto, temConta: !!senhaHash }
+  }
   res.json(chamado)
 })
 
