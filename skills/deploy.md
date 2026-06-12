@@ -79,6 +79,21 @@ server {
     server_name krakionlabs.cloud www.krakionlabs.cloud;
     root /var/www/krakion/frontend/dist;
     index index.html;
+
+    # Assets com hash no nome: cache imutável; inexistente → 404 real.
+    # Sem isso o fallback SPA devolve index.html no lugar do JS e abas abertas
+    # com o bundle antigo quebram em tela branca após cada deploy.
+    location /assets/ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # index.html sempre revalidado para pegar os hashes novos após deploy
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
     location / { try_files $uri $uri/ /index.html; }
     location /api {
         proxy_pass http://127.0.0.1:3001;
@@ -89,6 +104,8 @@ server {
     }
 }
 ```
+
+> **Chunks obsoletos após deploy:** cada deploy troca os hashes dos chunks do Vite. Abas abertas com o bundle antigo falham ao carregar páginas lazy. Defesa em duas camadas (2026-06-12): (1) `main.jsx` escuta `vite:preloadError` e recarrega a página (guard de 10s contra loop); (2) os blocos `location /assets/` e `location = /index.html` acima. O nginx de produção real tem também o bloco SSL (443) — o backup pré-mudança está em `/etc/nginx/sites-available/krakion.bak-fase4`.
 
 > **Atenção:** este arquivo (`/etc/nginx/sites-available/krakion`) é o nginx **de produção** (PM2). O `frontend/nginx.conf` do repo só vale para o setup Docker — alterações de proxy precisam ser feitas **aqui no servidor** e seguidas de `nginx -t && systemctl reload nginx`.
 
