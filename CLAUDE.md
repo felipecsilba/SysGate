@@ -111,7 +111,7 @@ krakion/
     │   ├── logo-com-nome.webp # Logo Krakion Labs com nome (uso em dashboards) — WebP 500px, 48 KB
     │   └── favicon.png        # Favicon 256px gerado da nova-logo
     └── src/
-        ├── main.jsx
+        ├── main.jsx           # Entry React + listener vite:preloadError — recarrega a página quando um chunk lazy falha após deploy (guard de 10s contra loop)
         ├── App.jsx            # BrowserRouter: /login e /redefinir-senha públicas + PrivateRoute; rotas do portal externo (/portal/login, /portal/registro, /portal/redefinir-senha públicas + /portal/* via PortalRoute); rota /perfil protegida; todas as páginas carregadas com React.lazy + Suspense (code splitting por rota)
         ├── index.css          # Classes Tailwind custom: .btn, .card, .input, .badge, .label
         ├── lib/
@@ -519,6 +519,7 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Chamados — histórico automático**: `PUT /api/chamados/:id` compara estado antes/depois e cria entradas `ChamadoHistorico` via `createMany` para cada campo alterado (`status`, `responsavel`, `classificacao`, `prioridade`, `titulo`, `vertical`). Ver `docs/chamados.md`.
 - **Chamados — ordem das rotas**: `/estatisticas`, `/dashboard`, `/anexos/:aid`, `/comentarios/:cid` registrados ANTES de `/:id`.
 - **Analisador JSON**: módulo 100% client-side, sem rotas de backend. Ver `docs/analisador-json.md`.
+- **Chunks obsoletos após deploy (2026-06-12)**: cada deploy troca os hashes dos chunks do Vite — abas abertas com o bundle antigo quebravam em tela branca ao navegar (React.lazy recebia o index.html do fallback SPA no lugar do JS). Defesa em duas camadas: `main.jsx` escuta `vite:preloadError` e recarrega a página (guard de 10s em sessionStorage); Nginx de produção serve `/assets/` com `try_files $uri =404` + cache imutável e `index.html` com `no-cache`. Ver `skills/deploy.md`.
 - **localStorage keys**: `krakion-auth` (authStore), `krakion-municipio` (municipioStore), `krakion-portal-auth` (portalAuthStore — sessão do solicitante externo), `krakion-json-viewerDark` (AnalisadorJson)
 - **Notas — isolamento e compartilhamento**: `Nota.usuarioId` obrigatório; queries filtram `usuarioId = req.usuario.id OR compartilhamentos.some({ usuarioId })`. Dono pode compartilhar com usuários específicos via `NotaCompartilhamento` (unique por nota+usuário). Notas alheias sem compartilhamento retornam 404.
 - **Notas — itens e etiquetas como JSON String**: `Nota.itens` e `Nota.etiquetas` armazenados como `JSON.stringify(array)` no SQLite (mesmo padrão de `bodySchema`). Helper `parseNota(n)` no backend faz `JSON.parse` antes de retornar.
