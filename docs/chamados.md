@@ -148,6 +148,8 @@ Quando `aba === 'painel'` e não há chamado selecionado, o painel fica oculto (
 - Input com botão Enviar — adiciona comentário vinculado ao usuário logado
 - Cada comentário exibe: avatar de iniciais, nome do autor, data/hora, texto
 - Exclusão pelo autor ou admin
+- **Toggle "Resposta ao cliente" / "Nota interna" (Fase 4)**: pills no rodapé do formulário de comentário. "Resposta ao cliente" (default, `interno: false`) é visível no portal externo; "Nota interna" (`interno: true`) é invisível para o cliente. No modo nota interna o editor ganha tint âmbar, o placeholder muda e o botão vira "Anotar" (âmbar). O modo **não reseta após enviar** (evita vazar a nota seguinte ao cliente por engano) — reseta só ao trocar de chamado. State: `comentarioInterno`.
+- **Renderização por tipo de comentário (Fase 4)**: nota interna renderiza com fundo `bg-amber-50` + borda âmbar + badge "Nota interna" (cadeado); comentário de autor externo (`autorSolicitanteId`) exibe o nome do solicitante (`autorSolicitante.nome`) + badge violeta "Cliente"
 - **Auto-linkify**: URLs no texto dos comentários são convertidas em `<a>` clicáveis
 - **@mention**: ao digitar `@` no textarea, exibe dropdown com lista de usuários internos; ao selecionar insere `@Nome` no texto; no comentário publicado, menções ficam destacadas com fundo `sysgate-50`
 - **Imagens inline**: botão de câmera no formulário de comentário faz upload de imagem em base64; a imagem é exibida em miniatura abaixo do texto do comentário (vinculada via `comentarioId` no anexo)
@@ -179,6 +181,7 @@ Quando `aba === 'painel'` e não há chamado selecionado, o painel fica oculto (
 - Exibido como card de metadados no painel de detalhe: nome, cargo, email, telefone, município
 - Diferente de `responsavelId` (usuário interno): solicitante é um contato do cliente, sem acesso ao sistema interno
 - **Email único (Fase 1)**: `email` tem constraint `@unique` (identifica a futura conta do portal). POST/PUT com email já usado → **409**. As respostas da API usam select público (`SELECT_PUBLICO`) — os campos de credencial (`senhaHash`, tokens de recuperação etc.) nunca são retornados; `contaAtiva` é exposto para a UI indicar se o solicitante tem conta no portal.
+- **Indicador de conta no portal (Fase 4)**: o `GET /api/chamados/:id` retorna o solicitante com `contaAtiva` e `temConta` (derivado de `senhaHash` no backend, removido antes da resposta). O card SOLICITANTE no grid de informações exibe badge: violeta "Conta no portal" (`contaAtiva`), âmbar "Conta pendente" (`temConta` sem aprovação), nada se sem conta.
 
 ### Preparação para o portal externo (Fase 1)
 
@@ -217,7 +220,7 @@ Rotas `/api/portal/*` em `backend/src/routes/portalAuth.js` e `portalChamados.js
 
 **Impactos nas rotas internas:**
 
-- `POST /api/chamados/:id/comentarios` aceita a flag **`interno`** (boolean) — nota da equipe invisível no portal (toggle de UI na Fase 4).
+- `POST /api/chamados/:id/comentarios` aceita a flag **`interno`** (boolean) — nota da equipe invisível no portal (toggle de UI implementado na Fase 4).
 - `GET /api/solicitantes` retorna **`temConta`** (derivado de `senhaHash`, que nunca sai na resposta) e aceita **`?contaPendente=true`** (registrou mas não foi aprovado).
 - **`PATCH /api/solicitantes/:id/conta`** (somente admin) — body `{ contaAtiva: boolean }`; aprovar também zera o lockout.
 
@@ -244,6 +247,18 @@ Comportamentos importantes:
 - **Sessões coexistem**: `krakion-portal-auth` é independente de `krakion-auth` — implantador e solicitante podem estar logados no mesmo browser sem conflito.
 - **Status nunca vazam no vocabulário interno**: toda exibição passa por `statusPortal()`; valores desconhecidos caem em fallback cinza com o texto original.
 - **Validação de anexos espelhada**: o client valida MIME e 5 MB antes do upload (a fonte da verdade continua sendo o backend da Fase 0).
+
+### Integração no sistema interno (Fase 4)
+
+Visibilidade do portal dentro do módulo interno de Chamados:
+
+| Item | Onde | Comportamento |
+|------|------|---------------|
+| Badge "Portal" | Cards da Minha Fila, tabela do Painel (coluna Título), lista "Abertos sem responsável" do Dashboard e cabeçalho do painel de detalhe | Exibido quando `chamado.origem === 'portal'` — badge violeta com ícone de globo (`bg-violet-100 text-violet-700`). O `GET /chamados/dashboard` passou a incluir `origem` no select de `semResponsavel` |
+| Toggle Nota interna | Formulário de comentário do painel de detalhe | Ver seção "Comentários" acima — envia a flag `interno` que as rotas `/api/portal/*` filtram |
+| Badge "Cliente" | Comentários da timeline | Comentário com `autorSolicitanteId` exibe nome do solicitante + badge violeta |
+| Conta no portal | Card SOLICITANTE do detalhe | Badge "Conta no portal" / "Conta pendente" (ver seção "Solicitante") |
+| Aprovação de contas | `Usuarios.jsx` (admin) | Seção "Contas do Portal" — ver `docs/usuarios.md` |
 
 ---
 
@@ -336,8 +351,8 @@ chamadosApi.deletarAnexo(aid)
 solicitantesApi.listar({ busca?, municipio?, contaPendente? })
 solicitantesApi.criar({ nome, cargo?, email?, telefone?, municipio? })
 solicitantesApi.atualizar(id, data)
+solicitantesApi.atualizarConta(id, contaAtiva)  // PATCH /:id/conta — aprovar/desativar conta do portal (admin, Fase 4)
 solicitantesApi.deletar(id)   // somente admin
-// PATCH /api/solicitantes/:id/conta { contaAtiva } — aprovar conta do portal (admin, Fase 2)
 
 // Fila personalizada — salva em campo filaFiltro do usuário
 // Formato: JSON string '{ "verticais": [], "sistemas": [], "status": [] }'
@@ -368,6 +383,7 @@ solicitantesApi.deletar(id)   // somente admin
 | `showModal` | boolean | Modal criar/editar chamado |
 | `editando` | object \| null | Chamado em edição |
 | `novoComentario` | string | Texto do comentário em digitação |
+| `comentarioInterno` | boolean | Toggle do formulário: `true` = nota interna (invisível no portal). Não reseta após enviar; reseta ao trocar de chamado |
 | `mostrarMention` | boolean | Dropdown de @mention visível |
 | `mentionQuery` | string | Texto após `@` para filtrar usuários no dropdown |
 | `pendingCommentAnexos` | array | IDs de anexos de imagem aguardando vinculação ao comentário |

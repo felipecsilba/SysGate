@@ -97,6 +97,15 @@ APP_URL=http://localhost:3000
 - Alterna `role` entre `admin` e `operador` via `PUT /api/usuarios/:id`
 - Não aparece na linha do próprio usuário logado (evita auto-rebaixamento acidental)
 
+### Contas do Portal (Fase 4)
+
+- Seção "Contas do Portal" em `Usuarios.jsx` (visível só para admin, abaixo da tabela de usuários internos)
+- Lista solicitantes externos com conta registrada no portal (`temConta: true`, derivado de `senhaHash` no backend — o hash nunca chega ao frontend)
+- Contas pendentes (`contaAtiva: false`) aparecem com badge laranja "Aguardando aprovação" e botão **Aprovar**; o header da seção exibe contador de pendentes
+- Contas ativas aparecem com badge violeta "Ativa" e botão **Desativar**
+- Aprovar/desativar usa `solicitantesApi.atualizarConta(id, contaAtiva)` → `PATCH /api/solicitantes/:id/conta` (somente admin; aprovar também zera o lockout do solicitante)
+- Estado React: `contasPortal` (array) carregado via `solicitantesApi.listar()` filtrado por `temConta`
+
 ### Isolamento não-admin
 
 - `GET /api/usuarios` retorna array com apenas o próprio registro para não-admin
@@ -129,7 +138,7 @@ APP_URL=http://localhost:3000
 |---------|-----------|
 | `pages/MeuPerfil.jsx` | Tela `/perfil` — card de identidade com banner gradiente (sysgate→violeta) no topo e avatar circular sobrepondo o banner (borda branca, `border-4 border-white`, margem negativa `-mt-10`); nome, badges de função e role, e login abaixo; stats Membro desde / Último acesso com divisor no rodapé do card. Cards Informações pessoais, Segurança e Atividades com `p-5`. Atividades exibe Login efetuado + Perfil atualizado (`atualizadoEm`) + link "Ver histórico completo". Acessível a todos os usuários. |
 | `pages/RedefinirSenha.jsx` | Rota pública `/redefinir-senha?token=...` — formulário de nova senha; tela de sucesso pós-reset. |
-| `pages/Usuarios.jsx` | Admin: CRUD completo + toggleAdmin. Não-admin: redireciona para `/perfil`. |
+| `pages/Usuarios.jsx` | Admin: CRUD completo + toggleAdmin + seção "Contas do Portal" (aprovar/desativar contas de solicitantes externos — Fase 4). Não-admin: redireciona para `/perfil`. |
 | `pages/Login.jsx` | `ModalEsqueceuSenha` — campo loginOuEmail, chamada `authApi.esquecerSenha()`, tela de confirmação. |
 
 ---

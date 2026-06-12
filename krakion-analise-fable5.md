@@ -189,11 +189,14 @@ model ChamadoComentario {
 
 ---
 
-### Fase 4 — Integração no sistema interno
+### Fase 4 — Integração no sistema interno — ✅ CONCLUÍDA (local, 2026-06-12)
 
-- Badge "Portal" nos chamados de `origem: 'portal'` (Minha Fila / Painel / Dashboard) — eles já caem naturalmente em "Sem Responsável".
-- No formulário de comentário interno: toggle **"Nota interna"** vs **"Resposta ao cliente"**.
-- Card do solicitante no detalhe passa a indicar se tem conta no portal.
+> **Implementado conforme o plano**, mais a tela de aprovação adiada da Fase 2. Backend: `GET /api/chamados/:id` passou a expor `contaAtiva`/`temConta` do solicitante (derivado de `senhaHash`, removido antes da resposta) e o `GET /dashboard` inclui `origem` em `semResponsavel` — todo o resto já existia desde as Fases 1–2. Smoke test local com 11 checks passou (temConta/contaAtiva sem vazar senhaHash, `?contaPendente=true`, aprovação via PATCH, `origem` na listagem/dashboard, flag `interno` persistida). Docs em `docs/chamados.md`, `docs/usuarios.md`, `skills/seguranca.md`, `CLAUDE.md`.
+
+- ✅ Badge "Portal" nos chamados de `origem: 'portal'` — cards da Minha Fila, tabela do Painel, lista do Dashboard e cabeçalho do detalhe.
+- ✅ Toggle **"Resposta ao cliente"** (default) vs **"Nota interna"** no formulário de comentário — nota interna renderiza em âmbar com badge; o modo não reseta após enviar (evita vazar nota ao cliente), só ao trocar de chamado. Comentários de autor externo exibem badge "Cliente".
+- ✅ Card do solicitante no detalhe indica conta no portal: "Conta no portal" (ativa) / "Conta pendente" (registrada sem aprovação).
+- ✅ **Aprovação de contas** (pendência da Fase 2): seção "Contas do Portal" em `Usuarios.jsx` (admin) lista contas registradas, com Aprovar/Desativar via `PATCH /api/solicitantes/:id/conta` (`solicitantesApi.atualizarConta`).
 
 ---
 

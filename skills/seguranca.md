@@ -169,6 +169,14 @@ Trilho de autenticação paralelo implementado (`routes/portalAuth.js` + `routes
 
 ---
 
+## Portal externo — Fase 4: integração no sistema interno (2026-06-12)
+
+- **Nota interna vs resposta ao cliente**: o formulário de comentário interno tem toggle que envia a flag `interno` (filtrada nas rotas `/api/portal/*`). O modo selecionado **não reseta após enviar** — reseta só ao trocar de chamado. Racional: se resetasse para "Resposta ao cliente", uma nota interna subsequente poderia vazar ao cliente por engano; o erro inverso (resposta ficar oculta) é menos danoso.
+- **Credenciais do solicitante seguem protegidas**: o `GET /api/chamados/:id` inclui `senhaHash` no select do Prisma **apenas** para derivar `temConta`, e o remove do objeto antes do `res.json` (mesmo padrão do `SELECT_COM_CONTA`/`publico()` de `solicitantes.js`). O frontend recebe só `contaAtiva` + `temConta`.
+- **Aprovação de contas**: seção "Contas do Portal" em `Usuarios.jsx` (tela já restrita a admin) consome `PATCH /api/solicitantes/:id/conta` (`exigirAdmin` no backend — a restrição real é do servidor, não da UI).
+
+---
+
 ## CORS — allowlist (vuln #8, 2026-06-12)
 
 - `app.use(cors())` aberto foi substituído por allowlist: por padrão **nenhuma origem cross-origin** é aceita — o frontend é same-origin (Vite proxy em dev, Nginx em produção).
