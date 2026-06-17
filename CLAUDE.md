@@ -606,9 +606,8 @@ A página `/sandbox` tem um **painel esquerdo compartilhado** (cards 1–4: muni
 ### Envio em lote (array body)
 - **Não envia uma requisição por linha** — agrupa linhas em batches e envia um array JSON por batch
 - `tamanhoBatch` (state, padrão 50): configurável via slider 1–200 no card de configuração (card 6 dentro de `AbaEnvioLote.jsx`)
-- `delayLotes` (state, padrão 0): delay em ms entre batches, configurável via slider
 - `construirBodyLinha(linha)`: função extraída que monta o body de uma linha CSV → objeto JS
-- `iniciarEnvio`: divide `linhas` em grupos de `tamanhoBatch`, envia cada grupo como array `[{...}, {...}, ...]`
+- `iniciarEnvio`: divide `linhas` em grupos de `tamanhoBatch`, dispara **todos os lotes simultaneamente** via `Promise.allSettled` — cada promise atualiza `progresso` via `.finally()` conforme vai resolvendo; sem delay entre lotes (modelo paralelo evita bloqueio do rate limiter de janela fixa da Betha)
 - Botão exibe: `▶ Iniciar envio (N lotes · M itens)`
 - Barra de progresso exibe: `Lote X/Y`
 - Log exibe por entrada: `Lote X/Y · N itens`, status badge, mensagem de resposta, IDs gerados
