@@ -86,13 +86,14 @@ export default function BatchProgress({
   }
 
   const pendentes = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'pendente')
+  const comErro = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'erro')
   const nSucesso = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'sucesso').length
-  const nErro = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'erro').length
+  const nErro = comErro.length
 
-  const consultarTodosPendentes = async () => {
+  const consultarLista = async (lista) => {
     setConsultandoTodos(true)
     await Promise.allSettled(
-      pendentes.map(({ id, lote }) => consultarLote(`${lote}-${id}`, id))
+      lista.map(({ id, lote }) => consultarLote(`${lote}-${id}`, id))
     )
     setConsultandoTodos(false)
   }
@@ -334,18 +335,32 @@ export default function BatchProgress({
                   {pendentes.length > 0 && <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">{pendentes.length} pendentes</span>}
                 </div>
               </div>
-              {pendentes.length > 0 && (
-                <button
-                  onClick={consultarTodosPendentes}
-                  disabled={consultandoTodos}
-                  className="flex items-center gap-1.5 text-xs bg-sysgate-600 text-white px-3 py-1.5 rounded-lg hover:bg-sysgate-700 disabled:opacity-50 transition-colors shrink-0 font-medium"
-                >
-                  {consultandoTodos
-                    ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Consultando...</>
-                    : <>↺ Consultar {pendentes.length} pendentes</>
-                  }
-                </button>
-              )}
+              <div className="flex gap-2 shrink-0">
+                {pendentes.length > 0 && (
+                  <button
+                    onClick={() => consultarLista(pendentes)}
+                    disabled={consultandoTodos}
+                    className="flex items-center gap-1.5 text-xs bg-sysgate-600 text-white px-3 py-1.5 rounded-lg hover:bg-sysgate-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {consultandoTodos
+                      ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Consultando...</>
+                      : <>↺ Consultar {pendentes.length} pendentes</>
+                    }
+                  </button>
+                )}
+                {comErro.length > 0 && (
+                  <button
+                    onClick={() => consultarLista(comErro)}
+                    disabled={consultandoTodos}
+                    className="flex items-center gap-1.5 text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {consultandoTodos
+                      ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Consultando...</>
+                      : <>↺ Reconsultar {comErro.length} erros</>
+                    }
+                  </button>
+                )}
+              </div>
             </div>
             <div className="p-3 max-h-64 overflow-y-auto scrollbar-thin">
               <div className="flex flex-wrap gap-1.5">
