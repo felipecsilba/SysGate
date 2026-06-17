@@ -78,7 +78,7 @@ export function tipoCor(tipo) { ... }                      // de EnvioLote/index
 ### Passo 2 — Copiar `CsvPreview.jsx` e `BatchProgress.jsx`
 
 - Copiar `EnvioLote/CsvPreview.jsx` → `Sandbox/CsvPreview.jsx` sem alterações.
-- Copiar `EnvioLote/BatchProgress.jsx` → `Sandbox/BatchProgress.jsx` — apenas o import de `highlightJson` permanece `'./utils'` (mesmo caminho relativo, sem mudança de lógica).
+- Copiar `EnvioLote/BatchProgress.jsx` → `Sandbox/BatchProgress.jsx` — apenas o import de `highlightJson` permanece `'./utils'` (mesmo caminho relativo, sem mudança de lógica). **Nota:** `BatchProgress.jsx` foi evoluído após a cópia: `consultarTodosPendentes` → `consultarLista(lista)` com `Promise.allSettled`; adicionado botão "↺ Reconsultar X erros" para IDs com status `erro`.
 
 ---
 
@@ -114,16 +114,16 @@ Extraído do painel direito + configuração de `EnvioLote/index.jsx`.
 ```javascript
 csvData, csvArquivo, csvSemCabecalho
 mapeamentoCampo, modoMapeamento, valoresFixos
-delay (padrão 200), tamanhoBatch (padrão 50)
+tamanhoBatch (padrão 50)
 executando, progresso, concluido, campoBusca
-abortRef, progressoRef
+progressoRef
 ```
 
 **Props recebidas do pai:** mesmas de `AbaRequisicao` exceto `setPathCustom`.
 
 **Gotcha — Cards 5 e 6 (CSV upload + sliders):** no EnvioLote original ficavam na coluna esquerda. Na nova estrutura, essa coluna esquerda pertence ao pai (cards 1–4). Os cards 5 e 6 passam para o painel direito desta aba, empilhados acima do mapeamento de campos.
 
-**`sleep` helper:** manter como função local (1 linha, não vale exportar).
+**`iniciarEnvio`:** dispara todos os lotes simultaneamente via `Promise.allSettled` (não sequencial). Cada promise atualiza `progresso` via `.finally()` conforme resolve. Sem delay entre lotes — modelo paralelo evita bloqueio do rate limiter de janela fixa da API Betha.
 
 **`useEffect([endpointSel])`:** resetar estado CSV-específico. O pai já reseta `camposSelecionados`.
 
