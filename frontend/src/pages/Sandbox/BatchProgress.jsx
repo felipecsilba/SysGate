@@ -3,9 +3,6 @@ import Papa from 'papaparse'
 import { proxyApi } from '../../lib/api'
 import { highlightJson } from './utils'
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 export default function BatchProgress({
   progresso,
@@ -94,11 +91,9 @@ export default function BatchProgress({
 
   const consultarTodosPendentes = async () => {
     setConsultandoTodos(true)
-    for (const { id, lote } of pendentes) {
-      const chave = `${lote}-${id}`
-      await consultarLote(chave, id)
-      await sleep(300)
-    }
+    await Promise.allSettled(
+      pendentes.map(({ id, lote }) => consultarLote(`${lote}-${id}`, id))
+    )
     setConsultandoTodos(false)
   }
 
