@@ -665,6 +665,7 @@ export default function AbaEnvioLote({
         sistemaSel={sistemaSel}
         pathCustom={pathCustom}
         progressoRef={progressoRef}
+        concorrencia={concorrencia}
       />
 
       {/* Estado vazio */}

@@ -15,6 +15,7 @@ export default function BatchProgress({
   sistemaSel,
   pathCustom,
   progressoRef,
+  concorrencia = 20,
 }) {
   const [consultasResultado, setConsultasResultado] = useState({})
   const [consultandoTodos, setConsultandoTodos] = useState(false)
@@ -90,8 +91,6 @@ export default function BatchProgress({
   const nSucesso = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'sucesso').length
   const nErro = comErro.length
 
-  const CONCORRENCIA_GET = 20
-
   const consultarLista = async (lista) => {
     setConsultandoTodos(true)
     let idx = 0
@@ -102,7 +101,7 @@ export default function BatchProgress({
       }
     }
     await Promise.allSettled(
-      Array.from({ length: Math.min(CONCORRENCIA_GET, lista.length) }, worker)
+      Array.from({ length: Math.min(concorrencia, lista.length) }, worker)
     )
     setConsultandoTodos(false)
   }
