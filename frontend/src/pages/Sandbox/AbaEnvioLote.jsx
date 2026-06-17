@@ -5,9 +5,6 @@ import { extrairIds, tipoCor } from './utils'
 import CsvPreview from './CsvPreview'
 import BatchProgress from './BatchProgress'
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 export default function AbaEnvioLote({
   municipioSel,
@@ -29,13 +26,11 @@ export default function AbaEnvioLote({
   const [mapeamentoCampo, setMapeamentoCampo] = useState({})
   const [modoMapeamento, setModoMapeamento] = useState({})
   const [valoresFixos, setValoresFixos] = useState({})
-  const [delay, setDelay] = useState(200)
   const [tamanhoBatch, setTamanhoBatch] = useState(50)
 
   const [executando, setExecutando] = useState(false)
   const [progresso, setProgresso] = useState([])
   const [concluido, setConcluido] = useState(false)
-  const abortRef = useRef(false)
   const progressoRef = useRef(null)
 
   // Reseta estado CSV-específico quando endpoint muda
@@ -142,40 +137,33 @@ export default function AbaEnvioLote({
     if (!pathCustom) { alert('Informe o path'); return }
     if (!csvData) { alert('Faça upload de um CSV'); return }
 
-    abortRef.current = false
     setExecutando(true)
     setConcluido(false)
     setProgresso([])
 
     const linhas = csvData.linhas
     const totalBatches = Math.ceil(linhas.length / tamanhoBatch)
-    const resultados = []
+    const resultados = new Array(totalBatches).fill(null)
 
-    for (let b = 0; b < totalBatches; b++) {
-      if (abortRef.current) {
-        resultados.push({ lote: b + 1, totalLotes: totalBatches, status: 'abortado', msg: 'Abortado pelo usuário', count: 0 })
-        break
-      }
-
+    const promises = Array.from({ length: totalBatches }, (_, b) => {
       const batchLinhas = linhas.slice(b * tamanhoBatch, (b + 1) * tamanhoBatch)
       const bodyArray = batchLinhas.map(construirBodyLinha)
-
       const inicio = Date.now()
-      try {
-        const res = await proxyApi.executar({
-          municipioId: Number(municipioSel),
-          sistemaId: Number(sistemaSel),
-          endpointId: endpointSel?.id || null,
-          path: pathCustom,
-          metodo,
-          body: metodo === 'GET' ? undefined : bodyArray,
-          tipo: 'lote',
-        })
+
+      return proxyApi.executar({
+        municipioId: Number(municipioSel),
+        sistemaId: Number(sistemaSel),
+        endpointId: endpointSel?.id || null,
+        path: pathCustom,
+        metodo,
+        body: metodo === 'GET' ? undefined : bodyArray,
+        tipo: 'lote',
+      }).then(res => {
         const duracao = Date.now() - inicio
         const idsGerados = Array.isArray(res.data)
           ? res.data.flatMap(extrairIds)
           : extrairIds(res.data)
-        resultados.push({
+        resultados[b] = {
           lote: b + 1,
           totalLotes: totalBatches,
           count: batchLinhas.length,
@@ -183,29 +171,28 @@ export default function AbaEnvioLote({
           msg: `${res.statusCode} — ${duracao}ms`,
           resposta: res.data,
           idsGerados,
-        })
-      } catch (err) {
-        resultados.push({
+        }
+      }).catch(err => {
+        resultados[b] = {
           lote: b + 1,
           totalLotes: totalBatches,
           count: batchLinhas.length,
           status: 'erro',
           msg: err.message,
-        })
-      }
+        }
+      }).finally(() => {
+        setProgresso([...resultados].filter(Boolean))
+        if (progressoRef.current) {
+          progressoRef.current.scrollTop = progressoRef.current.scrollHeight
+        }
+      })
+    })
 
-      setProgresso([...resultados])
-      if (progressoRef.current) {
-        progressoRef.current.scrollTop = progressoRef.current.scrollHeight
-      }
-      if (b < totalBatches - 1) await sleep(delay)
-    }
+    await Promise.allSettled(promises)
 
     setExecutando(false)
     setConcluido(true)
   }
-
-  const abortar = () => { abortRef.current = true }
 
   const totalOk = progresso.filter((p) => p.status === 'ok').length
   const totalErro = progresso.filter((p) => p.status === 'erro').length
@@ -269,22 +256,6 @@ export default function AbaEnvioLote({
           <div className="flex justify-between text-xs text-gray-400 mt-0.5">
             <span>1</span>
             <span>200</span>
-          </div>
-        </div>
-        <div>
-          <label className="label text-xs">Delay entre lotes: <strong>{delay}ms</strong></label>
-          <input
-            type="range"
-            min={0}
-            max={5000}
-            step={100}
-            value={delay}
-            onChange={(e) => setDelay(Number(e.target.value))}
-            className="w-full accent-sysgate-600"
-          />
-          <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-            <span>0ms</span>
-            <span>5000ms</span>
           </div>
         </div>
       </div>
@@ -639,11 +610,6 @@ export default function AbaEnvioLote({
 
       {/* Botão iniciar */}
       <div className="flex justify-end gap-2">
-        {executando && (
-          <button onClick={abortar} className="btn-danger px-5 py-2.5">
-            Abortar
-          </button>
-        )}
         <button
           onClick={iniciarEnvio}
           disabled={executando || !csvData || !municipioSel || !sistemaSel || !pathCustom}
