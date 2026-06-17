@@ -90,10 +90,19 @@ export default function BatchProgress({
   const nSucesso = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'sucesso').length
   const nErro = comErro.length
 
+  const CONCORRENCIA_GET = 20
+
   const consultarLista = async (lista) => {
     setConsultandoTodos(true)
+    let idx = 0
+    const worker = async () => {
+      while (idx < lista.length) {
+        const { id, lote } = lista[idx++]
+        await consultarLote(`${lote}-${id}`, id)
+      }
+    }
     await Promise.allSettled(
-      lista.map(({ id, lote }) => consultarLote(`${lote}-${id}`, id))
+      Array.from({ length: Math.min(CONCORRENCIA_GET, lista.length) }, worker)
     )
     setConsultandoTodos(false)
   }

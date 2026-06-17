@@ -27,6 +27,7 @@ export default function AbaEnvioLote({
   const [modoMapeamento, setModoMapeamento] = useState({})
   const [valoresFixos, setValoresFixos] = useState({})
   const [tamanhoBatch, setTamanhoBatch] = useState(50)
+  const [concorrencia, setConcorrencia] = useState(20)
 
   const [executando, setExecutando] = useState(false)
   const [progresso, setProgresso] = useState([])
@@ -145,20 +146,20 @@ export default function AbaEnvioLote({
     const totalBatches = Math.ceil(linhas.length / tamanhoBatch)
     const resultados = new Array(totalBatches).fill(null)
 
-    const promises = Array.from({ length: totalBatches }, (_, b) => {
+    const enviarBatch = async (b) => {
       const batchLinhas = linhas.slice(b * tamanhoBatch, (b + 1) * tamanhoBatch)
       const bodyArray = batchLinhas.map(construirBodyLinha)
       const inicio = Date.now()
-
-      return proxyApi.executar({
-        municipioId: Number(municipioSel),
-        sistemaId: Number(sistemaSel),
-        endpointId: endpointSel?.id || null,
-        path: pathCustom,
-        metodo,
-        body: metodo === 'GET' ? undefined : bodyArray,
-        tipo: 'lote',
-      }).then(res => {
+      try {
+        const res = await proxyApi.executar({
+          municipioId: Number(municipioSel),
+          sistemaId: Number(sistemaSel),
+          endpointId: endpointSel?.id || null,
+          path: pathCustom,
+          metodo,
+          body: metodo === 'GET' ? undefined : bodyArray,
+          tipo: 'lote',
+        })
         const duracao = Date.now() - inicio
         const idsGerados = Array.isArray(res.data)
           ? res.data.flatMap(extrairIds)
@@ -172,7 +173,7 @@ export default function AbaEnvioLote({
           resposta: res.data,
           idsGerados,
         }
-      }).catch(err => {
+      } catch (err) {
         resultados[b] = {
           lote: b + 1,
           totalLotes: totalBatches,
@@ -180,15 +181,23 @@ export default function AbaEnvioLote({
           status: 'erro',
           msg: err.message,
         }
-      }).finally(() => {
-        setProgresso([...resultados].filter(Boolean))
-        if (progressoRef.current) {
-          progressoRef.current.scrollTop = progressoRef.current.scrollHeight
-        }
-      })
-    })
+      }
+      setProgresso([...resultados].filter(Boolean))
+      if (progressoRef.current) {
+        progressoRef.current.scrollTop = progressoRef.current.scrollHeight
+      }
+    }
 
-    await Promise.allSettled(promises)
+    // Worker pool: mantém exatamente `concorrencia` lotes em andamento ao mesmo tempo
+    let proximoBatch = 0
+    const worker = async () => {
+      while (proximoBatch < totalBatches) {
+        await enviarBatch(proximoBatch++)
+      }
+    }
+    await Promise.allSettled(
+      Array.from({ length: Math.min(concorrencia, totalBatches) }, worker)
+    )
 
     setExecutando(false)
     setConcluido(true)
@@ -256,6 +265,22 @@ export default function AbaEnvioLote({
           <div className="flex justify-between text-xs text-gray-400 mt-0.5">
             <span>1</span>
             <span>200</span>
+          </div>
+        </div>
+        <div>
+          <label className="label text-xs">Concorrência: <strong>{concorrencia} lotes simultâneos</strong></label>
+          <input
+            type="range"
+            min={1}
+            max={100}
+            step={1}
+            value={concorrencia}
+            onChange={(e) => setConcorrencia(Number(e.target.value))}
+            className="w-full accent-sysgate-600"
+          />
+          <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+            <span>1</span>
+            <span>100</span>
           </div>
         </div>
       </div>
