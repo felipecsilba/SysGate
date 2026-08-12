@@ -164,12 +164,15 @@ export default function AbaEnvioLote({
         const idsGerados = Array.isArray(res.data)
           ? res.data.flatMap(extrairIds)
           : extrairIds(res.data)
+        const sucesso = res.statusCode >= 200 && res.statusCode < 300
         resultados[b] = {
           lote: b + 1,
           totalLotes: totalBatches,
           count: batchLinhas.length,
-          status: 'ok',
-          msg: `${res.statusCode} — ${duracao}ms`,
+          status: sucesso ? 'ok' : 'erro',
+          msg: sucesso
+            ? `${res.statusCode} — ${duracao}ms`
+            : `${res.statusCode} — ${duracao}ms — ${typeof res.data === 'string' ? res.data : JSON.stringify(res.data)}`,
           resposta: res.data,
           idsGerados,
         }
