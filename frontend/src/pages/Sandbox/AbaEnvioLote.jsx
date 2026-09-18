@@ -90,6 +90,9 @@ export default function AbaEnvioLote({
         }
         if (schemaExpanded.some((c) => c.campo === 'idIntegracao')) {
           autoSel['idIntegracao'] = true
+          // Nunca auto-mapear para uma coluna: o valor e gerado por linha (RUNID-Lnnn),
+          // que e a unica chave capaz de ligar um erro da Betha a linha da planilha.
+          delete autoMap['idIntegracao']
         }
         for (const c of schemaExpanded) {
           if (c.campo === 'idGerado' || c._displayCampo === 'idGerado') autoSel[c.campo] = true
@@ -230,7 +233,9 @@ export default function AbaEnvioLote({
             .map((it) => it.idGerado?.id ?? it.idGerado)
             .filter((v) => v != null)
             .map(String)
-          if (idsDoLote.length > 0) idsGerados = idsDoLote
+          // Consultamos o lote: os unicos ids validos sao os de registro do retorno[].
+          // Sem isso, um lote que falhou mostraria o idLote como se fosse id gravado.
+          idsGerados = idsDoLote
 
           if (statusLote === 'PROCESSADO') {
             status = 'ok'
@@ -598,7 +603,11 @@ export default function AbaEnvioLote({
                                         : 'border-gray-200 bg-gray-50 text-gray-400 focus:ring-sysgate-500'
                                   }`}
                                 >
-                                  <option value="">{csvData ? '— coluna CSV —' : '— sem CSV —'}</option>
+                                  <option value="">
+                                    {campo.campo === 'idIntegracao'
+                                      ? '— gerar automaticamente (L1, L2, L3…) —'
+                                      : csvData ? '— coluna CSV —' : '— sem CSV —'}
+                                  </option>
                                   {(csvData?.colunas || []).map((col, idx) => {
                                     const letra = idx < 26 ? String.fromCharCode(65 + idx) : `C${idx + 1}`
                                     const amostra = csvData.linhas[0]?.[col]

@@ -97,24 +97,25 @@ export default function BatchProgress({
   if (progresso.length === 0) return null
 
   const todosIds = progresso.flatMap((p) => p.idsGerados || [])
-  const todosIdsComLote = progresso.flatMap((p) =>
-    (p.idsGerados || []).map((id) => ({ id, lote: p.lote }))
-  )
+  // O monitor acompanha LOTES (idLote), nao ids de registro: e o lote que tem status
+  // na fila da Betha. O envio ja resolveu cada um; aqui so reconsultamos os indefinidos.
+  const todosIdsComLote = progresso
+    .filter((p) => p.idLote)
+    .map((p) => ({ id: p.idLote, lote: p.lote, statusLote: p.statusLote || null }))
 
-  const getStatus = (chave) => {
+  const getStatus = (chave, statusLoteConhecido = null) => {
     const c = consultasResultado[chave]
-    if (!c || !c.statusCode) return 'pendente'
-    if (c.consultando) return 'consultando'
-    if (c.statusCode < 200 || c.statusCode >= 300) return 'erro'
-    const statusLote = c.data?.statusLote
-    if (statusLote === 'NAO_PROCESSADO') return 'pendente'
-    if (statusLote === 'ERRO' || statusLote === 'FALHA') return 'erro'
-    return 'sucesso'
+    if (c?.consultando) return 'consultando'
+    if (c && c.statusCode && (c.statusCode < 200 || c.statusCode >= 300)) return 'erro'
+    const sl = c?.data?.statusLote ?? statusLoteConhecido
+    if (sl === 'PROCESSADO') return 'sucesso'
+    if (sl === 'PROCESSADO_COM_ERRO') return 'erro'
+    return 'pendente'
   }
 
-  const pendentes = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'pendente')
-  const comErro = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'erro')
-  const nSucesso = todosIdsComLote.filter(({ id, lote }) => getStatus(`${lote}-${id}`) === 'sucesso').length
+  const pendentes = todosIdsComLote.filter((l) => getStatus(`${l.lote}-${l.id}`, l.statusLote) === 'pendente')
+  const comErro = todosIdsComLote.filter((l) => getStatus(`${l.lote}-${l.id}`, l.statusLote) === 'erro')
+  const nSucesso = todosIdsComLote.filter((l) => getStatus(`${l.lote}-${l.id}`, l.statusLote) === 'sucesso').length
   const nErro = comErro.length
 
   const consultarLista = async (lista) => {
@@ -453,9 +454,9 @@ export default function BatchProgress({
             </div>
             <div className="p-3 max-h-64 overflow-y-auto scrollbar-thin">
               <div className="flex flex-wrap gap-1.5">
-                {todosIdsComLote.map(({ id, lote }, i) => {
+                {todosIdsComLote.map(({ id, lote, statusLote }, i) => {
                   const chave = `${lote}-${id}`
-                  const status = getStatus(chave)
+                  const status = getStatus(chave, statusLote)
                   const consulta = consultasResultado[chave]
                   return (
                     <button
