@@ -4,10 +4,24 @@ import SearchSelect from '../../components/SearchSelect'
 import AbaChecar from './AbaChecar'
 import AbaCampos from './AbaCampos'
 
+// O módulo vem do Swagger como "dividas (Inscrição em dívida)" — a parte
+// legível está nos parênteses. Sem parênteses, usa o texto como está.
+const nomeModulo = m => {
+  const m2 = /^\S+\s+\((.+)\)$/.exec(m || '')
+  return m2 ? m2[1] : (m || 'Geral')
+}
+
+// Os 350 endpoints repetem "Cria um registro de " — sobra só o que identifica.
+const nomeCadastro = c => {
+  const limpo = (c.nome || '').replace(/^Cria um registro de\s+/i, '').trim()
+  return limpo || c.path
+}
+
 export default function Checagem() {
   const [sistemas, setSistemas] = useState([])
   const [sistemaId, setSistemaId] = useState('')
   const [cadastros, setCadastros] = useState([])
+  const [moduloSel, setModuloSel] = useState('')
   const [path, setPath] = useState('')
   const [aba, setAba] = useState('checar')
   const [carregandoCadastros, setCarregandoCadastros] = useState(false)
@@ -24,6 +38,7 @@ export default function Checagem() {
   useEffect(() => {
     if (!sistemaId) {
       setCadastros([])
+      setModuloSel('')
       setPath('')
       return
     }
@@ -34,13 +49,47 @@ export default function Checagem() {
       .finally(() => setCarregandoCadastros(false))
   }, [sistemaId])
 
-  const opcoesCadastro = useMemo(
-    () => cadastros.map(c => ({
-      value: c.path,
-      label: `${c.nome || c.path}${c.marcacoes ? `  ·  ${c.marcacoes} marcado${c.marcacoes > 1 ? 's' : ''}` : ''}`,
-    })),
-    [cadastros]
+  const modulos = useMemo(() => {
+    const mapa = new Map()
+    for (const c of cadastros) {
+      const atual = mapa.get(c.modulo) || { total: 0, marcacoes: 0 }
+      mapa.set(c.modulo, {
+        total: atual.total + 1,
+        marcacoes: atual.marcacoes + (c.marcacoes || 0),
+      })
+    }
+    return [...mapa.entries()]
+      .map(([modulo, { total, marcacoes }]) => ({ modulo, total, marcacoes }))
+      .sort((a, b) => nomeModulo(a.modulo).localeCompare(nomeModulo(b.modulo), 'pt-BR'))
+  }, [cadastros])
+
+  const cadastrosDoModulo = useMemo(
+    () => cadastros.filter(c => c.modulo === moduloSel),
+    [cadastros, moduloSel]
   )
+
+  const opcoesModulo = useMemo(
+    () => modulos.map(m => ({
+      value: m.modulo,
+      label: `${nomeModulo(m.modulo)}  ·  ${m.total}${m.marcacoes ? `  ·  ${m.marcacoes} marcado${m.marcacoes > 1 ? 's' : ''}` : ''}`,
+    })),
+    [modulos]
+  )
+
+  const opcoesCadastro = useMemo(
+    () => cadastrosDoModulo
+      .map(c => ({
+        value: c.path,
+        label: `${nomeCadastro(c)}${c.marcacoes ? `  ·  ${c.marcacoes} marcado${c.marcacoes > 1 ? 's' : ''}` : ''}`,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR')),
+    [cadastrosDoModulo]
+  )
+
+  const escolherModulo = m => {
+    setModuloSel(m)
+    setPath('')
+  }
 
   const cadastroSel = cadastros.find(c => c.path === path)
 
@@ -71,12 +120,32 @@ export default function Checagem() {
           />
         </div>
 
-        <div className="flex-1 min-w-[280px]">
+        <div className="flex-1 min-w-[240px]">
+          <label className="label">
+            Módulo
+            {modulos.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-gray-400">{modulos.length}</span>
+            )}
+          </label>
+          <SearchSelect
+            options={opcoesModulo}
+            value={moduloSel}
+            onChange={escolherModulo}
+            disabled={!sistemaId || carregandoCadastros}
+            placeholder={
+              !sistemaId ? 'Escolha o sistema primeiro'
+                : carregandoCadastros ? 'Carregando...'
+                : 'Ex: Inscrição em dívida, Imóveis...'
+            }
+          />
+        </div>
+
+        <div className="flex-1 min-w-[240px]">
           <label className="label">
             Cadastro
-            {cadastros.length > 0 && (
+            {moduloSel && (
               <span className="ml-2 text-xs font-normal text-gray-400">
-                {cadastros.length} disponíveis
+                {cadastrosDoModulo.length}
               </span>
             )}
           </label>
@@ -84,17 +153,13 @@ export default function Checagem() {
             options={opcoesCadastro}
             value={path}
             onChange={setPath}
-            disabled={!sistemaId || carregandoCadastros}
-            placeholder={
-              !sistemaId ? 'Escolha o sistema primeiro'
-                : carregandoCadastros ? 'Carregando...'
-                : 'Ex: dívidas, imóveis, econômicos...'
-            }
+            disabled={!moduloSel}
+            placeholder={moduloSel ? 'Escolha o cadastro' : 'Escolha o módulo primeiro'}
           />
         </div>
 
         {cadastroSel && (
-          <div className="text-xs text-gray-500 pb-2">
+          <div className="text-xs text-gray-500 pb-2 shrink-0">
             <span className="badge-gray font-mono">{cadastroSel.metodo}</span>
             <span className="ml-2 font-mono">{cadastroSel.path}</span>
           </div>
@@ -104,7 +169,9 @@ export default function Checagem() {
       {!path ? (
         <div className="card flex-1 flex items-center justify-center text-center p-10">
           <div className="max-w-md">
-            <p className="text-gray-900 font-medium mb-1">Escolha um cadastro para começar</p>
+            <p className="text-gray-900 font-medium mb-1">
+              Escolha o módulo e o cadastro para começar
+            </p>
             <p className="text-sm text-gray-500">
               Na aba <strong>Checar</strong> você cola o JSON e recebe o laudo. Na aba{' '}
               <strong>Campos</strong> você marca quais campos são obrigatórios de verdade —
