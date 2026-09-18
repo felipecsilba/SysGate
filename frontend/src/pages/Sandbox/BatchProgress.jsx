@@ -10,7 +10,6 @@ export default function BatchProgress({
   percentual,
   totalOk,
   totalErro,
-  totalNaoProcessado = 0,
   totalPendente = 0,
   totalBatches,
   municipioSel,
@@ -156,11 +155,8 @@ export default function BatchProgress({
         <div className="flex gap-4 text-sm">
           <span className="text-green-600 font-medium">{totalOk} lote{totalOk !== 1 ? 's' : ''} ok</span>
           <span className="text-red-600 font-medium">{totalErro} com erro</span>
-          {totalNaoProcessado > 0 && (
-            <span className="text-amber-700 font-medium">{totalNaoProcessado} não processado(s)</span>
-          )}
           {totalPendente > 0 && (
-            <span className="text-gray-500 font-medium">{totalPendente} aguardando</span>
+            <span className="text-amber-700 font-medium">{totalPendente} ainda na fila</span>
           )}
           {totalItensErro > 0 && (
             <span className="text-red-700 font-medium">{totalItensErro} item(ns) com erro</span>
@@ -209,7 +205,7 @@ export default function BatchProgress({
             <div
               key={i}
               className={`px-4 py-3 ${
-                p.status === 'erro' ? 'bg-red-50' : p.status === 'naoProcessado' ? 'bg-amber-50' : ''
+                p.status === 'erro' ? 'bg-red-50' : p.status === 'pendente' ? 'bg-amber-50' : ''
               }`}
             >
               <div className="flex items-start gap-3">
@@ -218,9 +214,7 @@ export default function BatchProgress({
                     ? 'bg-green-500'
                     : p.status === 'erro'
                       ? 'bg-red-500'
-                      : p.status === 'naoProcessado'
-                        ? 'bg-amber-500'
-                        : 'bg-gray-400'
+                      : 'bg-amber-500'
                 }`} />
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -232,11 +226,9 @@ export default function BatchProgress({
                       className={`text-xs font-mono ${
                         p.status === 'ok'
                           ? 'text-green-600'
-                          : p.status === 'naoProcessado'
+                          : p.status === 'pendente'
                             ? 'text-amber-700'
-                            : p.status === 'pendente'
-                              ? 'text-gray-500'
-                              : 'text-red-600'
+                            : 'text-red-600'
                       }`}
                     >
                       {p.msg}

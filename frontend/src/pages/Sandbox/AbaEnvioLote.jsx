@@ -8,8 +8,11 @@ import BatchProgress from './BatchProgress'
 // Prefixo curto por execucao: distingue reenvios do mesmo CSV nos registros da Betha
 const gerarRunId = () => Math.random().toString(36).slice(2, 6).toUpperCase()
 
-// Estados finais do lote na API Betha (processamento assincrono)
-const ESTADOS_FINAIS = ['PROCESSADO', 'PROCESSADO_COM_ERRO', 'NAO_PROCESSADO']
+// Estados FINAIS do lote. NAO_PROCESSADO nao entra aqui: apesar do nome, ele
+// significa "ainda nao processado" — a fila da Betha pode levar minutos e o
+// mesmo lote passa a PROCESSADO depois. Tratar como falha faria o usuario
+// reenviar um lote que ia gravar sozinho, duplicando alteracao.
+const ESTADOS_FINAIS = ['PROCESSADO', 'PROCESSADO_COM_ERRO']
 const INTERVALO_CONSULTA_MS = 5000
 const LIMITE_CONSULTA_MS = 60000
 
@@ -254,12 +257,9 @@ export default function AbaEnvioLote({
           } else if (statusLote === 'PROCESSADO_COM_ERRO') {
             status = 'erro'
             msg = `${itens.length - itensErro.length} de ${itens.length} gravado(s) — ${itensErro.length} com erro`
-          } else if (statusLote === 'NAO_PROCESSADO') {
-            status = 'naoProcessado'
-            msg = 'Lote não processado — a API não informa o motivo. Reenvie este lote.'
           } else {
             status = 'pendente'
-            msg = `lote ${idLote} — sem resposta final em ${LIMITE_CONSULTA_MS / 1000}s`
+            msg = `ainda na fila após ${LIMITE_CONSULTA_MS / 1000}s — use "Consultar pendentes" no monitor abaixo`
           }
         }
 
@@ -307,7 +307,6 @@ export default function AbaEnvioLote({
 
   const totalOk = progresso.filter((p) => p.status === 'ok').length
   const totalErro = progresso.filter((p) => p.status === 'erro').length
-  const totalNaoProcessado = progresso.filter((p) => p.status === 'naoProcessado').length
   const totalPendente = progresso.filter((p) => p.status === 'pendente').length
   const totalBatches = csvData ? Math.ceil(csvData.linhas.length / tamanhoBatch) : 0
   const percentual = totalBatches ? Math.round((progresso.length / totalBatches) * 100) : 0
@@ -768,7 +767,6 @@ export default function AbaEnvioLote({
         percentual={percentual}
         totalOk={totalOk}
         totalErro={totalErro}
-        totalNaoProcessado={totalNaoProcessado}
         totalPendente={totalPendente}
         totalBatches={totalBatches}
         municipioSel={municipioSel}
