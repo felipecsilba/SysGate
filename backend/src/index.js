@@ -20,6 +20,7 @@ const chamadosRouter = require('./routes/chamados')
 const solicitantesRouter = require('./routes/solicitantes')
 const notasRouter = require('./routes/notas')
 const conhecimentoRouter = require('./routes/conhecimento')
+const checagemRouter = require('./routes/checagem')
 const portalAuthRouter = require('./routes/portalAuth')
 const portalChamadosRouter = require('./routes/portalChamados')
 
@@ -99,6 +100,7 @@ app.use('/api/chamados', chamadosRouter)
 app.use('/api/solicitantes', solicitantesRouter)
 app.use('/api/notas', notasRouter)
 app.use('/api/conhecimento', conhecimentoRouter)
+app.use('/api/checagem', checagemRouter)
 
 // Error handler global
 app.use((err, req, res, next) => {

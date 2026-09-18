@@ -20,6 +20,7 @@ const Notas          = lazy(() => import('./pages/Notas'))
 const MeuPerfil      = lazy(() => import('./pages/MeuPerfil'))
 const RedefinirSenha = lazy(() => import('./pages/RedefinirSenha'))
 const Conhecimento   = lazy(() => import('./pages/Conhecimento'))
+const Checagem       = lazy(() => import('./pages/Checagem'))
 
 // Portal externo (solicitantes) — trilho separado com store krakion-portal-auth
 const PortalLogin          = lazy(() => import('./pages/Portal/Login'))
@@ -111,6 +112,9 @@ export default function App() {
             } />
             <Route path="conhecimento" element={
               <Suspense fallback={<PageLoader />}><Conhecimento /></Suspense>
+            } />
+            <Route path="checagem" element={
+              <Suspense fallback={<PageLoader />}><Checagem /></Suspense>
             } />
             {/* Usuários: admin vê todos; não-admin é redirecionado para /perfil */}
             <Route path="usuarios" element={

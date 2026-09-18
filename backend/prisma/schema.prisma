@@ -17,6 +17,7 @@ model Sistema {
   swaggerSpecs      SwaggerSpec[]
   municipioSistemas MunicipioSistema[]
   requisicoes       Requisicao[]
+  camposChecagem    CampoChecagem[]
 }
 
 model Municipio {
@@ -59,6 +60,26 @@ model Endpoint {
   sistema     Sistema?     @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
   criadoEm   DateTime     @default(now())
   requisicoes  Requisicao[]
+}
+
+// Catálogo GLOBAL de obrigatoriedade de campos por cadastro.
+// Chaveado por `path` (e não por endpointId) porque reimportar o Swagger troca
+// todos os ids — o conhecimento marcado precisa sobreviver à reimportação.
+model CampoChecagem {
+  id           Int      @id @default(autoincrement())
+  sistemaId    Int
+  path         String   // "/api/dividas"
+  campo        String   // "dividas.sistemaOrigem"
+  obrigatorio  Boolean  @default(true)
+  observacao   String?  // o que quebra sem este campo
+  autorId      Int?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  sistema Sistema @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+
+  @@unique([sistemaId, path, campo])
+  @@index([sistemaId, path])
 }
 
 model Requisicao {

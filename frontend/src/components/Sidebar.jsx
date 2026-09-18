@@ -114,6 +114,12 @@ const ICONS = {
       <circle cx="12" cy="7" r="4" />
     </SvgIcon>
   ),
+  checagem: (
+    <SvgIcon>
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </SvgIcon>
+  ),
 }
 
 // ─── Helpers de estilo ───────────────────────────────────────────────────────
@@ -222,10 +228,11 @@ export default function Sidebar() {
         <NavGroup
           label="Ferramentas"
           icon={ICONS.ferramentas}
-          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/historico', '/notas', '/conhecimento']}
+          childRoutes={['/scripts', '/analisador-json', '/sandbox', '/historico', '/notas', '/conhecimento', '/checagem']}
         >
           <NavItem to="/scripts" label="Extensões" icon={ICONS.scripts} />
           <NavItem to="/analisador-json" label="Analisador JSON" icon={ICONS.analisadorJson} />
+          <NavItem to="/checagem" label="Checagem" icon={ICONS.checagem} />
           <NavItem to="/notas" label="Notas" icon={ICONS.notas} />
           <NavItem to="/conhecimento" label="Conhecimento" icon={ICONS.conhecimento} />
           <NavItem to="/sandbox" label="Sandbox" icon={ICONS.sandbox} />

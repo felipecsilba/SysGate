@@ -50,6 +50,7 @@ krakion/
 │   ├── notas.md               # Módulo Notas (Google Keep): modelos, API, comportamentos
 │   ├── usuarios.md            # Módulo Usuários e Perfil: schema, rotas, recuperação de senha, MeuPerfil
 │   ├── conhecimento.md        # Módulo Conhecimento: base colaborativa de FAQs, erros, passo a passo
+│   ├── checagem.md            # Módulo Checagem de Cadastros: valida JSON de migração contra spec + catálogo global de campos
 │   └── analisador-json.md
 ├── skills/                    # Referências de domínio e processo
 │   ├── backend.md
@@ -71,7 +72,7 @@ krakion/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL, CORS_ORIGINS (opcional)
 │   ├── prisma/
-│   │   ├── schema.prisma      # 24 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId, numero, origem), ChamadoComentario (+ autorId opcional, autorSolicitanteId, interno), ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante (+ email único e credenciais do portal: senhaHash, contaAtiva, emailVerificado, lockout, recuperação), Nota, NotaCompartilhamento, Conhecimento
+│   │   ├── schema.prisma      # 25 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, CampoChecagem, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId, numero, origem), ChamadoComentario (+ autorId opcional, autorSolicitanteId, interno), ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante (+ email único e credenciais do portal: senhaHash, contaAtiva, emailVerificado, lockout, recuperação), Nota, NotaCompartilhamento, Conhecimento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123) + usuário-sistema "portal" (inativo, p/ criadoPorId de chamados do portal) — DESTRUTIVO: apaga municípios/scripts/endpoints
 │   │   ├── migrar-sqlite-postgres.js # Migração de dados dev.db → Postgres preservando IDs (DMMF, pivots M2M, sequences, verificação de contagens) — requer Node ≥ 22.5
 │   │   └── dev.db             # SQLite LEGADO (fallback pré-migração; banco atual é PostgreSQL)
@@ -82,6 +83,7 @@ krakion/
 │       ├── lib/
 │       │   ├── prisma.js      # Instância ÚNICA de PrismaClient — TODA rota usa require('../lib/prisma'); NUNCA new PrismaClient() em rota (esgota pool do Postgres)
 │       │   ├── numeroChamado.js # prefixoMunicipio() + gerarNumero() — protocolo persistido PREFIXO-YYYY-NNNNN em transação
+│       │   ├── checagem.js    # Motor de validação PURO (sem Prisma): achatarCampos() + validarPayload() — coberto por checagem.test.js (19 testes, `npm test`)
 │       │   └── authUtils.js   # hashToken (SHA-256), captchaValido (hCaptcha), criarTransporter (SMTP) — compartilhados entre auth interno e portal
 │       └── routes/
 │           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha + atualiza ultimoLogin) + /logout + /me + /registrar + /esqueci-senha (rate limit 5/15min) + /redefinir-senha
@@ -100,7 +102,8 @@ krakion/
 │           ├── portalAuth.js  # Auth do PORTAL EXTERNO (/api/portal/auth) — registrar (hCaptcha + rate limit, contaAtiva: false), login por email (lockout), me, esqueci/redefinir-senha (hash SHA-256); JWT { sid, tipo: 'externo' }
 │           ├── portalChamados.js # Chamados do PORTAL (/api/portal/chamados) — autenticarExterno; sempre where solicitanteId=sid (404 se não dono); criação origem "portal" + numero + histórico; filtra comentários internos e seus anexos; upload validado
 │           ├── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
-│           └── conhecimento.js # CRUD Conhecimento — todos criam; autor/admin editam; somente admin deleta; dados globais
+│           ├── conhecimento.js # CRUD Conhecimento — todos criam; autor/admin editam; somente admin deleta; dados globais
+│           └── checagem.js    # Checagem de Cadastros — lista cadastros (endpoints de escrita), campos achatados, toggle de obrigatoriedade (catálogo GLOBAL) e validação de payload
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
@@ -123,7 +126,7 @@ krakion/
         │   └── portalAuthStore.js # Zustand + persist (krakion-portal-auth) — token + solicitante do portal externo; coexiste com a sessão interna no mesmo browser
         ├── components/
         │   ├── Layout.jsx         # Sidebar + barra acento gradiente no topo + header: chip usuário + botão Sair
-        │   ├── Sidebar.jsx        # NavLinks com SVG icons; grupo Ferramentas: Scripts, Analisador JSON, Notas, Conhecimento, Sandbox, Histórico; admin vê grupo "Configuração" completo (Sistemas + Central de Tokens + Usuários); não-admin vê apenas "Central de Tokens"; "Meu Perfil" visível para todos os usuários (fora do grupo)
+        │   ├── Sidebar.jsx        # NavLinks com SVG icons; grupo Ferramentas: Scripts, Analisador JSON, Checagem, Notas, Conhecimento, Sandbox, Histórico; admin vê grupo "Configuração" completo (Sistemas + Central de Tokens + Usuários); não-admin vê apenas "Central de Tokens"; "Meu Perfil" visível para todos os usuários (fora do grupo)
         │   ├── PrivateRoute.jsx   # Redireciona para /login se não autenticado; AdminRoute para role
         │   ├── PortalRoute.jsx    # Guarda das rotas /portal/* — redireciona para /portal/login se sem sessão do solicitante
         │   ├── MunicipioBadge.jsx # Badge do município ativo (alerta vermelho para produção)
@@ -184,6 +187,10 @@ krakion/
             │   ├── index.jsx               # Componente principal — lista esquerda (w-80, bg-gray-50/70, cards rounded-xl com shadow-sm e margem lateral) + painel detalhe direito (bg-white); filtros busca/tipo/vertical/sistema; paginação; `RenderBlocos` renderiza blocos (texto/subtítulo/código/nota)
             │   ├── constants.js            # TIPO_CONFIG, TIPO_OPTS e `parseConteudo(str)` — detecta JSON de blocos ou texto plano e retorna array de blocos
             │   └── ModalConhecimento.jsx   # Modal criar/editar; editor de blocos (BlocoEditorList + BlocoItem + AddBlocoMenu); suporte a blocos ricos dentro de cada passo (passo-a-passo)
+            ├── Checagem/
+            │   ├── index.jsx               # Seletor Sistema + Cadastro (compartilhado) + toggle de abas
+            │   ├── AbaChecar.jsx           # Cola o JSON → laudo com erros/alertas (aceita objeto ou array)
+            │   └── AbaCampos.jsx           # Tabela de campos com toggle Obrigatório + observação inline
             ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
             └── AnalisadorJson/
                 ├── index.jsx               # Componente principal — EditorLinhas, layout, toolbar
@@ -416,6 +423,17 @@ docker-compose up --build
 | PUT    | /api/conhecimento/:id   | Atualiza — somente autor ou admin (403 para outros)                                        |
 | DELETE | /api/conhecimento/:id   | Remove — **somente admin**                                                                 |
 
+### Checagem de Cadastros
+> Acesso público (qualquer autenticado). Dados **globais** — o catálogo de obrigatoriedade vale para todos os municípios e usuários. Documentação completa: `docs/checagem.md`.
+
+| Método | Rota                          | Descrição                                                                              |
+|--------|-------------------------------|----------------------------------------------------------------------------------------|
+| GET    | /api/checagem/cadastros       | Lista cadastros (endpoints POST/PUT/PATCH, um por path, POST preferido) + nº de marcações |
+| GET    | /api/checagem/campos          | `?sistemaId=&path=` — campos achatados com `obrigatorio` já mesclado das marcações      |
+| PUT    | /api/checagem/campos          | Upsert da marcação por `sistemaId+path+campo` (toggle + observação)                      |
+| DELETE | /api/checagem/campos          | Remove a marcação — volta ao que a spec diz                                             |
+| POST   | /api/checagem/validar         | `{ sistemaId, path, payload }` → `{ resumo, achados[] }`                                |
+
 ### Outros
 | Método | Rota                  | Descrição                                                                     |
 |--------|-----------------------|-------------------------------------------------------------------------------|
@@ -518,6 +536,13 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Chamados — auto-linkify**: função `linkify(texto)` escapa HTML e converte URLs em `<a target="_blank">` e `@mentions` em `<span>` destacado. Aplicada na descrição e em cada comentário via `dangerouslySetInnerHTML`.
 - **Chamados — histórico automático**: `PUT /api/chamados/:id` compara estado antes/depois e cria entradas `ChamadoHistorico` via `createMany` para cada campo alterado (`status`, `responsavel`, `classificacao`, `prioridade`, `titulo`, `vertical`). Ver `docs/chamados.md`.
 - **Chamados — ordem das rotas**: `/estatisticas`, `/dashboard`, `/anexos/:aid`, `/comentarios/:cid` registrados ANTES de `/:id`.
+- **Checagem — chaveada por `path`, nunca por `endpointId`**: `CampoChecagem` usa `@@unique([sistemaId, path, campo])`. Reimportar o Swagger recria todos os endpoints com ids novos; o path não muda. Chavear por id faria todo o conhecimento marcado se perder a cada reimportação.
+- **Checagem — duas camadas**: (1) automática, vinda do `bodySchema` já importado — enum inválido, tipo incorreto, campo inexistente (com sugestão por prefixo/distância de edição) e `required` da spec; (2) ensinada — toggle de obrigatoriedade + observação do que quebra sem o campo. A camada 2 existe porque a spec Betha é permissiva: `POST /api/dividas` tem 59 campos e só 15 `required`, e `sistemaOrigem` (sem o qual o débito não cancela) está entre os opcionais.
+- **Checagem — dados globais**: sem `usuarioId` e sem `municipioId` — é regra do sistema Betha, não do município. Qualquer autenticado marca campos.
+- **Checagem — regra do pai ausente**: quando um objeto pai falta no payload, o motor reporta só o pai e pula os filhos. Sem isso, um `dividas` faltando geraria 58 achados em vez de 1.
+- **Checagem — marcação redundante é apagada**: se o toggle volta a bater com a spec e não há observação, o registro é removido em vez de salvo. O catálogo guarda só o que difere da spec ou carrega explicação.
+- **Checagem — não existe auditoria em massa**: a API REST Betha tem 358 GETs, 354 deles `/{id}`, e o único parâmetro de query em toda a API é `id`. Não há GET de coleção nem filtro — varrer dados do município só é possível em BFC-Script (`Dados.tributos.v2.*.busca`), que roda no Studio. Ver `docs/checagem.md`.
+- **Testes**: `npm test` no backend roda `node --test "src/**/*.test.js"` (runner nativo do Node, sem dependência). Hoje cobre `src/lib/checagem.test.js` (19 testes do motor de validação, funções puras).
 - **Analisador JSON**: módulo 100% client-side, sem rotas de backend. Ver `docs/analisador-json.md`.
 - **Chunks obsoletos após deploy (2026-06-12)**: cada deploy troca os hashes dos chunks do Vite — abas abertas com o bundle antigo quebravam em tela branca ao navegar (React.lazy recebia o index.html do fallback SPA no lugar do JS). Defesa em duas camadas: `main.jsx` escuta `vite:preloadError` e recarrega a página (guard de 10s em sessionStorage); Nginx de produção serve `/assets/` com `try_files $uri =404` + cache imutável e `index.html` com `no-cache`. Ver `skills/deploy.md`.
 - **localStorage keys**: `krakion-auth` (authStore), `krakion-municipio` (municipioStore), `krakion-portal-auth` (portalAuthStore — sessão do solicitante externo), `krakion-json-viewerDark` (AnalisadorJson)

@@ -193,6 +193,15 @@ export const chamadosApi = {
 }
 
 // Base de Conhecimento
+// Checagem de Cadastros (validação de payload + catálogo global de campos)
+export const checagemApi = {
+  cadastros:     (params) => api.get('/checagem/cadastros', { params }).then(r => r.data),
+  campos:        (params) => api.get('/checagem/campos', { params }).then(r => r.data),
+  salvarCampo:   (data)   => api.put('/checagem/campos', data).then(r => r.data),
+  removerCampo:  (data)   => api.delete('/checagem/campos', { data }).then(r => r.data),
+  validar:       (data)   => api.post('/checagem/validar', data).then(r => r.data),
+}
+
 export const conhecimentoApi = {
   listar:    (params) => api.get('/conhecimento', { params }).then(r => r.data),
   obter:     (id)     => api.get(`/conhecimento/${id}`).then(r => r.data),
