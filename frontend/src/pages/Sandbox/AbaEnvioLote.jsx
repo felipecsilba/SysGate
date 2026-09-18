@@ -216,7 +216,18 @@ export default function AbaEnvioLote({
         let statusLote = null
         let lote = null
 
-        // HTTP 2xx aqui significa apenas "a fila aceitou". O resultado vem do status do lote.
+        // HTTP 2xx SEM idLote = envelope rejeitado. A API responde 200 com { message },
+        // ex: "Para registros de Pessoas, o idIntegracao e obrigatorio." Nada foi enfileirado.
+        if (httpOk && !idLote) {
+          status = 'erro'
+          const recado = res.data?.message || res.data?.error
+          msg = recado
+            ? `Lote recusado — ${recado}`
+            : `Lote recusado — resposta sem idLote: ${JSON.stringify(res.data).slice(0, 160)}`
+          idsGerados = []
+        }
+
+        // HTTP 2xx com idLote: a fila aceitou. O resultado vem do status do lote.
         if (httpOk && idLote) {
           status = 'pendente'
           msg = `lote ${idLote} — aguardando fila`
@@ -684,7 +695,7 @@ export default function AbaEnvioLote({
 
               const linhasJson = ['[']
               linhasPrevia.forEach((linha, i) => {
-                const body = construirBodyLinha(linha)
+                const body = construirBodyLinha(linha, i + 1, 'EXEM')
                 const pretty = JSON.stringify(body, null, 2)
                 const indented = pretty.split('\n').map((l) => `  ${l}`).join('\n')
                 linhasJson.push(indented + (i < linhasPrevia.length - 1 || restante > 0 ? ',' : ''))
