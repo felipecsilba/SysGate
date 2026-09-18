@@ -456,9 +456,11 @@ export default function BatchProgress({
                       onClick={() => status !== 'consultando' && consultarLote(chave, id)}
                       disabled={status === 'consultando'}
                       title={
-                        status === 'sucesso' ? `${consulta.statusCode} — clique para reprocessar` :
-                        status === 'erro' ? `${consulta.statusCode} — clique para reprocessar` :
-                        'Clique para consultar'
+                        // `consulta` so existe apos consulta manual. Desde que o status do lote
+                        // passou a vir resolvido do proprio envio, ele pode ser undefined aqui.
+                        status === 'sucesso' || status === 'erro'
+                          ? `${consulta?.statusCode ?? statusLote ?? ''} — clique para reprocessar`.trim()
+                          : 'Clique para consultar'
                       }
                       className={`text-xs font-mono border px-2 py-1 rounded transition-all flex items-center gap-1 ${CORES[status]}`}
                     >
