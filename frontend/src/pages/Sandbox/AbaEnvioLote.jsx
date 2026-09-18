@@ -5,6 +5,14 @@ import { extrairIds, tipoCor } from './utils'
 import CsvPreview from './CsvPreview'
 import BatchProgress from './BatchProgress'
 
+// Prefixo curto por execucao: distingue reenvios do mesmo CSV nos registros da Betha
+const gerarRunId = () => Math.random().toString(36).slice(2, 6).toUpperCase()
+
+// Estados finais do lote na API Betha (processamento assincrono)
+const ESTADOS_FINAIS = ['PROCESSADO', 'PROCESSADO_COM_ERRO', 'NAO_PROCESSADO']
+const INTERVALO_CONSULTA_MS = 5000
+const LIMITE_CONSULTA_MS = 60000
+
 
 export default function AbaEnvioLote({
   municipioSel,
@@ -98,7 +106,7 @@ export default function AbaEnvioLote({
     setCsvArquivo(file)
   }
 
-  const construirBodyLinha = (linha) => {
+  const construirBodyLinha = (linha, numeroLinha, runId) => {
     if (schemaExpanded.length === 0) {
       const body = {}
       for (const [key, val] of Object.entries(linha)) {
@@ -129,6 +137,12 @@ export default function AbaEnvioLote({
         body[c.campo] = typedVal
       }
     }
+    // idIntegracao e a unica chave que liga um erro da Betha de volta a linha do CSV.
+    // So injeta quando o endpoint tem esse campo e o usuario nao mapeou nada nele.
+    const temIdIntegracao = schema.some((c) => c.campo === 'idIntegracao')
+    if (temIdIntegracao && !body.idIntegracao && numeroLinha) {
+      body.idIntegracao = `${runId}-L${numeroLinha}`
+    }
     return body
   }
 
@@ -145,10 +159,34 @@ export default function AbaEnvioLote({
     const linhas = csvData.linhas
     const totalBatches = Math.ceil(linhas.length / tamanhoBatch)
     const resultados = new Array(totalBatches).fill(null)
+    const runId = gerarRunId()
+
+    // A API Betha e assincrona: o POST/PATCH so devolve { idLote }. O resultado real
+    // de cada item so aparece consultando o status do lote.
+    const consultarStatusLote = async (idLote) => {
+      const limite = Date.now() + LIMITE_CONSULTA_MS
+      while (true) {
+        try {
+          const st = await proxyApi.executar({
+            municipioId: Number(municipioSel),
+            sistemaId: Number(sistemaSel),
+            path: `${pathCustom}/${idLote}`,
+            metodo: 'GET',
+            tipo: 'individual',
+          })
+          const d = st.data
+          if (d?.statusLote && ESTADOS_FINAIS.includes(d.statusLote)) return d
+        } catch { /* rede instavel: tenta de novo ate o limite */ }
+        if (Date.now() >= limite) return null
+        await new Promise((r) => setTimeout(r, INTERVALO_CONSULTA_MS))
+      }
+    }
 
     const enviarBatch = async (b) => {
       const batchLinhas = linhas.slice(b * tamanhoBatch, (b + 1) * tamanhoBatch)
-      const bodyArray = batchLinhas.map(construirBodyLinha)
+      const bodyArray = batchLinhas.map((linha, i) =>
+        construirBodyLinha(linha, b * tamanhoBatch + i + 1, runId)
+      )
       const inicio = Date.now()
       try {
         const res = await proxyApi.executar({
@@ -161,20 +199,65 @@ export default function AbaEnvioLote({
           tipo: 'lote',
         })
         const duracao = Date.now() - inicio
-        const idsGerados = Array.isArray(res.data)
+        let idsGerados = Array.isArray(res.data)
           ? res.data.flatMap(extrairIds)
           : extrairIds(res.data)
-        const sucesso = res.statusCode >= 200 && res.statusCode < 300
+        const httpOk = res.statusCode >= 200 && res.statusCode < 300
+        const idLote = res.data?.idLote
+
+        let status = httpOk ? 'ok' : 'erro'
+        let msg = httpOk
+          ? `${res.statusCode} — ${duracao}ms`
+          : `${res.statusCode} — ${duracao}ms — ${typeof res.data === 'string' ? res.data : JSON.stringify(res.data)}`
+        let itensErro = []
+        let statusLote = null
+        let lote = null
+
+        // HTTP 2xx aqui significa apenas "a fila aceitou". O resultado vem do status do lote.
+        if (httpOk && idLote) {
+          status = 'pendente'
+          msg = `lote ${idLote} — aguardando fila`
+          resultados[b] = { lote: b + 1, totalLotes: totalBatches, count: batchLinhas.length, status, msg, resposta: res.data, idsGerados: [] }
+          setProgresso([...resultados].filter(Boolean))
+
+          lote = await consultarStatusLote(idLote)
+          statusLote = lote?.statusLote || null
+          const itens = lote?.retorno || []
+          itensErro = itens
+            .filter((it) => it.status === 'ERRO')
+            .map((it) => ({ idIntegracao: it.idIntegracao, mensagem: it.mensagem }))
+          const idsDoLote = itens
+            .map((it) => it.idGerado?.id ?? it.idGerado)
+            .filter((v) => v != null)
+            .map(String)
+          if (idsDoLote.length > 0) idsGerados = idsDoLote
+
+          if (statusLote === 'PROCESSADO') {
+            status = 'ok'
+            msg = `${itens.length} item(ns) gravado(s) — ${duracao}ms`
+          } else if (statusLote === 'PROCESSADO_COM_ERRO') {
+            status = 'erro'
+            msg = `${itens.length - itensErro.length} de ${itens.length} gravado(s) — ${itensErro.length} com erro`
+          } else if (statusLote === 'NAO_PROCESSADO') {
+            status = 'naoProcessado'
+            msg = 'Lote não processado — a API não informa o motivo. Reenvie este lote.'
+          } else {
+            status = 'pendente'
+            msg = `lote ${idLote} — sem resposta final em ${LIMITE_CONSULTA_MS / 1000}s`
+          }
+        }
+
         resultados[b] = {
           lote: b + 1,
           totalLotes: totalBatches,
           count: batchLinhas.length,
-          status: sucesso ? 'ok' : 'erro',
-          msg: sucesso
-            ? `${res.statusCode} — ${duracao}ms`
-            : `${res.statusCode} — ${duracao}ms — ${typeof res.data === 'string' ? res.data : JSON.stringify(res.data)}`,
-          resposta: res.data,
+          status,
+          msg,
+          resposta: lote || res.data,
           idsGerados,
+          itensErro,
+          statusLote,
+          idLote,
         }
       } catch (err) {
         resultados[b] = {
@@ -208,6 +291,8 @@ export default function AbaEnvioLote({
 
   const totalOk = progresso.filter((p) => p.status === 'ok').length
   const totalErro = progresso.filter((p) => p.status === 'erro').length
+  const totalNaoProcessado = progresso.filter((p) => p.status === 'naoProcessado').length
+  const totalPendente = progresso.filter((p) => p.status === 'pendente').length
   const totalBatches = csvData ? Math.ceil(csvData.linhas.length / tamanhoBatch) : 0
   const percentual = totalBatches ? Math.round((progresso.length / totalBatches) * 100) : 0
   const camposMapeados = schemaExpanded.filter((c) => camposSelecionados[c.campo])
@@ -663,6 +748,8 @@ export default function AbaEnvioLote({
         percentual={percentual}
         totalOk={totalOk}
         totalErro={totalErro}
+        totalNaoProcessado={totalNaoProcessado}
+        totalPendente={totalPendente}
         totalBatches={totalBatches}
         municipioSel={municipioSel}
         sistemaSel={sistemaSel}

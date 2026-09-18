@@ -10,6 +10,8 @@ export default function BatchProgress({
   percentual,
   totalOk,
   totalErro,
+  totalNaoProcessado = 0,
+  totalPendente = 0,
   totalBatches,
   municipioSel,
   sistemaSel,
@@ -54,7 +56,10 @@ export default function BatchProgress({
       lote: p.lote,
       itens: p.count,
       status: p.status,
+      status_lote: p.statusLote || '',
+      id_lote: p.idLote || '',
       mensagem: p.msg,
+      itens_com_erro: (p.itensErro || []).length,
       ids_gerados: (p.idsGerados || []).join(','),
       total_ids: (p.idsGerados || []).length,
     }))
@@ -64,6 +69,27 @@ export default function BatchProgress({
     const a = document.createElement('a')
     a.href = url
     a.download = `relatorio_lote_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const todosItensErro = progresso.flatMap((p) =>
+    (p.itensErro || []).map((it) => ({
+      lote: p.lote,
+      id_lote: p.idLote || '',
+      idIntegracao: it.idIntegracao,
+      mensagem: it.mensagem,
+    }))
+  )
+  const totalItensErro = todosItensErro.length
+
+  const exportarErrosCSV = () => {
+    const csv = Papa.unparse(todosItensErro)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `erros_lote_${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -128,7 +154,16 @@ export default function BatchProgress({
         </div>
         <div className="flex gap-4 text-sm">
           <span className="text-green-600 font-medium">{totalOk} lote{totalOk !== 1 ? 's' : ''} ok</span>
-          <span className="text-red-600 font-medium">{totalErro} erro{totalErro !== 1 ? 's' : ''}</span>
+          <span className="text-red-600 font-medium">{totalErro} com erro</span>
+          {totalNaoProcessado > 0 && (
+            <span className="text-amber-700 font-medium">{totalNaoProcessado} não processado(s)</span>
+          )}
+          {totalPendente > 0 && (
+            <span className="text-gray-500 font-medium">{totalPendente} aguardando</span>
+          )}
+          {totalItensErro > 0 && (
+            <span className="text-red-700 font-medium">{totalItensErro} item(ns) com erro</span>
+          )}
           {(() => {
             const total = progresso.reduce((acc, p) => acc + (p.idsGerados?.length || 0), 0)
             return total > 0 ? <span className="text-sysgate-600 font-medium">{total} IDs gerados</span> : null
@@ -151,6 +186,11 @@ export default function BatchProgress({
               <button onClick={exportarCSV} className="btn-secondary flex-1 justify-center">
                 Exportar relatório CSV
               </button>
+              {totalItensErro > 0 && (
+                <button onClick={exportarErrosCSV} className="btn-secondary flex-1 justify-center text-red-700 border-red-200 hover:bg-red-50">
+                  Exportar {totalItensErro} erro(s)
+                </button>
+              )}
             </div>
           )
         })()}
@@ -165,10 +205,21 @@ export default function BatchProgress({
           className="divide-y divide-gray-100 max-h-96 overflow-y-auto scrollbar-thin"
         >
           {progresso.map((p, i) => (
-            <div key={i} className={`px-4 py-3 ${p.status === 'erro' ? 'bg-red-50' : ''}`}>
+            <div
+              key={i}
+              className={`px-4 py-3 ${
+                p.status === 'erro' ? 'bg-red-50' : p.status === 'naoProcessado' ? 'bg-amber-50' : ''
+              }`}
+            >
               <div className="flex items-start gap-3">
                 <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
-                  p.status === 'ok' ? 'bg-green-500' : p.status === 'erro' ? 'bg-red-500' : 'bg-gray-400'
+                  p.status === 'ok'
+                    ? 'bg-green-500'
+                    : p.status === 'erro'
+                      ? 'bg-red-500'
+                      : p.status === 'naoProcessado'
+                        ? 'bg-amber-500'
+                        : 'bg-gray-400'
                 }`} />
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -176,7 +227,17 @@ export default function BatchProgress({
                       Lote {p.lote}/{p.totalLotes}
                     </span>
                     <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{p.count} itens</span>
-                    <span className={`text-xs font-mono ${p.status === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
+                    <span
+                      className={`text-xs font-mono ${
+                        p.status === 'ok'
+                          ? 'text-green-600'
+                          : p.status === 'naoProcessado'
+                            ? 'text-amber-700'
+                            : p.status === 'pendente'
+                              ? 'text-gray-500'
+                              : 'text-red-600'
+                      }`}
+                    >
                       {p.msg}
                     </span>
                     {p.idsGerados?.length > 0 && (
@@ -192,6 +253,26 @@ export default function BatchProgress({
                       </button>
                     )}
                   </div>
+                  {p.itensErro?.length > 0 && (
+                    <div className="mt-1 rounded-md border border-red-200 bg-white overflow-hidden">
+                      {p.itensErro.slice(0, 20).map((it, j) => (
+                        <div
+                          key={j}
+                          className="flex items-start gap-2 px-2 py-1.5 text-xs border-b border-red-100 last:border-b-0"
+                        >
+                          <span className="font-mono font-semibold text-red-700 flex-shrink-0">
+                            {it.idIntegracao || '—'}
+                          </span>
+                          <span className="text-gray-600 break-words">{it.mensagem}</span>
+                        </div>
+                      ))}
+                      {p.itensErro.length > 20 && (
+                        <div className="px-2 py-1 text-xs text-gray-400">
+                          +{p.itensErro.length - 20} outros itens com erro (use o CSV de erros)
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {p.idsGerados?.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-0.5">
                       {p.idsGerados.slice(0, 30).map((id, j) => {
