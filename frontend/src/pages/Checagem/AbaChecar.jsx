@@ -6,6 +6,16 @@ const CORES = {
   alerta: { pill: 'bg-amber-100 text-amber-800',   barra: 'border-l-amber-500',  texto: 'text-amber-700' },
 }
 
+// Notas do cadastro: o que falta FORA do payload. Um JSON impecavel ainda
+// pode nao funcionar por falta de formula, agrupamento ou de um campo que a
+// API de migracao nao tem.
+const NOTA_CONFIG = {
+  prerequisito: { rotulo: 'Pré-requisito',  cls: 'bg-violet-100 text-violet-800', barra: 'border-l-violet-400' },
+  dependencia:  { rotulo: 'Dependência',    cls: 'bg-sky-100 text-sky-800',       barra: 'border-l-sky-400' },
+  inalcancavel: { rotulo: 'Inalcançável',   cls: 'bg-amber-100 text-amber-800',   barra: 'border-l-amber-400' },
+  regra:        { rotulo: 'Regra',          cls: 'bg-gray-200 text-gray-700',     barra: 'border-l-gray-400' },
+}
+
 const ROTULO_TIPO = {
   obrigatorio:  'Campo obrigatório',
   enum:         'Valor inválido',
@@ -109,11 +119,13 @@ export default function AbaChecar({ sistemaId, path }) {
             <p className="text-sm text-gray-400 text-center mt-10">
               Cole o JSON e clique em Verificar.
             </p>
-          ) : resultado.achados.length === 0 ? (
-            <div className="text-center mt-10">
-              <p className="text-green-700 font-medium">Nenhum problema encontrado</p>
+          ) : (
+            <>
+          {resultado.achados.length === 0 ? (
+            <div className="text-center my-8">
+              <p className="text-green-700 font-medium">Nenhum problema no JSON</p>
               <p className="text-sm text-gray-500 mt-1">
-                O JSON está consistente com o cadastro e com os campos marcados.
+                O payload está consistente com o cadastro e com os campos marcados.
               </p>
             </div>
           ) : (
@@ -140,6 +152,36 @@ export default function AbaChecar({ sistemaId, path }) {
                 )
               })}
             </ul>
+          )}
+
+          {resultado.notas?.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-1 h-4 rounded-full bg-sysgate-600" />
+                <h3 className="text-sm font-semibold text-gray-700">Falta fora do JSON</h3>
+                <span className="text-xs text-gray-400">
+                  {resultado.notas.length} observaç{resultado.notas.length !== 1 ? 'ões' : 'ão'} sobre este cadastro
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">
+                Coisas que o payload não consegue mostrar — e que impedem o registro de funcionar.
+              </p>
+              <ul className="space-y-2">
+                {resultado.notas.map((n) => {
+                  const c = NOTA_CONFIG[n.tipo] || NOTA_CONFIG.regra
+                  return (
+                    <li key={n.id} className={`border-l-4 ${c.barra} bg-gray-50 rounded-r p-3`}>
+                      <span className={`${c.cls} px-2 py-0.5 rounded text-[11px] font-semibold uppercase`}>
+                        {c.rotulo}
+                      </span>
+                      <p className="text-sm text-gray-700 mt-1.5 whitespace-pre-line">{n.texto}</p>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+            </>
           )}
         </div>
       </div>

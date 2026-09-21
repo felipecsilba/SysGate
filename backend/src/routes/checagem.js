@@ -159,11 +159,97 @@ router.post('/validar', async (req, res) => {
       select: { campo: true, obrigatorio: true, observacao: true },
     })
 
+    // Notas do CADASTRO: o que falta fora do payload. Vao junto no laudo porque
+    // um JSON impecavel ainda pode nao funcionar por falta de formula,
+    // agrupamento ou de um campo que a API de migracao simplesmente nao tem.
+    const notas = await prisma.notaChecagem.findMany({
+      where: { sistemaId: parseInt(sistemaId), path },
+      select: { id: true, tipo: true, texto: true, ordem: true },
+      orderBy: [{ ordem: 'asc' }, { id: 'asc' }],
+    })
+
     res.json({
       endpoint: { nome: cadastro.endpoint.nome, path: cadastro.endpoint.path, metodo: cadastro.endpoint.metodo },
+      notas,
       ...validarPayload({ payload, campos: cadastro.campos, marcacoes }),
     })
   } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── Notas do cadastro ────────────────────────────────────────────────────────
+// Mesmo criterio do catalogo de campos: dados globais, qualquer autenticado
+// escreve, chaveado por path (reimportar o Swagger troca os ids dos endpoints).
+
+router.get('/notas', async (req, res) => {
+  try {
+    const { sistemaId, path } = req.query
+    if (!sistemaId) return res.status(400).json({ error: 'sistemaId é obrigatório' })
+    const notas = await prisma.notaChecagem.findMany({
+      where: { sistemaId: parseInt(sistemaId), ...(path ? { path } : {}) },
+      orderBy: [{ path: 'asc' }, { ordem: 'asc' }, { id: 'asc' }],
+    })
+    res.json(notas)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+const TIPOS_NOTA = ['prerequisito', 'dependencia', 'inalcancavel', 'regra']
+
+router.post('/notas', async (req, res) => {
+  try {
+    const { sistemaId, path, tipo, texto, ordem } = req.body
+    if (!sistemaId || !path || !tipo || !texto?.trim()) {
+      return res.status(400).json({ error: 'sistemaId, path, tipo e texto são obrigatórios' })
+    }
+    if (!TIPOS_NOTA.includes(tipo)) {
+      return res.status(400).json({ error: `tipo inválido. Use: ${TIPOS_NOTA.join(', ')}` })
+    }
+    const nota = await prisma.notaChecagem.create({
+      data: {
+        sistemaId: parseInt(sistemaId),
+        path,
+        tipo,
+        texto: texto.trim(),
+        ordem: Number.isInteger(ordem) ? ordem : 0,
+        autorId: req.usuario.id,
+      },
+    })
+    res.status(201).json(nota)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.put('/notas/:id', async (req, res) => {
+  try {
+    const { tipo, texto, ordem } = req.body
+    if (tipo && !TIPOS_NOTA.includes(tipo)) {
+      return res.status(400).json({ error: `tipo inválido. Use: ${TIPOS_NOTA.join(', ')}` })
+    }
+    const nota = await prisma.notaChecagem.update({
+      where: { id: parseInt(req.params.id) },
+      data: {
+        ...(tipo ? { tipo } : {}),
+        ...(texto?.trim() ? { texto: texto.trim() } : {}),
+        ...(Number.isInteger(ordem) ? { ordem } : {}),
+      },
+    })
+    res.json(nota)
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Nota não encontrada' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.delete('/notas/:id', async (req, res) => {
+  try {
+    await prisma.notaChecagem.delete({ where: { id: parseInt(req.params.id) } })
+    res.json({ ok: true })
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Nota não encontrada' })
     res.status(500).json({ error: err.message })
   }
 })

@@ -12,12 +12,13 @@ model Sistema {
   nome              String
   urlBase           String
   descricao         String?
-  criadoEm         DateTime           @default(now())
+  criadoEm          DateTime           @default(now())
   endpoints         Endpoint[]
   swaggerSpecs      SwaggerSpec[]
   municipioSistemas MunicipioSistema[]
   requisicoes       Requisicao[]
   camposChecagem    CampoChecagem[]
+  notasChecagem     NotaChecagem[]
 }
 
 model Municipio {
@@ -27,8 +28,8 @@ model Municipio {
   ativo             Boolean            @default(false)
   usuarioId         Int?
   usuario           Usuario?           @relation(fields: [usuarioId], references: [id])
-  criadoEm         DateTime           @default(now())
-  atualizadoEm     DateTime           @updatedAt
+  criadoEm          DateTime           @default(now())
+  atualizadoEm      DateTime           @updatedAt
   requisicoes       Requisicao[]
   scripts           Script[]
   relatorios        Relatorio[]
@@ -36,14 +37,14 @@ model Municipio {
 }
 
 model MunicipioSistema {
-  id              Int       @id @default(autoincrement())
-  municipioId     Int
-  sistemaId       Int
-  token           String
-  ambiente        String    @default("producao")
-  dataVencimento  DateTime?
-  municipio       Municipio @relation(fields: [municipioId], references: [id], onDelete: Cascade)
-  sistema         Sistema   @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+  id             Int       @id @default(autoincrement())
+  municipioId    Int
+  sistemaId      Int
+  token          String
+  ambiente       String    @default("producao")
+  dataVencimento DateTime?
+  municipio      Municipio @relation(fields: [municipioId], references: [id], onDelete: Cascade)
+  sistema        Sistema   @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
 
   @@unique([municipioId, sistemaId])
 }
@@ -53,25 +54,45 @@ model Endpoint {
   modulo      String
   nome        String
   path        String
-  metodo      String       // GET | POST | PUT | PATCH | DELETE
+  metodo      String // GET | POST | PUT | PATCH | DELETE
   descricao   String?
-  bodySchema  String?      // JSON serializado com os campos do body
+  bodySchema  String? // JSON serializado com os campos do body
   sistemaId   Int?
   sistema     Sistema?     @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
-  criadoEm   DateTime     @default(now())
-  requisicoes  Requisicao[]
+  criadoEm    DateTime     @default(now())
+  requisicoes Requisicao[]
 }
 
 // Catálogo GLOBAL de obrigatoriedade de campos por cadastro.
 // Chaveado por `path` (e não por endpointId) porque reimportar o Swagger troca
 // todos os ids — o conhecimento marcado precisa sobreviver à reimportação.
+// Conhecimento no nivel do CADASTRO (nao de um campo): o que precisa existir
+// alem do payload para o registro realmente funcionar. Nasceu da constatacao de
+// que "formula nao e migravel" e "imovel exige municipio da entidade" sao
+// verdades sobre o cadastro, sem campo de JSON onde morar.
+model NotaChecagem {
+  id           Int      @id @default(autoincrement())
+  sistemaId    Int
+  path         String // "/api/imoveis" — por path, nunca por endpointId
+  tipo         String // prerequisito | dependencia | inalcancavel | regra
+  texto        String
+  ordem        Int      @default(0)
+  autorId      Int?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  sistema Sistema @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+
+  @@index([sistemaId, path])
+}
+
 model CampoChecagem {
   id           Int      @id @default(autoincrement())
   sistemaId    Int
-  path         String   // "/api/dividas"
-  campo        String   // "dividas.sistemaOrigem"
+  path         String // "/api/dividas"
+  campo        String // "dividas.sistemaOrigem"
   obrigatorio  Boolean  @default(true)
-  observacao   String?  // o que quebra sem este campo
+  observacao   String? // o que quebra sem este campo
   autorId      Int?
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
@@ -83,36 +104,36 @@ model CampoChecagem {
 }
 
 model Requisicao {
-  id          Int        @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   municipioId Int
   sistemaId   Int?
   endpointId  Int?
   metodo      String
   url         String
-  headers     String?    // JSON serializado
-  body        String?    // JSON serializado
+  headers     String? // JSON serializado
+  body        String? // JSON serializado
   statusCode  Int?
-  resposta    String?    // JSON serializado
+  resposta    String? // JSON serializado
   duracaoMs   Int?
-  tipo        String?    // "individual" | "lote"
-  idGerado    String?    // ID gerado pela API na resposta
-  criadoEm   DateTime   @default(now())
-  municipio   Municipio  @relation(fields: [municipioId], references: [id])
-  sistema     Sistema?   @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
-  endpoint    Endpoint?  @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+  tipo        String? // "individual" | "lote"
+  idGerado    String? // ID gerado pela API na resposta
+  criadoEm    DateTime  @default(now())
+  municipio   Municipio @relation(fields: [municipioId], references: [id])
+  sistema     Sistema?  @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
+  endpoint    Endpoint? @relation(fields: [endpointId], references: [id], onDelete: SetNull)
 
   @@index([municipioId, criadoEm])
 }
 
 model Script {
-  id           Int         @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   titulo       String
   conteudo     String
-  categoria    String      // "sql" | "comando" | "fonte" | "anotacao"
+  categoria    String // "sql" | "comando" | "fonte" | "anotacao"
   municipioId  Int?
-  municipio    Municipio?  @relation(fields: [municipioId], references: [id], onDelete: SetNull)
+  municipio    Municipio? @relation(fields: [municipioId], references: [id], onDelete: SetNull)
   tags         Tag[]
-  criadoEm    DateTime    @default(now())
+  criadoEm     DateTime   @default(now())
   atualizadoEm DateTime   @updatedAt
 
   @@index([categoria])
@@ -130,52 +151,52 @@ model Relatorio {
   titulo        String
   descricao     String?
   jxrmlNome     String?
-  jxrmlConteudo String?    // base64 encoded JXRML file
-  scriptFonte   String?    // BFC script de fonte dinâmica
+  jxrmlConteudo String? // base64 encoded JXRML file
+  scriptFonte   String? // BFC script de fonte dinâmica
   municipioId   Int?
   municipio     Municipio? @relation(fields: [municipioId], references: [id], onDelete: SetNull)
   tags          Tag[]
-  criadoEm     DateTime   @default(now())
-  atualizadoEm DateTime   @updatedAt
+  criadoEm      DateTime   @default(now())
+  atualizadoEm  DateTime   @updatedAt
 }
 
 model SwaggerSpec {
   id             Int      @id @default(autoincrement())
   nome           String
   versao         String?
-  urlBase        String?  // URL base da API descrita no spec
-  conteudo       String   // JSON completo da spec (OpenAPI 2/3)
+  urlBase        String? // URL base da API descrita no spec
+  conteudo       String // JSON completo da spec (OpenAPI 2/3)
   totalEndpoints Int      @default(0)
   sistemaId      Int?
   sistema        Sistema? @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
-  criadoEm      DateTime @default(now())
+  criadoEm       DateTime @default(now())
 }
 
 model Usuario {
-  id               Int         @id @default(autoincrement())
-  login            String      @unique
-  senhaHash        String
-  nome             String
-  role             String      @default("operador")  // "admin" | "operador"
-  ativo            Boolean     @default(true)
-  tentativasLogin  Int         @default(0)
-  bloqueadoAte     DateTime?
-  filaFiltro       String?    // JSON: { verticais[], sistemas[], status[] }
-  email            String?    // email para recuperação de senha
-  funcao           String?    // "Suporte" | "Analista de Implantação" | "Gerente" | "Administrador"
-  ultimoLogin      DateTime?  // última vez que fez login com sucesso
-  recuperacaoToken String?    // token para redefinição de senha
-  recuperacaoExpira DateTime? // expiração do token de recuperação
-  municipios       Municipio[]
-  chamadosCriados      Chamado[]           @relation("chamadosCriados")
-  chamadosResponsavel  Chamado[]           @relation("chamadosResponsavel")
-  comentariosChamado   ChamadoComentario[] @relation("comentariosChamado")
-  historicoChamado     ChamadoHistorico[]  @relation("historicoChamado")
-  notasProprietario    Nota[]              @relation("NotasProprietario")
-  notasCompartilhadas  NotaCompartilhamento[] @relation("NotasCompartilhadas")
-  conhecimentosAutor   Conhecimento[]      @relation("ConhecimentoAutor")
-  criadoEm         DateTime    @default(now())
-  atualizadoEm     DateTime    @updatedAt
+  id                  Int                    @id @default(autoincrement())
+  login               String                 @unique
+  senhaHash           String
+  nome                String
+  role                String                 @default("operador") // "admin" | "operador"
+  ativo               Boolean                @default(true)
+  tentativasLogin     Int                    @default(0)
+  bloqueadoAte        DateTime?
+  filaFiltro          String? // JSON: { verticais[], sistemas[], status[] }
+  email               String? // email para recuperação de senha
+  funcao              String? // "Suporte" | "Analista de Implantação" | "Gerente" | "Administrador"
+  ultimoLogin         DateTime? // última vez que fez login com sucesso
+  recuperacaoToken    String? // token para redefinição de senha
+  recuperacaoExpira   DateTime? // expiração do token de recuperação
+  municipios          Municipio[]
+  chamadosCriados     Chamado[]              @relation("chamadosCriados")
+  chamadosResponsavel Chamado[]              @relation("chamadosResponsavel")
+  comentariosChamado  ChamadoComentario[]    @relation("comentariosChamado")
+  historicoChamado    ChamadoHistorico[]     @relation("historicoChamado")
+  notasProprietario   Nota[]                 @relation("NotasProprietario")
+  notasCompartilhadas NotaCompartilhamento[] @relation("NotasCompartilhadas")
+  conhecimentosAutor  Conhecimento[]         @relation("ConhecimentoAutor")
+  criadoEm            DateTime               @default(now())
+  atualizadoEm        DateTime               @updatedAt
 }
 
 // ── Módulo Portfólio ─────────────────────────────────────────────────────────
@@ -191,16 +212,16 @@ model PortfolioMunicipio {
 }
 
 model Entidade {
-  id                   Int                  @id @default(autoincrement())
+  id                   Int                @id @default(autoincrement())
   nome                 String
   tipo                 String
   observacoes          String?
   portfolioMunicipioId Int
-  portfolioMunicipio   PortfolioMunicipio   @relation(fields: [portfolioMunicipioId], references: [id], onDelete: Cascade)
+  portfolioMunicipio   PortfolioMunicipio @relation(fields: [portfolioMunicipioId], references: [id], onDelete: Cascade)
   sistemas             EntidadeSistema[]
   stakeholders         Stakeholder[]
-  criadoEm             DateTime             @default(now())
-  atualizadoEm         DateTime             @updatedAt
+  criadoEm             DateTime           @default(now())
+  atualizadoEm         DateTime           @updatedAt
 }
 
 model EntidadeSistema {
@@ -244,49 +265,49 @@ model StakeholderSistema {
 // ── Módulo Chamados ─────────────────────────────────────────────────────────
 
 model Solicitante {
-  id        Int       @id @default(autoincrement())
-  nome      String
-  cargo     String?
-  email     String?   @unique
-  telefone  String?
-  municipio String?
+  id                   Int                 @id @default(autoincrement())
+  nome                 String
+  cargo                String?
+  email                String?             @unique
+  telefone             String?
+  municipio            String?
   // ── Credenciais do portal externo (Fase 1) ──
-  senhaHash            String?    // null = solicitante sem conta (cadastrado pela equipe)
-  contaAtiva           Boolean    @default(false)  // aprovação pela equipe
-  emailVerificado      Boolean    @default(false)
-  tentativasLogin      Int        @default(0)
+  senhaHash            String? // null = solicitante sem conta (cadastrado pela equipe)
+  contaAtiva           Boolean             @default(false) // aprovação pela equipe
+  emailVerificado      Boolean             @default(false)
+  tentativasLogin      Int                 @default(0)
   bloqueadoAte         DateTime?
   recuperacaoTokenHash String?
   recuperacaoExpira    DateTime?
-  chamados     Chamado[]
-  comentarios  ChamadoComentario[] @relation("comentariosSolicitante")
-  criadoEm  DateTime  @default(now())
+  chamados             Chamado[]
+  comentarios          ChamadoComentario[] @relation("comentariosSolicitante")
+  criadoEm             DateTime            @default(now())
 }
 
 model Chamado {
-  id              Int                @id @default(autoincrement())
-  numero          String?            @unique  // protocolo persistido PREFIXO-YYYY-NNNNN
-  titulo          String
-  descricao       String?
-  status          String             @default("Nao Analisado")
-  classificacao   String?
-  prioridade      String             @default("Normal")
-  vertical        String?
-  sistema         String?
-  municipio       String?
-  entidade        String?
-  origem          String             @default("interno")  // "interno" | "portal"
-  solicitanteId   Int?
-  solicitante     Solicitante?       @relation(fields: [solicitanteId], references: [id])
-  criadoPorId     Int
-  criadoPor       Usuario            @relation("chamadosCriados", fields: [criadoPorId], references: [id])
-  responsavelId   Int?
-  responsavel     Usuario?           @relation("chamadosResponsavel", fields: [responsavelId], references: [id])
-  comentarios     ChamadoComentario[]
-  anexos          ChamadoAnexo[]
-  historicos      ChamadoHistorico[]
-  criadoEm        DateTime           @default(now())
-  atualizadoEm    DateTime           @updatedAt
+  id            Int                 @id @default(autoincrement())
+  numero        String?             @unique // protocolo persistido PREFIXO-YYYY-NNNNN
+  titulo        String
+  descricao     String?
+  status        String              @default("Nao Analisado")
+  classificacao String?
+  prioridade    String              @default("Normal")
+  vertical      String?
+  sistema       String?
+  municipio     String?
+  entidade      String?
+  origem        String              @default("interno") // "interno" | "portal"
+  solicitanteId Int?
+  solicitante   Solicitante?        @relation(fields: [solicitanteId], references: [id])
+  criadoPorId   Int
+  criadoPor     Usuario             @relation("chamadosCriados", fields: [criadoPorId], references: [id])
+  responsavelId Int?
+  responsavel   Usuario?            @relation("chamadosResponsavel", fields: [responsavelId], references: [id])
+  comentarios   ChamadoComentario[]
+  anexos        ChamadoAnexo[]
+  historicos    ChamadoHistorico[]
+  criadoEm      DateTime            @default(now())
+  atualizadoEm  DateTime            @updatedAt
 
   @@index([status, criadoEm])
   @@index([responsavelId])
@@ -298,11 +319,11 @@ model ChamadoComentario {
   conteudo           String
   chamadoId          Int
   chamado            Chamado      @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
-  autorId            Int?         // autor interno (equipe) — null quando autor externo
+  autorId            Int? // autor interno (equipe) — null quando autor externo
   autor              Usuario?     @relation("comentariosChamado", fields: [autorId], references: [id])
-  autorSolicitanteId Int?         // autor externo (portal) — null quando autor interno
+  autorSolicitanteId Int? // autor externo (portal) — null quando autor interno
   autorSolicitante   Solicitante? @relation("comentariosSolicitante", fields: [autorSolicitanteId], references: [id])
-  interno            Boolean      @default(false)  // true = invisível no portal
+  interno            Boolean      @default(false) // true = invisível no portal
   criadoEm           DateTime     @default(now())
 }
 
@@ -314,7 +335,7 @@ model ChamadoAnexo {
   tamanho      Int?
   chamadoId    Int
   chamado      Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
-  comentarioId Int?     // Vincula imagem a comentário específico (para exibição inline)
+  comentarioId Int? // Vincula imagem a comentário específico (para exibição inline)
   criadoEm     DateTime @default(now())
 }
 
@@ -324,7 +345,7 @@ model ChamadoHistorico {
   chamado     Chamado  @relation(fields: [chamadoId], references: [id], onDelete: Cascade)
   usuarioId   Int
   usuario     Usuario  @relation("historicoChamado", fields: [usuarioId], references: [id])
-  tipo        String   // "criacao" | "status" | "responsavel" | "classificacao" | "prioridade" | "titulo"
+  tipo        String // "criacao" | "status" | "responsavel" | "classificacao" | "prioridade" | "titulo"
   valorAntes  String?
   valorDepois String?
   criadoEm    DateTime @default(now())
@@ -333,20 +354,20 @@ model ChamadoHistorico {
 // ── Módulo Notas ─────────────────────────────────────────────────────────────
 
 model Nota {
-  id            Int       @id @default(autoincrement())
-  titulo        String    @default("Sem título")
-  tipo          String    @default("texto")   // texto | checklist | lista | codigo
-  conteudo      String    @default("")        // usado por tipo "texto" e "codigo"
-  itens         String    @default("[]")      // JSON: [{texto: string, feito?: boolean}]
-  cor           String    @default("#FFFDE7")
-  fixada        Boolean   @default(false)
-  ordem         Int       @default(0)
-  etiquetas     String    @default("[]")      // JSON: string[]
-  usuarioId     Int
-  usuario       Usuario   @relation("NotasProprietario", fields: [usuarioId], references: [id])
+  id                Int                    @id @default(autoincrement())
+  titulo            String                 @default("Sem título")
+  tipo              String                 @default("texto") // texto | checklist | lista | codigo
+  conteudo          String                 @default("") // usado por tipo "texto" e "codigo"
+  itens             String                 @default("[]") // JSON: [{texto: string, feito?: boolean}]
+  cor               String                 @default("#FFFDE7")
+  fixada            Boolean                @default(false)
+  ordem             Int                    @default(0)
+  etiquetas         String                 @default("[]") // JSON: string[]
+  usuarioId         Int
+  usuario           Usuario                @relation("NotasProprietario", fields: [usuarioId], references: [id])
   compartilhamentos NotaCompartilhamento[]
-  criadoEm      DateTime  @default(now())
-  atualizadoEm  DateTime  @updatedAt
+  criadoEm          DateTime               @default(now())
+  atualizadoEm      DateTime               @updatedAt
 
   @@index([usuarioId, ordem])
 }
@@ -377,13 +398,13 @@ model CatalogoVertical {
 model Conhecimento {
   id           Int      @id @default(autoincrement())
   titulo       String
-  tipo         String   @default("faq")   // faq | erro | passo-a-passo | dica | outro
-  descricao    String?                    // resumo curto exibido nos cards
-  conteudo     String   @default("")      // conteúdo principal (texto livre)
-  passos       String   @default("[]")   // JSON: [{texto: string}] — tipo passo-a-passo
-  vertical     String?                   // nome da vertical (ref. CatalogoVertical)
-  sistema      String?                   // nome do sistema Betha (ref. CatalogoVertical.sistemas)
-  etiquetas    String   @default("[]")   // JSON: string[]
+  tipo         String   @default("faq") // faq | erro | passo-a-passo | dica | outro
+  descricao    String? // resumo curto exibido nos cards
+  conteudo     String   @default("") // conteúdo principal (texto livre)
+  passos       String   @default("[]") // JSON: [{texto: string}] — tipo passo-a-passo
+  vertical     String? // nome da vertical (ref. CatalogoVertical)
+  sistema      String? // nome do sistema Betha (ref. CatalogoVertical.sistemas)
+  etiquetas    String   @default("[]") // JSON: string[]
   autorId      Int
   autor        Usuario  @relation("ConhecimentoAutor", fields: [autorId], references: [id])
   criadoEm     DateTime @default(now())
