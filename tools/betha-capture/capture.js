@@ -35,7 +35,12 @@ const CAP_TUDO = process.env.CAP_TUDO === '1'
 
 fs.mkdirSync(OUT, { recursive: true })
 
-let seq = fs.readdirSync(OUT).filter(f => /^\d{3}-/.test(f)).length
+// Conta QUALQUER prefixo numerico, nao so 3 digitos: com {3} o contador
+// reiniciava depois do arquivo 999 e os nomes colidiam entre sessoes.
+let seq = fs.readdirSync(OUT).reduce((max, f) => {
+  const m = f.match(/^(\d+)-/)
+  return m ? Math.max(max, Number(m[1])) : max
+}, 0)
 const pendentes = new Map()   // `${sessionId}:${requestId}` -> registro
 let id = 0
 const aguardando = new Map()
