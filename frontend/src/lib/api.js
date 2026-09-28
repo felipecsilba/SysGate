@@ -206,6 +206,9 @@ export const checagemApi = {
   atualizarRegra:(id, d)  => api.put(`/checagem/regras/${id}`, d).then(r => r.data),
   removerRegra:  (id)     => api.delete(`/checagem/regras/${id}`).then(r => r.data),
   verificar:     (data)   => api.post('/checagem/verificar', data).then(r => r.data),
+  fontes:        (params) => api.get('/checagem/fontes', { params }).then(r => r.data),
+  fonte:         (id)     => api.get(`/checagem/fontes/${id}`).then(r => r.data),
+  importarFontes:(data)   => api.post('/checagem/fontes/importar', data).then(r => r.data),
 }
 
 export const conhecimentoApi = {

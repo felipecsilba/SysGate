@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { checagemApi } from '../../lib/api'
+import ConstrutorScript from './ConstrutorScript'
 
 // Cada severidade tem forma própria, não só cor — o laudo é lido de relance.
 const SEV = {
@@ -167,6 +168,7 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
   const [erro, setErro] = useState(null)
   const [verificando, setVerificando] = useState(false)
   const [regrasCadastradas, setRegrasCadastradas] = useState([])
+  const [construtorAberto, setConstrutorAberto] = useState(false)
 
   useEffect(() => {
     setResultado(null)
@@ -198,13 +200,21 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-4 items-start">
+      {construtorAberto && (
+        <ConstrutorScript sistemaId={sistemaId} onFechar={() => setConstrutorAberto(false)} />
+      )}
       {/* entrada */}
       <div className="card overflow-hidden">
         <div className="px-4 py-2.5 border-b border-gray-200 bg-gradient-to-r from-white to-sysgate-50/30 flex items-center justify-between gap-2 flex-wrap">
           <span className="text-sm font-semibold text-gray-700">Saída do script</span>
-          <span className="text-xs text-gray-400">
-            {regrasCadastradas.length} regra{regrasCadastradas.length !== 1 ? 's' : ''} para <code className="font-mono">{cadastro}</code>
-          </span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs text-gray-400">
+              {regrasCadastradas.length} regra{regrasCadastradas.length !== 1 ? 's' : ''} para <code className="font-mono">{cadastro}</code>
+            </span>
+            <button onClick={() => setConstrutorAberto(true)} className="text-xs font-medium text-sysgate-600 hover:text-sysgate-800">
+              Gerar script de exportação
+            </button>
+          </div>
         </div>
         <div className="p-4">
           <textarea
