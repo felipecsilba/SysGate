@@ -3,6 +3,8 @@ const { Router } = require('express')
 const router = Router()
 const prisma = require('../lib/prisma')
 const { achatarCampos, validarPayload } = require('../lib/checagem')
+const { avaliarRegras } = require('../lib/regrasChecagem')
+const { parseEntrada } = require('../lib/parseEntrada')
 
 // Cadastros = endpoints de escrita, que são os que carregam payload de migração.
 const METODOS_CADASTRO = ['POST', 'PUT', 'PATCH']
@@ -250,6 +252,222 @@ router.delete('/notas/:id', async (req, res) => {
     res.json({ ok: true })
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Nota não encontrada' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── Regras de checagem ───────────────────────────────────────────────────────
+// Dados globais, qualquer autenticado escreve — mesmo critério do catálogo de
+// campos e das notas. Separadas por frente: "api" (payload de migração, valida
+// também contra a spec) e "fonte" (retorno de BFC-Script).
+
+const FRENTES = ['api', 'fonte']
+const SEVERIDADES = ['erro', 'alerta']
+
+function parseRegra(r) {
+  return {
+    ...r,
+    onde: r.onde ? JSON.parse(r.onde) : [],
+    quando: r.quando ? JSON.parse(r.quando) : null,
+  }
+}
+
+router.get('/regras', async (req, res) => {
+  try {
+    const { sistemaId, frente, cadastro } = req.query
+    if (!sistemaId) return res.status(400).json({ error: 'sistemaId é obrigatório' })
+    const regras = await prisma.regraChecagem.findMany({
+      where: {
+        sistemaId: parseInt(sistemaId),
+        ...(frente ? { frente } : {}),
+        ...(cadastro ? { cadastro } : {}),
+      },
+      orderBy: [{ cadastro: 'asc' }, { ordem: 'asc' }, { id: 'asc' }],
+    })
+    res.json(regras.map(parseRegra))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+function validarCorpoRegra(body) {
+  const { frente, cadastro, nome, porque, onde, severidade } = body
+  if (!frente || !cadastro || !nome?.trim() || !porque?.trim()) {
+    return 'frente, cadastro, nome e porque são obrigatórios'
+  }
+  if (!FRENTES.includes(frente)) return 'frente inválida. Use: ' + FRENTES.join(', ')
+  if (!Array.isArray(onde) || onde.length === 0) return 'onde precisa ser uma lista com ao menos um caminho'
+  if (severidade && !SEVERIDADES.includes(severidade)) return 'severidade inválida. Use: ' + SEVERIDADES.join(', ')
+  return null
+}
+
+router.post('/regras', async (req, res) => {
+  try {
+    const erro = validarCorpoRegra(req.body)
+    if (erro) return res.status(400).json({ error: erro })
+    const { sistemaId, frente, cadastro, nome, porque, onde, quando, esperado, naoSabemos, severidade, ordem } = req.body
+    if (!sistemaId) return res.status(400).json({ error: 'sistemaId é obrigatório' })
+
+    const regra = await prisma.regraChecagem.create({
+      data: {
+        sistemaId: parseInt(sistemaId),
+        frente,
+        cadastro,
+        nome: nome.trim(),
+        porque: porque.trim(),
+        onde: JSON.stringify(onde),
+        quando: quando ? JSON.stringify(quando) : null,
+        esperado: esperado?.trim() || null,
+        naoSabemos: naoSabemos?.trim() || null,
+        severidade: severidade || 'erro',
+        ordem: Number.isInteger(ordem) ? ordem : 0,
+        autorId: req.usuario.id,
+      },
+    })
+    res.status(201).json(parseRegra(regra))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.put('/regras/:id', async (req, res) => {
+  try {
+    const { nome, porque, onde, quando, esperado, naoSabemos, severidade, ordem } = req.body
+    if (severidade && !SEVERIDADES.includes(severidade)) {
+      return res.status(400).json({ error: 'severidade inválida. Use: ' + SEVERIDADES.join(', ') })
+    }
+    if (onde !== undefined && (!Array.isArray(onde) || onde.length === 0)) {
+      return res.status(400).json({ error: 'onde precisa ser uma lista com ao menos um caminho' })
+    }
+    const regra = await prisma.regraChecagem.update({
+      where: { id: parseInt(req.params.id) },
+      data: {
+        ...(nome?.trim() ? { nome: nome.trim() } : {}),
+        ...(porque?.trim() ? { porque: porque.trim() } : {}),
+        ...(onde !== undefined ? { onde: JSON.stringify(onde) } : {}),
+        ...(quando !== undefined ? { quando: quando ? JSON.stringify(quando) : null } : {}),
+        ...(esperado !== undefined ? { esperado: esperado?.trim() || null } : {}),
+        ...(naoSabemos !== undefined ? { naoSabemos: naoSabemos?.trim() || null } : {}),
+        ...(severidade ? { severidade } : {}),
+        ...(Number.isInteger(ordem) ? { ordem } : {}),
+      },
+    })
+    res.json(parseRegra(regra))
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Regra não encontrada' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.delete('/regras/:id', async (req, res) => {
+  try {
+    await prisma.regraChecagem.delete({ where: { id: parseInt(req.params.id) } })
+    res.json({ ok: true })
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Regra não encontrada' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── Verificação ──────────────────────────────────────────────────────────────
+// Recebe TEXTO cru, não JSON já parseado: o parser tolera array, NDJSON e o log
+// do Studio com a hora na frente. Na frente "api" roda também a validação
+// contra a spec, que só tem autoridade sobre payload de migração.
+
+router.post('/verificar', async (req, res) => {
+  try {
+    const { sistemaId, frente, cadastro, texto } = req.body
+    if (!sistemaId || !frente || !cadastro) {
+      return res.status(400).json({ error: 'sistemaId, frente e cadastro são obrigatórios' })
+    }
+    if (!FRENTES.includes(frente)) {
+      return res.status(400).json({ error: 'frente inválida. Use: ' + FRENTES.join(', ') })
+    }
+
+    const entrada = parseEntrada(texto)
+    if (entrada.registros.length === 0) {
+      return res.status(400).json({
+        error: 'Não encontrei nenhum registro no texto colado.',
+        detalhe: 'Aceito array JSON, um JSON por linha, ou a saída do Studio com a hora na frente.',
+      })
+    }
+
+    const sid = parseInt(sistemaId)
+    const [regrasBrutas, notas] = await Promise.all([
+      prisma.regraChecagem.findMany({
+        where: { sistemaId: sid, frente, cadastro },
+        orderBy: [{ ordem: 'asc' }, { id: 'asc' }],
+      }),
+      prisma.notaChecagem.findMany({
+        where: { sistemaId: sid, path: cadastro },
+        select: { id: true, tipo: true, texto: true, ordem: true },
+        orderBy: [{ ordem: 'asc' }, { id: 'asc' }],
+      }),
+    ])
+
+    const regras = regrasBrutas.map(parseRegra)
+    const resultados = avaliarRegras({ registros: entrada.registros, regras })
+
+    const porRegra = resultados.map((r) => {
+      const regra = regras.find((x) => x.id === r.regraId)
+      return {
+        regraId: r.regraId,
+        nome: r.nome,
+        severidade: r.severidade,
+        aplicaveis: r.aplicaveis,
+        faltam: r.faltando.length,
+        porque: regra?.porque || '',
+        onde: regra?.onde || [],
+        esperado: regra?.esperado || null,
+        naoSabemos: regra?.naoSabemos || null,
+        // o laudo mostra até 3 trechos; o resto vira contagem e lista de ids
+        exemplos: r.faltando.slice(0, 3),
+        ids: r.faltando.map((f) => f.id),
+      }
+    })
+
+    const resposta = {
+      entrada: {
+        formato: entrada.formato,
+        registros: entrada.registros.length,
+        descartadas: entrada.descartadas,
+      },
+      regras: porRegra,
+      notas,
+      resumo: {
+        erros: porRegra.filter((r) => r.severidade === 'erro').length,
+        alertas: porRegra.filter((r) => r.severidade === 'alerta').length,
+        ok: porRegra.filter((r) => r.severidade === 'ok').length,
+      },
+    }
+
+    // Na frente API a spec também tem autoridade: roda o motor antigo por cima.
+    if (frente === 'api') {
+      const cadastroSpec = await carregarCadastro(sid, cadastro)
+      if (cadastroSpec) {
+        const marcacoes = await prisma.campoChecagem.findMany({
+          where: { sistemaId: sid, path: cadastro },
+          select: { campo: true, obrigatorio: true, observacao: true },
+        })
+        const porPayload = entrada.registros.map((payload) =>
+          validarPayload({ payload, campos: cadastroSpec.campos, marcacoes })
+        )
+        resposta.spec = {
+          achados: porPayload.flatMap((p, i) => p.achados.map((a) => ({ ...a, registro: i + 1 }))),
+          resumo: porPayload.reduce(
+            (acc, p) => ({
+              erros: acc.erros + p.resumo.erros,
+              alertas: acc.alertas + p.resumo.alertas,
+              total: acc.total + p.resumo.total,
+            }),
+            { erros: 0, alertas: 0, total: 0 }
+          ),
+        }
+      }
+    }
+
+    res.json(resposta)
+  } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })

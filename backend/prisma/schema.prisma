@@ -19,6 +19,7 @@ model Sistema {
   requisicoes       Requisicao[]
   camposChecagem    CampoChecagem[]
   notasChecagem     NotaChecagem[]
+  regrasChecagem    RegraChecagem[]
 }
 
 model Municipio {
@@ -66,6 +67,33 @@ model Endpoint {
 // Catálogo GLOBAL de obrigatoriedade de campos por cadastro.
 // Chaveado por `path` (e não por endpointId) porque reimportar o Swagger troca
 // todos os ids — o conhecimento marcado precisa sobreviver à reimportação.
+// Regra de checagem escrita por gente: onde procurar o dado, quando a regra se
+// aplica e o que quebra sem ele. Separada por FRENTE porque os dois mundos usam
+// nomes diferentes para a mesma coisa — misturar produz falso positivo (a regra
+// do sistemaOrigem acusava ausencia em todo registro lido pela fonte BFC, que
+// simplesmente nao devolve esse campo).
+model RegraChecagem {
+  id           Int      @id @default(autoincrement())
+  sistemaId    Int
+  frente       String // "api" (payload de migracao) | "fonte" (retorno BFC)
+  cadastro     String // "/api/dividas" na frente api; "dividas" na frente fonte
+  nome         String
+  porque       String // o que quebra sem isso, na linguagem do problema
+  onde         String // JSON: ["idReceitaDiversa", "referente.codigo"]
+  quando       String? // JSON: { caminhos: [...], igualA: [...] }
+  esperado     String? // a FORMA do valor, nunca um valor inventado
+  naoSabemos   String? // o que nao se sabe sobre esta regra
+  severidade   String   @default("erro") // erro | alerta
+  ordem        Int      @default(0)
+  autorId      Int?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  sistema Sistema @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+
+  @@index([sistemaId, frente, cadastro])
+}
+
 // Conhecimento no nivel do CADASTRO (nao de um campo): o que precisa existir
 // alem do payload para o registro realmente funcionar. Nasceu da constatacao de
 // que "formula nao e migravel" e "imovel exige municipio da entidade" sao
