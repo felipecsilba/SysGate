@@ -63,9 +63,15 @@ app.use(cors({
 // Anexo de 5 MB binário vira ~6.7 MB em base64, então a rota de anexos usa 8 MB.
 const jsonGlobal = express.json({ limit: '1mb' })
 const jsonAnexo = express.json({ limit: '8mb' })
+// O catalogo de fontes do BFC-Script tem 574 fontes e ~13 MB. Importacao unica,
+// so admin, entao vale abrir o limite apenas nessa rota.
+const jsonCatalogo = express.json({ limit: '32mb' })
 app.use((req, res, next) => {
   if (req.method === 'POST' && /^\/api\/(portal\/)?chamados\/\d+\/anexos\/?$/.test(req.path)) {
     return jsonAnexo(req, res, next)
+  }
+  if (req.method === 'POST' && req.path === '/api/checagem/fontes/importar') {
+    return jsonCatalogo(req, res, next)
   }
   return jsonGlobal(req, res, next)
 })

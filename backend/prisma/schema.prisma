@@ -20,6 +20,7 @@ model Sistema {
   camposChecagem    CampoChecagem[]
   notasChecagem     NotaChecagem[]
   regrasChecagem    RegraChecagem[]
+  fontesDados       FonteDados[]
 }
 
 model Municipio {
@@ -67,6 +68,32 @@ model Endpoint {
 // Catálogo GLOBAL de obrigatoriedade de campos por cadastro.
 // Chaveado por `path` (e não por endpointId) porque reimportar o Swagger troca
 // todos os ids — o conhecimento marcado precisa sobreviver à reimportação.
+// Catalogo das fontes de dados do BFC-Script (Dados.tributos.v2.*). Importado
+// do catalogo_v2.json, do mesmo jeito que o Swagger e importado para Endpoint.
+// E o que permite montar filtro com os campos que a fonte aceita de verdade e
+// com os valores validos de cada enum, em vez de o usuario adivinhar.
+model FonteDados {
+  id          Int      @id @default(autoincrement())
+  sistemaId   Int
+  nome        String // "dividas"
+  path        String // "/dividas"
+  operacao    String // "busca"
+  verbo       String // "GET"
+  natureza    String // "LEITURA" | "CRIACAO" | ...
+  descricao   String?
+  descricaoOp String?
+  tipoRetorno String?
+  filtros     String // JSON [{ campo, tipo, descricao, eh_enum }]
+  campos      String // JSON campos de retorno
+  enums       String // JSON { TipoCadastro: { values: [{ key, value, description }] } }
+  criadoEm    DateTime @default(now())
+
+  sistema Sistema @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+
+  @@unique([sistemaId, nome, path, operacao])
+  @@index([sistemaId, nome])
+}
+
 // Regra de checagem escrita por gente: onde procurar o dado, quando a regra se
 // aplica e o que quebra sem ele. Separada por FRENTE porque os dois mundos usam
 // nomes diferentes para a mesma coisa — misturar produz falso positivo (a regra

@@ -2,6 +2,7 @@ const { Router } = require('express')
 
 const router = Router()
 const prisma = require('../lib/prisma')
+const { exigirAdmin } = require('../middleware/autenticar')
 const { achatarCampos, validarPayload } = require('../lib/checagem')
 const { avaliarRegras } = require('../lib/regrasChecagem')
 const { parseEntrada } = require('../lib/parseEntrada')
@@ -475,6 +476,122 @@ router.post('/verificar', async (req, res) => {
     }
 
     res.json(resposta)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── Catálogo de fontes de dados (BFC-Script) ─────────────────────────────────
+// Importado do catalogo_v2.json, do mesmo jeito que o Swagger vira Endpoint.
+// É o que permite montar filtro com os campos que a fonte aceita de verdade e
+// com os valores válidos de cada enum, em vez de o usuário adivinhar.
+
+// Importação é escrita global e destrutiva por sistema: só admin.
+router.post('/fontes/importar', exigirAdmin, async (req, res) => {
+  try {
+    const { sistemaId, catalogo } = req.body
+    if (!sistemaId) return res.status(400).json({ error: 'sistemaId é obrigatório' })
+    if (!Array.isArray(catalogo)) {
+      return res.status(400).json({ error: 'catalogo precisa ser o array do catalogo_v2.json' })
+    }
+
+    const sid = parseInt(sistemaId)
+    // Só interessa o que dá para ler: a checagem por fonte parte de consulta.
+    const leitura = catalogo.filter((f) => f && f.nome && f.path && (f.natureza || '').toUpperCase() === 'LEITURA')
+
+    let gravadas = 0
+    let ignoradas = 0
+    const vistos = new Set()
+
+    for (const f of leitura) {
+      const chave = `${f.nome}|${f.path}|${f.operacao || 'busca'}`
+      if (vistos.has(chave)) { ignoradas++; continue } // o catálogo repete algumas
+      vistos.add(chave)
+
+      const dados = {
+        sistemaId: sid,
+        nome: f.nome,
+        path: f.path,
+        operacao: f.operacao || 'busca',
+        verbo: f.verbo || 'GET',
+        natureza: f.natureza || 'LEITURA',
+        descricao: f.descricao || null,
+        descricaoOp: f.descricao_op || null,
+        tipoRetorno: f.tipo_retorno || null,
+        filtros: JSON.stringify(f.filtros || []),
+        campos: JSON.stringify(f.campos_retorno || []),
+        enums: JSON.stringify(f.enums || {}),
+      }
+
+      await prisma.fonteDados.upsert({
+        where: {
+          sistemaId_nome_path_operacao: {
+            sistemaId: sid, nome: dados.nome, path: dados.path, operacao: dados.operacao,
+          },
+        },
+        update: dados,
+        create: dados,
+      })
+      gravadas++
+    }
+
+    const total = await prisma.fonteDados.count({ where: { sistemaId: sid } })
+    res.json({ recebidas: catalogo.length, deLeitura: leitura.length, gravadas, ignoradas, totalNoSistema: total })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Lista enxuta para o seletor: uma entrada por fonte, com quantos filtros tem.
+router.get('/fontes', async (req, res) => {
+  try {
+    const { sistemaId, busca } = req.query
+    if (!sistemaId) return res.status(400).json({ error: 'sistemaId é obrigatório' })
+    const fontes = await prisma.fonteDados.findMany({
+      where: {
+        sistemaId: parseInt(sistemaId),
+        ...(busca ? { OR: [
+          { nome: { contains: busca, mode: 'insensitive' } },
+          { descricao: { contains: busca, mode: 'insensitive' } },
+        ] } : {}),
+      },
+      select: { id: true, nome: true, path: true, operacao: true, descricao: true, descricaoOp: true, tipoRetorno: true, filtros: true },
+      orderBy: [{ nome: 'asc' }, { path: 'asc' }],
+    })
+    res.json(fontes.map((f) => {
+      const { filtros, ...resto } = f
+      let qtd = 0
+      try { qtd = JSON.parse(filtros).length } catch { /* catálogo torto: conta zero */ }
+      return { ...resto, qtdFiltros: qtd }
+    }))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Detalhe com filtros e enums — é o que alimenta o construtor de filtro.
+router.get('/fontes/:id', async (req, res) => {
+  try {
+    const f = await prisma.fonteDados.findUnique({ where: { id: parseInt(req.params.id) } })
+    if (!f) return res.status(404).json({ error: 'Fonte não encontrada' })
+
+    const filtros = JSON.parse(f.filtros || '[]')
+    const enums = JSON.parse(f.enums || '{}')
+
+    // Cada filtro de enum já sai com os valores válidos junto, para a tela não
+    // precisar cruzar nada.
+    const comValores = filtros.map((flt) => {
+      if (!flt.eh_enum) return flt
+      const e = enums[flt.tipo]
+      return { ...flt, valores: (e?.values || []).map((v) => ({ key: v.key, descricao: v.description })) }
+    })
+
+    res.json({
+      id: f.id, nome: f.nome, path: f.path, operacao: f.operacao,
+      descricao: f.descricao, descricaoOp: f.descricaoOp, tipoRetorno: f.tipoRetorno,
+      filtros: comValores,
+      campos: JSON.parse(f.campos || '[]'),
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
