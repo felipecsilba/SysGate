@@ -3,6 +3,7 @@ import { sistemasApi, checagemApi } from '../../lib/api'
 import SearchSelect from '../../components/SearchSelect'
 import AbaChecar from './AbaChecar'
 import AbaCampos from './AbaCampos'
+import AbaPorFonte from './AbaPorFonte'
 
 // O módulo vem do Swagger como "dividas (Inscrição em dívida)" — a parte
 // legível está nos parênteses. Sem parênteses, usa o texto como está.
@@ -26,6 +27,14 @@ export default function Checagem() {
   const [aba, setAba] = useState('checar')
   const [carregandoCadastros, setCarregandoCadastros] = useState(false)
 
+  // Duas frentes, porque os dois mundos usam nomes diferentes para a mesma
+  // coisa: o payload de migracao fala idPessoa/valorInscrito; o retorno da
+  // fonte BFC fala contribuinte.id/valorTributoInscrito. Misturar produz
+  // falso positivo.
+  const [frente, setFrente] = useState('api')
+  const [fontes, setFontes] = useState([])
+  const [fonteSel, setFonteSel] = useState('')
+
   useEffect(() => {
     sistemasApi.listar()
       .then(lista => {
@@ -47,6 +56,19 @@ export default function Checagem() {
       .then(setCadastros)
       .catch(() => setCadastros([]))
       .finally(() => setCarregandoCadastros(false))
+  }, [sistemaId])
+
+  // Na Fase 1 a lista de fontes vem das regras cadastradas. Quando o catalogo
+  // de fontes for importado, passa a vir de la.
+  useEffect(() => {
+    if (!sistemaId) { setFontes([]); setFonteSel(''); return }
+    checagemApi.regras({ sistemaId, frente: 'fonte' })
+      .then(rs => {
+        const nomes = [...new Set(rs.map(r => r.cadastro))].sort()
+        setFontes(nomes)
+        if (nomes.length === 1) setFonteSel(nomes[0])
+      })
+      .catch(() => setFontes([]))
   }, [sistemaId])
 
   const modulos = useMemo(() => {
@@ -109,6 +131,25 @@ export default function Checagem() {
         </div>
       </div>
 
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+        {[
+          { id: 'api',   label: 'Por API',   dica: 'payload de migração' },
+          { id: 'fonte', label: 'Por Fonte', dica: 'saída de BFC-Script' },
+        ].map(f => (
+          <button
+            key={f.id}
+            onClick={() => setFrente(f.id)}
+            title={f.dica}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+              frente === f.id ? 'bg-white text-sysgate-700 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            {f.label}
+            <span className="ml-2 text-xs font-normal text-gray-400">{f.dica}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="card p-4 flex flex-wrap items-end gap-4">
         <div className="w-56">
           <label className="label">Sistema</label>
@@ -120,6 +161,28 @@ export default function Checagem() {
           />
         </div>
 
+        {frente === 'fonte' && (
+          <div className="flex-1 min-w-[240px]">
+            <label className="label">
+              Fonte de dados
+              {fontes.length > 0 && <span className="ml-2 text-xs font-normal text-gray-400">{fontes.length}</span>}
+            </label>
+            <SearchSelect
+              options={fontes.map(f => ({ value: f, label: f }))}
+              value={fonteSel}
+              onChange={setFonteSel}
+              disabled={!sistemaId}
+              placeholder={
+                !sistemaId ? 'Escolha o sistema primeiro'
+                  : fontes.length === 0 ? 'Nenhuma fonte com regras cadastradas'
+                  : 'Ex: dividas, debitos...'
+              }
+            />
+          </div>
+        )}
+
+        {frente === 'api' && (
+        <>
         <div className="flex-1 min-w-[240px]">
           <label className="label">
             Módulo
@@ -157,8 +220,10 @@ export default function Checagem() {
             placeholder={moduloSel ? 'Escolha o cadastro' : 'Escolha o módulo primeiro'}
           />
         </div>
+        </>
+        )}
 
-        {cadastroSel && (
+        {frente === 'api' && cadastroSel && (
           <div className="text-xs text-gray-500 pb-2 shrink-0">
             <span className="badge-gray font-mono">{cadastroSel.metodo}</span>
             <span className="ml-2 font-mono">{cadastroSel.path}</span>
@@ -166,7 +231,23 @@ export default function Checagem() {
         )}
       </div>
 
-      {!path ? (
+      {frente === 'fonte' ? (
+        !fonteSel ? (
+          <div className="card flex-1 flex items-center justify-center text-center p-10">
+            <div className="max-w-md">
+              <p className="text-gray-900 font-medium mb-1">Escolha a fonte de dados</p>
+              <p className="text-sm text-gray-500">
+                Aqui você cola a saída de um BFC-Script rodado no Studio e recebe o laudo do que
+                falta em cada registro. Aceita o log com a hora na frente, do jeito que sai da tela.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0">
+            <AbaPorFonte sistemaId={sistemaId} cadastro={fonteSel} />
+          </div>
+        )
+      ) : !path ? (
         <div className="card flex-1 flex items-center justify-center text-center p-10">
           <div className="max-w-md">
             <p className="text-gray-900 font-medium mb-1">

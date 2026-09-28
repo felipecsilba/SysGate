@@ -200,6 +200,12 @@ export const checagemApi = {
   salvarCampo:   (data)   => api.put('/checagem/campos', data).then(r => r.data),
   removerCampo:  (data)   => api.delete('/checagem/campos', { data }).then(r => r.data),
   validar:       (data)   => api.post('/checagem/validar', data).then(r => r.data),
+  notas:         (params) => api.get('/checagem/notas', { params }).then(r => r.data),
+  regras:        (params) => api.get('/checagem/regras', { params }).then(r => r.data),
+  criarRegra:    (data)   => api.post('/checagem/regras', data).then(r => r.data),
+  atualizarRegra:(id, d)  => api.put(`/checagem/regras/${id}`, d).then(r => r.data),
+  removerRegra:  (id)     => api.delete(`/checagem/regras/${id}`).then(r => r.data),
+  verificar:     (data)   => api.post('/checagem/verificar', data).then(r => r.data),
 }
 
 export const conhecimentoApi = {
