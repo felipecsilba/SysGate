@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { sistemasApi, checagemApi } from '../../lib/api'
 import SearchSelect from '../../components/SearchSelect'
-import AbaChecar from './AbaChecar'
+import AbaPorApi from './AbaPorApi'
 import AbaCampos from './AbaCampos'
 import AbaPorFonte from './AbaPorFonte'
 
@@ -254,9 +254,9 @@ export default function Checagem() {
               Escolha o módulo e o cadastro para começar
             </p>
             <p className="text-sm text-gray-500">
-              Na aba <strong>Checar</strong> você cola o JSON e recebe o laudo. Na aba{' '}
-              <strong>Campos</strong> você marca quais campos são obrigatórios de verdade —
-              o que a spec da Betha não diz.
+              Na aba <strong>Verificar payload</strong> você cola o JSON de migração e recebe o
+              laudo: o que a spec acusa, o que as regras acusam, e o que falta fora do JSON.
+              Na aba <strong>Campos</strong> você marca quais campos são obrigatórios de verdade.
             </p>
           </div>
         </div>
@@ -264,7 +264,7 @@ export default function Checagem() {
         <>
           <div className="flex gap-1 border-b border-gray-200">
             {[
-              { id: 'checar', label: 'Checar JSON' },
+              { id: 'checar', label: 'Verificar payload' },
               { id: 'campos', label: 'Campos' },
             ].map(t => (
               <button
@@ -283,7 +283,7 @@ export default function Checagem() {
 
           <div className="flex-1 min-h-0">
             {aba === 'checar'
-              ? <AbaChecar sistemaId={sistemaId} path={path} />
+              ? <AbaPorApi sistemaId={sistemaId} path={path} />
               : <AbaCampos sistemaId={sistemaId} path={path} onMarcacaoSalva={recarregarCadastros} />}
           </div>
         </>
