@@ -398,8 +398,13 @@ router.post('/verificar', async (req, res) => {
         where: { sistemaId: sid, frente, cadastro },
         orderBy: [{ ordem: 'asc' }, { id: 'asc' }],
       }),
+      // Nota fala do CADASTRO, nao do formato. Na frente fonte o cadastro se
+      // chama "dividas"; as notas estao gravadas em "/api/dividas". Busca os dois.
       prisma.notaChecagem.findMany({
-        where: { sistemaId: sid, path: cadastro },
+        where: {
+          sistemaId: sid,
+          path: { in: [cadastro, cadastro.startsWith('/api/') ? cadastro.slice(5) : `/api/${cadastro}`] },
+        },
         select: { id: true, tipo: true, texto: true, ordem: true },
         orderBy: [{ ordem: 'asc' }, { id: 'asc' }],
       }),
@@ -413,7 +418,9 @@ router.post('/verificar', async (req, res) => {
       return {
         regraId: r.regraId,
         nome: r.nome,
-        severidade: r.severidade,
+        // Regra que nao alcancou registro nenhum nao foi conferida — dizer "ok"
+        // sugere aprovacao que nao houve.
+        severidade: r.aplicaveis === 0 ? 'na' : r.severidade,
         aplicaveis: r.aplicaveis,
         faltam: r.faltando.length,
         porque: regra?.porque || '',
@@ -438,6 +445,7 @@ router.post('/verificar', async (req, res) => {
         erros: porRegra.filter((r) => r.severidade === 'erro').length,
         alertas: porRegra.filter((r) => r.severidade === 'alerta').length,
         ok: porRegra.filter((r) => r.severidade === 'ok').length,
+        naoSeAplicam: porRegra.filter((r) => r.severidade === 'na').length,
       },
     }
 
