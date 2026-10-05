@@ -23,13 +23,16 @@ const Titulo = ({ children, extra }) => (
   </h4>
 )
 
-export default function PainelCampos({ perfil, semCatalogo }) {
-  const [aberto, setAberto] = useState(true)
+// embutido: dentro do painel de detalhe, sem o cabeçalho que recolhe
+export default function PainelCampos({ perfil, semCatalogo, embutido = false }) {
+  const [abertoLocal, setAberto] = useState(true)
+  const aberto = embutido || abertoLocal
   if (!perfil) return null
   const { total, foraDoEnum, ausentes, desconhecidos, parciais, sempreVazios, sempreCheios } = perfil
 
   return (
-    <div className="mt-5">
+    <div className={embutido ? '' : 'mt-5'}>
+      {!embutido && (
       <button type="button" onClick={() => setAberto(!aberto)} className="flex items-center gap-2 mb-2 w-full text-left">
         <span className="w-1 h-4 rounded-full bg-sysgate-600" />
         <h3 className="text-sm font-semibold text-gray-700">Campos do arquivo</h3>
@@ -38,9 +41,10 @@ export default function PainelCampos({ perfil, semCatalogo }) {
         </span>
         <span className="ml-auto text-xs text-gray-400">{aberto ? 'ocultar' : 'mostrar'}</span>
       </button>
+      )}
 
       {aberto && (
-        <div className="border border-gray-200 rounded-lg px-3 pb-3 bg-white">
+        <div className={embutido ? '' : 'border border-gray-200 rounded-lg px-3 pb-3 bg-white'}>
           {semCatalogo && (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mt-3">
               Esta fonte não está no catálogo — não dá para conferir campos ausentes nem valores de enum.

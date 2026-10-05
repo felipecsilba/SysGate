@@ -85,15 +85,34 @@ function Trecho({ exemplo, regra }) {
   )
 }
 
+/** Ids afetados em grade + botão copiar. */
+function ListaIds({ ids = [] }) {
+  const [copiado, setCopiado] = useState(false)
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(ids.join(', '))
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch { /* sem clipboard: o usuário seleciona */ }
+  }
+  return (
+    <>
+      {/* um id por célula: com milhares de ids (upload de .jsonl), texto corrido
+          quebrava número no meio e virava um bloco ilegível */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-x-3 gap-y-0.5 font-mono text-xs tabular-nums text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-2.5 max-h-48 overflow-auto">
+        {ids.map((id) => <span key={id} className="whitespace-nowrap select-all">{id}</span>)}
+      </div>
+      <button type="button" onClick={copiar} className="btn-secondary mt-2 text-xs">
+        {copiado ? 'Copiado!' : `Copiar ${ids.length.toLocaleString('pt-BR')} id${ids.length !== 1 ? 's' : ''}`}
+      </button>
+    </>
+  )
+}
+
 function Regra({ r }) {
   const [aberto, setAberto] = useState(r.severidade === 'erro')
   const c = SEV[r.severidade] || SEV.na
   const temDetalhe = r.faltam > 0 || r.naoSabemos || (r.onde || []).length > 0
-
-  const copiarIds = async () => {
-    const texto = (r.ids || []).join(', ')
-    try { await navigator.clipboard.writeText(texto) } catch { /* sem clipboard: o usuário seleciona */ }
-  }
 
   return (
     <div className={`border border-gray-200 rounded-lg overflow-hidden ${c.fundo}`}>
@@ -135,14 +154,7 @@ function Regra({ r }) {
                 Todos os ids afetados
                 <span className="normal-case font-normal tracking-normal"> · {(r.ids || []).length.toLocaleString('pt-BR')}</span>
               </h4>
-              {/* um id por célula: com milhares de ids (upload de .jsonl), texto corrido
-                  quebrava número no meio e virava um bloco ilegível */}
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-x-3 gap-y-0.5 font-mono text-xs tabular-nums text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-2.5 max-h-48 overflow-auto">
-                {(r.ids || []).map((id) => <span key={id} className="whitespace-nowrap select-all">{id}</span>)}
-              </div>
-              <button type="button" onClick={copiarIds} className="btn-secondary mt-2 text-xs">
-                Copiar {r.ids.length} id{r.ids.length !== 1 ? 's' : ''}
-              </button>
+              <ListaIds ids={r.ids} />
             </>
           )}
 
@@ -172,4 +184,4 @@ function Regra({ r }) {
 }
 
 
-export { SEV, NOTA_CONFIG, CONTEXTO, Trecho, Regra }
+export { SEV, NOTA_CONFIG, CONTEXTO, Trecho, Regra, ListaIds }

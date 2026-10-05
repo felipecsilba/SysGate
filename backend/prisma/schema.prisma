@@ -110,6 +110,7 @@ model RegraChecagem {
   quando       String? // JSON: { caminhos: [...], igualA: [...] }
   esperado     String? // a FORMA do valor, nunca um valor inventado
   naoSabemos   String? // o que nao se sabe sobre esta regra
+  comoCorrigir String? // dica de correcao mostrada no laudo
   severidade   String   @default("erro") // erro | alerta
   ordem        Int      @default(0)
   autorId      Int?

@@ -306,7 +306,7 @@ router.post('/regras', async (req, res) => {
   try {
     const erro = validarCorpoRegra(req.body)
     if (erro) return res.status(400).json({ error: erro })
-    const { sistemaId, frente, cadastro, nome, porque, onde, quando, esperado, naoSabemos, severidade, ordem } = req.body
+    const { sistemaId, frente, cadastro, nome, porque, onde, quando, esperado, naoSabemos, comoCorrigir, severidade, ordem } = req.body
     if (!sistemaId) return res.status(400).json({ error: 'sistemaId é obrigatório' })
 
     const regra = await prisma.regraChecagem.create({
@@ -320,6 +320,7 @@ router.post('/regras', async (req, res) => {
         quando: quando ? JSON.stringify(quando) : null,
         esperado: esperado?.trim() || null,
         naoSabemos: naoSabemos?.trim() || null,
+        comoCorrigir: comoCorrigir?.trim() || null,
         severidade: severidade || 'erro',
         ordem: Number.isInteger(ordem) ? ordem : 0,
         autorId: req.usuario.id,
@@ -333,7 +334,7 @@ router.post('/regras', async (req, res) => {
 
 router.put('/regras/:id', async (req, res) => {
   try {
-    const { nome, porque, onde, quando, esperado, naoSabemos, severidade, ordem } = req.body
+    const { nome, porque, onde, quando, esperado, naoSabemos, comoCorrigir, severidade, ordem } = req.body
     if (severidade && !SEVERIDADES.includes(severidade)) {
       return res.status(400).json({ error: 'severidade inválida. Use: ' + SEVERIDADES.join(', ') })
     }
@@ -349,6 +350,7 @@ router.put('/regras/:id', async (req, res) => {
         ...(quando !== undefined ? { quando: quando ? JSON.stringify(quando) : null } : {}),
         ...(esperado !== undefined ? { esperado: esperado?.trim() || null } : {}),
         ...(naoSabemos !== undefined ? { naoSabemos: naoSabemos?.trim() || null } : {}),
+        ...(comoCorrigir !== undefined ? { comoCorrigir: comoCorrigir?.trim() || null } : {}),
         ...(severidade ? { severidade } : {}),
         ...(Number.isInteger(ordem) ? { ordem } : {}),
       },
@@ -428,6 +430,7 @@ router.post('/verificar', async (req, res) => {
         onde: regra?.onde || [],
         esperado: regra?.esperado || null,
         naoSabemos: regra?.naoSabemos || null,
+        comoCorrigir: regra?.comoCorrigir || null,
         // o laudo mostra até 3 trechos; o resto vira contagem e lista de ids
         exemplos: r.faltando.slice(0, 3),
         ids: r.faltando.map((f) => f.id),

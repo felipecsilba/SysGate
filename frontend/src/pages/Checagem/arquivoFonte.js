@@ -186,3 +186,50 @@ export function perfilCampos(registros, campos = [], enums = {}) {
     sempreCheios: linhas.filter((l) => l.vazios === 0).length,
   }
 }
+
+// ── Concentração das falhas ──────────────────────────────────────────────────
+
+/** Mesma identificação do motor (identificar() em regrasChecagem.js). */
+export function idDoRegistro(r) {
+  const id = CAMPOS_ID.map((c) => pegar(r, c)).find((v) => v !== undefined && v !== null && v !== '')
+  return id === undefined ? null : String(id)
+}
+
+export function indexarPorId(registros) {
+  const m = new Map()
+  for (const r of registros) {
+    const id = idDoRegistro(r)
+    if (id !== null) m.set(id, r)
+  }
+  return m
+}
+
+// Dimensões que ajudam a decidir a correção: situação diz o que já virou
+// dívida/pagamento, ano diz de que carga veio, crédito diz qual receita.
+const DIMENSOES = [
+  { rotulo: 'Situação', caminhos: ['situacao', 'situacaoDivida'] },
+  { rotulo: 'Ano', caminhos: ['ano', 'anoInscricao'] },
+  { rotulo: 'Crédito', caminhos: ['abreviaturaCredito', 'creditoTributario.abreviatura'] },
+]
+
+/** Agrupa os registros que falharam por situação, ano e crédito (só o que variar ou existir). */
+export function concentracao(ids, porId, maxValores = 6) {
+  const falhos = (ids || []).map((id) => porId.get(String(id))).filter(Boolean)
+  if (falhos.length === 0) return []
+  return DIMENSOES.map(({ rotulo, caminhos }) => {
+    const cont = new Map()
+    for (const r of falhos) {
+      const bruto = caminhos.map((c) => pegar(r, c)).find((v) => v !== undefined && v !== null && v !== '')
+      if (bruto === undefined) continue
+      const v = String(ehEnum(bruto) ? bruto.valor : bruto)
+      cont.set(v, (cont.get(v) || 0) + 1)
+    }
+    const valores = [...cont].sort((a, b) => b[1] - a[1]).map(([valor, qtd]) => ({ valor, qtd }))
+    const resto = valores.slice(maxValores).reduce((s, v) => s + v.qtd, 0)
+    return {
+      rotulo,
+      total: falhos.length,
+      valores: resto ? [...valores.slice(0, maxValores), { valor: `outros (${valores.length - maxValores})`, qtd: resto }] : valores,
+    }
+  }).filter((d) => d.valores.length > 0)
+}
