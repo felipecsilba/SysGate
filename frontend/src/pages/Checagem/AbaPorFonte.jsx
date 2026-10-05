@@ -3,6 +3,7 @@ import { checagemApi } from '../../lib/api'
 import ConstrutorScript from './ConstrutorScript'
 import PainelCampos from './PainelCampos'
 import DetalheRegra from './DetalheRegra'
+import DetalheCampo, { ESTILO_CAMPO } from './DetalheCampo'
 import { SEV, NOTA_CONFIG, CONTEXTO } from './LaudoRegras'
 import {
   lerJsonl, caminhosNecessarios, montarLotes, mesclarResultados, perfilCampos, indexarPorId, concentracao,
@@ -142,6 +143,10 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
 
   const temResultado = Boolean(resultado)
   const regraSel = selecionado?.tipo === 'regra' ? resultado?.regras.find((r) => r.regraId === selecionado.id) : null
+  const campoSel = selecionado?.tipo === 'campo' && perfil
+    ? perfil.campos.find((c) => c.campo === selecionado.campo)
+      || { ...perfil.ausentesDetalhe.find((c) => c.campo === selecionado.campo), status: 'ausente' }
+    : null
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-4 items-start">
@@ -293,6 +298,14 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
                 />
               )}
             </div>
+
+            {perfil && (
+              <ListaCampos
+                perfil={perfil}
+                selecionado={selecionado?.tipo === 'campo' ? selecionado.campo : null}
+                onSelecionar={(campo) => setSelecionado({ tipo: 'campo', campo })}
+              />
+            )}
           </div>
         )}
       </div>
@@ -316,6 +329,15 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
           )}
 
           {regraSel && <DetalheRegra r={regraSel} dimensoes={dimensoes} />}
+
+          {campoSel && (
+            <DetalheCampo
+              campo={campoSel}
+              total={perfil.total}
+              regras={resultado.regras}
+              onAbrirRegra={(id) => setSelecionado({ tipo: 'regra', id })}
+            />
+          )}
 
           {selecionado?.tipo === 'campos' && perfil && (
             <>
@@ -378,5 +400,94 @@ function ItemLaudo({ sev, rotulo, titulo, sub, contagem, ativo, onClick }) {
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
       </svg>
     </button>
+  )
+}
+
+const FILTROS_CAMPO = [
+  { id: 'todos', rotulo: 'Todos' },
+  { id: 'alerta', rotulo: 'Alerta' },
+  { id: 'parcial', rotulo: 'Parciais' },
+  { id: 'ok', rotulo: 'OK' },
+  { id: 'vazio', rotulo: 'Vazios' },
+  { id: 'ausente', rotulo: 'Não vieram' },
+]
+
+/** Um quadrado por campo do arquivo (e pelos que o catálogo lista e não vieram). */
+function ListaCampos({ perfil, selecionado, onSelecionar }) {
+  const [filtro, setFiltro] = useState('todos')
+  const [busca, setBusca] = useState('')
+
+  const todos = useMemo(
+    () => [...perfil.campos, ...perfil.ausentesDetalhe.map((c) => ({ ...c, status: 'ausente' }))],
+    [perfil]
+  )
+  const contagem = useMemo(() => {
+    const m = { todos: todos.length }
+    todos.forEach((c) => { m[c.status] = (m[c.status] || 0) + 1 })
+    return m
+  }, [todos])
+
+  const termo = busca.trim().toLowerCase()
+  const visiveis = todos.filter((c) =>
+    (filtro === 'todos' || c.status === filtro) &&
+    (!termo || c.campo.toLowerCase().includes(termo) || (c.descricao || '').toLowerCase().includes(termo)))
+
+  return (
+    <div className="mt-5">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-1 h-4 rounded-full bg-sysgate-600" />
+        <h3 className="text-sm font-semibold text-gray-700">Campos</h3>
+        <span className="text-xs text-gray-400">clique para ver a quantidade por valor</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+        {FILTROS_CAMPO.filter((f) => f.id === 'todos' || contagem[f.id]).map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setFiltro(f.id)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${filtro === f.id
+              ? 'bg-sysgate-600 border-sysgate-600 text-white'
+              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}
+          >
+            {f.rotulo} <span className={filtro === f.id ? 'text-sysgate-100' : 'text-gray-400'}>{contagem[f.id]}</span>
+          </button>
+        ))}
+        <input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar campo…"
+          className="input text-xs py-1 ml-auto w-full sm:w-40"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        {visiveis.map((c) => {
+          const e = ESTILO_CAMPO[c.status] || ESTILO_CAMPO.vazio
+          const ativo = selecionado === c.campo
+          const direita = c.status === 'parcial' || c.status === 'alerta'
+            ? (c.pct * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'
+            : c.status === 'ok' ? '100%' : c.status === 'vazio' ? 'vazio' : 'ausente'
+          return (
+            <button
+              key={c.campo}
+              type="button"
+              onClick={() => onSelecionar(c.campo)}
+              title={c.descricao || c.campo}
+              className={`text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-l-4 ${e.barra} bg-white transition-all
+                ${ativo ? 'border-sysgate-400 ring-2 ring-sysgate-200' : 'border-gray-200 hover:border-gray-300'}
+                ${c.status === 'vazio' || c.status === 'ausente' ? 'opacity-70' : ''}`}
+            >
+              <span className="flex-1 min-w-0">
+                <span className="block font-mono text-xs text-gray-800 truncate">{c.campo}</span>
+                {c.descricao && <span className="block text-[11px] text-gray-400 truncate">{c.descricao}</span>}
+              </span>
+              <span className={`${e.pill} text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 tabular-nums`}>{direita}</span>
+            </button>
+          )
+        })}
+        {visiveis.length === 0 && <p className="text-xs text-gray-400 col-span-full py-3 text-center">Nenhum campo com esse filtro.</p>}
+      </div>
+    </div>
   )
 }

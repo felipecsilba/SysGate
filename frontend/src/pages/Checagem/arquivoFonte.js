@@ -131,24 +131,82 @@ function achatar(obj, prefixo, destino) {
   for (const [k, v] of Object.entries(obj)) {
     const c = prefixo ? `${prefixo}.${k}` : k
     if (v && typeof v === 'object' && !Array.isArray(v) && !ehEnum(v) && Object.keys(v).length > 0) achatar(v, c, destino)
-    else destino.push([c, ehEnum(v) ? v.valor : v])
+    else if (ehEnum(v)) destino.push([c, v.valor, v.descricao])
+    else destino.push([c, v])
   }
   return destino
 }
 
+const ehData = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)
+const LIMITE_DISTINTOS = 50000 // teto de memória: acima disso só conta, não guarda o valor
+const MAX_LISTADOS = 30        // até aqui a distribuição sai inteira
+const MAX_FREQUENTES = 10      // acima, só os que mais se repetem
+
+function novoAcumulador(campo) {
+  return {
+    campo, presentes: 0, preenchidos: 0, tipos: new Set(),
+    valores: new Map(), descricoes: new Map(), estourou: false,
+    num: null, data: null, anos: new Map(),
+  }
+}
+
+function acumular(s, c, v, descricao) {
+  s.presentes++
+  if (vazioNoCampo(c, v)) return
+  s.preenchidos++
+
+  if (descricao !== undefined) s.tipos.add('enum')
+  else if (typeof v === 'number') s.tipos.add('numero')
+  else if (typeof v === 'boolean') s.tipos.add('booleano')
+  else if (ehData(v)) s.tipos.add('data')
+  else if (Array.isArray(v)) s.tipos.add('lista')
+  else s.tipos.add('texto')
+
+  if (typeof v === 'number') {
+    if (!s.num) s.num = { min: v, max: v, soma: 0 }
+    s.num.min = Math.min(s.num.min, v)
+    s.num.max = Math.max(s.num.max, v)
+    s.num.soma += v
+  }
+  if (ehData(v)) {
+    const d = v.slice(0, 10)
+    if (!s.data) s.data = { min: d, max: d }
+    if (d < s.data.min) s.data.min = d
+    if (d > s.data.max) s.data.max = d
+    const ano = d.slice(0, 4)
+    s.anos.set(ano, (s.anos.get(ano) || 0) + 1)
+    return // data não entra na distribuição por valor: seria um valor por registro
+  }
+
+  const chave = Array.isArray(v) ? JSON.stringify(v) : String(v)
+  if (s.valores.has(chave)) s.valores.set(chave, s.valores.get(chave) + 1)
+  else if (s.valores.size < LIMITE_DISTINTOS) s.valores.set(chave, 1)
+  else s.estourou = true
+  if (descricao !== undefined && !s.descricoes.has(chave)) s.descricoes.set(chave, descricao)
+}
+
+/** Status do quadrado do campo: o que o usuário lê de relance. */
+function statusCampo({ preenchidos, total, foraDoEnum }) {
+  if (foraDoEnum > 0) return 'alerta'
+  if (preenchidos === 0) return 'vazio'
+  if (preenchidos < total) return 'parcial'
+  return 'ok'
+}
+
 /**
- * campos: campos_retorno do catálogo ({ campo, tipo, eh_enum });
- * enums: mapa do catálogo { TipoX: { values: [{ key }] } }.
+ * campos: campos_retorno do catálogo ({ campo, tipo, eh_enum, descricao });
+ * enums: mapa do catálogo { TipoX: { values: [{ key, description }] } }.
+ *
+ * Devolve o resumo (parciais, ausentes, fora do enum...) e `campos`: um item por
+ * campo do arquivo, com status e a estatística que o painel de detalhe mostra.
  */
 export function perfilCampos(registros, campos = [], enums = {}) {
   const stats = new Map()
   for (const r of registros) {
-    for (const [c, v] of achatar(r, '', [])) {
+    for (const [c, v, descricao] of achatar(r, '', [])) {
       let s = stats.get(c)
-      if (!s) { s = { campo: c, presentes: 0, preenchidos: 0, valores: new Map() }; stats.set(c, s) }
-      s.presentes++
-      if (!vazioNoCampo(c, v)) s.preenchidos++
-      if (typeof v === 'string' && s.valores.size <= 50) s.valores.set(v, (s.valores.get(v) || 0) + 1)
+      if (!s) { s = novoAcumulador(c); stats.set(c, s) }
+      acumular(s, c, v, descricao)
     }
   }
 
@@ -157,33 +215,62 @@ export function perfilCampos(registros, campos = [], enums = {}) {
   const noArquivo = [...stats.keys()]
   const temFilho = (c) => noArquivo.some((k) => k.startsWith(c + '.'))
 
-  // Valor de enum que o catálogo não conhece = divergência de verdade.
-  const foraDoEnum = []
-  for (const c of campos.filter((x) => x.eh_enum)) {
-    const s = stats.get(c.campo)
-    const validos = new Set((enums[c.tipo]?.values || []).map((v) => v.key))
-    if (!s || validos.size === 0) continue
-    const fora = [...s.valores].filter(([v]) => v && !validos.has(v))
-    if (fora.length) foraDoEnum.push({ campo: c.campo, tipo: c.tipo, valores: fora.map(([valor, qtd]) => ({ valor, qtd })) })
-  }
+  const detalhes = [...stats.values()].map((s) => {
+    const cat = doCatalogo.get(s.campo)
+    const aceitos = cat?.eh_enum ? (enums[cat.tipo]?.values || []) : []
+    const validos = new Set(aceitos.map((v) => v.key))
 
-  const linhas = [...stats.values()].map((s) => ({
-    campo: s.campo,
-    preenchidos: s.preenchidos,
-    vazios: total - s.preenchidos,
-    pct: total ? s.preenchidos / total : 0,
-  }))
+    const ordenados = [...s.valores].sort((a, b) => b[1] - a[1])
+    const listaCompleta = !s.estourou && s.valores.size <= MAX_LISTADOS
+    // muitos valores (id, cpf, valor): a distribuição inteira não diz nada — só os que se repetem
+    const listados = listaCompleta ? ordenados : ordenados.filter(([, q]) => q > 1).slice(0, MAX_FREQUENTES)
+    const valores = listados.map(([valor, qtd]) => ({
+      valor, qtd,
+      descricao: s.descricoes.get(valor) || aceitos.find((a) => a.key === valor)?.description || null,
+      foraDoEnum: validos.size > 0 && !validos.has(valor),
+    }))
+    const foraDoEnum = validos.size ? ordenados.filter(([v]) => !validos.has(v)) : []
+
+    return {
+      campo: s.campo,
+      status: statusCampo({ preenchidos: s.preenchidos, total, foraDoEnum: foraDoEnum.length }),
+      preenchidos: s.preenchidos,
+      vazios: total - s.preenchidos,
+      pct: total ? s.preenchidos / total : 0,
+      tipo: s.tipos.size === 1 ? [...s.tipos][0] : (s.tipos.size ? 'misto' : null),
+      descricao: cat?.descricao || null,
+      tipoCatalogo: cat?.tipo || null,
+      distintos: s.valores.size,
+      muitos: s.estourou,
+      // valores que aparecem em mais de um registro (num id, sinal de duplicidade)
+      repetidos: ordenados.filter(([, q]) => q > 1).length,
+      listaCompleta,
+      valores,
+      foraDoEnum: foraDoEnum.map(([valor, qtd]) => ({ valor, qtd })),
+      enumAceitos: aceitos.map((a) => ({ key: a.key, descricao: a.description, presente: s.valores.has(a.key) })),
+      num: s.num,
+      data: s.data,
+      anos: [...s.anos].sort((a, b) => b[0].localeCompare(a[0])).map(([ano, qtd]) => ({ ano, qtd })),
+    }
+  })
+
+  const ausentes = campos.map((c) => c.campo).filter((c) => !stats.has(c) && !temFilho(c))
+  const ORDEM = { alerta: 0, parcial: 1, ok: 2, vazio: 3 }
 
   return {
     total,
-    foraDoEnum,
+    campos: detalhes.sort((a, b) =>
+      ORDEM[a.status] - ORDEM[b.status] || (a.status === 'parcial' ? a.pct - b.pct : 0) || a.campo.localeCompare(b.campo)),
+    foraDoEnum: detalhes.filter((d) => d.foraDoEnum.length).map((d) => ({ campo: d.campo, tipo: d.tipoCatalogo, valores: d.foraDoEnum })),
     // a fonte devolve, mas não veio no arquivo (pai com filhos presentes não conta)
-    ausentes: campos.map((c) => c.campo).filter((c) => !stats.has(c) && !temFilho(c)),
+    ausentes,
+    ausentesDetalhe: ausentes.map((c) => ({ campo: c, descricao: doCatalogo.get(c)?.descricao || null, tipoCatalogo: doCatalogo.get(c)?.tipo || null })),
     // veio no arquivo, mas o catálogo não conhece
     desconhecidos: campos.length ? noArquivo.filter((c) => !doCatalogo.has(c)) : [],
-    parciais: linhas.filter((l) => l.preenchidos > 0 && l.vazios > 0).sort((a, b) => a.pct - b.pct),
-    sempreVazios: linhas.filter((l) => l.preenchidos === 0).map((l) => l.campo).sort(),
-    sempreCheios: linhas.filter((l) => l.vazios === 0).length,
+    parciais: detalhes.filter((d) => d.status === 'parcial' || (d.status === 'alerta' && d.vazios > 0 && d.preenchidos > 0))
+      .sort((a, b) => a.pct - b.pct),
+    sempreVazios: detalhes.filter((d) => d.preenchidos === 0).map((d) => d.campo).sort(),
+    sempreCheios: detalhes.filter((d) => d.vazios === 0).length,
   }
 }
 
