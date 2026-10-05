@@ -50,8 +50,9 @@ krakion/
 │   ├── notas.md               # Módulo Notas (Google Keep): modelos, API, comportamentos
 │   ├── usuarios.md            # Módulo Usuários e Perfil: schema, rotas, recuperação de senha, MeuPerfil
 │   ├── conhecimento.md        # Módulo Conhecimento: base colaborativa de FAQs, erros, passo a passo
-│   ├── checagem.md            # Módulo Checagem de Cadastros: valida JSON de migração contra spec + catálogo global de campos
-│   └── analisador-json.md
+│   ├── checagem.md            # Módulo Checagem: frente Por API (spec + regras) e Por Fonte (upload do .jsonl da fonte BFC → laudo por regra e por campo, nada armazenado)
+│   ├── analisador-json.md
+│   └── scripts-bfc/           # BFC-Scripts versionados — exporta-debitos-por-credito.groovy gera o .jsonl que a Checagem Por Fonte lê
 ├── skills/                    # Referências de domínio e processo
 │   ├── backend.md
 │   ├── frontend.md
@@ -72,7 +73,7 @@ krakion/
 │   ├── package.json
 │   ├── .env                   # DATABASE_URL, PORT, JWT_SECRET, JWT_EXPIRES_IN, HCAPTCHA_SECRET, SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL, CORS_ORIGINS (opcional)
 │   ├── prisma/
-│   │   ├── schema.prisma      # 25 modelos: Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, CampoChecagem, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId, numero, origem), ChamadoComentario (+ autorId opcional, autorSolicitanteId, interno), ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante (+ email único e credenciais do portal: senhaHash, contaAtiva, emailVerificado, lockout, recuperação), Nota, NotaCompartilhamento, Conhecimento
+│   │   ├── schema.prisma      # 28 modelos (inclui FonteDados, RegraChecagem, NotaChecagem da Checagem): Script, Tag, Relatorio, Municipio (+ usuarioId), MunicipioSistema (+ dataVencimento), Sistema, Endpoint, CampoChecagem, Requisicao, SwaggerSpec, Usuario (+ filaFiltro, email, funcao, ultimoLogin, recuperacaoToken, recuperacaoExpira, conhecimentosAutor), PortfolioMunicipio, Entidade, EntidadeSistema (+ vertical), Stakeholder, StakeholderSistema, CatalogoVertical, Chamado (+ solicitanteId, numero, origem), ChamadoComentario (+ autorId opcional, autorSolicitanteId, interno), ChamadoAnexo (+ comentarioId), ChamadoHistorico, Solicitante (+ email único e credenciais do portal: senhaHash, contaAtiva, emailVerificado, lockout, recuperação), Nota, NotaCompartilhamento, Conhecimento
 │   │   ├── seed.js            # Dados iniciais + cria usuário admin padrão (admin/admin123) + usuário-sistema "portal" (inativo, p/ criadoPorId de chamados do portal) — DESTRUTIVO: apaga municípios/scripts/endpoints
 │   │   ├── migrar-sqlite-postgres.js # Migração de dados dev.db → Postgres preservando IDs (DMMF, pivots M2M, sequences, verificação de contagens) — requer Node ≥ 22.5
 │   │   └── dev.db             # SQLite LEGADO (fallback pré-migração; banco atual é PostgreSQL)
@@ -83,7 +84,9 @@ krakion/
 │       ├── lib/
 │       │   ├── prisma.js      # Instância ÚNICA de PrismaClient — TODA rota usa require('../lib/prisma'); NUNCA new PrismaClient() em rota (esgota pool do Postgres)
 │       │   ├── numeroChamado.js # prefixoMunicipio() + gerarNumero() — protocolo persistido PREFIXO-YYYY-NNNNN em transação
-│       │   ├── checagem.js    # Motor de validação PURO (sem Prisma): achatarCampos() + validarPayload() — coberto por checagem.test.js (19 testes, `npm test`)
+│       │   ├── checagem.js    # Motor de spec PURO da frente Por API: achatarCampos() + validarPayload() — checagem.test.js (19 testes)
+│       │   ├── regrasChecagem.js # Motor de regras PURO: avaliarRegras(), vazio() (0 = ausência), desembrulhar() (enum {valor,descricao}) — regrasChecagem.test.js (19 testes)
+│       │   ├── parseEntrada.js # Parser tolerante: array, envelope {data}, JSONL, log do Studio com hora — parseEntrada.test.js (10 testes)
 │       │   └── authUtils.js   # hashToken (SHA-256), captchaValido (hCaptcha), criarTransporter (SMTP) — compartilhados entre auth interno e portal
 │       └── routes/
 │           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha + atualiza ultimoLogin) + /logout + /me + /registrar + /esqueci-senha (rate limit 5/15min) + /redefinir-senha
@@ -103,7 +106,7 @@ krakion/
 │           ├── portalChamados.js # Chamados do PORTAL (/api/portal/chamados) — autenticarExterno; sempre where solicitanteId=sid (404 se não dono); criação origem "portal" + numero + histórico; filtra comentários internos e seus anexos; upload validado
 │           ├── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
 │           ├── conhecimento.js # CRUD Conhecimento — todos criam; autor/admin editam; somente admin deleta; dados globais
-│           └── checagem.js    # Checagem de Cadastros — lista cadastros (endpoints de escrita), campos achatados, toggle de obrigatoriedade (catálogo GLOBAL) e validação de payload
+│           └── checagem.js    # Checagem — cadastros/campos/marcações (spec), CRUD de regras e notas, POST /verificar (stateless: só lê do banco), catálogo de fontes BFC
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
@@ -188,9 +191,16 @@ krakion/
             │   ├── constants.js            # TIPO_CONFIG, TIPO_OPTS e `parseConteudo(str)` — detecta JSON de blocos ou texto plano e retorna array de blocos
             │   └── ModalConhecimento.jsx   # Modal criar/editar; editor de blocos (BlocoEditorList + BlocoItem + AddBlocoMenu); suporte a blocos ricos dentro de cada passo (passo-a-passo)
             ├── Checagem/
-            │   ├── index.jsx               # Seletor Sistema + Cadastro (compartilhado) + toggle de abas
-            │   ├── AbaChecar.jsx           # Cola o JSON → laudo com erros/alertas (aceita objeto ou array)
-            │   └── AbaCampos.jsx           # Tabela de campos com toggle Obrigatório + observação inline
+            │   ├── index.jsx               # Seletor de frente (Por API / Por Fonte) + Sistema + Cadastro/Fonte
+            │   ├── AbaPorFonte.jsx         # Upload do .jsonl (lotes de 700 KB p/ /verificar) ou texto colado; esquerda = quadrado por regra + por campo; direita = detalhe
+            │   ├── arquivoFonte.js         # Lógica PURA do upload: lerJsonl, montarLotes, mesclarResultados, perfilCampos (stats por campo), concentracao
+            │   ├── DetalheRegra.jsx        # Detalhe da regra: consequência, como corrigir, onde se concentra, JSON × esperado, ids
+            │   ├── DetalheCampo.jsx        # Detalhe do campo: preenchimento, quantidade por valor, enum aceito, datas, soma, unicidade
+            │   ├── PainelCampos.jsx        # Resumo dos campos do arquivo (modo embutido no detalhe)
+            │   ├── LaudoRegras.jsx         # Peças compartilhadas (SEV, Trecho, ListaIds, CONTEXTO) + laudo antigo usado na frente API
+            │   ├── AbaPorApi.jsx           # Frente API: payload de migração → spec + regras + notas
+            │   ├── AbaCampos.jsx           # Tabela de campos com toggle Obrigatório + observação inline
+            │   └── ConstrutorScript.jsx    # Gera o BFC-Script de exportação a partir do catálogo de fontes
             ├── AnalisadorJson.jsx # re-export → AnalisadorJson/index.jsx
             └── AnalisadorJson/
                 ├── index.jsx               # Componente principal — EditorLinhas, layout, toolbar
@@ -432,7 +442,12 @@ docker-compose up --build
 | GET    | /api/checagem/campos          | `?sistemaId=&path=` — campos achatados com `obrigatorio` já mesclado das marcações      |
 | PUT    | /api/checagem/campos          | Upsert da marcação por `sistemaId+path+campo` (toggle + observação)                      |
 | DELETE | /api/checagem/campos          | Remove a marcação — volta ao que a spec diz                                             |
-| POST   | /api/checagem/validar         | `{ sistemaId, path, payload }` → `{ resumo, achados[] }`                                |
+| POST   | /api/checagem/validar         | `{ sistemaId, path, payload }` → `{ resumo, achados[] }` (motor de spec antigo)          |
+| GET/POST/PUT/DELETE | /api/checagem/regras[/:id] | CRUD de `RegraChecagem` (`?frente=&cadastro=`; aceita `comoCorrigir`)            |
+| GET/POST/PUT/DELETE | /api/checagem/notas[/:id]  | CRUD de `NotaChecagem` (observações do cadastro, por `path`)                     |
+| POST   | /api/checagem/verificar       | `{ sistemaId, frente, cadastro, texto }` → laudo por regra (+ spec na frente api). **Stateless** — não grava nada |
+| POST   | /api/checagem/fontes/importar | Importa `catalogo_v2.json` (fontes BFC) — **somente admin**                             |
+| GET    | /api/checagem/fontes[/:id]    | Lista fontes / detalhe com filtros, campos de retorno e `enums`                         |
 
 ### Outros
 | Método | Rota                  | Descrição                                                                     |
@@ -542,7 +557,10 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Checagem — regra do pai ausente**: quando um objeto pai falta no payload, o motor reporta só o pai e pula os filhos. Sem isso, um `dividas` faltando geraria 58 achados em vez de 1.
 - **Checagem — marcação redundante é apagada**: se o toggle volta a bater com a spec e não há observação, o registro é removido em vez de salvo. O catálogo guarda só o que difere da spec ou carrega explicação.
 - **Checagem — não existe auditoria em massa**: a API REST Betha tem 358 GETs, 354 deles `/{id}`, e o único parâmetro de query em toda a API é `id`. Não há GET de coleção nem filtro — varrer dados do município só é possível em BFC-Script (`Dados.tributos.v2.*.busca`), que roda no Studio. Ver `docs/checagem.md`.
-- **Testes**: `npm test` no backend roda `node --test "src/**/*.test.js"` (runner nativo do Node, sem dependência). Hoje cobre `src/lib/checagem.test.js` (19 testes do motor de validação, funções puras).
+- **Checagem — frente Por Fonte (validador de arquivo, 2026-10-05)**: entrada padrão é o **`.jsonl`** gerado pelo script de exportação no Studio (um registro por linha, como a fonte devolveu; o CSV do mesmo zip é só para consulta humana). O navegador lê o arquivo, corta cada registro para os caminhos das regras + `CONTEXTO` e manda em **lotes de 700 KB** para `/verificar` (limite global de 1 MB) — 29 MB viram 8 lotes. **Nada é armazenado**: nem banco, nem disco, nem localStorage. Laudo: esquerda = quadrado por regra + quadrado por campo (ok/parcial/vazio/alerta/ausente); direita = detalhe. Perfil de campos usa o catálogo `FonteDados` (achado por `path === '/<cadastro>'`) para descrição, enum aceito e campos que não vieram. Vazio = `null`, `""`, `{}`, `0` em id/código, data `1800-01-01`.
+- **Checagem — regras**: fonte de verdade é `backend/prisma/seed-regras-checagem.js` (idempotente por `frente+cadastro+nome`; rodar `node prisma/seed-regras-checagem.js` na VPS após mudar). Cada fonte tem seus nomes de campo (`debitos`: `dtVencimento`, `referente.tipo`/`tipoCadastro`; `dividas`: `tipoReferente`/`creditoTributario.tipoCadastro`) — regra copiada entre fontes falha em silêncio ("0 alcançados"). Calibrar contra um gabarito (base feita pela tela: regra que acusa o gabarito está errada). Textos (`porque`, `naoSabemos`, `comoCorrigir`) são genéricos — nunca citam base/caso de origem (isso vai em comentário). `NotaChecagem` não tem seed: vive só no banco de produção.
+- **Checagem — `ArquivosTemporarios/`**: pasta local de extratos para teste (no `.gitignore` — contém CPF/CNPJ). Referência: `debitos_credito_285568.jsonl` (16.451 débitos, 1.635 sem receita vinculada).
+- **Testes**: `npm test` no backend roda `node --test "src/**/*.test.js"` (runner nativo do Node, sem dependência) — 48 testes: `checagem.test.js` (19, motor de spec), `regrasChecagem.test.js` (19, motor de regras + regras do seed contra o formato real da fonte) e `parseEntrada.test.js` (10).
 - **Analisador JSON**: módulo 100% client-side, sem rotas de backend. Ver `docs/analisador-json.md`.
 - **Chunks obsoletos após deploy (2026-06-12)**: cada deploy troca os hashes dos chunks do Vite — abas abertas com o bundle antigo quebravam em tela branca ao navegar (React.lazy recebia o index.html do fallback SPA no lugar do JS). Defesa em duas camadas: `main.jsx` escuta `vite:preloadError` e recarrega a página (guard de 10s em sessionStorage); Nginx de produção serve `/assets/` com `try_files $uri =404` + cache imutável e `index.html` com `no-cache`. Ver `skills/deploy.md`.
 - **localStorage keys**: `krakion-auth` (authStore), `krakion-municipio` (municipioStore), `krakion-portal-auth` (portalAuthStore — sessão do solicitante externo), `krakion-json-viewerDark` (AnalisadorJson)
