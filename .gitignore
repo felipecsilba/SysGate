@@ -8,3 +8,6 @@ backend/prisma/dev.db-journal
 backend/nul
 /LogoComNome.png
 /LogoSemNome.png
+
+# extratos de base para teste da Checagem (contêm CPF/CNPJ)
+ArquivosTemporarios/

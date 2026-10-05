@@ -23,6 +23,10 @@ const NOTA_CONFIG = {
 // vazio, não como valor, senão o usuário não entende por que a regra acusou.
 const ehVazio = (v) => v === null || v === undefined || v === '' || v === 0 || v === '0'
 
+// Campos que o recorte do registro mostra antes do que falta. Exportado porque o
+// upload de .jsonl corta cada registro e precisa preservar estes caminhos.
+const CONTEXTO = ['id', 'ano', 'anoInscricao', 'dataInscricao', 'tipoReferente', 'creditoTributario.abreviatura', 'referente.tipo', 'situacao']
+
 const pegar = (obj, caminho) =>
   String(caminho).split('.').reduce((a, k) => (a === null || a === undefined ? undefined : a[k]), obj)
 
@@ -35,7 +39,7 @@ const curto = (caminho) => (caminho.includes('.') ? caminho.split('.').slice(-2)
 function Trecho({ exemplo, regra }) {
   const reg = exemplo.registro || {}
 
-  const contexto = ['id', 'ano', 'anoInscricao', 'dataInscricao', 'tipoReferente', 'creditoTributario.abreviatura']
+  const contexto = CONTEXTO
     .map((c) => ({ c, v: pegar(reg, c) }))
     .filter((x) => x.v !== undefined && x.v !== null)
     .slice(0, 5)
@@ -165,4 +169,4 @@ function Regra({ r }) {
 }
 
 
-export { SEV, NOTA_CONFIG, Trecho, Regra }
+export { SEV, NOTA_CONFIG, CONTEXTO, Trecho, Regra }

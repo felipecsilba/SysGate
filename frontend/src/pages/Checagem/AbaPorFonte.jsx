@@ -1,7 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { checagemApi } from '../../lib/api'
 import ConstrutorScript from './ConstrutorScript'
-import { SEV, NOTA_CONFIG, Regra } from './LaudoRegras'
+import PainelCampos from './PainelCampos'
+import { SEV, NOTA_CONFIG, CONTEXTO, Regra } from './LaudoRegras'
+import { lerJsonl, caminhosNecessarios, montarLotes, mesclarResultados, perfilCampos } from './arquivoFonte'
+
+const fmtMB = (b) => (b / 1024 / 1024).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' MB'
+
+/** Catálogo da fonte com o mesmo nome do cadastro (path /<cadastro>), ou null. */
+async function carregarFonte(sistemaId, cadastro) {
+  const lista = await checagemApi.fontes({ sistemaId, busca: cadastro })
+  const alvo = lista.find((f) => f.nome === cadastro && f.path === `/${cadastro}`)
+    || lista.find((f) => f.nome === cadastro && f.operacao === 'busca')
+  return alvo ? checagemApi.fonte(alvo.id) : null
+}
 
 export default function AbaPorFonte({ sistemaId, cadastro }) {
   const [texto, setTexto] = useState('')
@@ -10,20 +22,83 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
   const [verificando, setVerificando] = useState(false)
   const [regrasCadastradas, setRegrasCadastradas] = useState([])
   const [construtorAberto, setConstrutorAberto] = useState(false)
+  // .jsonl carregado: os registros ficam fora do state (16 mil objetos não
+  // precisam passar pelo React), só o resumo vai para a tela
+  const [arquivo, setArquivo] = useState(null)
+  const registrosRef = useRef([])
+  const inputArquivoRef = useRef(null)
+  const [progresso, setProgresso] = useState(null)
+  const [perfil, setPerfil] = useState(null)
+  const [semCatalogo, setSemCatalogo] = useState(false)
 
   useEffect(() => {
     setResultado(null)
     setErro(null)
+    setPerfil(null)
     if (!sistemaId || !cadastro) { setRegrasCadastradas([]); return }
     checagemApi.regras({ sistemaId, frente: 'fonte', cadastro })
       .then(setRegrasCadastradas)
       .catch(() => setRegrasCadastradas([]))
   }, [sistemaId, cadastro])
 
+  const limpar = () => {
+    setTexto(''); setResultado(null); setErro(null); setPerfil(null)
+    setArquivo(null); registrosRef.current = []
+    if (inputArquivoRef.current) inputArquivoRef.current.value = ''
+  }
+
+  const carregarArquivo = async (file) => {
+    if (!file) return
+    setErro(null); setResultado(null); setPerfil(null)
+    try {
+      const { registros, descartadas } = lerJsonl(await file.text())
+      if (registros.length === 0) {
+        setErro('Não encontrei nenhum registro no arquivo. Esperado: um JSON por linha (.jsonl).')
+        return
+      }
+      registrosRef.current = registros
+      setArquivo({ nome: file.name, tamanho: file.size, registros: registros.length, descartadas })
+      setTexto('')
+    } catch (e) {
+      setErro('Não consegui ler o arquivo: ' + e.message)
+    }
+  }
+
+  const verificarArquivo = async () => {
+    const registros = registrosRef.current
+    const lotes = montarLotes(registros, caminhosNecessarios(regrasCadastradas, CONTEXTO))
+    const parciais = []
+    for (let i = 0; i < lotes.length; i++) {
+      setProgresso({ lote: i + 1, total: lotes.length })
+      parciais.push(await checagemApi.verificar({ sistemaId, frente: 'fonte', cadastro, texto: lotes[i] }))
+    }
+    setResultado(mesclarResultados(parciais, { registros: registros.length, descartadas: arquivo.descartadas }))
+
+    // perfil de campos: sem catálogo ainda vale o preenchimento
+    let fonte = null
+    try { fonte = await carregarFonte(sistemaId, cadastro) } catch { /* segue sem catálogo */ }
+    setSemCatalogo(!fonte)
+    setPerfil(perfilCampos(registros, fonte?.campos || [], fonte?.enums || {}))
+  }
+
   const verificar = async () => {
     setErro(null)
     setResultado(null)
-    if (!texto.trim()) { setErro('Cole a saída do script antes de verificar.'); return }
+    setPerfil(null)
+    if (arquivo) {
+      setVerificando(true)
+      try {
+        await verificarArquivo()
+      } catch (e) {
+        const d = e.response?.data
+        setErro(d?.detalhe ? `${d.error} ${d.detalhe}` : (d?.error || e.message))
+      } finally {
+        setVerificando(false)
+        setProgresso(null)
+      }
+      return
+    }
+    if (!texto.trim()) { setErro('Cole a saída do script ou carregue o arquivo .jsonl antes de verificar.'); return }
     setVerificando(true)
     try {
       setResultado(await checagemApi.verificar({ sistemaId, frente: 'fonte', cadastro, texto }))
@@ -57,20 +132,60 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
             </button>
           </div>
         </div>
-        <div className="p-4">
+        <div
+          className="p-4"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => { e.preventDefault(); carregarArquivo(e.dataTransfer.files?.[0]) }}
+        >
+          <input
+            ref={inputArquivoRef}
+            type="file"
+            accept=".jsonl,.ndjson,.json,.txt"
+            className="hidden"
+            onChange={(e) => carregarArquivo(e.target.files?.[0])}
+          />
+          {arquivo ? (
+            <div className="min-h-[330px] rounded-lg border-2 border-dashed border-sysgate-200 bg-sysgate-50/40 flex flex-col items-center justify-center gap-2 p-6 text-center">
+              <svg className="w-9 h-9 text-sysgate-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <span className="font-mono text-sm text-gray-800 break-all">{arquivo.nome}</span>
+              <span className="text-xs text-gray-500">
+                {arquivo.registros.toLocaleString('pt-BR')} registros · {fmtMB(arquivo.tamanho)}
+                {arquivo.descartadas > 0 && <> · <span className="text-amber-700">{arquivo.descartadas} linha(s) ilegível(is)</span></>}
+              </span>
+              {progresso && (
+                <div className="w-full max-w-xs mt-2">
+                  <div className="h-1.5 rounded-full bg-white overflow-hidden">
+                    <div className="h-full bg-sysgate-600 transition-all" style={{ width: `${(progresso.lote / progresso.total) * 100}%` }} />
+                  </div>
+                  <span className="text-[11px] text-gray-500">Lote {progresso.lote}/{progresso.total}</span>
+                </div>
+              )}
+              <button type="button" onClick={() => inputArquivoRef.current?.click()} disabled={verificando} className="text-xs font-medium text-sysgate-600 hover:text-sysgate-800 mt-1">
+                Trocar arquivo
+              </button>
+            </div>
+          ) : (
           <textarea
             id="entrada-fonte"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             spellCheck={false}
-            placeholder={'Cole aqui a saída do BFC-Script.\n\nAceita array JSON, um JSON por linha, ou o log do Studio\ncom a hora na frente:\n\n11:52:01 - {"id":274988488,"credito":"LIDFE"}'}
+            placeholder={'Cole aqui a saída do BFC-Script — ou arraste o arquivo .jsonl exportado.\n\nAceita array JSON, um JSON por linha, ou o log do Studio\ncom a hora na frente:\n\n11:52:01 - {"id":274988488,"credito":"LIDFE"}'}
             className="w-full min-h-[330px] resize-y rounded-lg bg-gray-900 text-gray-200 border-0 p-3 font-mono text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-sysgate-500"
           />
+          )}
           <div className="flex gap-2 mt-3 flex-wrap">
             <button onClick={verificar} disabled={verificando} className="btn-primary">
               {verificando ? 'Verificando…' : 'Verificar'}
             </button>
-            <button onClick={() => { setTexto(''); setResultado(null); setErro(null) }} className="btn-secondary">
+            {!arquivo && (
+              <button onClick={() => inputArquivoRef.current?.click()} disabled={verificando} className="btn-secondary">
+                Carregar .jsonl
+              </button>
+            )}
+            <button onClick={limpar} disabled={verificando} className="btn-secondary">
               Limpar
             </button>
           </div>
@@ -94,7 +209,7 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
           {erro && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{erro}</div>}
 
           {!resultado && !erro && (
-            <p className="text-sm text-gray-400 text-center py-10">Cole a saída e clique em Verificar.</p>
+            <p className="text-sm text-gray-400 text-center py-10">Cole a saída ou carregue o .jsonl e clique em Verificar.</p>
           )}
 
           {resultado && (
@@ -134,6 +249,8 @@ export default function AbaPorFonte({ sistemaId, cadastro }) {
                   </div>
                 </div>
               )}
+
+              <PainelCampos perfil={perfil} semCatalogo={semCatalogo} />
             </>
           )}
         </div>

@@ -591,6 +591,8 @@ router.get('/fontes/:id', async (req, res) => {
       descricao: f.descricao, descricaoOp: f.descricaoOp, tipoRetorno: f.tipoRetorno,
       filtros: comValores,
       campos: JSON.parse(f.campos || '[]'),
+      // o perfil do arquivo .jsonl confere os valores de enum contra este mapa
+      enums,
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
