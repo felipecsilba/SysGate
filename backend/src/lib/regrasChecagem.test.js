@@ -186,3 +186,51 @@ test('lista vazia de registros não quebra', () => {
   assert.equal(res[0].aplicaveis, 0)
   assert.equal(res[0].severidade, 'ok')
 })
+
+// ─── débitos: as regras do seed contra o formato REAL da fonte ──────────────
+// A fonte `debitos` não tem tipoReferente nem creditoTributario: o tipo vem em
+// `referente.tipo` / `tipoCadastro` e o vencimento em `dtVencimento`. As regras
+// nasceram com os nomes da fonte `dividas` — a de receita nunca se aplicava e a
+// de vencimento acusaria 100% dos débitos. Fixtures: export de 05/10/2026.
+
+const { REGRAS: REGRAS_SEED } = require('../../prisma/seed-regras-checagem')
+const regrasDebitos = REGRAS_SEED.filter((r) => r.frente === 'fonte' && r.cadastro === 'debitos')
+
+function debitoFonte({ id, idReceitaDiversa, refCodigo, dtVencimento }) {
+  return {
+    id,
+    idContribuinte: 99326994,
+    idImovel: 0,
+    idEconomico: 20948070,
+    idReceitaDiversa,
+    tipoCadastro: enumRD,
+    referente: {
+      tipo: enumRD,
+      tipoDescricao: 'Receitas diversas',
+      codigo: refCodigo,
+      descricao: `Receita diversa ${refCodigo}`,
+    },
+    ano: 2017,
+    nroParcela: 1,
+    situacao: { descricao: 'Inscrita', valor: 'INSCRITA' },
+    dtVencimento,
+    vlLancado: 22.29,
+  }
+}
+
+const debitoBom = debitoFonte({ id: 1, idReceitaDiversa: 177216445, refCodigo: '177216445', dtVencimento: '2020-08-18' })
+const debitoSemReceita = debitoFonte({ id: 2, idReceitaDiversa: 0, refCodigo: null, dtVencimento: '2025-03-19' })
+
+test('débitos: regra de vencimento lê dtVencimento — não acusa débito com vencimento', () => {
+  const regra = regrasDebitos.find((r) => r.nome === 'Vencimento informado')
+  const [res] = avaliarRegras({ registros: [debitoBom, debitoSemReceita], regras: [regra] })
+  assert.equal(res.aplicaveis, 2)
+  assert.equal(res.faltando.length, 0)
+})
+
+test('débitos: receita diversa com idReceitaDiversa 0 é acusada; a vinculada não', () => {
+  const regra = regrasDebitos.find((r) => r.nome === 'Receita vinculada quando o crédito é Receita Diversa')
+  const [res] = avaliarRegras({ registros: [debitoBom, debitoSemReceita], regras: [regra] })
+  assert.equal(res.aplicaveis, 2)
+  assert.deepEqual(res.faltando.map((f) => f.id), ['2'])
+})

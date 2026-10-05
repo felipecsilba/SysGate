@@ -11,7 +11,7 @@
  * Toda regra aqui nasceu de dado real, e a maioria de um erro cometido antes.
  * Ver docs/plans/2026-09-28-checagem-por-regras.md.
  */
-const prisma = require('../src/lib/prisma')
+// prisma é carregado dentro de main(): os testes importam REGRAS sem abrir conexão
 
 const REGRAS = [
   // ── Dívidas, frente FONTE (retorno do BFC-Script) ──────────────────────────
@@ -137,8 +137,9 @@ const REGRAS = [
     porque:
       'Sem vencimento o débito não vence, não gera acréscimo e nunca entra na rotina de inscrição ' +
       'em dívida ativa — fica invisível para a cobrança.',
-    onde: ['dataVencimento'],
-    esperado: '"dataVencimento": "AAAA-MM-DD"',
+    // a fonte debitos chama de dtVencimento; dataVencimento é o nome da API REST
+    onde: ['dtVencimento', 'competencia.dataVencimento', 'dataVencimento'],
+    esperado: '"dtVencimento": "AAAA-MM-DD"',
     severidade: 'erro',
     ordem: 1,
   },
@@ -149,8 +150,11 @@ const REGRAS = [
     porque:
       'É a origem do mesmo defeito que quebra o parcelamento na dívida: no Viseu, os 1445 débitos ' +
       'que geraram dívidas sem vínculo também estavam sem vínculo, com valor 0.',
-    onde: ['idReceitaDiversa', 'receitasDiversas.id'],
-    quando: { caminhos: ['tipoReferente', 'creditoTributario.tipoCadastro'], igualA: ['RECEITAS_DIVERSAS'] },
+    // referente.codigo fica de fora de propósito: com idReceitaDiversa 0 ele também
+    // vem vazio, e se um dia vier preenchido esconderia o vínculo que falta
+    onde: ['idReceitaDiversa'],
+    // a fonte debitos não tem tipoReferente nem creditoTributario: o tipo vem aqui
+    quando: { caminhos: ['referente.tipo', 'tipoCadastro'], igualA: ['RECEITAS_DIVERSAS'] },
     esperado: '"idReceitaDiversa": <id da receita diversa>',
     severidade: 'erro',
     ordem: 2,
@@ -158,6 +162,7 @@ const REGRAS = [
 ]
 
 async function main() {
+  const prisma = require('../src/lib/prisma')
   const sistemaId = parseInt(process.argv[2] || '', 10) || null
 
   const sistema = sistemaId
@@ -209,7 +214,9 @@ async function main() {
   process.exit(0)
 }
 
-main().catch((e) => {
+if (require.main === module) main().catch((e) => {
   console.error('ERRO:', e.message)
   process.exit(1)
 })
+
+module.exports = { REGRAS }
