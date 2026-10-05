@@ -25,9 +25,10 @@ const REGRAS = [
     onde: ['idReceitaDiversa', 'idReceitaDiversaLancamento', 'referente.codigo'],
     quando: { caminhos: ['tipoReferente', 'creditoTributario.tipoCadastro'], igualA: ['RECEITAS_DIVERSAS'] },
     esperado: '"idReceitaDiversa": <id da receita diversa>',
+    // Origem: no Viseu, 5 das 1445 dívidas sem vínculo constavam como PAGA_PARCELAMENTO.
     naoSabemos:
-      'Cinco dívidas nessa condição constam como PAGA_PARCELAMENTO no Viseu, ou seja, em algum ' +
-      'caminho o parcelamento passou. O erro pode não ser inevitável.',
+      'Já foram vistas dívidas nessa condição com situação PAGA_PARCELAMENTO, ou seja, em algum ' +
+      'caminho o parcelamento passa. A falha é provável, mas não garantida.',
     severidade: 'erro',
     ordem: 1,
   },
@@ -147,9 +148,13 @@ const REGRAS = [
     frente: 'fonte',
     cadastro: 'debitos',
     nome: 'Receita vinculada quando o crédito é Receita Diversa',
+    // Origem: Viseu, 09/2026 — os 1445 débitos que geraram dívidas sem vínculo
+    // também estavam sem vínculo, com valor 0. O texto do laudo não cita o caso:
+    // ele é lido em qualquer base e precisa explicar a regra, não a história.
     porque:
-      'É a origem do mesmo defeito que quebra o parcelamento na dívida: no Viseu, os 1445 débitos ' +
-      'que geraram dívidas sem vínculo também estavam sem vínculo, com valor 0.',
+      'Débito de crédito do tipo Receita Diversa precisa apontar a receita diversa que o originou. ' +
+      'Sem esse vínculo, a dívida gerada na inscrição também nasce sem referente e o parcelamento ' +
+      'dela falha com erro interno [E001]. Valor 0 no id conta como vazio.',
     // referente.codigo fica de fora de propósito: com idReceitaDiversa 0 ele também
     // vem vazio, e se um dia vier preenchido esconderia o vínculo que falta
     onde: ['idReceitaDiversa'],
