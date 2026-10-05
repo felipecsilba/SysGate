@@ -133,9 +133,12 @@ function Regra({ r }) {
               )}
               <h4 className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mt-3 mb-1.5">
                 Todos os ids afetados
+                <span className="normal-case font-normal tracking-normal"> · {(r.ids || []).length.toLocaleString('pt-BR')}</span>
               </h4>
-              <div className="font-mono text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-2.5 max-h-36 overflow-auto break-all">
-                {(r.ids || []).join(', ')}
+              {/* um id por célula: com milhares de ids (upload de .jsonl), texto corrido
+                  quebrava número no meio e virava um bloco ilegível */}
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-x-3 gap-y-0.5 font-mono text-xs tabular-nums text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-2.5 max-h-48 overflow-auto">
+                {(r.ids || []).map((id) => <span key={id} className="whitespace-nowrap select-all">{id}</span>)}
               </div>
               <button type="button" onClick={copiarIds} className="btn-secondary mt-2 text-xs">
                 Copiar {r.ids.length} id{r.ids.length !== 1 ? 's' : ''}
