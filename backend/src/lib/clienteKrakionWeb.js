@@ -51,8 +51,42 @@ async function entrar(url, login, senha) {
   return { base, token: r.token, usuario: r.usuario }
 }
 
+// Executa fn em cada item com no máximo `limite` chamadas ao mesmo tempo (não afoga a VPS)
+async function emParalelo(itens, limite, fn) {
+  const saida = new Array(itens.length)
+  let proximo = 0
+  const trabalhador = async () => {
+    while (proximo < itens.length) {
+      const i = proximo++
+      saida[i] = await fn(itens[i])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limite, itens.length) }, trabalhador))
+  return saida
+}
+
+// Checagem de um sistema: regras, notas e lista de fontes. Com `completo`, também o detalhe
+// de cada fonte (filtros, campos, enums) e as marcações de campo dos cadastros que têm alguma.
+async function buscarChecagem(base, token, sistemaId, { completo = false } = {}) {
+  const q = `sistemaId=${sistemaId}`
+  const [regras, notas, fontes] = await Promise.all([
+    chamar(base, `/api/checagem/regras?${q}`, { token }),
+    chamar(base, `/api/checagem/notas?${q}`, { token }),
+    chamar(base, `/api/checagem/fontes?${q}`, { token }),
+  ])
+  if (!completo) return { sistemaId, regras, notas, fontes }
+
+  const detalhes = await emParalelo(fontes, 8, f => chamar(base, `/api/checagem/fontes/${f.id}`, { token }))
+  const cadastros = (await chamar(base, `/api/checagem/cadastros?${q}`, { token })).filter(c => c.marcacoes > 0)
+  const campos = await emParalelo(cadastros, 8, async c => ({
+    path: c.path,
+    resposta: await chamar(base, `/api/checagem/campos?${q}&path=${encodeURIComponent(c.path)}`, { token }),
+  }))
+  return { sistemaId, regras, notas, fontes: detalhes, campos }
+}
+
 // Tudo que a importação usa, com os tokens de cada município (só os do usuário logado na VPS)
-async function buscarTudo(url, token) {
+async function buscarTudo(url, token, { checagemCompleta = false } = {}) {
   const base = normalizarUrl(url)
   const [sistemas, endpoints, municipios, notas, conhecimento] = await Promise.all([
     chamar(base, '/api/sistemas', { token }),
@@ -64,7 +98,8 @@ async function buscarTudo(url, token) {
   const comTokens = await Promise.all(
     municipios.map(async m => ({ ...m, tokens: await chamar(base, `/api/municipios/${m.id}/tokens`, { token }) }))
   )
-  return { sistemas, endpoints, municipios: comTokens, notas, conhecimento }
+  const checagem = await Promise.all(sistemas.map(s => buscarChecagem(base, token, s.id, { completo: checagemCompleta })))
+  return { sistemas, endpoints, municipios: comTokens, notas, conhecimento, checagem }
 }
 
-module.exports = { normalizarUrl, entrar, buscarTudo }
+module.exports = { normalizarUrl, entrar, buscarTudo, emParalelo }

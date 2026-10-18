@@ -3,6 +3,7 @@ const { exigirAdmin } = require('../middleware/autenticar')
 const { entrar, buscarTudo } = require('../lib/clienteKrakionWeb')
 const {
   casarPorNome, prepararEndpoint, prepararTokens, resumir, planejarPorChave, prepararNota, prepararConhecimento,
+  chaveRegra, chaveNotaChecagem, prepararRegra, prepararNotaChecagem, prepararFonte, camposMarcados,
 } = require('../lib/importacaoWeb')
 
 const router = express.Router()
@@ -38,11 +39,11 @@ router.post('/conectar', async (req, res) => {
 // POST /api/importacao/executar — busca de novo na VPS e grava tudo numa transação
 router.post('/executar', async (req, res) => {
   try {
-    const { url, tokenRemoto, sistemas: comSistemas, municipios: comMunicipios, notas: comNotas, conhecimento: comConhecimento } = req.body
+    const { url, tokenRemoto, sistemas: comSistemas, municipios: comMunicipios, notas: comNotas, conhecimento: comConhecimento, checagem: comChecagem } = req.body
     if (!tokenRemoto) return res.status(400).json({ error: 'Conecte ao Krakion web antes de importar.' })
-    if (!comSistemas && !comMunicipios && !comNotas && !comConhecimento) return res.status(400).json({ error: 'Escolha o que importar.' })
+    if (!comSistemas && !comMunicipios && !comNotas && !comConhecimento && !comChecagem) return res.status(400).json({ error: 'Escolha o que importar.' })
 
-    const remoto = await buscarTudo(url, tokenRemoto)
+    const remoto = await buscarTudo(url, tokenRemoto, { checagemCompleta: !!comChecagem })
     const usuarioId = req.usuario.id
 
     const resultado = await prisma.$transaction(async tx => {
@@ -120,8 +121,59 @@ router.post('/executar', async (req, res) => {
         r.conhecimento = [0, 0]
         await copiar(remoto.conhecimento, 'conhecimento', {}, c => prepararConhecimento(c, usuarioId), 'conhecimento')
       }
+
+      // Checagem: dados globais por sistema. Casam por chave natural e a VPS vence; nada local é apagado.
+      if (comChecagem) {
+        r.checagem = { regras: 0, notas: 0, fontes: 0, campos: 0, sistemasIgnorados: 0 }
+        for (const c of remoto.checagem) {
+          const sistemaId = mapaSistemas.get(c.sistemaId)
+          if (!sistemaId) {
+            if (c.regras.length || c.notas.length || c.fontes.length) r.checagem.sistemasIgnorados++
+            continue
+          }
+
+          const regrasLocais = new Map((await tx.regraChecagem.findMany({ where: { sistemaId } })).map(l => [chaveRegra(l), l.id]))
+          for (const regra of c.regras) {
+            const dados = prepararRegra(regra, sistemaId)
+            const id = regrasLocais.get(chaveRegra(regra))
+            if (id) await tx.regraChecagem.update({ where: { id }, data: dados })
+            else await tx.regraChecagem.create({ data: dados })
+            r.checagem.regras++
+          }
+
+          const notasLocais = new Map((await tx.notaChecagem.findMany({ where: { sistemaId } })).map(l => [chaveNotaChecagem(l), l.id]))
+          for (const nota of c.notas) {
+            const dados = prepararNotaChecagem(nota, sistemaId)
+            const id = notasLocais.get(chaveNotaChecagem(nota))
+            if (id) await tx.notaChecagem.update({ where: { id }, data: dados })
+            else await tx.notaChecagem.create({ data: dados })
+            r.checagem.notas++
+          }
+
+          for (const fonte of c.fontes) {
+            const dados = prepararFonte(fonte, sistemaId)
+            await tx.fonteDados.upsert({
+              where: { sistemaId_nome_path_operacao: { sistemaId, nome: dados.nome, path: dados.path, operacao: dados.operacao } },
+              update: dados,
+              create: dados,
+            })
+            r.checagem.fontes++
+          }
+
+          for (const { path, resposta } of c.campos) {
+            for (const dados of camposMarcados(resposta, path, sistemaId)) {
+              await tx.campoChecagem.upsert({
+                where: { sistemaId_path_campo: { sistemaId, path, campo: dados.campo } },
+                update: dados,
+                create: dados,
+              })
+              r.checagem.campos++
+            }
+          }
+        }
+      }
       return r
-    }, { timeout: 120000, maxWait: 10000 })
+    }, { timeout: 300000, maxWait: 10000 })
 
     res.json(resultado)
   } catch (e) {

@@ -85,8 +85,47 @@ function prepararConhecimento(c, autorId) {
   }
 }
 
-function resumir({ sistemas, endpoints, municipios, notas = [], conhecimento = [] }) {
+// ─── Checagem (regras, notas, catálogo de fontes, campos marcados) ──────────────
+// Nada é apagado: cada registro casa por uma chave natural e é atualizado com o da VPS.
+
+const chaveRegra = r => [r.frente, r.cadastro, normalizarNome(r.nome)].join('|')
+const chaveNotaChecagem = n => [n.path, n.tipo, normalizarNome(n.texto)].join('|')
+
+// Regra como a rota devolve (onde/quando parseados) → dados do Prisma
+function prepararRegra(r, sistemaId) {
+  return {
+    sistemaId, frente: r.frente, cadastro: r.cadastro, nome: r.nome, porque: r.porque,
+    onde: JSON.stringify(r.onde || []), quando: r.quando ? JSON.stringify(r.quando) : null,
+    esperado: r.esperado ?? null, naoSabemos: r.naoSabemos ?? null, comoCorrigir: r.comoCorrigir ?? null,
+    severidade: r.severidade || 'erro', ordem: r.ordem ?? 0,
+  }
+}
+
+function prepararNotaChecagem(n, sistemaId) {
+  return { sistemaId, path: n.path, tipo: n.tipo, texto: n.texto, ordem: n.ordem ?? 0 }
+}
+
+// Detalhe de /fontes/:id → linha de FonteDados. A rota anexa `valores` aos filtros de enum; não faz parte do catálogo.
+// Só fontes de leitura existem no catálogo (a importação do catalogo_v2.json filtra).
+function prepararFonte(d, sistemaId) {
+  return {
+    sistemaId, nome: d.nome, path: d.path, operacao: d.operacao || 'busca', verbo: 'GET', natureza: 'LEITURA',
+    descricao: d.descricao ?? null, descricaoOp: d.descricaoOp ?? null, tipoRetorno: d.tipoRetorno ?? null,
+    filtros: JSON.stringify((d.filtros || []).map(({ valores, ...f }) => f)),
+    campos: JSON.stringify(d.campos || []), enums: JSON.stringify(d.enums || {}),
+  }
+}
+
+// Resposta de /campos (spec + marcações mescladas) → só as marcações feitas à mão
+function camposMarcados(resp, path, sistemaId) {
+  return (resp?.campos || []).filter(c => c.marcado).map(c => ({
+    sistemaId, path, campo: c.caminho, obrigatorio: !!c.obrigatorio, observacao: c.observacao?.trim() || null,
+  }))
+}
+
+function resumir({ sistemas, endpoints, municipios, notas = [], conhecimento = [], checagem = [] }) {
   const semSistema = endpoints.filter(e => e.sistemaId == null).length
+  const soma = campo => checagem.reduce((n, c) => n + (c[campo]?.length || 0), 0)
   return {
     sistemas: sistemas.length,
     endpoints: endpoints.length - semSistema,
@@ -95,10 +134,14 @@ function resumir({ sistemas, endpoints, municipios, notas = [], conhecimento = [
     tokens: municipios.reduce((n, m) => n + (m.tokens?.length || 0), 0),
     notas: notas.length,
     conhecimento: conhecimento.length,
+    regras: soma('regras'),
+    notasChecagem: soma('notas'),
+    fontes: soma('fontes'),
   }
 }
 
 module.exports = {
   normalizarNome, casarPorNome, prepararEndpoint, prepararTokens, resumir,
   planejarPorChave, prepararNota, prepararConhecimento,
+  chaveRegra, chaveNotaChecagem, prepararRegra, prepararNotaChecagem, prepararFonte, camposMarcados,
 }

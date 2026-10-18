@@ -62,7 +62,7 @@ export default function ImportarDados() {
   const [etapa, setEtapa] = useState(0)
   const [form, setForm] = useState(() => ({ url: 'https://krakionlabs.cloud', login: '', ...lembrado(), senha: '' }))
   const [conexao, setConexao] = useState(null) // { url, tokenRemoto, resumo, usuarioRemoto }
-  const [escolha, setEscolha] = useState({ sistemas: true, municipios: true, notas: true, conhecimento: true })
+  const [escolha, setEscolha] = useState({ sistemas: true, municipios: true, notas: true, conhecimento: true, checagem: true })
   const [resultado, setResultado] = useState(null)
   const [erro, setErro] = useState('')
   const [ocupado, setOcupado] = useState(false)
@@ -175,9 +175,15 @@ export default function ImportarDados() {
                 titulo="Conhecimento"
                 detalhe={`${resumo.conhecimento ?? 0} artigos da base`}
               />
+              <Opcao
+                marcado={escolha.checagem}
+                onMudar={v => setEscolha(s => ({ ...s, checagem: v }))}
+                titulo="Checagem"
+                detalhe={`${resumo.regras ?? 0} regras · ${resumo.notasChecagem ?? 0} notas · ${resumo.fontes ?? 0} fontes do catálogo BFC, e os campos marcados como obrigatórios`}
+              />
               <p className="rounded-xl bg-amber-500/10 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
                 Pode importar quantas vezes quiser — nada é duplicado. Sistema ou município com o mesmo nome é atualizado com o que está
-                na VPS, e os endpoints desses sistemas são substituídos pelos de lá. Nota ou artigo que você editou aqui depois da última mudança na VPS é mantido.
+                na VPS, e os endpoints desses sistemas são substituídos pelos de lá. Nota ou artigo que você editou aqui depois da última mudança na VPS é mantido. Regras e fontes da checagem são atualizadas com as da VPS.
               </p>
               {erro && <p className="text-sm text-perigo">{erro}</p>}
               <div className="flex gap-2">
@@ -212,7 +218,14 @@ export default function ImportarDados() {
                 <Numero valor={resultado.tokens} rotulo="tokens" />
                 {resultado.notas && <Numero valor={resultado.notas[0] + resultado.notas[1]} rotulo={`notas (${resultado.notas[0]} novas)`} />}
                 {resultado.conhecimento && <Numero valor={resultado.conhecimento[0] + resultado.conhecimento[1]} rotulo={`artigos (${resultado.conhecimento[0]} novos)`} />}
+                {resultado.checagem && <Numero valor={resultado.checagem.regras} rotulo={`regras de checagem · ${resultado.checagem.notas} notas`} />}
+                {resultado.checagem && <Numero valor={resultado.checagem.fontes} rotulo={`fontes do catálogo · ${resultado.checagem.campos} campos marcados`} />}
               </div>
+              {resultado.checagem?.sistemasIgnorados > 0 && (
+                <p className="text-xs text-suave">
+                  A checagem de {resultado.checagem.sistemasIgnorados} sistema(s) ficou de fora porque o sistema não existe aqui — importe também os sistemas.
+                </p>
+              )}
               {resultado.tokensIgnorados > 0 && (
                 <p className="text-xs text-suave">
                   {resultado.tokensIgnorados} token(s) ficaram de fora porque o sistema deles não existe aqui — importe também os sistemas.

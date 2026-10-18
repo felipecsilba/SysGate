@@ -3,6 +3,7 @@ const assert = require('node:assert/strict')
 const {
   normalizarNome, casarPorNome, prepararEndpoint, prepararTokens, resumir,
   planejarPorChave, prepararNota, prepararConhecimento,
+  prepararRegra, chaveRegra, prepararNotaChecagem, chaveNotaChecagem, prepararFonte, camposMarcados,
 } = require('./importacaoWeb')
 
 test('normalizarNome ignora caixa, espaços e acentos', () => {
@@ -61,6 +62,7 @@ test('resumir conta o que veio e separa endpoints sem sistema', () => {
   }
   assert.deepEqual(resumir(dados), {
     sistemas: 2, endpoints: 2, endpointsSemSistema: 1, municipios: 2, tokens: 3, notas: 0, conhecimento: 0,
+    regras: 0, notasChecagem: 0, fontes: 0,
   })
 })
 
@@ -96,4 +98,63 @@ test('resumir conta notas e artigos de conhecimento', () => {
   const r = resumir({ sistemas: [], endpoints: [], municipios: [], notas: [{}, {}], conhecimento: [{}] })
   assert.equal(r.notas, 2)
   assert.equal(r.conhecimento, 1)
+})
+
+test('prepararRegra: onde/quando voltam a ser texto JSON, sistema local, sem id nem autor', () => {
+  const r = {
+    id: 5, sistemaId: 9, frente: 'fonte', cadastro: 'debitos', nome: 'Vencimento informado', porque: 'p',
+    onde: ['dtVencimento'], quando: { caminhos: ['tipo'], igualA: ['X'] }, esperado: null, naoSabemos: 'n',
+    comoCorrigir: null, severidade: 'erro', ordem: 2, autorId: 1, criadoEm: '2026-10-01',
+  }
+  assert.deepEqual(prepararRegra(r, 3), {
+    sistemaId: 3, frente: 'fonte', cadastro: 'debitos', nome: 'Vencimento informado', porque: 'p',
+    onde: '["dtVencimento"]', quando: '{"caminhos":["tipo"],"igualA":["X"]}', esperado: null, naoSabemos: 'n',
+    comoCorrigir: null, severidade: 'erro', ordem: 2,
+  })
+  assert.equal(prepararRegra({ ...r, quando: null }, 3).quando, null)
+})
+
+test('regra e nota da checagem casam pela mesma chave do seed (sem caixa nem acento)', () => {
+  assert.equal(chaveRegra({ frente: 'fonte', cadastro: 'debitos', nome: 'Receita Vinculada' }),
+    chaveRegra({ frente: 'fonte', cadastro: 'debitos', nome: 'receita vinculada ' }))
+  assert.notEqual(chaveRegra({ frente: 'api', cadastro: 'debitos', nome: 'a' }), chaveRegra({ frente: 'fonte', cadastro: 'debitos', nome: 'a' }))
+  assert.equal(chaveNotaChecagem({ path: '/api/dividas', tipo: 'regra', texto: ' Precisa da receita ' }),
+    chaveNotaChecagem({ path: '/api/dividas', tipo: 'regra', texto: 'precisa da receita' }))
+  assert.deepEqual(prepararNotaChecagem({ id: 1, sistemaId: 9, path: '/x', tipo: 'regra', texto: 't', ordem: 1, autorId: 2 }, 3),
+    { sistemaId: 3, path: '/x', tipo: 'regra', texto: 't', ordem: 1 })
+})
+
+test('prepararFonte: detalhe da VPS → linha do catálogo, sem os valores que a rota anexa aos filtros', () => {
+  const d = {
+    id: 40, nome: 'debitos', path: '/debitos', operacao: 'busca', descricao: 'Débitos', descricaoOp: null, tipoRetorno: 'Debito',
+    filtros: [{ campo: 'situacao', tipo: 'Situacao', eh_enum: true, valores: [{ key: 'A' }] }, { campo: 'id', tipo: 'Long' }],
+    campos: [{ nome: 'id' }], enums: { Situacao: { values: [{ key: 'A' }] } },
+  }
+  assert.deepEqual(prepararFonte(d, 3), {
+    sistemaId: 3, nome: 'debitos', path: '/debitos', operacao: 'busca', verbo: 'GET', natureza: 'LEITURA',
+    descricao: 'Débitos', descricaoOp: null, tipoRetorno: 'Debito',
+    filtros: '[{"campo":"situacao","tipo":"Situacao","eh_enum":true},{"campo":"id","tipo":"Long"}]',
+    campos: '[{"nome":"id"}]', enums: '{"Situacao":{"values":[{"key":"A"}]}}',
+  })
+})
+
+test('camposMarcados: só o que foi marcado à mão, com observação vazia virando null', () => {
+  const resp = { campos: [
+    { caminho: 'dividas.sistemaOrigem', marcado: true, obrigatorio: true, observacao: 'Sem ele o débito não cancela' },
+    { caminho: 'dividas.idPessoa', marcado: false, obrigatorio: true, observacao: '' },
+    { caminho: 'dividas.obs', marcado: true, obrigatorio: false, observacao: '' },
+  ] }
+  assert.deepEqual(camposMarcados(resp, '/api/dividas', 3), [
+    { sistemaId: 3, path: '/api/dividas', campo: 'dividas.sistemaOrigem', obrigatorio: true, observacao: 'Sem ele o débito não cancela' },
+    { sistemaId: 3, path: '/api/dividas', campo: 'dividas.obs', obrigatorio: false, observacao: null },
+  ])
+})
+
+test('resumir conta regras, notas e fontes da checagem de todos os sistemas', () => {
+  const r = resumir({ sistemas: [], endpoints: [], municipios: [], checagem: [
+    { regras: [{}, {}], notas: [{}], fontes: [{}, {}, {}] }, { regras: [{}], notas: [], fontes: [] },
+  ] })
+  assert.equal(r.regras, 3)
+  assert.equal(r.notasChecagem, 1)
+  assert.equal(r.fontes, 3)
 })
