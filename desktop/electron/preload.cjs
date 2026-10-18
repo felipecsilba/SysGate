@@ -1,5 +1,6 @@
 // Ponte mínima entre a interface e o Electron (contextIsolation + sandbox).
-// Expõe só controles da janela, tema, aviso de versão nova e o agente do Betha Admin — nenhum acesso a Node, arquivos ou IPC genérico.
+// Expõe só controles da janela, tema, aviso de versão nova, o agente do Betha Admin e a leitura da biblioteca
+// de extensões (só dentro da pasta escolhida, somente leitura) — nenhum acesso a Node, arquivos soltos ou IPC genérico.
 // .cjs: preload em sandbox não suporta ESM.
 const { contextBridge, ipcRenderer } = require('electron')
 
@@ -20,6 +21,14 @@ contextBridge.exposeInMainWorld('krakion', {
       ipcRenderer.on('betha:passo', ouvinte)
       return () => ipcRenderer.removeListener('betha:passo', ouvinte)
     },
+  },
+  // Biblioteca das Extensões (pasta de scripts, fórmulas e relatórios — somente leitura)
+  biblioteca: {
+    indice: () => ipcRenderer.invoke('biblioteca:indice'),
+    ler: id => ipcRenderer.invoke('biblioteca:ler', id),
+    buscar: (ids, termo) => ipcRenderer.invoke('biblioteca:buscar', ids, termo),
+    mostrar: id => ipcRenderer.invoke('biblioteca:mostrar', id),
+    escolherPasta: () => ipcRenderer.invoke('biblioteca:escolher-pasta'),
   },
   // Aviso de versão nova (modo atalho): 'interface' → recarregar; 'completo' → reiniciar
   app: {

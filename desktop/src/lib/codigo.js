@@ -1,7 +1,8 @@
 // Realce de código no estilo VS Code Dark+ (blocos de código do Conhecimento).
 // Escapa o HTML de cada pedaço ANTES de pintar — conteúdo do banco nunca vira marcação.
-export function highlightCode(code) {
-  const KEYWORDS = new Set([
+// `extras`: palavras-chave adicionais (ex.: BFC_SCRIPT nas Extensões)
+export function highlightCode(code, extras = []) {
+  const KEYWORDS = new Set([...extras, 
     'if','else','for','while','do','return','function','var','let','const',
     'new','true','false','null','undefined','import','export','class','extends',
     'try','catch','finally','throw','switch','case','break','continue','in','of',
@@ -81,4 +82,29 @@ export function highlightCode(code) {
     const esc = v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     return C[t] ? `<span style="color:${C[t]}">${esc}</span>` : esc
   }).join('')
+}
+
+// Palavras do BFC-Script (Groovy em português) — usadas no realce das Extensões
+export const BFC_SCRIPT = [
+  'se', 'senao', 'para', 'ate', 'passo', 'enquanto', 'retornar', 'def', 'nulo', 'verdadeiro', 'falso',
+  'percorrer', 'tentar', 'tratar', 'finalmente', 'lancar', 'importar', 'esperar', 'parar', 'continuar',
+  'escolha', 'caso', 'padrao', 'e', 'ou', 'nao', 'it', 'as', 'in',
+]
+
+// XML (layout .jrxml): tags, atributos, valores e comentários — escapa cada pedaço antes de pintar
+export function highlightXml(xml) {
+  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const cor = (c, t) => `<span style="color:${c}">${esc(t)}</span>`
+  return String(xml).replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\/?[\w:.-]+[^<>]*>|[^<]+|</g, trecho => {
+    if (trecho.startsWith('<!--')) return cor('#6a9955', trecho)
+    if (trecho.startsWith('<![CDATA[')) return cor('#ce9178', trecho)
+    const tag = /^<(\/?)([\w:.-]+)([^<>]*?)(\/?)>$/.exec(trecho)
+    if (!tag) return esc(trecho)
+    let atributos = ''
+    let resto = tag[3]
+    const re = /([\w:.-]+)(\s*=\s*)("[^"]*"|'[^']*')|[\s\S]/g
+    let m
+    while ((m = re.exec(resto))) atributos += m[1] ? cor('#9cdcfe', m[1]) + esc(m[2]) + cor('#ce9178', m[3]) : esc(m[0])
+    return `${esc('<' + tag[1])}${cor('#569cd6', tag[2])}${atributos}${esc(tag[4] + '>')}`
+  })
 }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
 import util from 'node:util'
@@ -11,6 +11,7 @@ import { maisForte, vigiar } from './novaVersao.js'
 import { hashArquivo } from './schemaHash.js'
 import * as credenciaisBetha from './bethaAdmin/credenciais.js'
 import { renovarToken } from './bethaAdmin/agente.js'
+import * as biblioteca from './biblioteca.js'
 
 // Dev (npm run dev → abrir.js): interface pelo Vite com hot reload.
 // Fora disso (atalho / instalador): interface compilada em dist/.
@@ -143,6 +144,26 @@ ipcMain.handle('betha:status', () => credenciaisBetha.status(dadosApp()))
 ipcMain.handle('betha:salvar', (_e, usuario, senha) => credenciaisBetha.salvar(dadosApp(), usuario, senha))
 ipcMain.handle('betha:apagar', () => credenciaisBetha.apagar(dadosApp()))
 ipcMain.handle('betha:esquecer', (_e, chave) => credenciaisBetha.esquecer(dadosApp(), chave))
+// Biblioteca das Extensões: lê a pasta de scripts/fórmulas/relatórios (somente leitura).
+// A tela só manda ids relativos; resolverDentro() impede sair da pasta.
+const pastaBiblioteca = () => lerPreferencias(dadosApp()).bibliotecaPasta || biblioteca.PASTA_PADRAO
+ipcMain.handle('biblioteca:indice', () => biblioteca.indexar(pastaBiblioteca()))
+ipcMain.handle('biblioteca:ler', async (_e, id) => {
+  try { return await biblioteca.lerItem(pastaBiblioteca(), id) } catch (err) { return { erro: err.message } }
+})
+ipcMain.handle('biblioteca:buscar', (_e, ids, termo) => biblioteca.buscarConteudo(pastaBiblioteca(), Array.isArray(ids) ? ids : [], termo))
+ipcMain.handle('biblioteca:mostrar', (_e, id) => {
+  try { shell.showItemInFolder(biblioteca.resolverDentro(pastaBiblioteca(), id)) } catch { /* id inválido: ignora */ }
+})
+ipcMain.handle('biblioteca:escolher-pasta', async e => {
+  const r = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Pasta da biblioteca (Scripts, Formulas, Relatorios)', defaultPath: pastaBiblioteca(), properties: ['openDirectory'],
+  })
+  if (r.canceled || !r.filePaths[0]) return null
+  salvarPreferencias(dadosApp(), { bibliotecaPasta: r.filePaths[0] })
+  return biblioteca.indexar(r.filePaths[0])
+})
+
 let filaBetha = Promise.resolve() // uma renovação por vez — nada de várias janelas no Betha ao mesmo tempo
 ipcMain.handle('betha:renovar', (e, pedido) => {
   const executar = async () => {

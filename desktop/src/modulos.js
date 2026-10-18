@@ -5,7 +5,6 @@ export const GRUPOS = [
     titulo: 'Ferramentas',
     icone: 'ferramentas',
     itens: [
-      { id: 'extensoes', rotulo: 'Extensões', icone: 'extensoes', descricao: 'Scripts BFC, fórmulas, anotações e relatórios.' },
       { id: 'analisador-json', rotulo: 'Analisador JSON', icone: 'json', descricao: 'Árvore, tabela, grafo e comparação de JSON.' },
       { id: 'checagem', rotulo: 'Checagem', icone: 'checagem', descricao: 'Valida payloads e arquivos de fonte contra as regras Betha.' },
       { id: 'conhecimento', rotulo: 'Conhecimento', icone: 'conhecimento', descricao: 'FAQs, erros conhecidos e passo a passo.' },
@@ -21,6 +20,16 @@ export const GRUPOS = [
     direto: true,
     itens: [
       { id: 'api', rotulo: 'API', icone: 'api', descricao: 'Chamadas à API Betha, uma a uma ou em lote.' },
+    ],
+  },
+  // Biblioteca de scripts, fórmulas e relatórios lida da pasta local
+  {
+    id: 'extensoes',
+    titulo: 'Extensões',
+    icone: 'extensoes',
+    direto: true,
+    itens: [
+      { id: 'extensoes', rotulo: 'Extensões', icone: 'extensoes', descricao: 'Biblioteca de scripts, fórmulas e relatórios.' },
     ],
   },
   {
