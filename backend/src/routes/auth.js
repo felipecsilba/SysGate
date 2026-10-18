@@ -5,6 +5,7 @@ const crypto = require('crypto')
 const rateLimit = require('express-rate-limit')
 const autenticar = require('../middleware/autenticar')
 const { hashToken, captchaValido, criarTransporter } = require('../lib/authUtils')
+const { setupLocalDisponivel } = require('../lib/setupLocal')
 
 const router = express.Router()
 const prisma = require('../lib/prisma')
@@ -126,6 +127,49 @@ router.get('/me', autenticar, async (req, res) => {
     })
     if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' })
     res.json(usuario)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /api/auth/setup-local — o Krakion Desktop pergunta se é a primeira abertura
+router.get('/setup-local', async (req, res) => {
+  try {
+    const total = await prisma.usuario.count()
+    res.json({ disponivel: setupLocalDisponivel(process.env, total) })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/auth/setup-local — cria a conta local (ativa + admin) e já entra.
+// Fora do desktop ou com usuário existente responde 404, como se a rota não existisse.
+router.post('/setup-local', async (req, res) => {
+  try {
+    const total = await prisma.usuario.count()
+    if (!setupLocalDisponivel(process.env, total)) {
+      return res.status(404).json({ error: 'Não encontrado' })
+    }
+
+    const { nome, login, senha } = req.body
+    if (!nome || !login || !senha) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios' })
+    }
+    if (senha.length < 8) {
+      return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres' })
+    }
+
+    const senhaHash = await bcrypt.hash(senha, 10)
+    const usuario = await prisma.usuario.create({
+      data: { login, senhaHash, nome, role: 'admin', ativo: true, ultimoLogin: new Date() },
+    })
+
+    const token = jwt.sign(
+      { id: usuario.id, login: usuario.login, nome: usuario.nome, role: usuario.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    )
+    res.status(201).json({ token, usuario: { id: usuario.id, login: usuario.login, nome: usuario.nome, role: usuario.role } })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

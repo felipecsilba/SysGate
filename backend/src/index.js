@@ -21,6 +21,7 @@ const solicitantesRouter = require('./routes/solicitantes')
 const notasRouter = require('./routes/notas')
 const conhecimentoRouter = require('./routes/conhecimento')
 const checagemRouter = require('./routes/checagem')
+const importacaoRouter = require('./routes/importacao')
 const portalAuthRouter = require('./routes/portalAuth')
 const portalChamadosRouter = require('./routes/portalChamados')
 
@@ -70,7 +71,8 @@ app.use((req, res, next) => {
   if (req.method === 'POST' && /^\/api\/(portal\/)?chamados\/\d+\/anexos\/?$/.test(req.path)) {
     return jsonAnexo(req, res, next)
   }
-  if (req.method === 'POST' && req.path === '/api/checagem/fontes/importar') {
+  // Specs Swagger da Betha passam de 1 MB; só admin importa
+  if (req.method === 'POST' && (req.path === '/api/checagem/fontes/importar' || req.path === '/api/endpoints/importar-swagger')) {
     return jsonCatalogo(req, res, next)
   }
   return jsonGlobal(req, res, next)
@@ -107,6 +109,7 @@ app.use('/api/solicitantes', solicitantesRouter)
 app.use('/api/notas', notasRouter)
 app.use('/api/conhecimento', conhecimentoRouter)
 app.use('/api/checagem', checagemRouter)
+app.use('/api/importacao', importacaoRouter) // só no Krakion Desktop (KRAKION_DESKTOP=1)
 
 // Error handler global
 app.use((err, req, res, next) => {
@@ -122,7 +125,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' })
 })
 
-app.listen(PORT, () => {
+// HOST opcional: o Krakion Desktop define 127.0.0.1 para o backend local não ficar
+// exposto na rede. Sem HOST (VPS), comportamento de sempre (todas as interfaces).
+app.listen(PORT, process.env.HOST, () => {
   console.log(`🚀 Krakion Backend rodando em http://localhost:${PORT}`)
   // Mascara a credencial da connection string (Postgres) antes de logar
   console.log(`   Banco de dados: ${(process.env.DATABASE_URL || '').replace(/:\/\/([^:@/]+):[^@/]+@/, '://$1:****@')}`)

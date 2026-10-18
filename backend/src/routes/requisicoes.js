@@ -2,6 +2,7 @@ const express = require('express')
 
 const router = express.Router()
 const prisma = require('../lib/prisma')
+const { mascararHeaders } = require('../lib/mascararHeaders')
 
 // GET /api/requisicoes — filtros: municipioId, sistemaId, tipo, limite
 // Retorna apenas requisições de municípios do usuário logado
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
 
     const parsed = requisicoes.map((r) => ({
       ...r,
-      headers: r.headers ? JSON.parse(r.headers) : null,
+      headers: r.headers ? mascararHeaders(JSON.parse(r.headers)) : null, // registros antigos ainda têm o token
       body: r.body ? JSON.parse(r.body) : null,
       resposta: r.resposta ? JSON.parse(r.resposta) : null,
     }))

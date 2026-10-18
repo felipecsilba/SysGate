@@ -31,7 +31,7 @@ município.
 | `CAP_DIR` | `./capturas` | Pasta de saída |
 | `CAP_HOSTS` | `betha` | Substrings de host a capturar (vírgula separa) |
 | `CAP_GET` | `1` no .cmd | Capturar GET também (a tela relê o registro salvo) |
-| `CAP_TOKEN` | off | `1` grava o `Authorization` inteiro. Por padrão sai mascarado |
+| `CAP_TOKEN` | off | `1` grava o `Authorization` inteiro e campos de senha do corpo. Por padrão saem mascarados (`mascararCorpo.js`) |
 
 Só captura XHR/fetch — imagem, CSS, JS e fonte ficam de fora. `OPTIONS` é ignorado.
 

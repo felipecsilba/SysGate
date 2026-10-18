@@ -14,6 +14,7 @@
  */
 const fs = require('fs')
 const path = require('path')
+const { mascararCorpo } = require('./mascararCorpo')
 
 const PORT = process.env.CDP_PORT || 9222
 const OUT = process.env.CAP_DIR || path.join(__dirname, 'capturas')
@@ -112,7 +113,7 @@ async function finalizar(chave, extra) {
     erro: extra?.erro || null,
     duracaoMs: reg.t0 ? Math.round((Date.now() - reg.t0)) : null,
     requestHeaders: mascarar(reg.headers),
-    requestJson: tentarJson(reg.postData),
+    requestJson: CAP_TOKEN ? tentarJson(reg.postData) : mascararCorpo(tentarJson(reg.postData)), // senha nunca vai para o arquivo
     responseJson: tentarJson(corpoResposta),
   }
   const arquivo = path.join(OUT, `${n}-${reg.metodo}-${slug(reg.url)}.json`)

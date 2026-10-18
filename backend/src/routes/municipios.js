@@ -21,6 +21,8 @@ router.get('/', async (req, res) => {
         ativo: true, observacoes: true,
         criadoEm: true, atualizadoEm: true,
         _count: { select: { municipioSistemas: true } },
+        // Só a validade (nunca o token) — a lista do Krakion App avisa quem tem token vencido
+        municipioSistemas: { select: { dataVencimento: true } },
       },
     })
     res.json(municipios)

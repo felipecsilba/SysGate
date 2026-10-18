@@ -89,6 +89,7 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 - Usuário não loga até admin ativar via `PUT /api/usuarios/:id` com `{ ativo: true }`
 - UI exibe aviso em âmbar ao criar novo usuário
 - Impede desativar/excluir o último admin ativo
+- **Exceção — conta local do Krakion Desktop (2026-10-17)**: `POST /api/auth/setup-local` cria a 1ª conta já **ativa e admin**, sem aprovação. Liberada só quando `KRAKION_DESKTOP === '1'` (o app desktop define ao subir o backend; a VPS nunca define) **e** `usuario.count() === 0`. Fora disso responde **404** (não revela a rota). Regra pura em `lib/setupLocal.js` + `setupLocal.test.js`. A importação do Krakion web (`/api/importacao`) segue a mesma trava — `KRAKION_DESKTOP === '1'` + `exigirAdmin`, senão 404 — e o backend local é quem fala com a VPS (a senha nunca passa pela tela nem fica salva; o JWT da VPS só vive durante a importação). Erros de credencial da VPS voltam como 400, não 401. O desktop também sobe o backend com `HOST=127.0.0.1` (o `index.js` respeita `HOST`) — sem isso a API local, inclusive o `setup-local`, ficaria acessível a qualquer máquina da rede. Ver `docs/desktop.md`.
 
 ---
 
@@ -111,6 +112,9 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 ## Hardening de payload e upload (Fase 0)
 
 - **`express.json` global = 1 MB** (`index.js`); parser dedicado de **8 MB** só na rota `POST /api/chamados/:id/anexos`. Antes era 50 MB global — qualquer autenticado podia inflar o SQLite.
+- **Credenciais do Betha Admin no Krakion App (2026-10-18)**: o agente de tokens guarda usuário + senha em `<userData>/betha-admin.json` com a senha **cifrada por `safeStorage` (DPAPI do Windows)**. Só o processo main decifra (`electron/bethaAdmin/credenciais.js`); a tela só envia a senha ao salvar e nunca a recebe de volta; nada vai para o banco, histórico ou `krakion.log`. A sessão do Betha usa partição em memória (some ao fechar o app). `tools/betha-capture` mascara campos de senha do corpo — capturas antigas a 2026-10-18 podem conter a senha em texto e devem ser apagadas.
+- **Token fora do histórico (2026-10-17)**: o proxy gravava `Authorization: Bearer <token>` em texto puro em `Requisicao.headers`. Agora `lib/mascararHeaders.js` mascara ao gravar (`proxy.js`) e ao ler (`requisicoes.js` — registros antigos no banco ainda têm o token completo até serem apagados; considerar limpar o histórico antigo na VPS).
+- Parser de **32 MB** só em duas rotas de admin: `POST /api/checagem/fontes/importar` (catálogo BFC) e `POST /api/endpoints/importar-swagger` (specs Betha > 1 MB, 2026-10-17). O parse acontece antes do `autenticar` (o middleware de body é global), mas a gravação exige `exigirAdmin`.
 - **Upload de anexos** valida MIME (whitelist imagens + PDF → 415), tamanho real do base64 (5 MB/anexo, 25 MB/chamado → 413) e sanitiza o nome do arquivo. Ver `docs/chamados.md` → Anexos.
 - **Error handler global** (`index.js`) respeita `err.status` (413 do body-parser propaga corretamente) e **não vaza** mais `err.message`/`detail` em respostas 500.
 

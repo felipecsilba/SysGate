@@ -3,6 +3,7 @@ const axios = require('axios')
 
 const router = express.Router()
 const prisma = require('../lib/prisma')
+const { mascararHeaders } = require('../lib/mascararHeaders')
 
 // Proxy HTTP opcional — configurar PROXY_URL no .env para rotear chamadas externas
 // Formato: http://usuario:senha@host:porta  ou  http://host:porta
@@ -151,7 +152,7 @@ router.post('/executar', async (req, res) => {
       endpointId: endpointId ? Number(endpointId) : null,
       metodo: metodo.toUpperCase(),
       url,
-      headers: JSON.stringify(headers),
+      headers: JSON.stringify(mascararHeaders(headers)), // token não fica em texto puro no histórico
       body: body ? JSON.stringify(body) : null,
       statusCode,
       resposta: JSON.stringify(resposta),
@@ -182,7 +183,7 @@ router.post('/executar', async (req, res) => {
       endpointId: endpointId ? Number(endpointId) : null,
       metodo: metodo.toUpperCase(),
       url,
-      headers: JSON.stringify(headers),
+      headers: JSON.stringify(mascararHeaders(headers)), // token não fica em texto puro no histórico
       body: body ? JSON.stringify(body) : null,
       statusCode: err.response?.status || 0,
       resposta: JSON.stringify({ error: errMsg }),

@@ -3,6 +3,7 @@ const { exigirAdmin } = require('../middleware/autenticar')
 
 const router = express.Router()
 const prisma = require('../lib/prisma')
+const { metadadosSpec } = require('../lib/swaggerSpec')
 
 function buildProxyConfig() {
   const raw = process.env.PROXY_URL
@@ -351,6 +352,45 @@ function parsearSwagger(spec) {
 }
 
 /**
+ * Grava a spec no histórico e cria os endpoints dela — numa transação.
+ * `substituir` (com sistemaId): apaga antes os endpoints atuais do sistema, para reimportar
+ * a spec sem duplicar. Sem ele, mantém o comportamento antigo (só acrescenta).
+ */
+async function gravarSpec({ spec, nome, sistemaId, endpointsParsados, substituir }) {
+  const sid = sistemaId ? Number(sistemaId) : null
+  const { versao, urlBase, titulo } = metadadosSpec(spec)
+  return prisma.$transaction(async tx => {
+    const removidos = substituir && sid ? (await tx.endpoint.deleteMany({ where: { sistemaId: sid } })).count : 0
+    const specSalva = await tx.swaggerSpec.create({
+      data: {
+        nome: nome || titulo || 'Swagger importado',
+        versao,
+        urlBase,
+        conteudo: JSON.stringify(spec),
+        totalEndpoints: endpointsParsados.length,
+        sistemaId: sid,
+      },
+    })
+    const criados = []
+    for (const ep of endpointsParsados) {
+      const created = await tx.endpoint.create({
+        data: {
+          modulo: ep.modulo,
+          nome: ep.nome,
+          path: ep.path,
+          metodo: ep.metodo,
+          descricao: ep.descricao || null,
+          bodySchema: ep.bodySchema.length ? JSON.stringify(ep.bodySchema) : null,
+          sistemaId: sid,
+        },
+      })
+      criados.push({ ...created, bodySchema: ep.bodySchema })
+    }
+    return { spec: specSalva, importados: criados.length, removidos, endpoints: criados }
+  }, { timeout: 120000, maxWait: 10000 })
+}
+
+/**
  * Tenta extrair a URL do spec JSON embutida em uma página HTML do Swagger UI.
  * Cobre padrões comuns: SwaggerUIBundle({url:...}), configUrl, link rel, etc.
  */
@@ -471,38 +511,7 @@ router.post('/fetch-swagger', exigirAdmin, async (req, res) => {
       })
     }
 
-    const versao = spec.openapi || spec.swagger || '?'
-    const urlBase = spec.servers?.[0]?.url ||
-      (spec.host ? `${spec.schemes?.[0] || 'https'}://${spec.host}${spec.basePath || ''}` : null)
-
-    const specSalva = await prisma.swaggerSpec.create({
-      data: {
-        nome: nome || spec.info?.title || 'Swagger importado',
-        versao,
-        urlBase,
-        conteudo: JSON.stringify(spec),
-        totalEndpoints: endpointsParsados.length,
-        sistemaId: sistemaId ? Number(sistemaId) : null,
-      },
-    })
-
-    const criados = []
-    for (const ep of endpointsParsados) {
-      const created = await prisma.endpoint.create({
-        data: {
-          modulo: ep.modulo,
-          nome: ep.nome,
-          path: ep.path,
-          metodo: ep.metodo,
-          descricao: ep.descricao || null,
-          bodySchema: ep.bodySchema.length ? JSON.stringify(ep.bodySchema) : null,
-          sistemaId: sistemaId ? Number(sistemaId) : null,
-        },
-      })
-      criados.push({ ...created, bodySchema: ep.bodySchema })
-    }
-
-    res.status(201).json({ spec: specSalva, importados: criados.length, endpoints: criados })
+    res.status(201).json(await gravarSpec({ spec, nome, sistemaId, endpointsParsados, substituir: req.body.substituir }))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -535,47 +544,7 @@ router.post('/importar-swagger', exigirAdmin, async (req, res) => {
       return res.json({ total: endpointsParsados.length, endpoints: endpointsParsados })
     }
 
-    // Detecta versão da spec
-    const versao = spec.openapi || spec.swagger || '?'
-    // URL base — OpenAPI 3: servers[0].url; Swagger 2: host + basePath
-    const urlBase =
-      spec.servers?.[0]?.url ||
-      (spec.host ? `${spec.schemes?.[0] || 'https'}://${spec.host}${spec.basePath || ''}` : null)
-
-    // Salva a spec bruta
-    const specSalva = await prisma.swaggerSpec.create({
-      data: {
-        nome: nome || spec.info?.title || 'Swagger importado',
-        versao,
-        urlBase,
-        conteudo: JSON.stringify(spec),
-        totalEndpoints: endpointsParsados.length,
-        sistemaId: sistemaId ? Number(sistemaId) : null,
-      },
-    })
-
-    // Cria os endpoints no banco
-    const criados = []
-    for (const ep of endpointsParsados) {
-      const created = await prisma.endpoint.create({
-        data: {
-          modulo: ep.modulo,
-          nome: ep.nome,
-          path: ep.path,
-          metodo: ep.metodo,
-          descricao: ep.descricao || null,
-          bodySchema: ep.bodySchema.length ? JSON.stringify(ep.bodySchema) : null,
-          sistemaId: sistemaId ? Number(sistemaId) : null,
-        },
-      })
-      criados.push({ ...created, bodySchema: ep.bodySchema })
-    }
-
-    res.status(201).json({
-      spec: specSalva,
-      importados: criados.length,
-      endpoints: criados,
-    })
+    res.status(201).json(await gravarSpec({ spec, nome, sistemaId, endpointsParsados, substituir: req.body.substituir }))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
