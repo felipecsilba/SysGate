@@ -152,7 +152,7 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 ## Interface
 
 - Layout 3 colunas: **Rail** (grupos + tema + avatar) → **PainelLista** (itens do grupo) → conteúdo.
-- Menu vem de `src/modulos.js` (fonte única): Ferramentas → Extensões, Analisador JSON, Checagem, Conhecimento, Notas, Histórico; API (ícone próprio); Configurações → Sistemas, Central de Tokens, Betha Admin, Importar dados. Módulo sem página em `PAGINAS` (`App.jsx`) mostra `EmConstrucao` — hoje: Extensões e Checagem.
+- Menu vem de `src/modulos.js` (fonte única): Ferramentas → Extensões, Analisador JSON, Checagem, Conhecimento, Notas, Histórico; API (ícone próprio); Configurações → Sistemas, Central de Tokens, Betha Admin, Importar dados. Módulo sem página em `PAGINAS` (`App.jsx`) mostra `EmConstrucao` — hoje: só Extensões.
 - Padrão dos módulos de conteúdo (Histórico, Notas, Conhecimento): lista `w-80` à esquerda (busca + filtros no topo) e detalhe/editor à direita, no mesmo cartão da `Pagina`; ação principal ("Nova nota", "Novo artigo") verde sólido nas `acoes` do cabeçalho; seleção da lista neutra (`bg-texto/[0.07]`); cor só como ponto pequeno.
 - **Tema sem piscar**: a preferência também fica em `<userData>/preferencias.json` (o renderer avisa via `window.krakion.tema.definir` → IPC `tema:definir`). Antes de abrir a janela o main aplica `nativeTheme.themeSource` (`electron/preferencias.js`, testado) — assim o `prefers-color-scheme` de todas as páginas, inclusive `carregando.html`, já segue o app; e um script no `<head>` do `index.html` põe a classe `dark` antes do React carregar. Na 1ª abertura depois de atualizar, o arquivo ainda não existe (pisca uma vez); daí em diante nasce no tema certo.
 - Tema: tokens RGB em CSS vars (`src/index.css`, `:root` e `.dark`) mapeados no Tailwind (`bg-fundo`, `text-suave`, `bg-acento`…). Preferência `sistema → claro → escuro` em `localStorage` (`krakion-desktop-tema`); sessão em `krakion-desktop-auth`.
@@ -193,7 +193,7 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 
 4. Melhorias da API (2026-10-18, em andamento, guiadas pelo Felipe): seletor em dois níveis igual ao web, CaixaBusca, bloco Valores neutro com selo "fixo", **Modelos**, CaixaBusca em todo o app e módulo **Histórico** — API fechada. Pendente: o agente de tokens (login real — ver seção própria).
 
-5. Trazer os módulos "Em construção" (2026-10-18, em andamento): ~~Histórico~~, ~~Notas~~, ~~Conhecimento~~ (+ notas e conhecimento na importação), **Analisador JSON** (2026-10-18) — prontos. Faltam, **nesta ordem combinada**: **Checagem** (dados já vêm na importação; falta a tela) → **Extensões por último** (o Felipe pediu).
+5. Trazer os módulos "Em construção" (2026-10-18, em andamento): ~~Histórico~~, ~~Notas~~, ~~Conhecimento~~ (+ notas e conhecimento na importação), **Analisador JSON** (2026-10-18) — prontos. **Checagem Por Fonte** (2026-10-18) — prontos. Faltam: Checagem Por API (+ marcação de campos) → gerador de script de exportação → **Extensões por último** → **Extensões por último** (o Felipe pediu).
 
 ### Estado em 2026-10-18 (fim da sessão) — para retomar numa sessão nova
 
@@ -212,6 +212,13 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 
 - **Comparar**: dois editores (A original / B novo, Colar / Formatar / Limpar, botão trocar A↔B) e embaixo a lista de diferenças (`comparar()`): `+` adicionado, `−` removido, `~` alterado (de riscado → para), filtros por tipo, clique copia o caminho. Modo e textos sobrevivem à troca de módulo.
 - **Grafo do web não foi portado** — decisão do Felipe (2026-10-18): Árvore e Tabela cobrem o uso.
+
+**Checagem — frente Por Fonte pronta (2026-10-18).** `pages/Checagem/` (`index.jsx` com abas Por Fonte / Por API no cabeçalho + sistema/fonte; `PorFonte.jsx`; `Detalhes.jsx` com DetalheRegra/DetalheCampo/ResumoCampos/NotasCadastro; `pecas.jsx`) + `lib/arquivoFonte.js` (portado do web, agora com 11 testes). Usa as rotas `/api/checagem/*` do backend local; os dados vêm da importação (opção Checagem).
+- Fluxo igual ao web: arrastar/abrir o `.jsonl` (ou colar texto), corte de cada registro aos caminhos das regras + `CONTEXTO`, lotes de 700 KB para `/verificar`, mescla, perfil de campos com o catálogo `FonteDados`. Diferença: o lote é medido em **bytes UTF-8** (o web media caracteres — acentos podiam estourar o 1 MB).
+- Laudo só na memória enquanto o app está aberto (trocar de módulo não perde); nada em disco nem no banco (arquivo tem CPF/CNPJ).
+- Visual sóbrio: severidade = ponto + palavra; lista à esquerda (regras, "Campos do arquivo", "Falta fora do arquivo", campos com filtros e busca sem acento); detalhe à direita sem caixas coloridas (ícone + título colorido, texto neutro). "Onde se concentra" em uma coluna.
+- Conferido com o arquivo de referência (`ArquivosTemporarios/debitos_credito_285568.jsonl`): 16.451 débitos verificados em ~1,1 s, regra "Receita vinculada…" acusa os 1.635 esperados; concentração (INSCRITA 890, 2025 1.512, LIDFE 100%).
+- Frente **Por API** ainda mostra aviso "próximo passo".
 
 **Depois do Analisador:** Checagem (web `pages/Checagem/`, ~2.700 linhas — frentes Por API e Por Fonte; usa `/api/checagem/*` e o catálogo `FonteDados` — ver `docs/checagem.md`; regras vêm do `seed-regras-checagem.js`, que precisa rodar no banco local também) → Extensões (Scripts BFC/Fórmulas/Anotações + Relatórios JRXML — `Scripts.jsx` 760 linhas; incluir scripts e relatórios na importação, mesmo padrão título + `criadoEm`).
 

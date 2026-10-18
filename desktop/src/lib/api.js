@@ -83,6 +83,14 @@ export const conhecimentoApi = {
   excluir: id => api.delete(`/conhecimento/${id}`).then(dados),
 }
 
+// Checagem: regras, notas e catálogo de fontes vêm da importação; /verificar não grava nada
+export const checagemApi = {
+  regras: params => api.get('/checagem/regras', { params }).then(dados),
+  verificar: d => api.post('/checagem/verificar', d).then(dados),
+  fontes: params => api.get('/checagem/fontes', { params }).then(dados),
+  fonte: id => api.get(`/checagem/fontes/${id}`).then(dados),
+}
+
 // Verticais Betha (nome, cor, sistemas) — o backend cria as 9 oficiais na 1ª leitura
 export const catalogoApi = {
   listar: () => api.get('/catalogo').then(dados),
