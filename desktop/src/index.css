@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens do tema — canais RGB para o Tailwind aplicar opacidade (bg-acento/10) */
+:root {
+  --fundo: 255 255 255;
+  --painel: 247 247 248;
+  --rail: 240 240 243;
+  --borda: 229 231 235;
+  --texto: 17 24 39;
+  --suave: 107 114 128;
+  --acento: 79 70 229;
+  --acento-suave: 238 242 255;
+  --perigo: 220 38 38;
+  --contorno: rgb(0 0 0 / 0.14);
+  color-scheme: light;
+}
+
+.dark {
+  --fundo: 17 19 24;
+  --painel: 22 24 30;
+  --rail: 13 15 19;
+  --borda: 38 42 51;
+  --texto: 229 231 235;
+  --suave: 156 163 175;
+  --acento: 99 102 241; /* índigo Krakion (sysgate-500) — sem violeta neon */
+  --acento-suave: 33 35 64;
+  --perigo: 248 113 113;
+  --contorno: rgb(255 255 255 / 0.10);
+  color-scheme: dark;
+}
+
+html, body, #root { height: 100%; }
+
+/* Janela transparente do Electron (html.electron): o #root é a janela, com cantos de 16px
+   e um contorno fino por cima (a janela transparente não tem sombra nativa).
+   Maximizada (html.maximizada) volta a ser retangular, colada nas bordas da tela. */
+html.electron, html.electron body { background: transparent; }
+html.electron #root {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgb(var(--fundo));
+}
+html.electron #root::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--contorno);
+  pointer-events: none;
+  z-index: 100;
+}
+html.electron.maximizada #root,
+html.electron.maximizada #root::after { border-radius: 0; box-shadow: none; }
+
+/* Janela sem moldura: estas áreas arrastam a janela (e 2 cliques maximizam).
+   Tudo que é clicável dentro delas precisa de .nao-arrastar. */
+.arrastar { -webkit-app-region: drag; user-select: none; }
+.arrastar :is(button, a, input, select, textarea), .nao-arrastar { -webkit-app-region: no-drag; }
+
+body {
+  @apply bg-fundo text-texto font-sans antialiased;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+@layer components {
+  .campo {
+    @apply w-full rounded-xl border border-borda bg-fundo px-3 py-2 text-sm text-texto outline-none
+      placeholder:text-suave/70 focus:border-acento focus:ring-2 focus:ring-acento/20 transition;
+  }
+  .rotulo {
+    @apply mb-1 block text-xs font-medium text-suave;
+  }
+  .botao {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .botao-primario {
+    @apply botao bg-acento text-white hover:brightness-110;
+  }
+  /* Neutro mas visível: fundo um tom acima da tela (antes era igual ao fundo e sumia no escuro) */
+  .botao-secundario {
+    @apply botao border border-texto/15 bg-texto/[0.07] text-texto hover:border-texto/25 hover:bg-texto/[0.12];
+  }
+}

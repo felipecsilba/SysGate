@@ -50,6 +50,7 @@ krakion/
 │   ├── notas.md               # Módulo Notas (Google Keep): modelos, API, comportamentos
 │   ├── usuarios.md            # Módulo Usuários e Perfil: schema, rotas, recuperação de senha, MeuPerfil
 │   ├── conhecimento.md        # Módulo Conhecimento: base colaborativa de FAQs, erros, passo a passo
+│   ├── desktop.md             # Krakion Desktop (Electron): banco embutido, backend local, conta local, portas, armadilhas
 │   ├── checagem.md            # Módulo Checagem: frente Por API (spec + regras) e Por Fonte (upload do .jsonl da fonte BFC → laudo por regra e por campo, nada armazenado)
 │   ├── analisador-json.md
 │   └── scripts-bfc/           # BFC-Scripts versionados — exporta-debitos-por-credito.groovy gera o .jsonl que a Checagem Por Fonte lê
@@ -87,6 +88,11 @@ krakion/
 │       │   ├── checagem.js    # Motor de spec PURO da frente Por API: achatarCampos() + validarPayload() — checagem.test.js (19 testes)
 │       │   ├── regrasChecagem.js # Motor de regras PURO: avaliarRegras(), vazio() (0 = ausência), desembrulhar() (enum {valor,descricao}) — regrasChecagem.test.js (19 testes)
 │       │   ├── parseEntrada.js # Parser tolerante: array, envelope {data}, JSONL, log do Studio com hora — parseEntrada.test.js (10 testes)
+│       │   ├── setupLocal.js  # setupLocalDisponivel(env, totalUsuarios) — conta local do Desktop só com KRAKION_DESKTOP=1 e banco vazio (setupLocal.test.js)
+│       │   ├── importacaoWeb.js # Regras PURAS da importação web → desktop: casarPorNome (sem acento), prepararEndpoint, prepararTokens, resumir (importacaoWeb.test.js)
+│       │   ├── mascararHeaders.js # Authorization → "Bearer abcdef12••••" no histórico (gravar em proxy.js e ler em requisicoes.js) — mascararHeaders.test.js
+│       │   ├── swaggerSpec.js # metadadosSpec(spec) → versao/urlBase/titulo (OpenAPI 3 e Swagger 2) — swaggerSpec.test.js
+│       │   ├── clienteKrakionWeb.js # Cliente HTTP da VPS usado pela importação: normalizarUrl (testado), entrar, buscarTudo
 │       │   └── authUtils.js   # hashToken (SHA-256), captchaValido (hCaptcha), criarTransporter (SMTP) — compartilhados entre auth interno e portal
 │       └── routes/
 │           ├── auth.js        # POST /login (rate limit 10/15min + lockout + hCaptcha + atualiza ultimoLogin) + /logout + /me + /registrar + /esqueci-senha (rate limit 5/15min) + /redefinir-senha
@@ -106,7 +112,29 @@ krakion/
 │           ├── portalChamados.js # Chamados do PORTAL (/api/portal/chamados) — autenticarExterno; sempre where solicitanteId=sid (404 se não dono); criação origem "portal" + numero + histórico; filtra comentários internos e seus anexos; upload validado
 │           ├── notas.js      # CRUD Notas + PATCH /ordem (batch reorder) + PATCH /:id/fixar + compartilhamento por usuário — isolado por usuário
 │           ├── conhecimento.js # CRUD Conhecimento — todos criam; autor/admin editam; somente admin deleta; dados globais
-│           └── checagem.js    # Checagem — cadastros/campos/marcações (spec), CRUD de regras e notas, POST /verificar (stateless: só lê do banco), catálogo de fontes BFC
+│           ├── checagem.js    # Checagem — cadastros/campos/marcações (spec), CRUD de regras e notas, POST /verificar (stateless: só lê do banco), catálogo de fontes BFC
+│           └── importacao.js  # SÓ no Krakion Desktop (KRAKION_DESKTOP=1, admin): POST /conectar e /executar — copia sistemas/endpoints/municípios/tokens da VPS para o banco local
+├── desktop/                   # KRAKION DESKTOP (Electron) — app local/offline com visual próprio; ver docs/desktop.md
+│   ├── package.json           # npm run dev (Vite 5174 + Electron) · npm run atalho (build + atalhos "Krakion App") · npm test
+│   ├── electron/
+│   │   ├── main.js            # Janela + sobe banco e backend + carregando.html; desliga tudo no before-quit; KRAKION_DADOS = pasta de dados alternativa
+│   │   ├── abrir.js           # Lançador dev — remove ELECTRON_RUN_AS_NODE herdado do VS Code e define KRAKION_DEV=1
+│   │   ├── protocolo.js       # app://krakion (modo atalho) — serve dist/ e repassa /api ao backend (mesma origem)
+│   │   ├── preload.cjs        # window.krakion: janela (min/max/fechar), tema, app (versão nova), betha (agente de tokens — a senha nunca volta para a tela)
+│   │   ├── bancoLocal.js      # Postgres 18 embutido (binários do embedded-postgres + initdb/pg_ctl), porta 5433, prisma db push quando o schema muda
+│   │   ├── backendLocal.js    # node backend/src/index.js com PORT=3101, DATABASE_URL, JWT_SECRET, KRAKION_DESKTOP=1
+│   │   ├── configLocal.js     # %APPDATA%\Krakion Desktop\local.json — senha do banco, JWT_SECRET, schemaHash
+│   │   ├── novaVersao.js      # Vigia dist/, electron/ e backend/src → aviso "Recarregar" (interface) ou "Reiniciar" (backend/núcleo) — novaVersao.test.js
+│   │   ├── bethaAdmin/        # Agente de tokens: agente.js (janela escondida no Betha Admin — login, selects, Emitir), escolha.js (prefeitura do município; lembra escolhas — testado), credenciais.js (betha-admin.json, senha cifrada por safeStorage)
+│   │   ├── preferencias.js    # preferencias.json — tema salvo p/ o main aplicar nativeTheme antes da janela (sem piscar claro→escuro)
+│   │   └── aguardarUrl.js / schemaHash.js (+ .test.js)
+│   ├── scripts/               # criar-atalho.js (atalhos Desktop + Menu Iniciar) + icone.js (PNG → .ico, testado)
+│   └── src/
+│       ├── modulos.js         # Fonte única do menu (Ferramentas / API / Configurações) + grupoDaRota(); grupo com direto: true = ícone próprio no Rail e sem a lista do meio
+│       ├── components/        # Rail (grupos, tema, avatar), PainelLista, Layout (3 colunas), Pagina (cabeçalho arrastável + cartão arredondado — moldura de todo módulo), ControlesJanela, Modal, Confirmar, Busca, Abas, BotaoIcone, MetodoBadge, JsonColorido (escapa HTML antes de colorir), AvisoVersao (faixa "Nova versão disponível"), LimiteErro (erro de módulo não vira tela branca), Icone (SVG inline)
+│       ├── pages/             # Login (login ou "Criar conta local" na 1ª abertura), EmConstrucao, ImportarDados (3 etapas: conectar → escolher → pronto), CentralTokens/ (municípios + tokens, SeloValidade, ModalRenovacao — Renovar no Betha / Renovar vencidos), BethaAdmin (usuário/senha do agente + escolhas lembradas), Sistemas/ (lista + abas Visão geral/Endpoints/Specs + ModalSwagger por URL ou arquivo, substituindo), Sandbox/ (módulo "API", rota /api — requisição única: SeletorEndpoint, EditorBody, PainelResposta, Historico; AbaLote: CSV → mapeamento → lotes assíncronos com consulta do idLote)
+│       ├── stores/            # authStore (krakion-desktop-auth), temaStore (krakion-desktop-tema)
+│       └── lib/               # api.js (axios /api + municipiosApi/sistemasApi/importacaoApi), tema.js, validade.js (dias/selo/limites — sem o off-by-one UTC do web), texto.js (busca sem acento), endpoints.js (agruparPorModulo, avisoUrlBase, buscarEndpoints), corpo.js (body do Sandbox a partir do bodySchema), caminho.js ({params} do path), ids.js, lote.js (lote assíncrono Betha: interpretarEnvio/interpretarStatusLote, RUNID-L<linha>, csvResultados) — todos com .test.js
 └── frontend/
     ├── package.json
     ├── .env                   # VITE_HCAPTCHA_SITEKEY (não vai ao git)
@@ -248,6 +276,10 @@ docker-compose up --build
 | POST   | /api/auth/registrar         | Auto-cadastro: cria conta com `ativo: false`, aguarda aprovação                               |
 | POST   | /api/auth/esqueci-senha     | Gera token de recuperação e envia email (rate limit 5/15min). Sempre retorna sucesso genérico |
 | POST   | /api/auth/redefinir-senha   | Valida token + expiry, atualiza senha, limpa `recuperacaoToken`/`recuperacaoExpira`           |
+| GET    | /api/auth/setup-local       | Krakion Desktop: `{ disponivel }` — true só com `KRAKION_DESKTOP=1` e banco sem usuários       |
+| POST   | /api/auth/setup-local       | Krakion Desktop: cria a conta local (admin, ativa) e devolve token; fora das condições → 404   |
+| POST   | /api/importacao/conectar    | Krakion Desktop (admin, autenticado): entra na VPS e devolve `{ url, tokenRemoto, resumo }`    |
+| POST   | /api/importacao/executar    | Krakion Desktop (admin, autenticado): copia sistemas/endpoints e/ou municípios/tokens da VPS   |
 | GET    | /api/health                 | Health check                                                                                   |
 
 ### Usuários
@@ -506,6 +538,7 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Rotas nomeadas ANTES de /:id** no Express (ex: `/swagger`, `/limpar-tudo` devem vir antes de `/:id`)
 - **bodySchema** é armazenado como `String` (JSON serializado) no SQLite, parseado/stringificado manualmente
 - **Sentinel `_exemplo`** no bodySchema: o primeiro elemento `{ _exemplo: true, json: {...} }` contém o exemplo completo do request body da spec. Frontend filtra com `.filter(c => !c._exemplo)`
+- **Reimportar Swagger (2026-10-17)**: `importar-swagger`/`fetch-swagger` aceitam `substituir: true` (apaga os endpoints do sistema antes, numa transação — `gravarSpec`); sem ele só acrescenta e **duplica**. `importar-swagger` aceita corpo de até 32 MB (specs Betha > 1 MB davam 413).
 - **Swagger parser** resolve `$ref`, `allOf`, `anyOf/oneOf` com limite de 5 níveis de profundidade
 - **Array bodies**: quando o requestBody é `type: array`, os campos são extraídos do `items`
 - **HTML auto-detection**: `/fetch-swagger` detecta se a URL retornou HTML do Swagger UI e tenta extrair o URL do JSON automaticamente
@@ -517,6 +550,7 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Municípios isolados por usuário**: campo `usuarioId Int?` em `Municipio`; queries sempre filtradas por `req.usuario.id`. Municípios de outros usuários são invisíveis e inacessíveis (404 em vez de 403 para não vazar informação de existência)
 - **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (pages/Sandbox/)` não tem esse botão; botões de importação visíveis **apenas para admin**
 - **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema); ações de escrita visíveis **apenas para admin** (`isAdmin = useAuthStore(state => state.usuario)?.role === 'admin'`)
+- **Histórico sem token (2026-10-17)**: `Requisicao.headers` é gravado com `Authorization` mascarado (`lib/mascararHeaders.js`) e `GET /api/requisicoes` mascara também registros antigos.
 - **idGerado no proxy**: `proxy.js` extrai `idGerado` de resposta array (mapeia `item.id ?? item.idGerado ?? item.idEconomico ?? item.idLote`, filtra nulos, une com vírgula) e de objeto simples (`.id`, `.idGerado`, `.idEconomico`). Salvo no histórico de requisições.
 - **Relatórios JRXML**: `Relatorio.jxrmlConteudo` armazena o arquivo como base64 no SQLite. A listagem (`GET /`) omite o campo por performance — apenas `temJxrml: bool`. Download via `GET /:id/jxrml` faz `Buffer.from(base64)` → `Content-Type: application/octet-stream`. Frontend faz download via `atob()` → `Uint8Array` → `Blob`.
 - **Scripts BFC vs Relatórios**: `Script` (modelo) cobre categorias `script`, `formula`, `anotacao` — exibidas em 3 das 4 abas de Scripts.jsx. `Relatorio` é modelo separado, exibido na 4ª aba, com suporte a JRXML + scriptFonte (fonte dinâmica BFC).
@@ -560,7 +594,8 @@ A UI usa a marca **Krakion Labs** com paleta de **índigo/violeta** (estilo Line
 - **Checagem — frente Por Fonte (validador de arquivo, 2026-10-05)**: entrada padrão é o **`.jsonl`** gerado pelo script de exportação no Studio (um registro por linha, como a fonte devolveu; o CSV do mesmo zip é só para consulta humana). O navegador lê o arquivo, corta cada registro para os caminhos das regras + `CONTEXTO` e manda em **lotes de 700 KB** para `/verificar` (limite global de 1 MB) — 29 MB viram 8 lotes. **Nada é armazenado**: nem banco, nem disco, nem localStorage. Laudo: esquerda = quadrado por regra + quadrado por campo (ok/parcial/vazio/alerta/ausente); direita = detalhe. Perfil de campos usa o catálogo `FonteDados` (achado por `path === '/<cadastro>'`) para descrição, enum aceito e campos que não vieram. Vazio = `null`, `""`, `{}`, `0` em id/código, data `1800-01-01`.
 - **Checagem — regras**: fonte de verdade é `backend/prisma/seed-regras-checagem.js` (idempotente por `frente+cadastro+nome`; rodar `node prisma/seed-regras-checagem.js` na VPS após mudar). Cada fonte tem seus nomes de campo (`debitos`: `dtVencimento`, `referente.tipo`/`tipoCadastro`; `dividas`: `tipoReferente`/`creditoTributario.tipoCadastro`) — regra copiada entre fontes falha em silêncio ("0 alcançados"). Calibrar contra um gabarito (base feita pela tela: regra que acusa o gabarito está errada). Textos (`porque`, `naoSabemos`, `comoCorrigir`) são genéricos — nunca citam base/caso de origem (isso vai em comentário). `NotaChecagem` não tem seed: vive só no banco de produção.
 - **Checagem — `ArquivosTemporarios/`**: pasta local de extratos para teste (no `.gitignore` — contém CPF/CNPJ). Referência: `debitos_credito_285568.jsonl` (16.451 débitos, 1.635 sem receita vinculada).
-- **Testes**: `npm test` no backend roda `node --test "src/**/*.test.js"` (runner nativo do Node, sem dependência) — 48 testes: `checagem.test.js` (19, motor de spec), `regrasChecagem.test.js` (19, motor de regras + regras do seed contra o formato real da fonte) e `parseEntrada.test.js` (10).
+- **Testes**: `npm test` no backend roda `node --test "src/**/*.test.js"` (runner nativo do Node, sem dependência) — 60 testes: `checagem.test.js` (19, motor de spec), `regrasChecagem.test.js` (19, motor de regras + regras do seed contra o formato real da fonte), `parseEntrada.test.js` (10), `setupLocal.test.js` (3), `importacaoWeb.test.js` (6), `clienteKrakionWeb.test.js` (3) `swaggerSpec.test.js` (3) e `mascararHeaders.test.js` (5) — 68 no total. O `desktop/` tem seus próprios testes (`npm test` lá — 76).
+- **Krakion Desktop (2026-10-17)** — nova versão melhorada do Krakion (nome visível "Krakion App"; pasta de dados segue `%APPDATA%\Krakion Desktop` — não renomear): app Electron em `desktop/`, local e offline, com Postgres embutido (5433) e o **mesmo** `backend/` rodando como processo filho (3101). Não compartilha banco nem sessão com o web. Toda mudança no `schema.prisma` é aplicada no banco do desktop na próxima abertura (`prisma db push` sem `--accept-data-loss`). Ver `docs/desktop.md`.
 - **Analisador JSON**: módulo 100% client-side, sem rotas de backend. Ver `docs/analisador-json.md`.
 - **Chunks obsoletos após deploy (2026-06-12)**: cada deploy troca os hashes dos chunks do Vite — abas abertas com o bundle antigo quebravam em tela branca ao navegar (React.lazy recebia o index.html do fallback SPA no lugar do JS). Defesa em duas camadas: `main.jsx` escuta `vite:preloadError` e recarrega a página (guard de 10s em sessionStorage); Nginx de produção serve `/assets/` com `try_files $uri =404` + cache imutável e `index.html` com `no-cache`. Ver `skills/deploy.md`.
 - **localStorage keys**: `krakion-auth` (authStore), `krakion-municipio` (municipioStore), `krakion-portal-auth` (portalAuthStore — sessão do solicitante externo), `krakion-json-viewerDark` (AnalisadorJson)

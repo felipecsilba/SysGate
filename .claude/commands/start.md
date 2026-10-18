@@ -20,7 +20,7 @@ ssh -i ~/.ssh/krakion_tunnel -o StrictHostKeyChecking=no root@187.77.230.138 "pm
 
 Execute via Bash:
 ```bash
-powershell.exe -NoProfile -Command "Start-Process 'C:\Users\Felipe\Desktop\tunnel.bat'"
+powershell.exe -NoProfile -Command "Start-Process 'C:\Users\Felipe\Desktop\Trabalho\tunnel.bat'"
 ```
 
 ## Passo 3 — Confirme ao usuário

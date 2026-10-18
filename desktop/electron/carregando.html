@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <title>Krakion App</title>
+  <style>
+    :root { --bg: #ffffff; --texto: #111827; --suave: #6b7280; --acento: #4f46e5; --erro: #dc2626; --painel: #f7f7f8; --contorno: rgb(0 0 0 / 0.14); }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #111318; --texto: #e5e7eb; --suave: #9ca3af; --acento: #6366f1; --erro: #f87171; --painel: #1a1d24; --contorno: rgb(255 255 255 / 0.10); }
+    }
+    html, body { height: 100%; margin: 0; }
+    /* Janela transparente: os cantos de 16px e o contorno são desenhados aqui (igual ao app) */
+    html { background: transparent; }
+    body {
+      box-sizing: border-box; border-radius: 16px; overflow: hidden;
+      box-shadow: inset 0 0 0 1px var(--contorno);
+      background: var(--bg); color: var(--texto);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .caixa { text-align: center; max-width: 520px; padding: 24px; }
+    .marca { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+    .marca span { color: var(--acento); }
+    .spinner {
+      width: 28px; height: 28px; margin: 28px auto 16px;
+      border: 3px solid var(--painel); border-top-color: var(--acento);
+      border-radius: 50%; animation: gira .8s linear infinite;
+    }
+    @keyframes gira { to { transform: rotate(360deg) } }
+    #status { color: var(--suave); font-size: 14px; }
+    #erro { display: none; margin-top: 20px; text-align: left; }
+    #erro h2 { color: var(--erro); font-size: 15px; margin: 0 0 8px; }
+    #erro pre {
+      background: var(--painel); border-radius: 10px; padding: 12px;
+      font-size: 12px; white-space: pre-wrap; max-height: 260px; overflow: auto;
+    }
+    /* Janela sem moldura: a tela inteira arrasta; o X fecha */
+    body { -webkit-app-region: drag; user-select: none; }
+    #erro pre { -webkit-app-region: no-drag; user-select: text; }
+    #fechar {
+      -webkit-app-region: no-drag; position: fixed; top: 12px; right: 12px;
+      width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent;
+      color: var(--suave); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    #fechar:hover { background: #ef4444; color: #fff; }
+    body.falhou .spinner { display: none; }
+    body.falhou #erro { display: block; }
+  </style>
+</head>
+<body>
+  <button id="fechar" title="Fechar" onclick="window.krakion?.janela.fechar()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <div class="caixa">
+    <div class="marca">Krakion App</div>
+    <div class="spinner"></div>
+    <div id="status">Iniciando…</div>
+    <div id="erro">
+      <h2>Não foi possível iniciar</h2>
+      <pre id="detalhe"></pre>
+    </div>
+  </div>
+  <script>
+    function definirStatus(texto) { document.getElementById('status').textContent = texto }
+    function mostrarErro(texto) {
+      document.body.classList.add('falhou')
+      document.getElementById('status').textContent = ''
+      document.getElementById('detalhe').textContent = texto
+    }
+  </script>
+</body>
+</html>

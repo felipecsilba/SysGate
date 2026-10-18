@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="./favicon.png">
+  <title>Krakion App</title>
+  <script>
+    // Pinta o tema certo antes do React carregar (sem piscar claro → escuro).
+    // No Electron o prefers-color-scheme já segue a preferência salva (nativeTheme no main).
+    try {
+      var salvo = JSON.parse(localStorage.getItem('krakion-desktop-tema') || '{}').state || {}
+      var p = salvo.preferencia
+      var escuro = p === 'escuro' || (p !== 'claro' && matchMedia('(prefers-color-scheme: dark)').matches)
+      if (escuro) document.documentElement.classList.add('dark')
+      if (window.krakion) document.documentElement.classList.add('electron')
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
