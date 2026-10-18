@@ -193,7 +193,7 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 
 4. Melhorias da API (2026-10-18, em andamento, guiadas pelo Felipe): seletor em dois níveis igual ao web, CaixaBusca, bloco Valores neutro com selo "fixo", **Modelos**, CaixaBusca em todo o app e módulo **Histórico** — API fechada. Pendente: o agente de tokens (login real — ver seção própria).
 
-5. Trazer os módulos "Em construção" (2026-10-18, em andamento): ~~Histórico~~, ~~Notas~~, ~~Conhecimento~~ (+ notas e conhecimento na importação), **Analisador JSON** (2026-10-18) — prontos. **Checagem Por Fonte** (2026-10-18) — prontos. Faltam: Checagem Por API (+ marcação de campos) → gerador de script de exportação → **Extensões por último** → **Extensões por último** (o Felipe pediu).
+5. Trazer os módulos "Em construção" (2026-10-18, em andamento): ~~Histórico~~, ~~Notas~~, ~~Conhecimento~~ (+ notas e conhecimento na importação), **Analisador JSON** (2026-10-18) — prontos. **Checagem Por Fonte e Por API** (2026-10-18) — prontos. Faltam: gerador de script de exportação → **Extensões por último** → **Extensões por último** (o Felipe pediu).
 
 ### Estado em 2026-10-18 (fim da sessão) — para retomar numa sessão nova
 
@@ -218,7 +218,7 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 - Laudo só na memória enquanto o app está aberto (trocar de módulo não perde); nada em disco nem no banco (arquivo tem CPF/CNPJ).
 - Visual sóbrio: severidade = ponto + palavra; lista à esquerda (regras, "Campos do arquivo", "Falta fora do arquivo", campos com filtros e busca sem acento); detalhe à direita sem caixas coloridas (ícone + título colorido, texto neutro). "Onde se concentra" em uma coluna.
 - Conferido com o arquivo de referência (`ArquivosTemporarios/debitos_credito_285568.jsonl`): 16.451 débitos verificados em ~1,1 s, regra "Receita vinculada…" acusa os 1.635 esperados; concentração (INSCRITA 890, 2025 1.512, LIDFE 100%).
-- Frente **Por API** ainda mostra aviso "próximo passo".
+- **Frente Por API (2026-10-18)**: `PorApi.jsx` + `CamposApi.jsx` + `lib/checagem.js` (6 testes). Cadastro numa caixa única com busca sem acento ("Dívida · Inscrição em dívida · 2 marcados"), sub-abas **Verificar payload** (editor do Analisador + laudo: Contra a spec / Regras expansíveis — erros abertos / Falta fora do JSON) e **Campos** (chave Obrigatório + "O que quebra sem ele" editável; marcação igual à spec e sem observação é apagada). As marcações feitas no app ficam nesta máquina; reimportar a Checagem atualiza as que também existem na VPS (a VPS vence). Conferido: payload de dívida com campo errado → 15 achados (obrigatórios, tipo incorreto, campo inexistente), 2 regras e 3 notas.
 
 **Depois do Analisador:** Checagem (web `pages/Checagem/`, ~2.700 linhas — frentes Por API e Por Fonte; usa `/api/checagem/*` e o catálogo `FonteDados` — ver `docs/checagem.md`; regras vêm do `seed-regras-checagem.js`, que precisa rodar no banco local também) → Extensões (Scripts BFC/Fórmulas/Anotações + Relatórios JRXML — `Scripts.jsx` 760 linhas; incluir scripts e relatórios na importação, mesmo padrão título + `criadoEm`).
 

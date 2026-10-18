@@ -15,11 +15,11 @@ function Cabecalho({ estilo, titulo, mono, sub, children }) {
 
 // ─── Regra ────────────────────────────────────────────────────────────────────
 
-export function DetalheRegra({ r, dimensoes = [] }) {
+export function DetalheRegra({ r, dimensoes = [], semCabecalho = false }) {
   const falhou = r.faltam > 0
   return (
     <div>
-      <Cabecalho
+      {!semCabecalho && <Cabecalho
         estilo={SEV[r.severidade] || SEV.na}
         titulo={r.nome}
         sub={r.severidade === 'na'
@@ -27,9 +27,9 @@ export function DetalheRegra({ r, dimensoes = [] }) {
           : falhou
             ? <><b className="font-semibold text-texto">{fmtN(r.faltam)}</b> de {fmtN(r.aplicaveis)} registros ({fmtPct(r.faltam / r.aplicaveis)}) com o problema</>
             : <>Os {fmtN(r.aplicaveis)} registros verificados estão corretos</>}
-      />
+      />}
 
-      <div className="mt-5 space-y-2">
+      <div className={`${semCabecalho ? '' : 'mt-5'} space-y-2`}>
         {r.severidade === 'na' && (
           <Caixa icone="duvida" titulo="Não foi conferida">
             Nenhum registro do arquivo atende à condição desta regra, então ela não foi verificada. Isso não é aprovação.
@@ -273,12 +273,12 @@ export function ResumoCampos({ perfil, semCatalogo, cadastro }) {
 
 // ─── Notas do cadastro ────────────────────────────────────────────────────────
 
-export function NotasCadastro({ notas }) {
+export function NotasCadastro({ notas, titulo = 'Falta fora do arquivo', embutido = false }) {
   return (
     <div>
-      <h3 className="text-lg font-semibold">Falta fora do arquivo</h3>
-      <p className="mt-0.5 text-sm text-suave">O que este cadastro precisa e não aparece nos campos do registro.</p>
-      <ul className="mt-5 space-y-2">
+      {!embutido && <h3 className="text-lg font-semibold">{titulo}</h3>}
+      {!embutido && <p className="mt-0.5 text-sm text-suave">O que este cadastro precisa e não aparece nos campos do registro.</p>}
+      <ul className={`${embutido ? '' : 'mt-5'} space-y-2`}>
         {notas.map(n => (
           <li key={n.id} className="rounded-xl border border-borda p-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-suave">{TIPO_NOTA[n.tipo] || 'Regra'}</p>

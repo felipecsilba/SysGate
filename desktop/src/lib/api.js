@@ -89,6 +89,11 @@ export const checagemApi = {
   verificar: d => api.post('/checagem/verificar', d).then(dados),
   fontes: params => api.get('/checagem/fontes', { params }).then(dados),
   fonte: id => api.get(`/checagem/fontes/${id}`).then(dados),
+  // Frente Por API: cadastros da spec e marcações de campo (catálogo global, fica nesta máquina)
+  cadastros: params => api.get('/checagem/cadastros', { params }).then(dados),
+  campos: params => api.get('/checagem/campos', { params }).then(dados),
+  salvarCampo: d => api.put('/checagem/campos', d).then(dados),
+  removerCampo: d => api.delete('/checagem/campos', { data: d }).then(dados),
 }
 
 // Verticais Betha (nome, cor, sistemas) — o backend cria as 9 oficiais na 1ª leitura
