@@ -8,14 +8,31 @@ import Editor from './Editor'
 import Arvore from './Arvore'
 import Tabela from './Tabela'
 import Estatisticas from './Estatisticas'
+import Comparar from './Comparar'
 import { buscar, colorirJson, cursor as posicaoCursor, interpretar, resumoValor, tabela } from '../../lib/json'
 
 // O texto sobrevive à troca de módulo enquanto o app está aberto — não vai para disco
 let textoGuardado = ''
 
+let modoGuardado = 'analisar'
+
 const ALTURA_LINHA = 13 * 1.6
 
+const MODOS = [
+  { id: 'analisar', rotulo: 'Analisar' },
+  { id: 'comparar', rotulo: 'Comparar' },
+]
+
 export default function AnalisadorJson() {
+  const [modo, setModo] = useState(modoGuardado)
+  return (
+    <Pagina titulo="Analisador JSON" icone="json" acoes={<Abas abas={MODOS} atual={modo} onMudar={m => { modoGuardado = m; setModo(m) }} />}>
+      {modo === 'analisar' ? <Analisar /> : <Comparar />}
+    </Pagina>
+  )
+}
+
+function Analisar() {
   const [texto, setTextoEstado] = useState(textoGuardado)
   const [aba, setAba] = useState('formatado')
   const [busca, setBusca] = useState('')
@@ -90,7 +107,7 @@ export default function AnalisadorJson() {
   ]
 
   return (
-    <Pagina titulo="Analisador JSON" icone="json">
+    <>
       <div className="flex min-h-0 flex-1">
         {/* Esquerda: entrada */}
         <div className="flex w-2/5 min-w-[18rem] flex-col border-r border-borda">
@@ -166,7 +183,7 @@ export default function AnalisadorJson() {
         <span className="ml-auto tabular-nums">Ln {cursor.linha}, Col {cursor.coluna}</span>
         <span className="tabular-nums">{texto.length.toLocaleString('pt-BR')} caracteres</span>
       </footer>
-    </Pagina>
+    </>
   )
 }
 
