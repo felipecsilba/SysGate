@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Modal from '../../components/Modal'
+import CaixaBusca from '../../components/CaixaBusca'
 import { mensagemErro } from '../../lib/api'
 import { limitesData } from '../../lib/validade'
 
@@ -50,14 +51,16 @@ export default function ModalToken({ aberto, vinculo, sistemas, sistemasOcupados
     >
       <form id="form-token" onSubmit={salvar} className="space-y-4">
         {!vinculo && (
-          <label className="block">
+          <div>
             <span className="rotulo">Sistema</span>
-            <select className="campo" value={form.sistemaId} onChange={e => setForm(f => ({ ...f, sistemaId: e.target.value }))} required>
-              <option value="">Selecione…</option>
-              {disponiveis.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-            </select>
+            <CaixaBusca
+              opcoes={disponiveis.map(s => ({ valor: String(s.id), rotulo: s.nome }))}
+              valor={form.sistemaId}
+              onEscolher={v => setForm(f => ({ ...f, sistemaId: v }))}
+              placeholder="Selecione…"
+            />
             {!sistemas.length && <span className="mt-1 block text-xs text-suave">Nenhum sistema cadastrado — importe os dados ou cadastre em Sistemas.</span>}
-          </label>
+          </div>
         )}
         <label className="block">
           <span className="rotulo">Token</span>

@@ -1,7 +1,9 @@
 const express = require('express')
 const { exigirAdmin } = require('../middleware/autenticar')
 const { entrar, buscarTudo } = require('../lib/clienteKrakionWeb')
-const { casarPorNome, prepararEndpoint, prepararTokens, resumir } = require('../lib/importacaoWeb')
+const {
+  casarPorNome, prepararEndpoint, prepararTokens, resumir, planejarPorChave, prepararNota, prepararConhecimento,
+} = require('../lib/importacaoWeb')
 
 const router = express.Router()
 const prisma = require('../lib/prisma')
@@ -36,9 +38,9 @@ router.post('/conectar', async (req, res) => {
 // POST /api/importacao/executar — busca de novo na VPS e grava tudo numa transação
 router.post('/executar', async (req, res) => {
   try {
-    const { url, tokenRemoto, sistemas: comSistemas, municipios: comMunicipios } = req.body
+    const { url, tokenRemoto, sistemas: comSistemas, municipios: comMunicipios, notas: comNotas, conhecimento: comConhecimento } = req.body
     if (!tokenRemoto) return res.status(400).json({ error: 'Conecte ao Krakion web antes de importar.' })
-    if (!comSistemas && !comMunicipios) return res.status(400).json({ error: 'Escolha o que importar.' })
+    if (!comSistemas && !comMunicipios && !comNotas && !comConhecimento) return res.status(400).json({ error: 'Escolha o que importar.' })
 
     const remoto = await buscarTudo(url, tokenRemoto)
     const usuarioId = req.usuario.id
@@ -96,6 +98,27 @@ router.post('/executar', async (req, res) => {
         if (!temAtivo && ativoRemoto && mapaMunicipios.has(ativoRemoto.id)) {
           await tx.municipio.update({ where: { id: mapaMunicipios.get(ativoRemoto.id) }, data: { ativo: true } })
         }
+      }
+
+      // Notas e conhecimento: o usuário local vira dono/autor. Reimportar não duplica e
+      // não sobrescreve o que foi editado aqui depois da última mudança na VPS.
+      const copiar = async (lista, modelo, onde, preparar, chaveR) => {
+        const locais = await tx[modelo].findMany({ where: onde, select: { id: true, titulo: true, criadoEm: true, atualizadoEm: true } })
+        for (const { remoto, localId, acao } of planejarPorChave(lista, locais)) {
+          if (acao === 'manter') continue
+          const dados = preparar(remoto)
+          if (acao === 'criar') await tx[modelo].create({ data: dados })
+          else await tx[modelo].update({ where: { id: localId }, data: dados })
+          r[chaveR][acao === 'criar' ? 0 : 1]++
+        }
+      }
+      if (comNotas) {
+        r.notas = [0, 0] // [novas, atualizadas]
+        await copiar(remoto.notas, 'nota', { usuarioId }, n => prepararNota(n, usuarioId), 'notas')
+      }
+      if (comConhecimento) {
+        r.conhecimento = [0, 0]
+        await copiar(remoto.conhecimento, 'conhecimento', {}, c => prepararConhecimento(c, usuarioId), 'conhecimento')
       }
       return r
     }, { timeout: 120000, maxWait: 10000 })

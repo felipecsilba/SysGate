@@ -76,6 +76,7 @@ Copia **sistemas + endpoints** e **municípios + tokens** da VPS para o banco lo
 - Quem fala com a VPS é o **backend local** (`routes/importacao.js` → `lib/clienteKrakionWeb.js`): a tela não chama a VPS (o CORS de lá bloquearia) e a senha só vai do PC para a VPS. A rota só existe com `KRAKION_DESKTOP=1` e para admin (na VPS → 404).
 - 2 chamadas stateless: `POST /api/importacao/conectar { url, login, senha }` → `{ url, tokenRemoto, usuarioRemoto, resumo }`; `POST /api/importacao/executar { url, tokenRemoto, sistemas, municipios }` → busca de novo e grava numa `$transaction` (timeout 120 s).
 - **Reimportar não duplica** (`lib/importacaoWeb.js`, testado): sistema e município casam por nome normalizado (sem acento/caixa); endpoints de cada sistema importado são substituídos pelos da VPS; token faz upsert por município × sistema; sem município ativo local, herda o ativo da VPS. Mesmo nome → a VPS vence.
+- **Notas e Conhecimento** (2026-10-18): `executar` aceita também `notas` e `conhecimento`. Notas = as do usuário na VPS + as compartilhadas com ele; artigos = toda a base. O usuário local vira dono/autor. Sem nome único → casam por **título + `criadoEm`** (a importação grava as datas da VPS); `planejarPorChave` decide criar / atualizar (VPS mais nova) / **manter** (editado aqui depois) — reimportar não duplica nem apaga edição local. Resultado vem como `notas: [novas, atualizadas]`.
 - Erro de credencial da VPS volta como **400**, nunca 401 — 401 faria o app deslogar a sessão local.
 - Fora: specs Swagger (a API não expõe o conteúdo; endpoints bastam), histórico de requisições, endpoints sem sistema (informados no resumo).
 - A tela lembra endereço e login em `localStorage` (`krakion-desktop-importacao`), nunca a senha.
@@ -111,6 +112,18 @@ Copia **sistemas + endpoints** e **municípios + tokens** da VPS para o banco lo
 
 Requisições prontas para reusar: botões no **cabeçalho do Body, ao lado das abas Campos/JSON** (longe do Executar, para não clicar errado; sem body — GET/DELETE — ficam no canto esquerdo da linha do Executar). Sem modelo aberto: **Salvar modelo** (verde sólido). Com modelo aberto: **Atualizar modelo** (neutro — só regrava) + **Salvar como novo** (verde — cria). E a lista **Modelos** no fim da coluna da esquerda (clique aplica; lixeira no hover). Guarda sistema, método, path, `{params}`, modo, campos marcados, valores e JSON — **não** o município (o mesmo modelo serve para qualquer um). Ao abrir modelo de outro sistema, troca o sistema e aplica quando os endpoints carregam (`modeloPendente`). Armazenamento: `localStorage` do app (`krakion-desktop-modelos`, persiste em userData) via `lib/modelos.js` (testado) — local desta máquina, sem banco.
 
+## Histórico (Ferramentas → Histórico, 2026-10-18)
+
+`pages/Historico.jsx` — todas as requisições do proxy (até 500 mais recentes, `GET /api/requisicoes`). Filtros: município (no backend), sistema, Todas/Sucesso/Erro com contadores e busca sem acento por path, ID gerado, endpoint ou método. Lista agrupada por dia (Hoje / Ontem / data) → painel de detalhe: município, sistema, endpoint, quando, duração, ID gerado (copiar), URL (copiar), Enviado e Resposta. Lixeira limpa o histórico do município filtrado (ou tudo, com confirmação). Regras puras em `lib/historico.js` (`situacao` — só 2xx é sucesso; `filtrarHistorico`; `agruparPorDia` pelo dia local) — testadas.
+
+## Notas (Ferramentas → Notas, 2026-10-18)
+
+`pages/Notas/` — mesmo backend do web (`/api/notas`), outro desenho: **lista à esquerda** (busca sem acento, filtro por tipo com ícones, etiquetas `#`, Fixadas no topo, prévia de uma linha — checklist mostra `feitos/total`) e **editor à direita que grava sozinho** (700 ms sem digitar; ao trocar de nota grava o que faltou; selo Salvo/Salvando/Editando). Tipos texto, checklist, lista e código (trocar de tipo converte linhas ↔ itens; Tab no código insere 2 espaços; Enter num item cria o próximo, Backspace num item vazio apaga). Cor da nota vira um **ponto** saturado (as cores pastel do web somem no tema claro e destoam no escuro — `PONTO` em `Notas/constantes.js`; o banco segue guardando o hex do web). Sem compartilhamento (só há a conta local) e sem arrastar para ordenar. Regras puras em `lib/notas.js` (testadas).
+
+## Conhecimento (Ferramentas → Conhecimento, 2026-10-18)
+
+`pages/Conhecimento/` — mesmo backend e **mesmo formato de dados** do web (blocos `texto|subtitulo|codigo|nota` em JSON no `conteudo`; passo-a-passo em `passos[].texto`; texto plano antigo vira um bloco). Lista à esquerda (busca sem acento que acha **até dentro de bloco de código e de passo**, filtro por tipo com ponto colorido, vertical → sistema do `CatalogoVertical` em CaixaBusca) carregada de uma vez (`limite=100000`). Direita: **leitura** em coluna de leitura (código em fundo escuro com realce VS Code e botão copiar; passos numerados) ou **edição no próprio painel** (sem modal — Salvar/Cancelar; trocar de/para passo-a-passo aproveita as linhas). Permissões iguais ao web: edita autor ou admin, exclui admin. Regras em `lib/conhecimento.js` (`parseConteudo`, `formDoArtigo`, `montarArtigo`, `trocarTipo`, `filtrarArtigos`) e realce em `lib/codigo.js` (escapa HTML antes de pintar) — testados.
+
 ## Sandbox — envio em lote (aba "Envio em lote")
 
 `pages/Sandbox/AbaLote.jsx` — usa a mesma coluna da esquerda (município, sistema, endpoint, path). CSV (Papa Parse; "Sem cabeçalho" → colunas A, B, C…; prévia das 4 primeiras linhas) → **mapeamento** por campo: coluna do CSV (com valor de exemplo), valor fixo ou não enviar — pré-mapeado por nome sem acento/caixa → itens por lote (padrão 50, até 300; as descrições dos endpoints não trazem o limite de forma utilizável) e lotes simultâneos (até 5) → prévia do 1º item → **confirmação** (itens + URL — os dados vão direto para a API) → progresso (rola até ele) com **Parar**, **Consultar pendentes**, **Copiar IDs** e **Exportar CSV** (`;`, UTF-8 com BOM).
@@ -138,12 +151,13 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 ## Interface
 
 - Layout 3 colunas: **Rail** (grupos + tema + avatar) → **PainelLista** (itens do grupo) → conteúdo.
-- Menu vem de `src/modulos.js` (fonte única): Ferramentas → Extensões, Analisador JSON, Checagem, Conhecimento, Notas, Sandbox, Histórico; Configurações → Sistemas, Central de Tokens. Módulos ainda são `EmConstrucao`.
+- Menu vem de `src/modulos.js` (fonte única): Ferramentas → Extensões, Analisador JSON, Checagem, Conhecimento, Notas, Histórico; API (ícone próprio); Configurações → Sistemas, Central de Tokens, Betha Admin, Importar dados. Módulo sem página em `PAGINAS` (`App.jsx`) mostra `EmConstrucao` — hoje: Extensões, Analisador JSON e Checagem.
+- Padrão dos módulos de conteúdo (Histórico, Notas, Conhecimento): lista `w-80` à esquerda (busca + filtros no topo) e detalhe/editor à direita, no mesmo cartão da `Pagina`; ação principal ("Nova nota", "Novo artigo") verde sólido nas `acoes` do cabeçalho; seleção da lista neutra (`bg-texto/[0.07]`); cor só como ponto pequeno.
 - **Tema sem piscar**: a preferência também fica em `<userData>/preferencias.json` (o renderer avisa via `window.krakion.tema.definir` → IPC `tema:definir`). Antes de abrir a janela o main aplica `nativeTheme.themeSource` (`electron/preferencias.js`, testado) — assim o `prefers-color-scheme` de todas as páginas, inclusive `carregando.html`, já segue o app; e um script no `<head>` do `index.html` põe a classe `dark` antes do React carregar. Na 1ª abertura depois de atualizar, o arquivo ainda não existe (pisca uma vez); daí em diante nasce no tema certo.
 - Tema: tokens RGB em CSS vars (`src/index.css`, `:root` e `.dark`) mapeados no Tailwind (`bg-fundo`, `text-suave`, `bg-acento`…). Preferência `sistema → claro → escuro` em `localStorage` (`krakion-desktop-tema`); sessão em `krakion-desktop-auth`.
 - Sem fontes nem ícones externos (offline): Segoe UI + SVG inline em `components/Icone.jsx`.
 - **Visual sóbrio (pedido do Felipe, 2026-10-18)**: acento = índigo Krakion (`99 102 241` no escuro), nunca violeta/fúcsia neon nem degradê. Botões **sólidos** (cor cheia + texto branco) ou neutros (`.botao-secundario` = `bg-texto/[0.07]` + borda `texto/15`); **evitar pílula translúcida** (fundo colorido transparente + borda e texto coloridos) — ele chamou de "cara de feito por IA". Verde sólido (`emerald-600`) = criar/salvar; índigo = Executar; neutro = ações que só regravam.
-- **`components/CaixaBusca.jsx`** substitui `<select>` nativo (que no Windows fica quadrado e sem tema): lista num portal `position: fixed`, abre para cima quando falta espaço, `buscavel` (filtro sem acento) e `compacta`. Usada no seletor Módulo → Recurso e nos valores enum/booleanos do body. Ainda nativos: ModalToken, ModalEndpoint e o mapeamento do lote.
+- **`components/CaixaBusca.jsx`** substitui `<select>` nativo (que no Windows fica quadrado e sem tema): lista num portal `position: fixed`, abre para cima quando falta espaço, `buscavel` (filtro sem acento) e `compacta`. Usada em todo o app (nenhum `<select>` nativo restante): seletor Módulo → Recurso, valores enum/booleanos do body, mapeamento do lote, ModalToken, ModalEndpoint, ModalRenovacao e filtros do Histórico. Esc com a lista aberta fecha só a lista (não o Modal).
 
 ## Janela sem moldura
 
@@ -176,12 +190,27 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 
 3. ~~Sandbox vira "API"~~ — feito (2026-10-18): grupo próprio `api` (`direto: true` em `modulos.js` → o `Layout` esconde a lista do meio), rota `/api` (`/sandbox` redireciona), ícone `api` (nuvem + texto "API" + conexões, em `Icone.jsx`). Melhorias do módulo: a combinar. **Era:** (pedido de 2026-10-18, depois do agente de tokens): o módulo muda de nome para **API**, sai do grupo Ferramentas e ganha **ícone próprio na barra da esquerda (Rail)** — desenho de nuvem com "API" e engrenagem/conexões embaixo (referência: ícones "API cloud + gear" que ele mostrou). Junto, melhorias no próprio Sandbox (a definir com ele).
 
-4. Melhorias da API (2026-10-18, em andamento, guiadas pelo Felipe): seletor em dois níveis igual ao web, CaixaBusca, bloco Valores neutro com selo "fixo", **Modelos**. Pendente: o agente de tokens (login real — ver seção própria).
+4. Melhorias da API (2026-10-18, em andamento, guiadas pelo Felipe): seletor em dois níveis igual ao web, CaixaBusca, bloco Valores neutro com selo "fixo", **Modelos**, CaixaBusca em todo o app e módulo **Histórico** — API fechada. Pendente: o agente de tokens (login real — ver seção própria).
 
-**Depois:**
+5. Trazer os módulos "Em construção" (2026-10-18, em andamento): ~~Histórico~~, ~~Notas~~, ~~Conhecimento~~ (+ notas e conhecimento na importação) — prontos. Faltam, **nesta ordem combinada**: **Analisador JSON** → **Checagem** → **Extensões por último** (o Felipe pediu).
 
-- Redesenhar os módulos um a um (sugestão: Central de Tokens + Sandbox primeiro — chamadas Betha saem do IP local, sem túnel).
-- Importação única de dados (Postgres local/VPS → banco embutido).
+### Estado em 2026-10-18 (fim da sessão) — para retomar numa sessão nova
+
+**Já no app:** Central de Tokens, Sistemas, API (requisição única, lote, Modelos), Histórico, Notas, Conhecimento, Importar dados (sistemas, endpoints, municípios, tokens, notas, conhecimento), Betha Admin (agente com login real pendente). Testes: desktop 92, backend 71 — todos passando.
+
+**Git:** commits até a API (`18039e7`, `e197c76`) estão no branch **`krakion-app`** (tag `app-v0.1.0`) no GitHub — o `master` não foi tocado (a VPS faz `git pull` dele). **O que veio depois NÃO está commitado**: CaixaBusca em todo o app, Histórico, Notas, Conhecimento, importação de notas/conhecimento (backend: `importacaoWeb.js`, `clienteKrakionWeb.js`, `routes/importacao.js` + teste), `lib/historico.js`, `lib/notas.js`, `lib/conhecimento.js`, `lib/codigo.js` (+ testes) e estes docs. Commitar no `krakion-app` ao retomar. Nada disso foi aberto na janela real ainda — o Felipe confere visualmente.
+
+**Próximo: Analisador JSON** (estava começando — nenhum arquivo criado no desktop ainda). Web: `frontend/src/pages/AnalisadorJson/` (~1.550 linhas: `index.jsx`, `utils.js` com `analyzeJson`/`diffJson`/`buscaJson`/`fmtDiffVal`, `JsonNode` árvore, `JsonTabela` com ordenação + CSV, `JsonEstatisticas`, `BuscaResultados`, `DiffViewer`, `JsonGrafo` com pan/zoom e arestas SVG). Plano para o desktop:
+- 100% na tela, sem backend. Portar `utils.js` para `desktop/src/lib/json.js` **com testes** (`analyzeJson`, `diffJson`, `buscaJson` — busca sem acento via `lib/texto.js`).
+- **Sem o tema próprio do web** (paleta slate fixa + toggle escuro/claro do visualizador + bolinhas de macOS + "Validar" que não faz nada): segue o tema do app. Cores do JSON por classes com variante clara/escura (o `JsonColorido` atual usa tons só para fundo escuro — `text-sky-300` etc.; a árvore/tabela precisam funcionar no claro também).
+- Layout no padrão do app: `Pagina` com abas **Analisar / Comparar** nas `acoes`; esquerda = editor com números de linha (+ Colar, Abrir arquivo, Formatar, Minificar, Limpar); direita = abas Formatado / Árvore (clique copia o path `$.a[0].b`) / Grafo / Tabela (array de objetos, ordenar, Exportar CSV) / Estatísticas; busca de chave/valor; barra de status (válido/erro com linha, linha:coluna, tamanho).
+- Visual sóbrio: nada de cards coloridos nas estatísticas (números neutros + barra de distribuição discreta), botões neutros, verde só onde for "criar".
+
+**Depois do Analisador:** Checagem (web `pages/Checagem/`, ~2.700 linhas — frentes Por API e Por Fonte; usa `/api/checagem/*` e o catálogo `FonteDados` — ver `docs/checagem.md`; regras vêm do `seed-regras-checagem.js`, que precisa rodar no banco local também) → Extensões (Scripts BFC/Fórmulas/Anotações + Relatórios JRXML — `Scripts.jsx` 760 linhas; incluir scripts e relatórios na importação, mesmo padrão título + `criadoEm`).
+
+**Depois (roadmap):**
+
+- Agente de tokens: login real (pulado pelo Felipe por custo — ver seção própria).
 - Instalador `.exe` (empacotar Node + backend + binários do Postgres) — necessário para levar ao notebook; hoje o atalho depende do repositório nesta máquina.
 - Sincronização com a VPS (ids globais, `atualizadoEm`, exclusão lógica).
-- Chat com agentes (Claude Code).
+- Chat com agentes (Claude Code local — `claude` 2.1 instalado em `~/.local/bin`). Abordagem sugerida: Agent SDK no processo main com ferramentas MCP do próprio app. Decisões pendentes (o Felipe pulou por ora): o que o agente pode fazer (sugestão: ler/preparar, **nunca** disparar chamada à Betha), onde pode criar arquivos, onde o chat aparece (sugestão: ícone próprio no Rail).

@@ -51,7 +51,41 @@ function prepararTokens(municipiosRemotos, mapaSistemas, mapaMunicipios) {
   return { tokens, ignorados }
 }
 
-function resumir({ sistemas, endpoints, municipios }) {
+// Notas e conhecimento não têm nome único: o par título + data de criação identifica o registro
+// (a importação grava a criadoEm da VPS, então reimportar acha o mesmo registro).
+const chave = r => `${normalizarNome(r.titulo)}|${new Date(r.criadoEm).toISOString()}`
+
+// [{ remoto, localId, acao }] — 'criar' | 'atualizar' (VPS mais nova) | 'manter' (local editado depois)
+function planejarPorChave(remotos, locais) {
+  const porChave = new Map(locais.map(l => [chave(l), l]))
+  return remotos.map(remoto => {
+    const local = porChave.get(chave(remoto))
+    if (!local) return { remoto, localId: null, acao: 'criar' }
+    const maisNova = new Date(remoto.atualizadoEm) > new Date(local.atualizadoEm)
+    return { remoto, localId: local.id, acao: maisNova ? 'atualizar' : 'manter' }
+  })
+}
+
+const datas = r => ({ criadoEm: new Date(r.criadoEm), atualizadoEm: new Date(r.atualizadoEm) })
+
+// Nota como a API devolve (itens/etiquetas já parseados) → dados do Prisma, com o dono local
+function prepararNota(n, usuarioId) {
+  return {
+    titulo: n.titulo, tipo: n.tipo, conteudo: n.conteudo ?? '',
+    itens: JSON.stringify(n.itens || []), cor: n.cor, fixada: !!n.fixada, ordem: n.ordem ?? 0,
+    etiquetas: JSON.stringify(n.etiquetas || []), usuarioId, ...datas(n),
+  }
+}
+
+function prepararConhecimento(c, autorId) {
+  return {
+    titulo: c.titulo, tipo: c.tipo, descricao: c.descricao ?? null, conteudo: c.conteudo ?? '',
+    passos: JSON.stringify(c.passos || []), vertical: c.vertical ?? null, sistema: c.sistema ?? null,
+    etiquetas: JSON.stringify(c.etiquetas || []), autorId, ...datas(c),
+  }
+}
+
+function resumir({ sistemas, endpoints, municipios, notas = [], conhecimento = [] }) {
   const semSistema = endpoints.filter(e => e.sistemaId == null).length
   return {
     sistemas: sistemas.length,
@@ -59,7 +93,12 @@ function resumir({ sistemas, endpoints, municipios }) {
     endpointsSemSistema: semSistema,
     municipios: municipios.length,
     tokens: municipios.reduce((n, m) => n + (m.tokens?.length || 0), 0),
+    notas: notas.length,
+    conhecimento: conhecimento.length,
   }
 }
 
-module.exports = { normalizarNome, casarPorNome, prepararEndpoint, prepararTokens, resumir }
+module.exports = {
+  normalizarNome, casarPorNome, prepararEndpoint, prepararTokens, resumir,
+  planejarPorChave, prepararNota, prepararConhecimento,
+}

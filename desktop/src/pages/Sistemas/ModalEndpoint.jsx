@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Modal from '../../components/Modal'
+import CaixaBusca from '../../components/CaixaBusca'
 import { mensagemErro } from '../../lib/api'
 
 const METODOS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -60,12 +61,15 @@ export default function ModalEndpoint({ aberto, endpoint, onFechar, onSalvar }) 
           </label>
         </div>
         <div className="grid grid-cols-[110px_1fr] gap-3">
-          <label className="block">
+          <div>
             <span className="rotulo">Método</span>
-            <select className="campo" {...campo('metodo')}>
-              {METODOS.map(m => <option key={m}>{m}</option>)}
-            </select>
-          </label>
+            <CaixaBusca
+              opcoes={METODOS.map(m => ({ valor: m, rotulo: m }))}
+              valor={form.metodo}
+              onEscolher={v => setForm(f => ({ ...f, metodo: v }))}
+              buscavel={false}
+            />
+          </div>
           <label className="block">
             <span className="rotulo">Path</span>
             <input className="campo font-mono text-xs" {...campo('path')} required />

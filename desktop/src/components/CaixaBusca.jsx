@@ -52,7 +52,8 @@ export default function CaixaBusca({ opcoes, valor, onEscolher, placeholder, des
     if (e.key === 'ArrowDown') { e.preventDefault(); setDestaque(i => Math.min(i + 1, visiveis.length - 1)) }
     if (e.key === 'ArrowUp') { e.preventDefault(); setDestaque(i => Math.max(i - 1, 0)) }
     if (e.key === 'Enter' && visiveis[destaque]) { e.preventDefault(); escolher(visiveis[destaque]) }
-    if (e.key === 'Escape') { setAberto(false); setTermo('') }
+    // Esc com a lista aberta só fecha a lista — não deixa chegar ao Modal (que fecharia junto)
+    if (e.key === 'Escape' && aberto) { e.stopPropagation(); setAberto(false); setTermo('') }
   }
 
   return (

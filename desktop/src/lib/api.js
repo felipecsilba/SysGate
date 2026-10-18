@@ -66,6 +66,28 @@ export const requisicoesApi = {
   limpar: params => api.delete('/requisicoes', { params }).then(dados),
 }
 
+// Notas do usuário local (o backend também filtra, mas aqui a busca é feita na tela)
+export const notasApi = {
+  listar: () => api.get('/notas').then(dados),
+  criar: d => api.post('/notas', d).then(dados),
+  atualizar: (id, d) => api.put(`/notas/${id}`, d).then(dados),
+  fixar: id => api.patch(`/notas/${id}/fixar`).then(dados),
+  excluir: id => api.delete(`/notas/${id}`).then(dados),
+}
+
+// Base de conhecimento: carrega tudo de uma vez (busca e filtros na tela, instantâneos)
+export const conhecimentoApi = {
+  listar: () => api.get('/conhecimento', { params: { limite: 100000 } }).then(r => r.data.data),
+  criar: d => api.post('/conhecimento', d).then(dados),
+  atualizar: (id, d) => api.put(`/conhecimento/${id}`, d).then(dados),
+  excluir: id => api.delete(`/conhecimento/${id}`).then(dados),
+}
+
+// Verticais Betha (nome, cor, sistemas) — o backend cria as 9 oficiais na 1ª leitura
+export const catalogoApi = {
+  listar: () => api.get('/catalogo').then(dados),
+}
+
 export const importacaoApi = {
   conectar: d => api.post('/importacao/conectar', d).then(dados),
   executar: d => api.post('/importacao/executar', d).then(dados),

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import CaixaBusca from '../../components/CaixaBusca'
 import Icone from '../../components/Icone'
 import Modal from '../../components/Modal'
 import { mensagemErro, municipiosApi } from '../../lib/api'
@@ -121,10 +122,12 @@ export default function ModalRenovacao({ aberto, itens, onFechar, onConcluido })
                 Não achei sozinho a <span className="font-medium">{pendente.rotulo}</span> de{' '}
                 <span className="font-medium">{itens[pendente.indice].municipioNome}</span>. Qual é? (vou lembrar nas próximas)
               </p>
-              <select className="campo text-xs" value={pendente.escolhido} onChange={e => setPendente(p => ({ ...p, escolhido: e.target.value }))}>
-                <option value="">— escolha —</option>
-                {pendente.opcoes.map(o => <option key={o.valor} value={o.texto}>{o.texto}</option>)}
-              </select>
+              <CaixaBusca
+                opcoes={pendente.opcoes.map(o => ({ valor: o.texto, rotulo: o.texto }))}
+                valor={pendente.escolhido}
+                onEscolher={v => setPendente(p => ({ ...p, escolhido: v }))}
+                placeholder="— escolha —"
+              />
             </div>
           )}
 

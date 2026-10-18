@@ -8,12 +8,18 @@ import ImportarDados from './pages/ImportarDados'
 import Sistemas from './pages/Sistemas'
 import Sandbox from './pages/Sandbox'
 import BethaAdmin from './pages/BethaAdmin'
+import Historico from './pages/Historico'
+import Notas from './pages/Notas'
+import Conhecimento from './pages/Conhecimento'
 import { MODULOS } from './modulos'
 import { useAuthStore } from './stores/authStore'
 
 // Módulos já redesenhados; o resto mostra "Em construção"
 const PAGINAS = {
   api: Sandbox,
+  historico: Historico,
+  notas: Notas,
+  conhecimento: Conhecimento,
   sistemas: Sistemas,
   tokens: CentralTokens,
   'betha-admin': BethaAdmin,

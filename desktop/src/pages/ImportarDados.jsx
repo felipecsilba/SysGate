@@ -62,7 +62,7 @@ export default function ImportarDados() {
   const [etapa, setEtapa] = useState(0)
   const [form, setForm] = useState(() => ({ url: 'https://krakionlabs.cloud', login: '', ...lembrado(), senha: '' }))
   const [conexao, setConexao] = useState(null) // { url, tokenRemoto, resumo, usuarioRemoto }
-  const [escolha, setEscolha] = useState({ sistemas: true, municipios: true })
+  const [escolha, setEscolha] = useState({ sistemas: true, municipios: true, notas: true, conhecimento: true })
   const [resultado, setResultado] = useState(null)
   const [erro, setErro] = useState('')
   const [ocupado, setOcupado] = useState(false)
@@ -163,9 +163,21 @@ export default function ImportarDados() {
                 titulo="Municípios e tokens"
                 detalhe={`${resumo.municipios} municípios · ${resumo.tokens} tokens`}
               />
+              <Opcao
+                marcado={escolha.notas}
+                onMudar={v => setEscolha(s => ({ ...s, notas: v }))}
+                titulo="Notas"
+                detalhe={`${resumo.notas ?? 0} notas (suas e as compartilhadas com você)`}
+              />
+              <Opcao
+                marcado={escolha.conhecimento}
+                onMudar={v => setEscolha(s => ({ ...s, conhecimento: v }))}
+                titulo="Conhecimento"
+                detalhe={`${resumo.conhecimento ?? 0} artigos da base`}
+              />
               <p className="rounded-xl bg-amber-500/10 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
                 Pode importar quantas vezes quiser — nada é duplicado. Sistema ou município com o mesmo nome é atualizado com o que está
-                na VPS, e os endpoints desses sistemas são substituídos pelos de lá.
+                na VPS, e os endpoints desses sistemas são substituídos pelos de lá. Nota ou artigo que você editou aqui depois da última mudança na VPS é mantido.
               </p>
               {erro && <p className="text-sm text-perigo">{erro}</p>}
               <div className="flex gap-2">
@@ -174,7 +186,7 @@ export default function ImportarDados() {
                   type="button"
                   className="botao-primario"
                   onClick={importar}
-                  disabled={ocupado || (!escolha.sistemas && !escolha.municipios)}
+                  disabled={ocupado || !Object.values(escolha).some(Boolean)}
                 >
                   {ocupado ? 'Importando…' : 'Importar'}
                 </button>
@@ -198,6 +210,8 @@ export default function ImportarDados() {
                 <Numero valor={resultado.endpoints} rotulo="endpoints" />
                 <Numero valor={resultado.municipiosCriados + resultado.municipiosAtualizados} rotulo={`municípios (${resultado.municipiosCriados} novos)`} />
                 <Numero valor={resultado.tokens} rotulo="tokens" />
+                {resultado.notas && <Numero valor={resultado.notas[0] + resultado.notas[1]} rotulo={`notas (${resultado.notas[0]} novas)`} />}
+                {resultado.conhecimento && <Numero valor={resultado.conhecimento[0] + resultado.conhecimento[1]} rotulo={`artigos (${resultado.conhecimento[0]} novos)`} />}
               </div>
               {resultado.tokensIgnorados > 0 && (
                 <p className="text-xs text-suave">

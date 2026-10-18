@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Papa from 'papaparse'
 import Busca from '../../components/Busca'
+import CaixaBusca from '../../components/CaixaBusca'
 import Confirmar from '../../components/Confirmar'
 import Icone from '../../components/Icone'
 import JsonColorido from '../../components/JsonColorido'
@@ -225,11 +226,18 @@ export default function AbaLote({ campos, municipioId, sistemaId, endpoint, meto
                     {(c.obrigatorio || fixo(c)) && <span className="ml-0.5 text-perigo">*</span>}
                   </span>
                   <span className="w-16 shrink-0 font-mono text-[10px] text-suave">{c.tipo}</span>
-                  <select className="campo h-8 py-1 text-xs" value={valorSelect} onChange={e => mudar(e.target.value)}>
-                    <option value="">{c.campo === 'idIntegracao' ? '— automático (RUNID-L<linha>) —' : '— não enviar —'}</option>
-                    {csv.colunas.map(col => <option key={col} value={`col:${col}`}>Coluna {col}{exemploColuna(col) ? ` — ${exemploColuna(col)}` : ''}</option>)}
-                    <option value="__fixo">Valor fixo…</option>
-                  </select>
+                  <div className="min-w-0 flex-1">
+                    <CaixaBusca
+                      compacta
+                      opcoes={[
+                        { valor: '', rotulo: c.campo === 'idIntegracao' ? '— automático (RUNID-L<linha>) —' : '— não enviar —' },
+                        ...csv.colunas.map(col => ({ valor: `col:${col}`, rotulo: `Coluna ${col}${exemploColuna(col) ? ` — ${exemploColuna(col)}` : ''}` })),
+                        { valor: '__fixo', rotulo: 'Valor fixo…' },
+                      ]}
+                      valor={valorSelect}
+                      onEscolher={mudar}
+                    />
+                  </div>
                   {m?.modo === 'fixo' && (
                     <input
                       className="campo h-8 w-40 py-1 font-mono text-xs"

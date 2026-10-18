@@ -54,15 +54,17 @@ async function entrar(url, login, senha) {
 // Tudo que a importação usa, com os tokens de cada município (só os do usuário logado na VPS)
 async function buscarTudo(url, token) {
   const base = normalizarUrl(url)
-  const [sistemas, endpoints, municipios] = await Promise.all([
+  const [sistemas, endpoints, municipios, notas, conhecimento] = await Promise.all([
     chamar(base, '/api/sistemas', { token }),
     chamar(base, '/api/endpoints', { token }),
     chamar(base, '/api/municipios', { token }),
+    chamar(base, '/api/notas', { token }), // próprias + compartilhadas com o usuário
+    chamar(base, '/api/conhecimento?limite=100000', { token }).then(r => r.data),
   ])
   const comTokens = await Promise.all(
     municipios.map(async m => ({ ...m, tokens: await chamar(base, `/api/municipios/${m.id}/tokens`, { token }) }))
   )
-  return { sistemas, endpoints, municipios: comTokens }
+  return { sistemas, endpoints, municipios: comTokens, notas, conhecimento }
 }
 
 module.exports = { normalizarUrl, entrar, buscarTudo }
