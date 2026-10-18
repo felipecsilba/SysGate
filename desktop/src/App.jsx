@@ -11,6 +11,7 @@ import BethaAdmin from './pages/BethaAdmin'
 import Historico from './pages/Historico'
 import Notas from './pages/Notas'
 import Conhecimento from './pages/Conhecimento'
+import AnalisadorJson from './pages/AnalisadorJson'
 import { MODULOS } from './modulos'
 import { useAuthStore } from './stores/authStore'
 
@@ -20,6 +21,7 @@ const PAGINAS = {
   historico: Historico,
   notas: Notas,
   conhecimento: Conhecimento,
+  'analisador-json': AnalisadorJson,
   sistemas: Sistemas,
   tokens: CentralTokens,
   'betha-admin': BethaAdmin,

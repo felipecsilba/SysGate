@@ -1,19 +1,10 @@
 import { useMemo, useState } from 'react'
 import Icone from './Icone'
+import { colorirJson } from '../lib/json'
 
-// Escapa o HTML ANTES de colorir: a resposta vem de uma API externa e não pode virar marcação na tela.
-function colorir(texto) {
-  const seguro = texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  return seguro.replace(
-    /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-    trecho => {
-      if (trecho.startsWith('"')) return trecho.endsWith(':') ? `<span class="text-sky-300">${trecho}</span>` : `<span class="text-emerald-300">${trecho}</span>`
-      if (trecho === 'true' || trecho === 'false') return `<span class="text-fuchsia-300">${trecho}</span>`
-      if (trecho === 'null') return `<span class="italic text-slate-400">${trecho}</span>`
-      return `<span class="text-amber-200">${trecho}</span>`
-    }
-  )
-}
+// Bloco sempre escuro: cores fixas para fundo escuro
+const CORES_ESCURO = { chave: 'text-sky-300', texto: 'text-emerald-300', numero: 'text-amber-200', booleano: 'text-fuchsia-300', nulo: 'italic text-slate-400' }
+const colorir = texto => colorirJson(texto, CORES_ESCURO)
 
 // Bloco de código escuro (estilo editor) com JSON colorido e botão copiar
 export default function JsonColorido({ dados, texto, titulo = 'JSON', alturaMax = '60vh' }) {

@@ -151,7 +151,7 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 ## Interface
 
 - Layout 3 colunas: **Rail** (grupos + tema + avatar) → **PainelLista** (itens do grupo) → conteúdo.
-- Menu vem de `src/modulos.js` (fonte única): Ferramentas → Extensões, Analisador JSON, Checagem, Conhecimento, Notas, Histórico; API (ícone próprio); Configurações → Sistemas, Central de Tokens, Betha Admin, Importar dados. Módulo sem página em `PAGINAS` (`App.jsx`) mostra `EmConstrucao` — hoje: Extensões, Analisador JSON e Checagem.
+- Menu vem de `src/modulos.js` (fonte única): Ferramentas → Extensões, Analisador JSON, Checagem, Conhecimento, Notas, Histórico; API (ícone próprio); Configurações → Sistemas, Central de Tokens, Betha Admin, Importar dados. Módulo sem página em `PAGINAS` (`App.jsx`) mostra `EmConstrucao` — hoje: Extensões e Checagem.
 - Padrão dos módulos de conteúdo (Histórico, Notas, Conhecimento): lista `w-80` à esquerda (busca + filtros no topo) e detalhe/editor à direita, no mesmo cartão da `Pagina`; ação principal ("Nova nota", "Novo artigo") verde sólido nas `acoes` do cabeçalho; seleção da lista neutra (`bg-texto/[0.07]`); cor só como ponto pequeno.
 - **Tema sem piscar**: a preferência também fica em `<userData>/preferencias.json` (o renderer avisa via `window.krakion.tema.definir` → IPC `tema:definir`). Antes de abrir a janela o main aplica `nativeTheme.themeSource` (`electron/preferencias.js`, testado) — assim o `prefers-color-scheme` de todas as páginas, inclusive `carregando.html`, já segue o app; e um script no `<head>` do `index.html` põe a classe `dark` antes do React carregar. Na 1ª abertura depois de atualizar, o arquivo ainda não existe (pisca uma vez); daí em diante nasce no tema certo.
 - Tema: tokens RGB em CSS vars (`src/index.css`, `:root` e `.dark`) mapeados no Tailwind (`bg-fundo`, `text-suave`, `bg-acento`…). Preferência `sistema → claro → escuro` em `localStorage` (`krakion-desktop-tema`); sessão em `krakion-desktop-auth`.
@@ -192,7 +192,7 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 
 4. Melhorias da API (2026-10-18, em andamento, guiadas pelo Felipe): seletor em dois níveis igual ao web, CaixaBusca, bloco Valores neutro com selo "fixo", **Modelos**, CaixaBusca em todo o app e módulo **Histórico** — API fechada. Pendente: o agente de tokens (login real — ver seção própria).
 
-5. Trazer os módulos "Em construção" (2026-10-18, em andamento): ~~Histórico~~, ~~Notas~~, ~~Conhecimento~~ (+ notas e conhecimento na importação) — prontos. Faltam, **nesta ordem combinada**: **Analisador JSON** → **Checagem** → **Extensões por último** (o Felipe pediu).
+5. Trazer os módulos "Em construção" (2026-10-18, em andamento): ~~Histórico~~, ~~Notas~~, ~~Conhecimento~~ (+ notas e conhecimento na importação), **Analisador JSON** (parte 1, 2026-10-18) — prontos. Faltam, **nesta ordem combinada**: Analisador parte 2 (Comparar + Grafo) → **Checagem** → **Extensões por último** (o Felipe pediu).
 
 ### Estado em 2026-10-18 (fim da sessão) — para retomar numa sessão nova
 
@@ -200,11 +200,16 @@ Plano: `docs/plans/2026-10-18-desktop-agente-tokens.md`. Configurações → **B
 
 **Git:** commits até a API (`18039e7`, `e197c76`) estão no branch **`krakion-app`** (tag `app-v0.1.0`) no GitHub — o `master` não foi tocado (a VPS faz `git pull` dele). **O que veio depois NÃO está commitado**: CaixaBusca em todo o app, Histórico, Notas, Conhecimento, importação de notas/conhecimento (backend: `importacaoWeb.js`, `clienteKrakionWeb.js`, `routes/importacao.js` + teste), `lib/historico.js`, `lib/notas.js`, `lib/conhecimento.js`, `lib/codigo.js` (+ testes) e estes docs. Commitar no `krakion-app` ao retomar. Nada disso foi aberto na janela real ainda — o Felipe confere visualmente.
 
-**Próximo: Analisador JSON** (estava começando — nenhum arquivo criado no desktop ainda). Web: `frontend/src/pages/AnalisadorJson/` (~1.550 linhas: `index.jsx`, `utils.js` com `analyzeJson`/`diffJson`/`buscaJson`/`fmtDiffVal`, `JsonNode` árvore, `JsonTabela` com ordenação + CSV, `JsonEstatisticas`, `BuscaResultados`, `DiffViewer`, `JsonGrafo` com pan/zoom e arestas SVG). Plano para o desktop:
-- 100% na tela, sem backend. Portar `utils.js` para `desktop/src/lib/json.js` **com testes** (`analyzeJson`, `diffJson`, `buscaJson` — busca sem acento via `lib/texto.js`).
-- **Sem o tema próprio do web** (paleta slate fixa + toggle escuro/claro do visualizador + bolinhas de macOS + "Validar" que não faz nada): segue o tema do app. Cores do JSON por classes com variante clara/escura (o `JsonColorido` atual usa tons só para fundo escuro — `text-sky-300` etc.; a árvore/tabela precisam funcionar no claro também).
-- Layout no padrão do app: `Pagina` com abas **Analisar / Comparar** nas `acoes`; esquerda = editor com números de linha (+ Colar, Abrir arquivo, Formatar, Minificar, Limpar); direita = abas Formatado / Árvore (clique copia o path `$.a[0].b`) / Grafo / Tabela (array de objetos, ordenar, Exportar CSV) / Estatísticas; busca de chave/valor; barra de status (válido/erro com linha, linha:coluna, tamanho).
-- Visual sóbrio: nada de cards coloridos nas estatísticas (números neutros + barra de distribuição discreta), botões neutros, verde só onde for "criar".
+**Analisador JSON — parte 1 pronta (2026-10-18), commitada no `krakion-app`.** `pages/AnalisadorJson/` (`index.jsx`, `Editor`, `Arvore`, `Tabela`, `Estatisticas`) + `lib/json.js` (17 testes; desktop 109 no total). 100% na tela, sem backend; o texto sobrevive à troca de módulo (variável do módulo), nunca vai a disco.
+- Esquerda: editor com números de linha (Tab = 2 espaços), Colar / Abrir / Formatar / Minificar / Limpar; a linha do erro fica vermelha na régua.
+- Direita: abas Formatado / Árvore / Tabela / Estatísticas + busca de chave/valor (sem acento; clique copia o caminho). Barra de status: válido ou "Erro na linha X, coluna Y" (clique leva ao erro), Ln/Col, caracteres.
+- `interpretar()` acha a posição do erro com um leitor próprio — a mensagem do `JSON.parse` muda entre versões do V8 e nem sempre traz posição. Mensagem em português ("esperava "," ou "}"").
+- `caminhoFilho()`: `$.a[0].b`; chave fora do padrão de identificador vai entre colchetes (`$["meu-campo"]`).
+- Tabela: lista de objetos, ou objeto com **um** array de objetos dentro (envelope `{ content: [...] }` — mostra "lista em content"); objetos aninhados viram colunas com ponto (`credito.id`), arrays ficam inteiros; ordena por coluna (vazios por último); Exportar CSV com `;`. Mostra 1.000 linhas, o CSV leva todas.
+- Cores do JSON: `colorirJson()` / `CORES_JSON` (claro e escuro) — o `JsonColorido` usa a mesma função com as cores fixas de fundo escuro.
+- Visual sóbrio: sem o tema próprio do web, sem cards coloridos nas estatísticas (números neutros + barra discreta).
+
+**Parte 2 (próximo):** aba **Comparar** (dois editores, `comparar()` já pronto e testado) e **Grafo** (web `JsonGrafo.jsx`, pan/zoom + arestas SVG) — perguntar ao Felipe se o Grafo vale o esforço antes de portar.
 
 **Depois do Analisador:** Checagem (web `pages/Checagem/`, ~2.700 linhas — frentes Por API e Por Fonte; usa `/api/checagem/*` e o catálogo `FonteDados` — ver `docs/checagem.md`; regras vêm do `seed-regras-checagem.js`, que precisa rodar no banco local também) → Extensões (Scripts BFC/Fórmulas/Anotações + Relatórios JRXML — `Scripts.jsx` 760 linhas; incluir scripts e relatórios na importação, mesmo padrão título + `criadoEm`).
 
