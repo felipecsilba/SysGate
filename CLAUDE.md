@@ -50,7 +50,7 @@ krakion/
 │   ├── notas.md               # Módulo Notas (Google Keep): modelos, API, comportamentos
 │   ├── usuarios.md            # Módulo Usuários e Perfil: schema, rotas, recuperação de senha, MeuPerfil
 │   ├── conhecimento.md        # Módulo Conhecimento: base colaborativa de FAQs, erros, passo a passo
-│   ├── desktop.md             # Krakion Desktop (Electron): banco embutido, backend local, conta local, portas, armadilhas
+│   ├── desktop.md             # Krakion Desktop / Krakion App (Electron): banco embutido, backend local, conta local, portas, armadilhas, uma seção por módulo e "Estado e próximos passos" (ler ao retomar)
 │   ├── checagem.md            # Módulo Checagem: frente Por API (spec + regras) e Por Fonte (upload do .jsonl da fonte BFC → laudo por regra e por campo, nada armazenado)
 │   ├── analisador-json.md
 │   └── scripts-bfc/           # BFC-Scripts versionados — exporta-debitos-por-credito.groovy gera o .jsonl que a Checagem Por Fonte lê
@@ -120,7 +120,7 @@ krakion/
 │   │   ├── main.js            # Janela + sobe banco e backend + carregando.html; desliga tudo no before-quit; KRAKION_DADOS = pasta de dados alternativa
 │   │   ├── abrir.js           # Lançador dev — remove ELECTRON_RUN_AS_NODE herdado do VS Code e define KRAKION_DEV=1
 │   │   ├── protocolo.js       # app://krakion (modo atalho) — serve dist/ e repassa /api ao backend (mesma origem)
-│   │   ├── preload.cjs        # window.krakion: janela (min/max/fechar), tema, app (versão nova), betha (agente de tokens — a senha nunca volta para a tela)
+│   │   ├── preload.cjs        # window.krakion: janela (min/max/fechar), tema, app (versão nova), betha (agente de tokens — a senha nunca volta para a tela), biblioteca, gerador e municipios (só pontes específicas; caminhos sempre resolvidos dentro da pasta permitida)
 │   │   ├── bancoLocal.js      # Postgres 18 embutido (binários do embedded-postgres + initdb/pg_ctl), porta 5433, prisma db push quando o schema muda
 │   │   ├── backendLocal.js    # node backend/src/index.js com PORT=3101, DATABASE_URL, JWT_SECRET, KRAKION_DESKTOP=1
 │   │   ├── configLocal.js     # %APPDATA%\Krakion Desktop\local.json — senha do banco, JWT_SECRET, schemaHash
@@ -133,7 +133,7 @@ krakion/
 │   │   └── aguardarUrl.js / schemaHash.js (+ .test.js)
 │   ├── scripts/               # criar-atalho.js (atalhos Desktop + Menu Iniciar) + icone.js (PNG → .ico, testado)
 │   └── src/
-│       ├── modulos.js         # Fonte única do menu (Ferramentas / API / Configurações) + grupoDaRota(); grupo com direto: true = ícone próprio no Rail e sem a lista do meio
+│       ├── modulos.js         # Fonte única do menu (Ferramentas / API / Municípios / Biblioteca / Gerador de Extensões / Configurações) + grupoDaRota(); grupo com direto: true = ícone próprio no Rail e sem a lista do meio
 │       ├── components/        # Rail (grupos, tema, avatar), PainelLista, Layout (3 colunas), Pagina (cabeçalho arrastável + cartão arredondado — moldura de todo módulo), ControlesJanela, Modal, Confirmar, Busca, Abas, BotaoIcone, MetodoBadge, JsonColorido (escapa HTML antes de colorir), AvisoVersao (faixa "Nova versão disponível"), LimiteErro (erro de módulo não vira tela branca), Icone (SVG inline)
 │       ├── pages/             # Login (login ou "Criar conta local" na 1ª abertura), EmConstrucao, ImportarDados (3 etapas: conectar → escolher → pronto), CentralTokens/ (municípios + tokens, SeloValidade, ModalRenovacao — Renovar no Betha / Renovar vencidos), BethaAdmin (usuário/senha do agente + escolhas lembradas), Sistemas/ (lista + abas Visão geral/Endpoints/Specs + ModalSwagger por URL ou arquivo, substituindo), Sandbox/ (módulo "API", rota /api — requisição única: SeletorEndpoint, EditorBody, PainelResposta, Historico; AbaLote: CSV → mapeamento → lotes assíncronos com consulta do idLote), Historico.jsx (filtros + detalhe), Notas/ (lista + editor que grava sozinho), Conhecimento/ (lista + Leitura + Editor de blocos no painel), AnalisadorJson/ (Analisar: editor + Formatado/Árvore/Tabela/Estatísticas; Comparar: A × B com lista de diferenças; sem Grafo), Checagem/ (Por Fonte: .jsonl → laudo por regra e por campo + detalhe; Por API: payload → spec + regras + notas, e marcação de campos), Municipios/ (ícone próprio: legislação e documentos por município — lista só os ativados, sugestões da Central de Tokens, remover = Lixeira sem tocar metadados; PDF no leitor embutido, anotações .md, CSV; arquivos na pasta da Biblioteca), Biblioteca/ (ex-Extensões; ícone próprio no Rail: somente leitura da pasta local — navegação Scripts por categoria → Relatórios → Fórmulas por tipo de fórmula, anos da mesma fórmula num item só com comparação entre anos; electron/biblioteca.js), Gerador/ (ícone próprio: script de exportação de qualquer fonte — lib/exportacao.js; Templates e Funções prontas em breve) (estado e plano em docs/desktop.md)
 │       ├── stores/            # authStore (krakion-desktop-auth), temaStore (krakion-desktop-tema)

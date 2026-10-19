@@ -210,3 +210,7 @@ O body de `/verificar` está sujeito ao limite global de 1 MB do `express.json` 
 - **Sem histórico de laudos:** por decisão, nada é salvo. Se um dia for preciso, guardar só o resumo (data, base, contagens por regra), nunca registros.
 - **Auditoria direto da API REST:** impossível — 358 GETs, 354 deles `/{id}`, sem GET de coleção nem filtro. A varredura de dados só existe em BFC-Script, por isso o fluxo é exportar no Studio e subir o arquivo.
 - **Celular:** a sidebar do Krakion cobre a tela em telas estreitas (limitação do layout geral, não do módulo).
+
+## No Krakion App (desktop)
+
+A Checagem também existe no Krakion App (`desktop/src/pages/Checagem/`), com as duas frentes e o mesmo backend (`/api/checagem/*` no backend local). Regras, notas, catálogo de fontes e campos marcados chegam pela importação (Configurações → Importar dados → **Checagem**). Diferenças: lotes medidos em bytes UTF-8 (não em caracteres), laudo mantido só em memória enquanto o app está aberto, e o atalho "Gerar o script de exportação desta fonte" abre o Gerador de Extensões do app (que lê o catálogo `catalogo_v2.json` + `mapa_bfc_rest.json` da pasta da biblioteca, com o nome BFC confirmado). Detalhes em `docs/desktop.md`.
