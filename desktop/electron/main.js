@@ -13,6 +13,7 @@ import * as credenciaisBetha from './bethaAdmin/credenciais.js'
 import { renovarToken } from './bethaAdmin/agente.js'
 import * as biblioteca from './biblioteca.js'
 import * as catalogoFontes from './catalogoFontes.js'
+import * as municipiosDocs from './municipiosDocs.js'
 
 // Dev (npm run dev → abrir.js): interface pelo Vite com hot reload.
 // Fora disso (atalho / instalador): interface compilada em dist/.
@@ -78,6 +79,7 @@ function criarJanela() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      plugins: true, // leitor de PDF embutido (documentos dos municípios)
       preload: path.join(import.meta.dirname, 'preload.cjs'),
     },
   })
@@ -163,6 +165,30 @@ ipcMain.handle('gerador:fontes', () => {
 ipcMain.handle('gerador:fonte', (_e, chave) => {
   try { return catalogoFontes.detalheFonte(pastaBiblioteca(), String(chave)) } catch { return null }
 })
+// Municípios: legislação e documentos em <biblioteca>/Municipios/<município>/Legislacao (escrita só ali)
+const comErro = fn => async (...args) => {
+  try { return { ok: true, dados: await fn(...args) } } catch (err) { return { ok: false, erro: err.message } }
+}
+ipcMain.handle('municipios:listar', comErro(() => municipiosDocs.listarMunicipios(pastaBiblioteca())))
+ipcMain.handle('municipios:criar', comErro((_e, nome) => municipiosDocs.criarMunicipio(pastaBiblioteca(), nome)))
+ipcMain.handle('municipios:documentos', comErro((_e, pasta) => municipiosDocs.listarDocumentos(pastaBiblioteca(), pasta)))
+ipcMain.handle('municipios:anexar', comErro(async (e, pasta, tipo, meta, caminhos) => {
+  let origens = Array.isArray(caminhos) ? caminhos.filter(c => typeof c === 'string' && fs.existsSync(c)) : []
+  if (!origens.length) {
+    const r = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), { title: 'Anexar documentos', properties: ['openFile', 'multiSelections'] })
+    if (r.canceled) return []
+    origens = r.filePaths
+  }
+  return municipiosDocs.anexar(pastaBiblioteca(), pasta, tipo, origens, meta || {})
+}))
+ipcMain.handle('municipios:ler-texto', comErro((_e, id) => municipiosDocs.lerTexto(pastaBiblioteca(), id)))
+ipcMain.handle('municipios:salvar-texto', comErro((_e, dados) => municipiosDocs.salvarTexto(pastaBiblioteca(), dados || {})))
+ipcMain.handle('municipios:renomear', comErro((_e, id, meta) => municipiosDocs.renomear(pastaBiblioteca(), id, meta || {})))
+// Excluir manda para a Lixeira do Windows (dá para recuperar)
+ipcMain.handle('municipios:excluir', comErro((_e, id) => shell.trashItem(municipiosDocs.resolverDoc(pastaBiblioteca(), id))))
+ipcMain.handle('municipios:mostrar', comErro((_e, id) => shell.showItemInFolder(municipiosDocs.resolverDoc(pastaBiblioteca(), id))))
+ipcMain.handle('municipios:abrir', comErro((_e, id) => shell.openPath(municipiosDocs.resolverDoc(pastaBiblioteca(), id))))
+
 ipcMain.handle('biblioteca:escolher-pasta', async e => {
   const r = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Pasta da biblioteca (Scripts, Formulas, Relatorios)', defaultPath: pastaBiblioteca(), properties: ['openDirectory'],
@@ -208,6 +234,7 @@ function erro(texto) {
 
 async function iniciar() {
   criarJanela()
+  protocolo.servirDocumentos(id => municipiosDocs.resolverDoc(pastaBiblioteca(), id))
   await new Promise(r => janela.webContents.once('did-finish-load', r))
   try {
     const credenciais = await bancoLocal.iniciar(app.getPath('userData'), status)

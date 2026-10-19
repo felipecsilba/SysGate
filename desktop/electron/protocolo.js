@@ -12,7 +12,22 @@ const DIST = path.resolve(import.meta.dirname, '..', 'dist')
 export function registrarEsquema() {
   protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
+    // Documentos dos municípios (PDFs grandes vão direto do disco para o leitor embutido, sem passar pela tela)
+    { scheme: 'krakion-doc', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
   ])
+}
+
+// krakion-doc://municipios/<id codificado> → arquivo em Municipios/<município>/Legislacao (resolver barra o resto)
+export function servirDocumentos(resolver) {
+  protocol.handle('krakion-doc', req => {
+    try {
+      const url = new URL(req.url)
+      const id = decodeURIComponent(url.pathname.replace(/^\//, ''))
+      return net.fetch(pathToFileURL(resolver(id)).toString())
+    } catch {
+      return new Response('Não encontrado', { status: 404 })
+    }
+  })
 }
 
 export function servir(portaBackend) {

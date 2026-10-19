@@ -6,6 +6,7 @@ test('menu tem os módulos combinados, com ids únicos', () => {
   assert.deepEqual(MODULOS.map(m => m.id), [
     'analisador-json', 'checagem', 'conhecimento', 'notas', 'historico',
     'api',
+    'municipios',
     'biblioteca',
     'gerador',
     'sistemas', 'tokens', 'betha-admin', 'importar',

@@ -2,7 +2,7 @@
 // Expõe só controles da janela, tema, aviso de versão nova, o agente do Betha Admin e a leitura da biblioteca
 // de extensões (só dentro da pasta escolhida, somente leitura) — nenhum acesso a Node, arquivos soltos ou IPC genérico.
 // .cjs: preload em sandbox não suporta ESM.
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webUtils } = require('electron')
 
 contextBridge.exposeInMainWorld('krakion', {
   // Avisa o main da preferência de tema — ele guarda e aplica já na próxima abertura
@@ -29,6 +29,21 @@ contextBridge.exposeInMainWorld('krakion', {
     buscar: (ids, termo) => ipcRenderer.invoke('biblioteca:buscar', ids, termo),
     mostrar: id => ipcRenderer.invoke('biblioteca:mostrar', id),
     escolherPasta: () => ipcRenderer.invoke('biblioteca:escolher-pasta'),
+  },
+  // Municípios: legislação e documentos (escrita só em Municipios/<município>/Legislacao; excluir = Lixeira)
+  municipios: {
+    listar: () => ipcRenderer.invoke('municipios:listar'),
+    criar: nome => ipcRenderer.invoke('municipios:criar', nome),
+    documentos: pasta => ipcRenderer.invoke('municipios:documentos', pasta),
+    // caminhos: arquivos arrastados para a tela; sem eles, o main abre a janela de escolher arquivos
+    anexar: (pasta, tipo, meta, caminhos) => ipcRenderer.invoke('municipios:anexar', pasta, tipo, meta, caminhos),
+    lerTexto: id => ipcRenderer.invoke('municipios:ler-texto', id),
+    salvarTexto: dados => ipcRenderer.invoke('municipios:salvar-texto', dados),
+    renomear: (id, meta) => ipcRenderer.invoke('municipios:renomear', id, meta),
+    excluir: id => ipcRenderer.invoke('municipios:excluir', id),
+    mostrar: id => ipcRenderer.invoke('municipios:mostrar', id),
+    abrir: id => ipcRenderer.invoke('municipios:abrir', id),
+    caminhoDoArquivo: arquivo => webUtils.getPathForFile(arquivo),
   },
   // Gerador de Extensões: catálogo de fontes BFC da pasta da biblioteca (somente leitura)
   gerador: {

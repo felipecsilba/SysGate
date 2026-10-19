@@ -22,6 +22,16 @@ export const GRUPOS = [
       { id: 'api', rotulo: 'API', icone: 'api', descricao: 'Chamadas à API Betha, uma a uma ou em lote.' },
     ],
   },
+  // Legislação e documentos de cada município (pasta Municipios/<município>/Legislacao)
+  {
+    id: 'municipios',
+    titulo: 'Municípios',
+    icone: 'municipio',
+    direto: true,
+    itens: [
+      { id: 'municipios', rotulo: 'Municípios', icone: 'municipio', descricao: 'Código tributário, leis, decretos, anotações e documentos de cada município.' },
+    ],
+  },
   // Consulta: scripts, fórmulas e relatórios lidos da pasta local (somente leitura)
   {
     id: 'biblioteca',
