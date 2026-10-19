@@ -1,27 +1,44 @@
 import { useEffect, useMemo, useState } from 'react'
 import Pagina from '../../components/Pagina'
-import Abas from '../../components/Abas'
 import Busca from '../../components/Busca'
 import CaixaBusca from '../../components/CaixaBusca'
 import Icone from '../../components/Icone'
-import { TIPOS, contar, filtrarItens, grupos as listarGrupos, municipios as listarMunicipios } from '../../lib/biblioteca'
+import { filtrarItens, rotuloCategoria, rotuloTipoFormula, secoes as montarSecoes } from '../../lib/biblioteca'
 import Visualizador from './Visualizador'
 
 // Biblioteca de extensões: scripts, fórmulas e relatórios lidos da pasta local (somente leitura).
 // O índice (só nomes) vem do Electron; o conteúdo é lido quando o item é aberto.
 const TODOS = ''
 const POR_VEZ = 300
-const ROTULO_GRUPO = { Criticas: 'Críticas', 'Fontes Dinamicas': 'Fontes dinâmicas', 'Contribuicao de Melhorias': 'Contribuição de Melhorias', 'Divida Ativa': 'Dívida Ativa', 'Debitos Gerais': 'Débitos Gerais', 'Convenios Bancarios': 'Convênios Bancários', 'ISS - Economicos': 'ISS - Econômicos', 'Imoveis - IPTU': 'Imóveis - IPTU' }
-const rotuloGrupo = g => ROTULO_GRUPO[g] || g
+// "Geração de crédito · Imóveis (IPTU)" → assunto "Geração de crédito" + nome "Imóveis (IPTU)".
+// Assunto com um tipo só fica como item solto, sem subtítulo.
+function agruparPorAssunto(subgrupos) {
+  const blocos = []
+  for (const g of subgrupos) {
+    const [assunto, ...resto] = g.rotulo.split(' · ')
+    const chave = resto.length ? assunto : null
+    const ultimo = blocos.at(-1)
+    if (chave && ultimo?.assunto === chave) ultimo.itens.push({ ...g, nome: resto.join(' · ') })
+    else blocos.push({ assunto: chave, itens: [{ ...g, nome: resto.length ? resto.join(' · ') : g.rotulo }] })
+  }
+  return blocos.map(b => (b.itens.length === 1 && b.assunto ? { assunto: null, itens: [{ ...b.itens[0], nome: b.itens[0].rotulo }] } : b))
+}
+
+// Linha de baixo de cada item: o que o filtro atual ainda não diz
+function subtitulo(i, subgrupo) {
+  if (i.tipo === 'formula') return [i.municipio, subgrupo === null ? rotuloTipoFormula(i.codigo) : null, i.ano].filter(Boolean).join(' · ')
+  return [i.municipio, i.tipo === 'script' && subgrupo === null ? rotuloCategoria(i.grupo) : null, i.detalhe].filter(Boolean).join(' · ')
+}
 
 // Filtros sobrevivem à troca de módulo enquanto o app está aberto
-const lembrado = { tipo: 'script', grupo: TODOS, municipio: TODOS, busca: '', selecionado: null }
+// subgrupo: null = o tipo inteiro; senão a categoria (script) ou o tipo de fórmula
+const lembrado = { tipo: 'script', subgrupo: null, municipio: TODOS, busca: '', selecionado: null }
 
 export default function Extensoes() {
   const ponte = window.krakion?.biblioteca
   const [indice, setIndice] = useState(null)
-  const [tipo, setTipoEstado] = useState(lembrado.tipo)
-  const [grupo, setGrupo] = useState(lembrado.grupo)
+  const [tipo, setTipo] = useState(lembrado.tipo)
+  const [subgrupo, setSubgrupo] = useState(lembrado.subgrupo)
   const [municipio, setMunicipio] = useState(lembrado.municipio)
   const [busca, setBusca] = useState(lembrado.busca)
   const [selecionado, setSelecionado] = useState(lembrado.selecionado)
@@ -30,20 +47,24 @@ export default function Extensoes() {
   const [limite, setLimite] = useState(POR_VEZ)
   const [conteudoBusca, setConteudoBusca] = useState(null) // { termo, achados, buscando, cortado }
 
-  useEffect(() => { Object.assign(lembrado, { tipo, grupo, municipio, busca, selecionado }) }, [tipo, grupo, municipio, busca, selecionado])
+  useEffect(() => { Object.assign(lembrado, { tipo, subgrupo, municipio, busca, selecionado }) }, [tipo, subgrupo, municipio, busca, selecionado])
   useEffect(() => { ponte?.indice().then(setIndice) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function setTipo(t) {
-    setTipoEstado(t); setGrupo(TODOS); setMunicipio(TODOS); setConteudoBusca(null); setLimite(POR_VEZ)
+  function escolher(t, sub = null) {
+    setTipo(t); setSubgrupo(sub); setConteudoBusca(null)
   }
 
   const itens = indice?.itens || []
-  const contagem = useMemo(() => contar(itens), [itens])
-  const grupos = useMemo(() => listarGrupos(itens, tipo), [itens, tipo])
-  const municipios = useMemo(() => listarMunicipios(itens, tipo), [itens, tipo])
+  const secoes = useMemo(() => montarSecoes(itens, municipio || null), [itens, municipio])
+  const municipios = useMemo(() => {
+    const m = new Map()
+    for (const i of itens) if (i.municipio) m.set(i.municipio, (m.get(i.municipio) || 0) + 1)
+    return [...m].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'))
+  }, [itens])
+  const filtro = { tipo, subgrupo, municipio: municipio || null }
   const filtrados = useMemo(
-    () => filtrarItens(itens, { tipo, grupo: grupo || null, municipio: municipio || null, busca: conteudoBusca ? '' : busca }),
-    [itens, tipo, grupo, municipio, busca, conteudoBusca]
+    () => filtrarItens(itens, { ...filtro, busca: conteudoBusca ? '' : busca }),
+    [itens, tipo, subgrupo, municipio, busca, conteudoBusca] // eslint-disable-line react-hooks/exhaustive-deps
   )
   const porId = useMemo(() => new Map(itens.map(i => [i.id, i])), [itens])
   const lista = conteudoBusca && !conteudoBusca.buscando
@@ -51,7 +72,7 @@ export default function Extensoes() {
     : filtrados
   const item = selecionado ? porId.get(selecionado) : null
 
-  useEffect(() => { setLimite(POR_VEZ) }, [grupo, municipio, busca])
+  useEffect(() => { setLimite(POR_VEZ) }, [tipo, subgrupo, municipio, busca])
 
   useEffect(() => {
     if (!selecionado || !ponte) { setConteudo(null); return }
@@ -68,7 +89,7 @@ export default function Extensoes() {
   async function buscarNoConteudo() {
     const termo = busca.trim()
     if (termo.length < 3) return
-    const ids = filtrarItens(itens, { tipo, grupo: grupo || null, municipio: municipio || null }).map(i => i.id)
+    const ids = filtrarItens(itens, filtro).map(i => i.id)
     setConteudoBusca({ termo, achados: [], buscando: true, total: ids.length })
     const r = await ponte.buscar(ids, termo)
     setConteudoBusca({ termo, achados: r.achados, cortado: r.cortado, buscando: false, total: ids.length })
@@ -78,10 +99,6 @@ export default function Extensoes() {
     const novo = await ponte.escolherPasta()
     if (novo) { setIndice(novo); setSelecionado(null) }
   }
-
-  const acoes = indice?.existe && (
-    <Abas abas={TIPOS.map(t => ({ ...t, contador: contagem[t.id] }))} atual={tipo} onMudar={setTipo} />
-  )
 
   if (!ponte) {
     return <Pagina titulo="Extensões" icone="extensoes"><Aviso titulo="Disponível só no app">A biblioteca lê a pasta desta máquina pelo Krakion App.</Aviso></Pagina>
@@ -98,36 +115,50 @@ export default function Extensoes() {
   }
 
   return (
-    <Pagina titulo="Extensões" icone="extensoes" acoes={acoes}>
+    <Pagina titulo="Extensões" icone="extensoes">
       <div className="flex min-h-0 flex-1">
-        {/* Filtros: grupos do tipo + município */}
-        <aside className="flex w-56 shrink-0 flex-col border-r border-borda">
-          {/* Com grupos (scripts, fórmulas): município numa caixa e grupos na lista. Sem grupos (relatórios): a lista é de municípios. */}
-          {grupos.length > 0 && (
-            <div className="border-b border-borda p-2">
-              <CaixaBusca
-                opcoes={[{ valor: TODOS, rotulo: 'Todos os municípios' }, ...municipios.map(m => ({ valor: m.valor, rotulo: `${m.valor} · ${m.qtd}` }))]}
-                valor={municipio}
-                onEscolher={v => { setMunicipio(v); setConteudoBusca(null) }}
-              />
-            </div>
-          )}
+        {/* Navegação: município no topo; Scripts por categoria, Fórmulas por tipo de fórmula, Relatórios */}
+        <aside className="flex w-64 shrink-0 flex-col border-r border-borda">
+          <div className="border-b border-borda p-2">
+            <CaixaBusca
+              opcoes={[{ valor: TODOS, rotulo: 'Todos os municípios' }, ...municipios.map(([nome, qtd]) => ({ valor: nome, rotulo: `${nome} · ${qtd}` }))]}
+              valor={municipio}
+              onEscolher={v => { setMunicipio(v); setConteudoBusca(null) }}
+            />
+          </div>
           <nav className="min-h-0 flex-1 overflow-y-auto p-2">
-            <ul className="space-y-0.5">
-              {[{ valor: TODOS, qtd: contagem[tipo] }, ...(grupos.length ? grupos : municipios)].map(g => {
-                const ativo = (grupos.length ? grupo : municipio) === g.valor
-                return (
-                  <li key={g.valor}>
-                    <button type="button"
-                      onClick={() => { grupos.length ? setGrupo(g.valor) : setMunicipio(g.valor); setConteudoBusca(null) }}
-                      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${ativo ? 'bg-texto/[0.07] font-medium' : 'text-suave hover:bg-texto/[0.04] hover:text-texto'}`}>
-                      <span className="min-w-0 flex-1 truncate">{g.valor ? (grupos.length ? rotuloGrupo(g.valor) : g.valor) : grupos.length ? 'Todos' : 'Todos os municípios'}</span>
-                      <span className="text-[11px] tabular-nums text-suave">{g.qtd}</span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
+            {secoes.map(sec => (
+              <section key={sec.tipo} className="mb-3">
+                <button type="button" onClick={() => escolher(sec.tipo)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition ${tipo === sec.tipo && subgrupo === null ? 'bg-texto/[0.07]' : 'hover:bg-texto/[0.04]'}`}>
+                  <span className={`flex-1 text-[11px] font-semibold uppercase tracking-wider ${tipo === sec.tipo ? 'text-texto' : 'text-suave'}`}>{sec.titulo}</span>
+                  <span className="text-[11px] tabular-nums text-suave">{sec.total.toLocaleString('pt-BR')}</span>
+                </button>
+                {sec.subgrupos.length > 0 && (
+                  <ul className="mt-0.5 space-y-0.5">
+                    {agruparPorAssunto(sec.subgrupos).map(({ assunto, itens: subs }) => (
+                      <li key={assunto || subs[0].valor}>
+                        {assunto && <p className="px-4 pb-0.5 pt-1.5 text-[11px] text-suave">{assunto}</p>}
+                        <ul className="space-y-0.5">
+                          {subs.map(g => {
+                            const ativo = tipo === sec.tipo && subgrupo === g.valor
+                            return (
+                              <li key={g.valor}>
+                                <button type="button" onClick={() => escolher(sec.tipo, g.valor)} title={g.rotulo}
+                                  className={`flex w-full items-center gap-2 rounded-lg py-1.5 pr-2.5 text-left text-sm transition ${assunto ? 'pl-6' : 'pl-4'} ${ativo ? 'bg-texto/[0.07] font-medium' : 'text-suave hover:bg-texto/[0.04] hover:text-texto'}`}>
+                                  <span className="min-w-0 flex-1 truncate">{g.nome}</span>
+                                  <span className="text-[11px] tabular-nums text-suave">{g.qtd.toLocaleString('pt-BR')}</span>
+                                </button>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ))}
           </nav>
           <button type="button" onClick={trocarPasta} title={indice.raiz}
             className="flex items-center gap-2 border-t border-borda px-4 py-2.5 text-left text-[11px] text-suave hover:text-texto">
@@ -170,7 +201,7 @@ export default function Extensoes() {
                   className={`w-full rounded-lg px-2.5 py-2 text-left transition ${selecionado === i.id ? 'bg-texto/[0.07]' : 'hover:bg-texto/[0.04]'}`}>
                   <span className="block truncate text-sm">{i.nome}</span>
                   <span className="block truncate text-[11px] text-suave">
-                    {[i.municipio, !grupo && i.grupo ? rotuloGrupo(i.grupo) : null, i.detalhe].filter(Boolean).join(' · ')}
+                    {subtitulo(i, conteudoBusca ? null : subgrupo)}
                   </span>
                   {i.achado && (
                     <span className="mt-1 block truncate font-mono text-[11px] text-suave/90" title={i.achado.trecho}>

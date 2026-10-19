@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { contar, filtrarItens, grupos, municipios, linguagem, linhaComTermo } from './biblioteca.js'
+import { contar, filtrarItens, grupos, municipios, linguagem, linhaComTermo, rotuloTipoFormula, secoes } from './biblioteca.js'
 
 const itens = [
   { id: 's1', tipo: 'script', grupo: 'Componentes', municipio: 'Atibaia', nome: 'Similaridade Strings', detalhe: null },
@@ -42,4 +42,33 @@ test('linhaComTermo acha a primeira linha (1-based) sem acento', () => {
   assert.equal(linhaComTermo('a\nb\nCréditos.transferir()', 'creditos'), 3)
   assert.equal(linhaComTermo('a', 'zz'), null)
   assert.equal(linhaComTermo('a', ''), null)
+})
+
+test('rotuloTipoFormula: nome conhecido e fallback legível', () => {
+  assert.equal(rotuloTipoFormula('GERACAO_CREDITO_RECEITAS_DIVERSAS'), 'Geração de crédito · Receitas Diversas')
+  assert.equal(rotuloTipoFormula('ITBI_TRANSFERENCIA_CREDITOS'), 'ITBI · Transferência de créditos')
+  assert.equal(rotuloTipoFormula('NOVO_TIPO_X'), 'Novo tipo x')
+  assert.equal(rotuloTipoFormula(null), 'Sem tipo')
+})
+
+test('secoes: Scripts por categoria, Fórmulas por tipo (ordem do rótulo), Relatórios sem subdivisão; respeita município', () => {
+  const lista = [
+    ...itens,
+    { id: 'f2', tipo: 'formula', grupo: 'Parcelamentos', codigo: 'DESCONTO_PARCELAMENTO_DIVIDAS', municipio: 'Atibaia', nome: 'Desc' },
+    { id: 'f3', tipo: 'formula', grupo: 'ITBI', codigo: 'ITBI_TRANSFERENCIA_CREDITOS', municipio: 'Atibaia', nome: 'T' },
+  ]
+  lista[3] = { ...lista[3], codigo: 'ITBI_TRANSFERENCIA_CREDITOS' }
+  const s = secoes(lista)
+  assert.deepEqual(s.map(x => [x.tipo, x.total]), [['script', 3], ['formula', 3], ['relatorio', 1]])
+  assert.deepEqual(s[0].subgrupos.map(g => g.valor), ['Componentes', 'Criticas'])
+  assert.deepEqual(s[1].subgrupos.map(g => [g.rotulo, g.qtd]), [['ITBI · Transferência de créditos', 2], ['Parcelamento · Desconto em dívidas', 1]])
+  assert.deepEqual(s[2].subgrupos, [])
+  const soAtibaia = secoes(lista, 'Atibaia')
+  assert.deepEqual(soAtibaia.map(x => x.total), [2, 2, 0])
+})
+
+test('filtrarItens com subgrupo: categoria no script, tipo na fórmula', () => {
+  const lista = [{ ...itens[3], codigo: 'ITBI_TRANSFERENCIA_CREDITOS' }, itens[1]]
+  assert.deepEqual(filtrarItens(lista, { tipo: 'formula', subgrupo: 'ITBI_TRANSFERENCIA_CREDITOS' }).map(i => i.id), ['f1'])
+  assert.deepEqual(filtrarItens(lista, { tipo: 'script', subgrupo: 'Criticas' }).map(i => i.id), ['s2'])
 })

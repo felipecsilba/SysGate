@@ -25,7 +25,7 @@ function pastaExemplo() {
 
 test('interpretarNome: fórmula com id, código e ano', () => {
   assert.deepEqual(interpretarNome('formula', 'Bom Jesus - 1787182060739823900 - ITBI_TRANSFERENCIA_CREDITOS - Transferência de créditos - 2026.txt'),
-    { municipio: 'Bom Jesus', nome: 'Transferência de créditos', detalhe: 'ITBI_TRANSFERENCIA_CREDITOS · 2026', ano: '2026' })
+    { municipio: 'Bom Jesus', nome: 'Transferência de créditos', detalhe: 'ITBI_TRANSFERENCIA_CREDITOS · 2026', ano: '2026', codigo: 'ITBI_TRANSFERENCIA_CREDITOS' })
   assert.equal(interpretarNome('formula', 'Atibaia - CONVENIO_BANCARIO - FEBRABAN CNAB 240 - 2026.txt').nome, 'FEBRABAN CNAB 240')
 })
 

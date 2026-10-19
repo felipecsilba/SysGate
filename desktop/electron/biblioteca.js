@@ -27,7 +27,7 @@ export function interpretarNome(tipo, base) {
     if (/^\d{10,}$/.test(partes[0])) partes.shift()
     const ano = /^\d{4}$/.test(partes.at(-1)) ? partes.pop() : null
     const codigo = /^[A-Z0-9_]+$/.test(partes[0]) && partes.length > 1 ? partes.shift() : null
-    return { municipio, nome: partes.join(' - '), detalhe: [codigo, ano].filter(Boolean).join(' · ') || null, ano }
+    return { municipio, nome: partes.join(' - '), detalhe: [codigo, ano].filter(Boolean).join(' · ') || null, ano, codigo }
   }
   // Crítica: ÁREA - {'identificador'_ 'CRIACAO', …} - Nome
   const iDict = partes.findIndex(p => p.startsWith('{'))

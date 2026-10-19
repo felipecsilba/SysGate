@@ -3,7 +3,7 @@ import Abas from '../../components/Abas'
 import BotaoIcone from '../../components/BotaoIcone'
 import Icone from '../../components/Icone'
 import { BFC_SCRIPT, highlightCode, highlightXml } from '../../lib/codigo'
-import { linguagem, linhaComTermo } from '../../lib/biblioteca'
+import { linguagem, linhaComTermo, rotuloCategoria, rotuloTipoFormula } from '../../lib/biblioteca'
 
 const ALTURA_LINHA = 20 // leading-5 — régua, código e marca da linha usam a mesma altura
 const escapar = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -68,7 +68,9 @@ export default function Visualizador({ item, conteudo, erro, termoConteudo }) {
       <header className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-semibold leading-snug">{item.nome}</h3>
-          <p className="mt-0.5 text-sm text-suave">{[item.municipio, item.grupo, item.detalhe].filter(Boolean).join(' · ')}</p>
+          <p className="mt-0.5 text-sm text-suave">
+            {(item.tipo === 'formula' ? [item.municipio, rotuloTipoFormula(item.codigo), item.ano] : [item.municipio, rotuloCategoria(item.grupo), item.detalhe]).filter(Boolean).join(' · ')}
+          </p>
         </div>
         {atual?.texto && <BotaoIcone titulo={copiado ? 'Copiado' : 'Copiar código'} icone={copiado ? 'check' : 'copiar'} ativo={copiado} onClick={copiar} />}
         <BotaoIcone titulo="Mostrar na pasta" icone="arquivo" onClick={() => window.krakion?.biblioteca.mostrar(item.id)} />
