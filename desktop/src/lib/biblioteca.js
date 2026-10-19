@@ -1,4 +1,4 @@
-// Extensões — filtros da biblioteca (o índice vem do Electron: electron/biblioteca.js)
+// Biblioteca — filtros (o índice vem do Electron: electron/biblioteca.js)
 import { normalizar } from './texto.js'
 
 export const TIPOS = [

@@ -22,14 +22,24 @@ export const GRUPOS = [
       { id: 'api', rotulo: 'API', icone: 'api', descricao: 'Chamadas à API Betha, uma a uma ou em lote.' },
     ],
   },
-  // Biblioteca de scripts, fórmulas e relatórios lida da pasta local
+  // Consulta: scripts, fórmulas e relatórios lidos da pasta local (somente leitura)
   {
-    id: 'extensoes',
-    titulo: 'Extensões',
+    id: 'biblioteca',
+    titulo: 'Biblioteca',
+    icone: 'biblioteca',
+    direto: true,
+    itens: [
+      { id: 'biblioteca', rotulo: 'Biblioteca', icone: 'biblioteca', descricao: 'Scripts, fórmulas e relatórios dos municípios, para consultar e copiar.' },
+    ],
+  },
+  // Criação: script de exportação, templates e funções prontas
+  {
+    id: 'gerador',
+    titulo: 'Gerador de Extensões',
     icone: 'extensoes',
     direto: true,
     itens: [
-      { id: 'extensoes', rotulo: 'Extensões', icone: 'extensoes', descricao: 'Biblioteca de scripts, fórmulas e relatórios.' },
+      { id: 'gerador', rotulo: 'Gerador de Extensões', icone: 'extensoes', descricao: 'Gera scripts e fórmulas a partir de modelos e do catálogo de fontes.' },
     ],
   },
   {

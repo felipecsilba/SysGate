@@ -1,6 +1,6 @@
 // Realce de código no estilo VS Code Dark+ (blocos de código do Conhecimento).
 // Escapa o HTML de cada pedaço ANTES de pintar — conteúdo do banco nunca vira marcação.
-// `extras`: palavras-chave adicionais (ex.: BFC_SCRIPT nas Extensões)
+// `extras`: palavras-chave adicionais (ex.: BFC_SCRIPT na Biblioteca)
 export function highlightCode(code, extras = []) {
   const KEYWORDS = new Set([...extras, 
     'if','else','for','while','do','return','function','var','let','const',
@@ -84,7 +84,7 @@ export function highlightCode(code, extras = []) {
   }).join('')
 }
 
-// Palavras do BFC-Script (Groovy em português) — usadas no realce das Extensões
+// Palavras do BFC-Script (Groovy em português) — usadas no realce da Biblioteca
 export const BFC_SCRIPT = [
   'se', 'senao', 'para', 'ate', 'passo', 'enquanto', 'retornar', 'def', 'nulo', 'verdadeiro', 'falso',
   'percorrer', 'tentar', 'tratar', 'finalmente', 'lancar', 'importar', 'esperar', 'parar', 'continuar',

@@ -99,7 +99,7 @@ export default function Visualizador({ item, termoConteudo, versaoInicial }) {
     return (
       <div className="m-auto max-w-xs py-20 text-center">
         <span className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-borda text-suave">
-          <Icone nome="extensoes" className="h-5 w-5" />
+          <Icone nome="biblioteca" className="h-5 w-5" />
         </span>
         <p className="text-sm font-medium">Escolha um item da biblioteca</p>
         <p className="mt-1 text-xs text-suave">O código abre aqui, com realce, para ler e copiar. Nada é alterado na pasta.</p>

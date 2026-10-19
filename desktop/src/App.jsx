@@ -13,7 +13,7 @@ import Notas from './pages/Notas'
 import Conhecimento from './pages/Conhecimento'
 import AnalisadorJson from './pages/AnalisadorJson'
 import Checagem from './pages/Checagem'
-import Extensoes from './pages/Extensoes'
+import Biblioteca from './pages/Biblioteca'
 import { MODULOS } from './modulos'
 import { useAuthStore } from './stores/authStore'
 
@@ -25,7 +25,7 @@ const PAGINAS = {
   conhecimento: Conhecimento,
   'analisador-json': AnalisadorJson,
   checagem: Checagem,
-  extensoes: Extensoes,
+  biblioteca: Biblioteca,
   sistemas: Sistemas,
   tokens: CentralTokens,
   'betha-admin': BethaAdmin,
@@ -46,6 +46,7 @@ export default function App() {
               return <Route key={m.id} path={m.rota} element={Pagina ? <Pagina /> : <EmConstrucao modulo={m} />} />
             })}
             <Route path="/sandbox" element={<Navigate to="/api" replace />} />
+            <Route path="/extensoes" element={<Navigate to="/biblioteca" replace />} />
             <Route path="*" element={<Navigate to={MODULOS[0].rota} replace />} />
           </Route>
         ) : (

@@ -6,7 +6,7 @@ import Icone from '../../components/Icone'
 import { agruparVersoes, filtrarItens, rotuloCategoria, rotuloTipoFormula, secoes as montarSecoes } from '../../lib/biblioteca'
 import Visualizador from './Visualizador'
 
-// Biblioteca de extensões: scripts, fórmulas e relatórios lidos da pasta local (somente leitura).
+// Biblioteca: scripts, fórmulas e relatórios lidos da pasta local (somente leitura).
 // O índice (só nomes) vem do Electron; o conteúdo é lido quando o item é aberto.
 const TODOS = ''
 const POR_VEZ = 300
@@ -37,7 +37,7 @@ function subtitulo(i, subgrupo) {
 // subgrupo: null = o tipo inteiro; senão a categoria (script) ou o tipo de fórmula
 const lembrado = { tipo: 'script', subgrupo: null, municipio: TODOS, busca: '', selecionado: null }
 
-export default function Extensoes() {
+export default function Biblioteca() {
   const ponte = window.krakion?.biblioteca
   const [indice, setIndice] = useState(null)
   const [tipo, setTipo] = useState(lembrado.tipo)
@@ -108,12 +108,12 @@ export default function Extensoes() {
   }
 
   if (!ponte) {
-    return <Pagina titulo="Extensões" icone="extensoes"><Aviso titulo="Disponível só no app">A biblioteca lê a pasta desta máquina pelo Krakion App.</Aviso></Pagina>
+    return <Pagina titulo="Biblioteca" icone="biblioteca"><Aviso titulo="Disponível só no app">A biblioteca lê a pasta desta máquina pelo Krakion App.</Aviso></Pagina>
   }
-  if (!indice) return <Pagina titulo="Extensões" icone="extensoes"><p className="py-16 text-center text-sm text-suave">Lendo a biblioteca…</p></Pagina>
+  if (!indice) return <Pagina titulo="Biblioteca" icone="biblioteca"><p className="py-16 text-center text-sm text-suave">Lendo a biblioteca…</p></Pagina>
   if (!indice.existe) {
     return (
-      <Pagina titulo="Extensões" icone="extensoes">
+      <Pagina titulo="Biblioteca" icone="biblioteca">
         <Aviso titulo="Pasta da biblioteca não encontrada" acao={['Escolher pasta', trocarPasta]}>
           Procurei em <code className="font-mono">{indice.raiz}</code>. Escolha a pasta que tem Scripts, Formulas e Relatorios.
         </Aviso>
@@ -122,7 +122,7 @@ export default function Extensoes() {
   }
 
   return (
-    <Pagina titulo="Extensões" icone="extensoes">
+    <Pagina titulo="Biblioteca" icone="biblioteca">
       <div className="flex min-h-0 flex-1">
         {/* Navegação: município no topo; Scripts por categoria, Fórmulas por tipo de fórmula, Relatórios */}
         <aside className="flex w-64 shrink-0 flex-col border-r border-borda">
@@ -242,7 +242,7 @@ function Aviso({ titulo, acao, children }) {
   return (
     <div className="m-auto max-w-sm py-16 text-center">
       <span className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-borda text-suave">
-        <Icone nome="extensoes" className="h-5 w-5" />
+        <Icone nome="biblioteca" className="h-5 w-5" />
       </span>
       <p className="text-sm font-medium">{titulo}</p>
       <p className="mt-1 text-xs text-suave">{children}</p>
