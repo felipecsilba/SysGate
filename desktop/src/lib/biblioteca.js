@@ -100,3 +100,74 @@ export function linhaComTermo(texto, termo) {
   const i = String(texto).split(/\r?\n/).findIndex(l => normalizar(l).includes(t))
   return i < 0 ? null : i + 1
 }
+
+// ─── Versões por ano (fórmulas) ───────────────────────────────────────────────
+
+// A mesma fórmula (município + tipo + nome) extraída em anos diferentes vira um item só.
+// O item fica com o id da versão mais recente; `versoes` lista todas (mais recente primeiro).
+export function agruparVersoes(itens) {
+  const saida = []
+  const porChave = new Map()
+  for (const i of itens) {
+    if (i.tipo !== 'formula') { saida.push(i); continue }
+    const chave = [i.municipio, i.codigo, String(i.nome).trim()].join('|')
+    if (!porChave.has(chave)) { const g = []; porChave.set(chave, g); saida.push(g) }
+    porChave.get(chave).push(i)
+  }
+  return saida.map(g => {
+    if (!Array.isArray(g)) return g
+    const versoes = [...g].sort((a, b) => String(b.ano ?? '').localeCompare(String(a.ano ?? '')))
+    const anos = [...new Set(versoes.map(v => v.ano).filter(Boolean))]
+    const rotuloAnos = anos.length > 1 ? `${anos.at(-1)}–${anos[0]}` : anos[0] || null
+    return { ...versoes[0], versoes: versoes.map(v => ({ id: v.id, ano: v.ano })), anos: rotuloAnos }
+  })
+}
+
+// O cabeçalho da extração muda todo ano (ID, Ano, Usuário, data) — fica fora da comparação
+export function semCabecalho(texto) {
+  const linhas = String(texto).replace(/\r\n?/g, '\n').split('\n')
+  let i = 0
+  while (i < linhas.length && /^\/\/\s*[^:]{2,30}?\s*:/.test(linhas[i])) i++
+  if (i === 0) return linhas.join('\n')
+  while (i < linhas.length && !linhas[i].trim()) i++
+  return linhas.slice(i).join('\n')
+}
+
+// Diff por linha (LCS). Fórmulas têm no máximo alguns milhares de linhas: O(n·m) é suficiente.
+export function diffLinhas(antes, depois) {
+  const a = String(antes).replace(/\r\n?/g, '\n').split('\n')
+  const b = String(depois).replace(/\r\n?/g, '\n').split('\n')
+  const n = a.length, m = b.length
+  const lcs = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1))
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) {
+    lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1])
+  }
+  const saida = []
+  let i = 0, j = 0
+  while (i < n || j < m) {
+    if (i < n && j < m && a[i] === b[j]) { saida.push({ tipo: 'igual', texto: a[i], linhaNova: j + 1 }); i++; j++ }
+    else if (j < m && (i >= n || lcs[i][j + 1] >= lcs[i + 1][j])) {
+      // remoção antes da inclusão quando as duas cabem: lê como "trocou X por Y"
+      if (i < n && lcs[i + 1][j] === lcs[i][j]) { saida.push({ tipo: 'removido', texto: a[i] }); i++ }
+      else { saida.push({ tipo: 'adicionado', texto: b[j], linhaNova: j + 1 }); j++ }
+    } else { saida.push({ tipo: 'removido', texto: a[i] }); i++ }
+  }
+  return saida
+}
+
+// Trechos iguais longos viram { tipo: 'oculto', qtd }, deixando `contexto` linhas em volta das mudanças
+export function blocosDiff(diff, contexto = 3) {
+  const perto = diff.map(() => false)
+  diff.forEach((d, k) => {
+    if (d.tipo === 'igual') return
+    for (let x = Math.max(0, k - contexto); x <= Math.min(diff.length - 1, k + contexto); x++) perto[x] = true
+  })
+  const saida = []
+  for (let k = 0; k < diff.length; k++) {
+    if (diff[k].tipo !== 'igual' || perto[k]) { saida.push(diff[k]); continue }
+    const ultimo = saida.at(-1)
+    if (ultimo?.tipo === 'oculto') ultimo.qtd++
+    else saida.push({ tipo: 'oculto', qtd: 1 })
+  }
+  return saida
+}

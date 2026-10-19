@@ -3,7 +3,7 @@ import Pagina from '../../components/Pagina'
 import Busca from '../../components/Busca'
 import CaixaBusca from '../../components/CaixaBusca'
 import Icone from '../../components/Icone'
-import { filtrarItens, rotuloCategoria, rotuloTipoFormula, secoes as montarSecoes } from '../../lib/biblioteca'
+import { agruparVersoes, filtrarItens, rotuloCategoria, rotuloTipoFormula, secoes as montarSecoes } from '../../lib/biblioteca'
 import Visualizador from './Visualizador'
 
 // Biblioteca de extensões: scripts, fórmulas e relatórios lidos da pasta local (somente leitura).
@@ -26,7 +26,10 @@ function agruparPorAssunto(subgrupos) {
 
 // Linha de baixo de cada item: o que o filtro atual ainda não diz
 function subtitulo(i, subgrupo) {
-  if (i.tipo === 'formula') return [i.municipio, subgrupo === null ? rotuloTipoFormula(i.codigo) : null, i.ano].filter(Boolean).join(' · ')
+  if (i.tipo === 'formula') {
+    const anos = i.versoes?.length > 1 ? `${i.anos} · ${i.versoes.length} versões` : i.ano
+    return [i.municipio, subgrupo === null ? rotuloTipoFormula(i.codigo) : null, anos].filter(Boolean).join(' · ')
+  }
   return [i.municipio, i.tipo === 'script' && subgrupo === null ? rotuloCategoria(i.grupo) : null, i.detalhe].filter(Boolean).join(' · ')
 }
 
@@ -42,8 +45,7 @@ export default function Extensoes() {
   const [municipio, setMunicipio] = useState(lembrado.municipio)
   const [busca, setBusca] = useState(lembrado.busca)
   const [selecionado, setSelecionado] = useState(lembrado.selecionado)
-  const [conteudo, setConteudo] = useState(null)
-  const [erroItem, setErroItem] = useState('')
+  const [versaoInicial, setVersaoInicial] = useState(null) // ano aberto pela busca no código
   const [limite, setLimite] = useState(POR_VEZ)
   const [conteudoBusca, setConteudoBusca] = useState(null) // { termo, achados, buscando, cortado }
 
@@ -54,7 +56,8 @@ export default function Extensoes() {
     setTipo(t); setSubgrupo(sub); setConteudoBusca(null)
   }
 
-  const itens = indice?.itens || []
+  // Fórmulas: os anos da mesma fórmula viram um item só (as versões ficam dentro dele)
+  const itens = useMemo(() => agruparVersoes(indice?.itens || []), [indice])
   const secoes = useMemo(() => montarSecoes(itens, municipio || null), [itens, municipio])
   const municipios = useMemo(() => {
     const m = new Map()
@@ -67,29 +70,33 @@ export default function Extensoes() {
     [itens, tipo, subgrupo, municipio, busca, conteudoBusca] // eslint-disable-line react-hooks/exhaustive-deps
   )
   const porId = useMemo(() => new Map(itens.map(i => [i.id, i])), [itens])
-  const lista = conteudoBusca && !conteudoBusca.buscando
-    ? conteudoBusca.achados.map(a => ({ ...porId.get(a.id), achado: a })).filter(i => i.id)
-    : filtrados
+  // Cada arquivo (inclusive anos antigos) → o item que o representa na lista
+  const porArquivo = useMemo(() => {
+    const m = new Map()
+    for (const i of itens) for (const v of i.versoes || [{ id: i.id }]) m.set(v.id, i)
+    return m
+  }, [itens])
+  // Vários anos da mesma fórmula com o termo: um item só, aberto no ano mais recente que bateu
+  const lista = useMemo(() => {
+    if (!conteudoBusca || conteudoBusca.buscando) return filtrados
+    const vistos = new Set()
+    const saida = []
+    for (const a of conteudoBusca.achados) {
+      const i = porArquivo.get(a.id)
+      if (!i || vistos.has(i.id)) continue
+      vistos.add(i.id)
+      saida.push({ ...i, achado: a })
+    }
+    return saida
+  }, [conteudoBusca, filtrados, porArquivo])
   const item = selecionado ? porId.get(selecionado) : null
 
   useEffect(() => { setLimite(POR_VEZ) }, [tipo, subgrupo, municipio, busca])
 
-  useEffect(() => {
-    if (!selecionado || !ponte) { setConteudo(null); return }
-    let vivo = true
-    setConteudo(null); setErroItem('')
-    ponte.ler(selecionado).then(r => {
-      if (!vivo) return
-      if (r?.erro) setErroItem('Não foi possível abrir: ' + r.erro)
-      else setConteudo(r)
-    })
-    return () => { vivo = false }
-  }, [selecionado]) // eslint-disable-line react-hooks/exhaustive-deps
-
   async function buscarNoConteudo() {
     const termo = busca.trim()
     if (termo.length < 3) return
-    const ids = filtrarItens(itens, filtro).map(i => i.id)
+    const ids = filtrarItens(itens, filtro).flatMap(i => (i.versoes || [{ id: i.id }]).map(v => v.id))
     setConteudoBusca({ termo, achados: [], buscando: true, total: ids.length })
     const r = await ponte.buscar(ids, termo)
     setConteudoBusca({ termo, achados: r.achados, cortado: r.cortado, buscando: false, total: ids.length })
@@ -197,7 +204,7 @@ export default function Extensoes() {
           <ul className="min-h-0 flex-1 overflow-y-auto p-1.5">
             {lista.slice(0, limite).map(i => (
               <li key={i.id}>
-                <button type="button" onClick={() => setSelecionado(i.id)}
+                <button type="button" onClick={() => { setSelecionado(i.id); setVersaoInicial(i.achado?.id ?? null) }}
                   className={`w-full rounded-lg px-2.5 py-2 text-left transition ${selecionado === i.id ? 'bg-texto/[0.07]' : 'hover:bg-texto/[0.04]'}`}>
                   <span className="block truncate text-sm">{i.nome}</span>
                   <span className="block truncate text-[11px] text-suave">
@@ -224,7 +231,7 @@ export default function Extensoes() {
 
         {/* Código */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <Visualizador item={item} conteudo={conteudo} erro={erroItem} termoConteudo={conteudoBusca?.termo} />
+          <Visualizador item={item} termoConteudo={conteudoBusca?.termo} versaoInicial={versaoInicial} />
         </div>
       </div>
     </Pagina>

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { contar, filtrarItens, grupos, municipios, linguagem, linhaComTermo, rotuloTipoFormula, secoes } from './biblioteca.js'
+import { contar, filtrarItens, grupos, municipios, linguagem, linhaComTermo, rotuloTipoFormula, secoes, agruparVersoes, semCabecalho, diffLinhas, blocosDiff } from './biblioteca.js'
 
 const itens = [
   { id: 's1', tipo: 'script', grupo: 'Componentes', municipio: 'Atibaia', nome: 'Similaridade Strings', detalhe: null },
@@ -72,4 +72,37 @@ test('filtrarItens com subgrupo: categoria no script, tipo na fórmula', () => {
   const lista = [{ ...itens[3], codigo: 'ITBI_TRANSFERENCIA_CREDITOS' }, itens[1]]
   assert.deepEqual(filtrarItens(lista, { tipo: 'formula', subgrupo: 'ITBI_TRANSFERENCIA_CREDITOS' }).map(i => i.id), ['f1'])
   assert.deepEqual(filtrarItens(lista, { tipo: 'script', subgrupo: 'Criticas' }).map(i => i.id), ['s2'])
+})
+
+test('agruparVersoes junta a mesma fórmula (município + tipo + nome) em anos diferentes, mais recente primeiro', () => {
+  const f = (id, ano, nome = 'CEMITERIO', municipio = 'Andradas') => ({ id, tipo: 'formula', grupo: 'Receitas Diversas', codigo: 'GERACAO_CREDITO_RECEITAS_DIVERSAS', municipio, nome, ano })
+  const r = agruparVersoes([f('a25', '2025'), f('a26', '2026'), f('b26', '2026', 'Cemitério'), f('c26', '2026', 'CEMITERIO', 'Atibaia'), itens[0]])
+  const cem = r.find(i => i.id === 'a26')
+  assert.deepEqual(cem.versoes.map(v => v.ano), ['2026', '2025'])
+  assert.equal(cem.anos, '2025–2026')
+  assert.equal(r.length, 4) // a25 entrou em a26; "Cemitério" (com acento) e Atibaia ficam separados
+  assert.equal(r.find(i => i.id === 's1').versoes, undefined) // script não agrupa
+  assert.equal(r.find(i => i.id === 'c26').versoes.length, 1)
+})
+
+test('semCabecalho tira o "// Chave : Valor" do topo e as linhas em branco logo depois', () => {
+  assert.equal(semCabecalho('// ID : 1\r\n// Ano : 2026\r\n\r\n//inicio\r\nx = 1'), '//inicio\nx = 1')
+  assert.equal(semCabecalho('x = 1'), 'x = 1')
+})
+
+const sinal = x => ({ igual: '=', removido: '-', adicionado: '+' })[x.tipo]
+
+test('diffLinhas marca o que entrou e saiu, mantendo a ordem', () => {
+  const d = diffLinhas('a\nb\nc\nd', 'a\nB\nc\nd\ne')
+  assert.deepEqual(d.map(x => sinal(x) + x.texto), ['=a', '-b', '+B', '=c', '=d', '+e'])
+  assert.deepEqual(diffLinhas('x', 'x').map(x => x.tipo), ['igual'])
+})
+
+test('blocosDiff esconde trechos iguais longos, mantendo contexto em volta das mudanças', () => {
+  const a = Array.from({ length: 20 }, (_, i) => `l${i}`).join('\n')
+  const b = a.replace('l10', 'L10')
+  const blocos = blocosDiff(diffLinhas(a, b), 2)
+  assert.deepEqual(blocos.map(x => (x.tipo === 'oculto' ? `…${x.qtd}` : sinal(x) + x.texto)),
+    ['…8', '=l8', '=l9', '-l10', '+L10', '=l11', '=l12', '…7'])
+  assert.equal(blocos.find(x => x.texto === 'L10').linhaNova, 11)
 })
