@@ -14,6 +14,7 @@ import Conhecimento from './pages/Conhecimento'
 import AnalisadorJson from './pages/AnalisadorJson'
 import Checagem from './pages/Checagem'
 import Biblioteca from './pages/Biblioteca'
+import Gerador from './pages/Gerador'
 import { MODULOS } from './modulos'
 import { useAuthStore } from './stores/authStore'
 
@@ -26,6 +27,7 @@ const PAGINAS = {
   'analisador-json': AnalisadorJson,
   checagem: Checagem,
   biblioteca: Biblioteca,
+  gerador: Gerador,
   sistemas: Sistemas,
   tokens: CentralTokens,
   'betha-admin': BethaAdmin,

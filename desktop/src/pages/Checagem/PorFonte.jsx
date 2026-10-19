@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Abas from '../../components/Abas'
 import Busca from '../../components/Busca'
 import Icone from '../../components/Icone'
@@ -26,6 +27,7 @@ const FILTROS_CAMPO = [
 ]
 
 export default function PorFonte({ sistemaId, cadastro, regras }) {
+  const navegar = useNavigate()
   const chave = `${sistemaId}|${cadastro}`
   const inicial = guardado?.chave === chave ? guardado : null
   const [arquivo, setArquivo] = useState(inicial?.arquivo ?? null)
@@ -179,6 +181,11 @@ export default function PorFonte({ sistemaId, cadastro, regras }) {
           </div>
           {erro && <p className="mt-2 text-sm text-perigo">{erro}</p>}
           {!resultado && <p className="mt-3 text-[11px] text-suave">{regras.length} regra{regras.length !== 1 ? 's' : ''} para <code className="font-mono">{cadastro}</code>. O arquivo não sai desta máquina e nada é gravado.</p>}
+          {!resultado && (
+            <button type="button" onClick={() => navegar(`/gerador?fonte=${encodeURIComponent(cadastro)}`)} className="mt-2 flex items-center gap-1.5 text-xs text-acento hover:underline">
+              <Icone nome="extensoes" className="h-3.5 w-3.5" /> Gerar o script de exportação desta fonte
+            </button>
+          )}
         </div>
 
         {resultado && (

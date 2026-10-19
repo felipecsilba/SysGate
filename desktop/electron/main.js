@@ -12,6 +12,7 @@ import { hashArquivo } from './schemaHash.js'
 import * as credenciaisBetha from './bethaAdmin/credenciais.js'
 import { renovarToken } from './bethaAdmin/agente.js'
 import * as biblioteca from './biblioteca.js'
+import * as catalogoFontes from './catalogoFontes.js'
 
 // Dev (npm run dev → abrir.js): interface pelo Vite com hot reload.
 // Fora disso (atalho / instalador): interface compilada em dist/.
@@ -154,6 +155,13 @@ ipcMain.handle('biblioteca:ler', async (_e, id) => {
 ipcMain.handle('biblioteca:buscar', (_e, ids, termo) => biblioteca.buscarConteudo(pastaBiblioteca(), Array.isArray(ids) ? ids : [], termo))
 ipcMain.handle('biblioteca:mostrar', (_e, id) => {
   try { shell.showItemInFolder(biblioteca.resolverDentro(pastaBiblioteca(), id)) } catch { /* id inválido: ignora */ }
+})
+// Gerador de Extensões: catálogo de fontes BFC lido de <biblioteca>/FontesDeDados (catalogo_v2 + mapa REST→BFC)
+ipcMain.handle('gerador:fontes', () => {
+  try { return catalogoFontes.listarFontes(pastaBiblioteca()) } catch (err) { return { existe: false, fontes: [], erro: err.message } }
+})
+ipcMain.handle('gerador:fonte', (_e, chave) => {
+  try { return catalogoFontes.detalheFonte(pastaBiblioteca(), String(chave)) } catch { return null }
 })
 ipcMain.handle('biblioteca:escolher-pasta', async e => {
   const r = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {

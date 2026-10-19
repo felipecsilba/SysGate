@@ -8,7 +8,8 @@ import { blocosDiff, diffLinhas, linguagem, linhaComTermo, rotuloCategoria, rotu
 const ALTURA_LINHA = 20 // leading-5 — régua, código e marca da linha usam a mesma altura
 const escapar = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-function Codigo({ texto: original, nome, linhaMarcada }) {
+// Também usado pelo Gerador de Extensões para mostrar o script gerado
+export function Codigo({ texto: original, nome, linhaMarcada }) {
   const rolagem = useRef(null)
   // \r\n → \n: o realce fecha o <span> do comentário antes do \n e o \r sozinho viraria uma linha a mais
   const texto = useMemo(() => original.replace(/\r\n?/g, '\n'), [original])

@@ -30,6 +30,11 @@ contextBridge.exposeInMainWorld('krakion', {
     mostrar: id => ipcRenderer.invoke('biblioteca:mostrar', id),
     escolherPasta: () => ipcRenderer.invoke('biblioteca:escolher-pasta'),
   },
+  // Gerador de Extensões: catálogo de fontes BFC da pasta da biblioteca (somente leitura)
+  gerador: {
+    fontes: () => ipcRenderer.invoke('gerador:fontes'),
+    fonte: chave => ipcRenderer.invoke('gerador:fonte', chave),
+  },
   // Aviso de versão nova (modo atalho): 'interface' → recarregar; 'completo' → reiniciar
   app: {
     aoNovaVersao: callback => {
