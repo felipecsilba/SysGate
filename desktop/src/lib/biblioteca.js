@@ -3,8 +3,8 @@ import { normalizar } from './texto.js'
 
 export const TIPOS = [
   { id: 'script', rotulo: 'Scripts' },
-  { id: 'formula', rotulo: 'Fórmulas' },
   { id: 'relatorio', rotulo: 'Relatórios' },
+  { id: 'formula', rotulo: 'Fórmulas' },
 ]
 
 export function contar(itens) {

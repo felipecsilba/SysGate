@@ -59,12 +59,13 @@ test('secoes: Scripts por categoria, Fórmulas por tipo (ordem do rótulo), Rela
   ]
   lista[3] = { ...lista[3], codigo: 'ITBI_TRANSFERENCIA_CREDITOS' }
   const s = secoes(lista)
-  assert.deepEqual(s.map(x => [x.tipo, x.total]), [['script', 3], ['formula', 3], ['relatorio', 1]])
+  // Ordem pedida: Scripts, Relatórios, Fórmulas
+  assert.deepEqual(s.map(x => [x.tipo, x.total]), [['script', 3], ['relatorio', 1], ['formula', 3]])
   assert.deepEqual(s[0].subgrupos.map(g => g.valor), ['Componentes', 'Criticas'])
-  assert.deepEqual(s[1].subgrupos.map(g => [g.rotulo, g.qtd]), [['ITBI · Transferência de créditos', 2], ['Parcelamento · Desconto em dívidas', 1]])
-  assert.deepEqual(s[2].subgrupos, [])
+  assert.deepEqual(s[1].subgrupos, [])
+  assert.deepEqual(s[2].subgrupos.map(g => [g.rotulo, g.qtd]), [['ITBI · Transferência de créditos', 2], ['Parcelamento · Desconto em dívidas', 1]])
   const soAtibaia = secoes(lista, 'Atibaia')
-  assert.deepEqual(soAtibaia.map(x => x.total), [2, 2, 0])
+  assert.deepEqual(soAtibaia.map(x => x.total), [2, 0, 2])
 })
 
 test('filtrarItens com subgrupo: categoria no script, tipo na fórmula', () => {
