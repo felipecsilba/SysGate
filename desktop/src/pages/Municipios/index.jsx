@@ -3,6 +3,9 @@ import Pagina from '../../components/Pagina'
 import Busca from '../../components/Busca'
 import Icone from '../../components/Icone'
 import Confirmar from '../../components/Confirmar'
+import BotaoIcone from '../../components/BotaoIcone'
+import { municipiosApi } from '../../lib/api'
+import { normalizar } from '../../lib/texto'
 import { agruparDocumentos, detalheDocumento, filtrarMunicipios, tituloDocumento, visualizacao } from '../../lib/documentos'
 import Documento from './Documento'
 import { ModalAnexar, ModalDados } from './Modais'
@@ -26,6 +29,8 @@ export default function Municipios() {
   const [editando, setEditando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [soltando, setSoltando] = useState(false)
+  const [removendo, setRemovendo] = useState(false)
+  const [daCentral, setDaCentral] = useState([]) // nomes da Central de Tokens (os municípios do dia a dia)
 
   const setPasta = p => { lembrado.pasta = p; setPastaEstado(p); setDocId(null); setBuscaDoc('') }
   const setDocId = id => { lembrado.docId = id; setDocIdEstado(id) }
@@ -44,6 +49,7 @@ export default function Municipios() {
   }, [pasta, ponte])
 
   useEffect(() => { carregarMunicipios() }, [carregarMunicipios])
+  useEffect(() => { municipiosApi.listar().then(l => setDaCentral(l.map(m => m.nome))).catch(() => {}) }, [])
   useEffect(() => { carregarDocs() }, [carregarDocs])
 
   const municipios = useMemo(() => filtrarMunicipios(lista?.municipios || [], buscaMun), [lista, buscaMun])
@@ -51,12 +57,26 @@ export default function Municipios() {
   const atual = lista?.municipios.find(m => m.pasta === pasta)
   const doc = docs?.find(d => d.id === docId) || null
 
-  async function criarMunicipio() {
-    const r = await ponte.criar(novoNome)
+  async function criarMunicipio(nome = novoNome) {
+    const r = await ponte.criar(nome)
     if (!r.ok) return setErro(r.erro)
     setNovoNome(null); setErro('')
     await carregarMunicipios()
     setPasta(r.dados)
+  }
+
+  // Sugestões ao criar: municípios da Central de Tokens que ainda não estão na lista
+  const sugestoes = useMemo(() => {
+    const ja = new Set((lista?.municipios || []).map(m => normalizar(m.nome)))
+    const termo = normalizar(novoNome || '')
+    return daCentral.filter(n => !ja.has(normalizar(n)) && (!termo || normalizar(n).includes(termo))).slice(0, 8)
+  }, [daCentral, lista, novoNome])
+
+  async function removerMunicipio() {
+    const r = await ponte.remover(pasta)
+    if (!r.ok) return setErro(r.erro)
+    setPasta(null)
+    await carregarMunicipios()
   }
 
   async function confirmarAnexo(meta, caminhos) {
@@ -112,6 +132,11 @@ export default function Municipios() {
             <Busca valor={buscaMun} onMudar={setBuscaMun} placeholder="Buscar município…" className="h-8" />
           </div>
           <ul className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-1.5">
+            {!lista.municipios.length && (
+              <li className="px-3 py-6 text-center text-xs text-suave">
+                Nenhum município ainda. Adicione os que você atende no dia a dia — os municípios de onde só vieram scripts ficam fora desta lista.
+              </li>
+            )}
             {municipios.map(m => (
               <li key={m.pasta}>
                 <button type="button" onClick={() => setPasta(m.pasta)} title={m.entidade || m.nome}
@@ -125,14 +150,22 @@ export default function Municipios() {
           <div className="border-t border-borda p-2">
             {novoNome === null ? (
               <button type="button" onClick={() => { setNovoNome(''); setErro('') }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-suave hover:bg-texto/[0.04] hover:text-texto">
-                <Icone nome="mais" className="h-4 w-4" /> Novo município
+                <Icone nome="mais" className="h-4 w-4" /> Adicionar município
               </button>
             ) : (
               <form onSubmit={e => { e.preventDefault(); criarMunicipio() }} className="space-y-1.5">
-                <input autoFocus className="campo h-8 text-sm" value={novoNome} onChange={e => setNovoNome(e.target.value)} placeholder="Nome (ex.: Ruropólis)"
+                <input autoFocus className="campo h-8 text-sm" value={novoNome} onChange={e => setNovoNome(e.target.value)} placeholder="Nome do município"
                   onKeyDown={e => { if (e.key === 'Escape') setNovoNome(null) }} />
+                {sugestoes.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    <span className="w-full text-[10px] uppercase tracking-wider text-suave">Da Central de Tokens</span>
+                    {sugestoes.map(n => (
+                      <button key={n} type="button" onClick={() => criarMunicipio(n)} className="rounded-full border border-borda px-2 py-0.5 text-[11px] hover:border-acento hover:text-acento">{n}</button>
+                    ))}
+                  </div>
+                )}
                 <div className="flex gap-1.5">
-                  <button type="submit" className="botao-primario flex-1 px-2 py-1 text-xs" disabled={!novoNome.trim()}>Criar pasta</button>
+                  <button type="submit" className="botao-primario flex-1 px-2 py-1 text-xs" disabled={!novoNome.trim()}>Adicionar</button>
                   <button type="button" className="botao-secundario px-2 py-1 text-xs" onClick={() => setNovoNome(null)}>Cancelar</button>
                 </div>
               </form>
@@ -153,9 +186,12 @@ export default function Municipios() {
           ) : (
             <>
               <div className="space-y-2 border-b border-borda p-3">
-                <div className="min-w-0">
-                  <h3 className="truncate text-[15px] font-semibold">{atual.nome}</h3>
-                  {atual.entidade && <p className="truncate text-[11px] text-suave">{atual.entidade}</p>}
+                <div className="flex items-start gap-1">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-[15px] font-semibold">{atual.nome}</h3>
+                    {atual.entidade && <p className="truncate text-[11px] text-suave">{atual.entidade}</p>}
+                  </div>
+                  <BotaoIcone titulo="Remover município da lista" icone="lixeira" perigo className="h-7 w-7" onClick={() => setRemovendo(true)} />
                 </div>
                 <div className="flex gap-1.5">
                   <button type="button" className="botao-primario flex-1 px-2.5 py-1.5 text-xs" onClick={() => setAnexar({ caminhos: [] })}>
@@ -209,6 +245,9 @@ export default function Municipios() {
 
       <ModalAnexar aberto={!!anexar} caminhos={anexar?.caminhos} onFechar={() => setAnexar(null)} onAnexar={confirmarAnexo} />
       <ModalDados aberto={editando} doc={doc} onFechar={() => setEditando(false)} onSalvar={salvarDados} />
+      <Confirmar aberto={removendo} titulo={`Remover ${atual?.nome || 'município'} da lista?`} rotulo="Remover"
+        mensagem={atual ? `${atual.documentos ? `Os ${atual.documentos} documento(s) de ${atual.nome} vão para a Lixeira do Windows (dá para recuperar de lá).` : `${atual.nome} sai da lista.`} Os metadados e os scripts desse município não são tocados.` : ''}
+        onConfirmar={removerMunicipio} onFechar={() => setRemovendo(false)} />
       <Confirmar aberto={excluindo} titulo="Mandar para a Lixeira?" rotulo="Mandar para a Lixeira"
         mensagem={doc ? `“${doc.arquivo}” sai da pasta do município e vai para a Lixeira do Windows (dá para recuperar de lá).` : ''}
         onConfirmar={excluir} onFechar={() => setExcluindo(false)} />

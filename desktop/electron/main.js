@@ -171,6 +171,10 @@ const comErro = fn => async (...args) => {
 }
 ipcMain.handle('municipios:listar', comErro(() => municipiosDocs.listarMunicipios(pastaBiblioteca())))
 ipcMain.handle('municipios:criar', comErro((_e, nome) => municipiosDocs.criarMunicipio(pastaBiblioteca(), nome)))
+// Remover da lista = Legislacao (ou a pasta só dela) para a Lixeira; metadados ficam
+ipcMain.handle('municipios:remover', comErro(async (_e, pasta) => {
+  for (const alvo of municipiosDocs.alvosParaRemover(pastaBiblioteca(), pasta)) await shell.trashItem(alvo)
+}))
 ipcMain.handle('municipios:documentos', comErro((_e, pasta) => municipiosDocs.listarDocumentos(pastaBiblioteca(), pasta)))
 ipcMain.handle('municipios:anexar', comErro(async (e, pasta, tipo, meta, caminhos) => {
   let origens = Array.isArray(caminhos) ? caminhos.filter(c => typeof c === 'string' && fs.existsSync(c)) : []

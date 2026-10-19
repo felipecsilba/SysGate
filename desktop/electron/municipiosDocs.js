@@ -78,10 +78,12 @@ function pastaDoMunicipio(raiz, pasta) {
 const relDe = (raiz, abs) => path.relative(dirMunicipios(raiz), abs).split(path.sep).join('/')
 const lerDir = p => { try { return fs.readdirSync(p, { withFileTypes: true }) } catch { return [] } }
 
+// Só entram os municípios ativados (com pasta Legislacao). As pastas que só têm metadados/ são dos municípios
+// de onde vieram scripts e fórmulas — ficam no disco, mas fora da lista.
 export function listarMunicipios(raiz) {
   const dir = dirMunicipios(raiz)
   if (!fs.existsSync(dir)) return { existe: false, municipios: [] }
-  const municipios = lerDir(dir).filter(e => e.isDirectory()).map(e => {
+  const municipios = lerDir(dir).filter(e => e.isDirectory() && fs.existsSync(path.join(dir, e.name, PASTA_LEGISLACAO))).map(e => {
     const leg = path.join(dir, e.name, PASTA_LEGISLACAO)
     const documentos = TIPOS.reduce((n, t) => n + lerDir(path.join(leg, t.pasta)).filter(f => f.isFile()).length, 0)
     return { pasta: e.name, ...interpretarPastaMunicipio(e.name), documentos }
@@ -92,13 +94,28 @@ export function listarMunicipios(raiz) {
 
 const semAcento = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
+// Ativa o município: se já existe pasta com esse nome (ex.: a dos metadados), reaproveita; senão cria
 export function criarMunicipio(raiz, nome) {
   const limpo = limparNome(nome)
   if (!limpo) throw new Error('Informe o nome do município.')
-  const { municipios } = listarMunicipios(raiz)
-  if (municipios.some(m => semAcento(m.nome) === semAcento(limpo))) throw new Error(`Já existe uma pasta para ${limpo}.`)
-  fs.mkdirSync(path.join(dirMunicipios(raiz), limpo, PASTA_LEGISLACAO), { recursive: true })
-  return limpo
+  const existente = lerDir(dirMunicipios(raiz)).find(e => e.isDirectory() && semAcento(interpretarPastaMunicipio(e.name).nome) === semAcento(limpo))
+  const pasta = existente?.name || limpo
+  const leg = path.join(dirMunicipios(raiz), pasta, PASTA_LEGISLACAO)
+  if (fs.existsSync(leg)) throw new Error(`${interpretarPastaMunicipio(pasta).nome} já está na lista.`)
+  fs.mkdirSync(leg, { recursive: true })
+  return pasta
+}
+
+/**
+ * O que mandar para a Lixeira ao remover o município da lista: só a pasta Legislacao (com os documentos);
+ * a pasta do município inteira apenas quando ela só tinha a Legislacao (metadados nunca são apagados).
+ */
+export function alvosParaRemover(raiz, pasta) {
+  const dir = pastaDoMunicipio(raiz, pasta)
+  const leg = path.join(dir, PASTA_LEGISLACAO)
+  if (!fs.existsSync(leg)) throw new Error('Este município não está na lista.')
+  const outros = lerDir(dir).filter(e => e.name !== PASTA_LEGISLACAO)
+  return [outros.length ? leg : dir]
 }
 
 export function listarDocumentos(raiz, pasta) {

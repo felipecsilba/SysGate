@@ -5,7 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import {
   limparNome, interpretarPastaMunicipio, nomeDocumento, interpretarDocumento, resolverDoc,
-  listarMunicipios, criarMunicipio, listarDocumentos, anexar, lerTexto, salvarTexto, renomear,
+  listarMunicipios, criarMunicipio, alvosParaRemover, listarDocumentos, anexar, lerTexto, salvarTexto, renomear,
 } from './municipiosDocs.js'
 
 function raizExemplo() {
@@ -55,9 +55,10 @@ test('resolverDoc só aceita arquivos dentro de Municipios/<município>/Legislac
 
 test('listar, criar município, anexar com nome padronizado, sem sobrescrever', () => {
   const { raiz, origem, crici } = raizExemplo()
+  // Pasta só com metadados (município de onde vieram scripts) não aparece na lista
+  assert.deepEqual(listarMunicipios(raiz).municipios, [])
   assert.equal(criarMunicipio(raiz, 'Ruropólis'), 'Ruropólis')
-  assert.throws(() => criarMunicipio(raiz, 'ruropolis'), /Já existe/)
-  assert.throws(() => criarMunicipio(raiz, 'criciuma'), /Já existe/)
+  assert.throws(() => criarMunicipio(raiz, 'ruropolis'), /já está na lista/)
   const ids = anexar(raiz, crici, 'leis', [origem], { numero: '524', ano: '2021', assunto: 'PROREFIS' })
   assert.deepEqual(ids, [`${crici}/Legislacao/Leis/Lei 524-2021 - PROREFIS.pdf`])
   const [id2] = anexar(raiz, crici, 'leis', [origem], { numero: '524', ano: '2021', assunto: 'PROREFIS' })
@@ -69,6 +70,24 @@ test('listar, criar município, anexar com nome padronizado, sem sobrescrever', 
   const docs = listarDocumentos(raiz, crici)
   assert.deepEqual(docs.filter(d => d.tipo === 'leis').map(d => d.numero), ['524', '524'])
   assert.throws(() => listarDocumentos(raiz, '../fora'), /inválido/)
+})
+
+test('ativar município que já tem pasta reaproveita a pasta (sem duplicar)', () => {
+  const { raiz, crici } = raizExemplo()
+  assert.equal(criarMunicipio(raiz, 'criciuma'), crici)
+  assert.ok(fs.existsSync(path.join(raiz, 'Municipios', crici, 'Legislacao')))
+  assert.deepEqual(listarMunicipios(raiz).municipios.map(m => m.nome), ['Criciúma'])
+  assert.throws(() => criarMunicipio(raiz, 'Criciúma'), /já está na lista/)
+})
+
+test('alvosParaRemover: só a Legislacao quando há metadados; a pasta inteira quando só tinha a Legislacao', () => {
+  const { raiz, origem, crici } = raizExemplo()
+  anexar(raiz, crici, 'leis', [origem])
+  criarMunicipio(raiz, 'Ruropólis')
+  assert.deepEqual(alvosParaRemover(raiz, crici), [path.join(raiz, 'Municipios', crici, 'Legislacao')])
+  assert.deepEqual(alvosParaRemover(raiz, 'Ruropólis'), [path.join(raiz, 'Municipios', 'Ruropólis')])
+  assert.throws(() => alvosParaRemover(raiz, '..'), /inválido/)
+  assert.throws(() => alvosParaRemover(raiz, 'Andradas'), /não está na lista/)
 })
 
 test('anotação em Markdown: cria, lê, regrava; renomear muda de tipo mantendo a extensão', () => {

@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('krakion', {
   municipios: {
     listar: () => ipcRenderer.invoke('municipios:listar'),
     criar: nome => ipcRenderer.invoke('municipios:criar', nome),
+    remover: pasta => ipcRenderer.invoke('municipios:remover', pasta),
     documentos: pasta => ipcRenderer.invoke('municipios:documentos', pasta),
     // caminhos: arquivos arrastados para a tela; sem eles, o main abre a janela de escolher arquivos
     anexar: (pasta, tipo, meta, caminhos) => ipcRenderer.invoke('municipios:anexar', pasta, tipo, meta, caminhos),
