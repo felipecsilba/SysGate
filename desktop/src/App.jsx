@@ -18,6 +18,7 @@ import Biblioteca from './pages/Biblioteca'
 import Municipios from './pages/Municipios'
 import Gerador from './pages/Gerador'
 import Mapa from './pages/Mapa'
+import ExclusaoCascata from './pages/Mapa/ExclusaoCascata'
 import { MODULOS } from './modulos'
 import { useAuthStore } from './stores/authStore'
 
@@ -54,6 +55,7 @@ export default function App() {
               return <Route key={m.id} path={m.rota} element={Pagina ? <Pagina /> : <EmConstrucao modulo={m} />} />
             })}
             <Route path="/conexoes/:conector" element={<Conexoes />} />
+            <Route path="/mapa/exclusao" element={<ExclusaoCascata />} />
             <Route path="/sandbox" element={<Navigate to="/api" replace />} />
             <Route path="/extensoes" element={<Navigate to="/biblioteca" replace />} />
             <Route path="*" element={<Navigate to={MODULOS[0].rota} replace />} />

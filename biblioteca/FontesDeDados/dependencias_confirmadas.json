@@ -1,5 +1,5 @@
 {
-  "_leia": "Camada CURADA do Mapa de dependências do Krakion App. O que está aqui foi confirmado na prática e sempre vence a inferência (Swagger + catálogo de fontes). Campos por recurso da API: rotulo, categoria (cadastro|financeiro|documentos|outros), status (confirmado|inferido), confirmadoEm, acao (excluir|saiJunto|reprocessar|naoExcluir), saiCom (recurso), fonte {bfc, filtro|parametro, campoId}, pais [{recurso, campo}] (arestas que a inferência não vê), notas [texto] (comece com ⚠ para virar alerta vermelho), scripts [{nome, principal (true = o que usar primeiro), arquivo (relativo à biblioteca), readme, validadoEm, descricao objetiva}] — SÓ scripts que rodaram de verdade no Studio. Ao confirmar algo novo: registre aqui com a data e a origem nas notas. Caso de origem: biblioteca/_CONHECIMENTO/Imoveis/casos/Excluir imovel por API (migrado errado).md",
+  "_leia": "Camada CURADA do Mapa de dependências do Krakion App. O que está aqui foi confirmado na prática e sempre vence a inferência (Swagger + catálogo de fontes). Campos por recurso da API: rotulo, categoria (cadastro|financeiro|documentos|outros), status (confirmado|inferido), confirmadoEm, acao (excluir|saiJunto|reprocessar|naoExcluir), saiCom (recurso), fonte {bfc, filtro|parametro, campoId}, pais [{recurso, campo}] (arestas que a inferência não vê), notas [texto] (comece com ⚠ para virar alerta vermelho), scripts [{nome, principal (true = o que usar primeiro), analisa (\"levantamentoImoveis\" = botão Analisar resultado → exclusão em cascata), arquivo (relativo à biblioteca), readme, validadoEm, descricao objetiva}] — SÓ scripts que rodaram de verdade no Studio. Ao confirmar algo novo: registre aqui com a data e a origem nas notas. Caso de origem: biblioteca/_CONHECIMENTO/Imoveis/casos/Excluir imovel por API (migrado errado).md",
   "recursos": {
     "imoveis": {
       "notas": [
@@ -13,7 +13,8 @@
           "arquivo": "_BIBLIOTECA/Templates/Levantamento_Vinculos_Imoveis_BASE.txt",
           "readme": "_BIBLIOTECA/Templates/README - Levantamento de Vinculos de Imoveis.md",
           "validadoEm": "2026-10-20",
-          "descricao": "Use antes de excluir. Recebe uma lista de ids de imóveis e gera um JSONL com, para cada imóvel, os ids de tudo que trava a exclusão (proprietários, corresponsáveis, testadas, englobados, movimentações, movimentações de inscrição imobiliária e histórico) e a contagem de vínculos financeiros (débitos, dívidas, parcelamentos, lançamentos e receitas diversas). Imóvel com vínculo financeiro sai marcado para revisão."
+          "descricao": "Use antes de excluir. Recebe uma lista de ids de imóveis e gera um JSONL com, para cada imóvel, os ids de tudo que trava a exclusão (proprietários, corresponsáveis, testadas, englobados, movimentações, movimentações de inscrição imobiliária e histórico) e a contagem de vínculos financeiros (débitos, dívidas, parcelamentos, lançamentos e receitas diversas). Imóvel com vínculo financeiro sai marcado para revisão.",
+          "analisa": "levantamentoImoveis"
         },
         {
           "nome": "Varredura de vínculos",

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import JsonColorido from '../../components/JsonColorido'
 import MetodoBadge from '../../components/MetodoBadge'
 import Icone from '../../components/Icone'
@@ -123,6 +124,7 @@ function Alerta({ tipo, titulo, children }) {
 
 // Script que rodou de verdade no Studio (registrado no curado). Texto lido da biblioteca sob demanda.
 function ScriptValidado({ script }) {
+  const navegar = useNavigate()
   const [aberto, setAberto] = useState(null) // 'script' | 'readme' | null
   const [textos, setTextos] = useState({})
   const [copiado, setCopiado] = useState(false)
@@ -167,6 +169,9 @@ function ScriptValidado({ script }) {
           <button type="button" className="botao-secundario !px-2.5 !py-1 text-xs" onClick={() => alternar('script')}>{aberto === 'script' ? 'Fechar' : 'Ver script'}</button>
           <button type="button" className="botao-primario !px-2.5 !py-1 text-xs" onClick={copiar}>{copiado ? 'Copiado' : 'Copiar script'}</button>
           {script.readme && <button type="button" className="botao-secundario !px-2.5 !py-1 text-xs" onClick={() => alternar('readme')}>{aberto === 'readme' ? 'Fechar' : 'Como usar'}</button>}
+          {script.analisa === 'levantamentoImoveis' && (
+            <button type="button" className="botao-primario !px-2.5 !py-1 text-xs" onClick={() => navegar('/mapa/exclusao')}>Analisar resultado →</button>
+          )}
         </div>
         {erro && <p className="mt-2 text-xs text-perigo">{erro}</p>}
       </div>

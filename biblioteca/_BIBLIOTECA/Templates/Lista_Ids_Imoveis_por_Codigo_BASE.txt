@@ -1,0 +1,76 @@
+// ---------------------------------------------------------------------------
+// LISTA OS IDS DOS IMÓVEIS DE UMA FAIXA DE CÓDIGOS
+//
+// Busca os imóveis com código entre CODIGO_INICIAL e CODIGO_FINAL e imprime os ids já no formato
+// para colar em IDS_IMOVEIS do Levantamento de vínculos.
+//
+// NÃO ALTERA NADA — só lê.
+//
+// Saída:
+//   - console: quantidade, situação e a linha "IDS_IMOVEIS = [...]" (em partes de 200 ids)
+//   - ids_imoveis_<inicial>_<final>.zip com:
+//       ids.txt  → a lista de ids separados por vírgula (para colar)
+//       imoveis.csv → código; id; situação; inscrição (para conferir antes de excluir)
+// ---------------------------------------------------------------------------
+
+// ============================ CONFIGURAÇÃO =================================
+
+CODIGO_INICIAL = 11
+CODIGO_FINAL   = 100
+
+// Filtrar por situação? "" = todas · "DESATIVADO" · "ATIVADO" · "REMEMBRADO" · "DESMEMBRADO"
+// (no critério vai o nome do valor, não a letra: situacao = 'ATIVADO' é o que roda em produção)
+SITUACAO = ""
+
+// ===========================================================================
+
+if (CODIGO_INICIAL > CODIGO_FINAL) {
+  imprimir "CODIGO_INICIAL maior que CODIGO_FINAL."
+  return
+}
+
+criterio = "codigo >= " + CODIGO_INICIAL + " and codigo <= " + CODIGO_FINAL
+if (SITUACAO) criterio = criterio + " and situacao = '" + SITUACAO + "'"
+imprimir "Critério: " + criterio
+
+// enum vem como objeto { valor, descricao } — ler o .valor
+valorEnum = { v -> v instanceof Map ? v.valor : v }
+
+nome = "ids_imoveis_" + CODIGO_INICIAL + "_" + CODIGO_FINAL
+arquivoCsv = Arquivo.novo("imoveis.csv", 'csv', [delimitador: ';', entreAspas: 'N', encoding: 'utf-8'])
+arquivoCsv.escrever("codigo;id;situacao;inscricao")
+arquivoCsv.novaLinha()
+
+ids = []
+porSituacao = [:]
+Dados.tributos.v2.imoveis.busca(criterio: criterio, campos: "id, codigo, situacao, inscricaoImobiliariaFormatada", ordenacao: "codigo asc").each { im ->
+  ids << im.id
+  sit = valorEnum(im.situacao)
+  porSituacao[sit] = (porSituacao[sit] ? porSituacao[sit] : 0) + 1
+  arquivoCsv.escrever([im.codigo, im.id, sit, im.inscricaoImobiliariaFormatada].collect { it == null ? "" : it.toString().replace(";", " ") }.join(";"))
+  arquivoCsv.novaLinha()
+}
+
+imprimir "------------------------------------------------------------"
+imprimir "Imóveis encontrados: " + ids.size() + " · por situação: " + porSituacao
+if (!ids) {
+  imprimir "Nenhum imóvel nessa faixa."
+  return
+}
+// em partes: linha muito longa pode vir cortada no log do Studio.
+// A linha vai numa variável antes: "imprimir (a) + b" faz o Groovy imprimir só (a) e tentar somar b ao resultado
+partes = ids.collate(200)
+partes.eachWithIndex { parte, i ->
+  linha = (i == 0 ? "IDS_IMOVEIS = [" : "  ") + parte.join(", ") + (i == partes.size() - 1 ? "]" : ",")
+  imprimir linha
+}
+imprimir "------------------------------------------------------------"
+
+arquivoTxt = Arquivo.novo("ids.txt", 'txt', [encoding: 'utf-8'])
+arquivoTxt.escrever(ids.join(", "))
+
+zip = Arquivo.novo(nome + ".zip", 'zip', [encoding: 'utf-8'])
+zip.adicionar(arquivoTxt)
+zip.adicionar(arquivoCsv)
+Resultado.nome(nome + ".zip")
+Resultado.arquivo(zip)
