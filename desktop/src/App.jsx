@@ -8,6 +8,7 @@ import ImportarDados from './pages/ImportarDados'
 import Sistemas from './pages/Sistemas'
 import Sandbox from './pages/Sandbox'
 import BethaAdmin from './pages/BethaAdmin'
+import Conexoes from './pages/Conexoes'
 import Historico from './pages/Historico'
 import Notas from './pages/Notas'
 import Conhecimento from './pages/Conhecimento'
@@ -33,6 +34,7 @@ const PAGINAS = {
   sistemas: Sistemas,
   tokens: CentralTokens,
   'betha-admin': BethaAdmin,
+  conexoes: Conexoes,
   importar: ImportarDados,
 }
 

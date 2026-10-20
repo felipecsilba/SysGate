@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, safeStorage, shell } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
 import util from 'node:util'
@@ -14,6 +14,7 @@ import { renovarToken } from './bethaAdmin/agente.js'
 import * as biblioteca from './biblioteca.js'
 import * as catalogoFontes from './catalogoFontes.js'
 import * as municipiosDocs from './municipiosDocs.js'
+import { criarConexaoDrive } from './conexoes/googleDrive/index.js'
 
 // Dev (npm run dev → abrir.js): interface pelo Vite com hot reload.
 // Fora disso (atalho / instalador): interface compilada em dist/.
@@ -201,6 +202,39 @@ ipcMain.handle('biblioteca:escolher-pasta', async e => {
   salvarPreferencias(dadosApp(), { bibliotecaPasta: r.filePaths[0] })
   return biblioteca.indexar(r.filePaths[0])
 })
+
+// Conexões → Google Drive. Segredo do app e refresh token cifrados (safeStorage) em <userData>/google-drive.json;
+// nunca saem deste processo. KRAKION_GOOGLE_BASE aponta para um Google falso (só testes).
+const drive = criarConexaoDrive({
+  userData: dadosApp(),
+  base: process.env.KRAKION_GOOGLE_BASE,
+  cifra: {
+    disponivel: () => safeStorage.isEncryptionAvailable(),
+    cifrar: s => safeStorage.encryptString(s).toString('base64'),
+    decifrar: s => safeStorage.decryptString(Buffer.from(s, 'base64')),
+  },
+  abrirNavegador: url => shell.openExternal(url),
+})
+const registrarDrive = (nome, fn) => ipcMain.handle(`drive:${nome}`, comErro(async (...args) => {
+  try { return await fn(...args) } catch (err) {
+    console.error('[drive]', nome, err.amigavel ? err.message : err) // mensagens não contêm segredo nem token
+    throw err.amigavel ? err : new Error('Falha inesperada na conexão com o Google Drive. Veja o krakion.log.')
+  }
+}))
+registrarDrive('status', () => drive.status())
+registrarDrive('configurar-app', (_e, dados) => drive.configurarApp(dados || {}))
+registrarDrive('remover-app', () => drive.removerApp())
+registrarDrive('conectar', async () => {
+  const s = await drive.conectar()
+  console.log('[drive] conectado como', s.email)
+  if (janela) { if (janela.isMinimized()) janela.restore(); janela.focus() } // volta do navegador para o app
+  return s
+})
+registrarDrive('cancelar', () => drive.cancelarConexao())
+registrarDrive('testar', () => drive.testar())
+registrarDrive('desconectar', () => drive.desconectar())
+// A URL sai do status guardado, não da tela
+registrarDrive('abrir-pasta', () => { const url = drive.status().pastaUrl; if (url) shell.openExternal(url) })
 
 let filaBetha = Promise.resolve() // uma renovação por vez — nada de várias janelas no Betha ao mesmo tempo
 ipcMain.handle('betha:renovar', (e, pedido) => {

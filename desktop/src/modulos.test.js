@@ -9,7 +9,7 @@ test('menu tem os módulos combinados, com ids únicos', () => {
     'municipios',
     'biblioteca',
     'gerador',
-    'sistemas', 'tokens', 'betha-admin', 'importar',
+    'sistemas', 'tokens', 'betha-admin', 'conexoes', 'importar',
   ])
   assert.equal(new Set(MODULOS.map(m => m.rota)).size, MODULOS.length)
 })

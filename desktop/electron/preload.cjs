@@ -46,6 +46,17 @@ contextBridge.exposeInMainWorld('krakion', {
     abrir: id => ipcRenderer.invoke('municipios:abrir', id),
     caminhoDoArquivo: arquivo => webUtils.getPathForFile(arquivo),
   },
+  // Conexões → Google Drive: o segredo vai para o main uma vez (configurarApp) e nunca volta; o login é no navegador
+  drive: {
+    status: () => ipcRenderer.invoke('drive:status'),
+    configurarApp: dados => ipcRenderer.invoke('drive:configurar-app', dados),
+    removerApp: () => ipcRenderer.invoke('drive:remover-app'),
+    conectar: () => ipcRenderer.invoke('drive:conectar'),
+    cancelar: () => ipcRenderer.invoke('drive:cancelar'),
+    testar: () => ipcRenderer.invoke('drive:testar'),
+    desconectar: () => ipcRenderer.invoke('drive:desconectar'),
+    abrirPasta: () => ipcRenderer.invoke('drive:abrir-pasta'),
+  },
   // Gerador de Extensões: catálogo de fontes BFC da pasta da biblioteca (somente leitura)
   gerador: {
     fontes: () => ipcRenderer.invoke('gerador:fontes'),

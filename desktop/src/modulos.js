@@ -60,6 +60,7 @@ export const GRUPOS = [
       { id: 'sistemas', rotulo: 'Sistemas', icone: 'sistemas', descricao: 'Sistemas Betha, specs Swagger e endpoints.' },
       { id: 'tokens', rotulo: 'Central de Tokens', icone: 'tokens', descricao: 'Municípios e tokens por sistema.' },
       { id: 'betha-admin', rotulo: 'Betha Admin', icone: 'agente', descricao: 'Acesso do agente que renova tokens.' },
+      { id: 'conexoes', rotulo: 'Conexões', icone: 'nuvem', descricao: 'Serviços externos conectados — Google Drive.' },
       { id: 'importar', rotulo: 'Importar dados', icone: 'importar', descricao: 'Copia sistemas, endpoints, municípios e tokens do Krakion web.' },
     ],
   },

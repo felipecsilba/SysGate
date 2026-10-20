@@ -196,6 +196,18 @@ Nasceu como "Extensões" e foi renomeada a pedido do Felipe — consultar ≠ cr
 - A Checagem Por Fonte tem o atalho "Gerar o script de exportação desta fonte" → `/gerador?fonte=<cadastro>` (abre em `<cadastro>.busca`).
 - **Ainda não rodado no Studio** — o primeiro uso deve ser com LIMITE pequeno.
 
+## Conexões → Google Drive (Configurações → Conexões, 2026-10-19)
+
+Primeiro conector (opção B do brainstorming: OAuth próprio + API REST, sem dependência nova). Plano: `docs/plans/2026-10-19-desktop-conexao-google-drive.md`. Configuração do Google Cloud (passo a passo do Felipe): `docs/conexoes-google-drive.md`.
+- `electron/conexoes/googleDrive/oauth.js`: PKCE, URL de autorização, servidor de retorno em `127.0.0.1:<porta livre>` (confere `state`, tempo limite de 5 min, cancelável), troca de código, renovação, revogação.
+- `cliente.js`: `sobre`, `garantirPasta`, `enviar` (upload resumable em partes de 8 MB, lê o arquivo do disco em partes; serve o backup grande), `baixarTexto`, `excluir`. Num 401 renova o acesso e repete uma vez.
+- `index.js` (`criarConexaoDrive`): `<userData>/google-drive.json` com client ID, segredo **cifrado**, refresh token **cifrado**, conta, pasta, datas; o acesso curto fica só na memória. Cifra injetada (`safeStorage` no `main.js`) para os testes rodarem no Node. `invalid_grant` → marca desconectado e pede para conectar de novo. Trocar o client ID derruba a conexão.
+- Escopo **`drive.file`**: o app só enxerga o que criou (pasta **Krakion App**). O app OAuth precisa estar **Em produção** no Google Cloud (em Teste o refresh token expira em 7 dias).
+- IPC `drive:*` (via `comErro`) + `window.krakion.drive`. A URL da pasta para "Abrir no Drive" sai do status guardado, nunca da tela.
+- Testes: `oauth.test.js` (8), `cliente.test.js` (5) e `index.test.js` (11) contra `googleFalso.js` (OAuth + Drive falsos em memória; `KRAKION_GOOGLE_BASE` aponta o app para ele). `safeStorage` real conferido num smoke dentro do Electron.
+- **Ainda não testado contra o Google de verdade** — depende do Felipe criar o app no Google Cloud.
+- Próximo passo: backup automático (banco local + corpus da `biblioteca/`) usando `drive.cliente().enviar()` + `drive.pastaApp()`.
+
 ## Componentes compartilhados
 
 `Pagina` (moldura), `Modal`, `Confirmar` (ação destrutiva, aceita async), `Busca`, `CaixaBusca` (substitui o `<select>`), `Abas` (pílulas com contador), `BotaoIcone`, `MetodoBadge` (cor por método HTTP), `JsonColorido`, `Codigo` (em `pages/Biblioteca/Visualizador.jsx` — código com régua e realce, também usado pelo Gerador), `LimiteErro` (erro num módulo mostra a mensagem em vez de tela em branco; o `Layout` reseta ao trocar de rota), `Icone`. Helpers: `lib/texto.js` (`normalizar`, `contem` — busca sem acento), `lib/endpoints.js` (`agruparPorModulo`, `avisoUrlBase`), `lib/codigo.js` (`highlightCode` com palavras extras — `BFC_SCRIPT` —, `highlightXml`; ambos escapam antes de pintar), `lib/json.js` (`colorirJson`).
@@ -239,8 +251,8 @@ Nasceu como "Extensões" e foi renomeada a pedido do Felipe — consultar ≠ cr
 **No app (todos os módulos do menu têm página — nenhum "Em construção"):**
 - Ferramentas: Analisador JSON (Analisar + Comparar), Checagem (Por Fonte + Por API e marcação de campos), Conhecimento, Notas, Histórico.
 - Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação).
-- Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
-- Testes: desktop **170**, backend **77** — todos passando (`npm test` em cada pasta).
+- Configurações: Sistemas, Central de Tokens, Betha Admin, Conexões (Google Drive), Importar dados (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
+- Testes: desktop **194**, backend **77** — todos passando (`npm test` em cada pasta).
 
 **Git:** tudo no branch **`krakion-app`** (nunca no `master` — a VPS faz `git pull` dele). A tag `app-v0.1.0` marca a versão até a API; o que veio depois está commitado no `krakion-app` local — conferir com `git log origin/krakion-app..HEAD` o que ainda falta enviar ao GitHub.
 
