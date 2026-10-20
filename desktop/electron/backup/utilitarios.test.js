@@ -87,10 +87,37 @@ test('exportarBanco: todas as tabelas do schema public, em JSON compactado', asy
   }
   const r = await exportarBanco(consultar)
   const dados = JSON.parse(zlib.gunzipSync(r.conteudo).toString())
-  assert.equal(dados.formato, 'krakion-banco-v1')
+  assert.equal(dados.formato, 'krakion-banco-v2')
   assert.deepEqual(Object.keys(dados.tabelas), ['Nota', 'Usuario'])
   assert.equal(dados.tabelas.Nota[0].titulo, 'olá')
   assert.equal(dados.tabelas.Nota[0].criadoEm, '2026-10-20T00:00:00.000Z')
   assert.deepEqual(r.contagens, { Nota: 1, Usuario: 1 })
   assert.ok(consultas[0].includes("table_schema = 'public'"))
+})
+
+test('exportarBanco nunca leva segredo: tokens, hashes de senha e Authorization do histórico', async () => {
+  const consultar = async sql => {
+    if (sql.includes('information_schema')) return [{ table_name: 'MunicipioSistema' }, { table_name: 'Requisicao' }, { table_name: 'Usuario' }]
+    if (sql.includes('"MunicipioSistema"')) return [{ id: 1, municipioId: 3, token: 'eyJ-token-betha', dataVencimento: null }]
+    if (sql.includes('"Usuario"')) return [{ id: 1, login: 'felipe', senhaHash: '$2a$10$abc', recuperacaoToken: 'x', recuperacaoExpira: null, tentativasLogin: 0 }]
+    if (sql.includes('"Requisicao"')) return [
+      { id: 9, headers: JSON.stringify({ Authorization: 'Bearer segredo', 'Content-Type': 'application/json', 'X-Api-Token': 'y' }), body: '{}' },
+      { id: 10, headers: 'texto que não é JSON', body: null },
+    ]
+    throw new Error(sql)
+  }
+  const r = await exportarBanco(consultar)
+  const texto = zlib.gunzipSync(r.conteudo).toString()
+  for (const segredo of ['eyJ-token-betha', '$2a$10$abc', 'Bearer segredo', '"y"']) assert.ok(!texto.includes(segredo), segredo)
+  const dados = JSON.parse(texto)
+  assert.equal(dados.formato, 'krakion-banco-v2')
+  assert.deepEqual(dados.omitidos, { MunicipioSistema: ['token'], Usuario: ['senhaHash', 'recuperacaoToken'] })
+  assert.deepEqual(Object.keys(dados.tabelas.MunicipioSistema[0]), ['id', 'municipioId', 'dataVencimento'])
+  assert.equal(dados.tabelas.Usuario[0].login, 'felipe')
+  assert.equal(dados.tabelas.Usuario[0].tentativasLogin, 0) // bloqueio de login não é segredo
+  const h = JSON.parse(dados.tabelas.Requisicao[0].headers)
+  assert.equal(h.Authorization, '[omitido no backup]')
+  assert.equal(h['X-Api-Token'], '[omitido no backup]')
+  assert.equal(h['Content-Type'], 'application/json')
+  assert.equal(dados.tabelas.Requisicao[1].headers, '[omitido no backup]') // não deu para ler: não arrisca
 })

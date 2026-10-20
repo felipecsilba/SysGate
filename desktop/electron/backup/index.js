@@ -132,6 +132,11 @@ export function criarBackup({ userData, drive, pastaBiblioteca, exportarBanco, m
       // 3. Retenção — apaga no Drive o que passou do limite
       informar({ etapa: 'limpando', texto: 'Apagando backups antigos…' })
       let apagados = 0
+      // Uma vez só: backups de banco de antes de 2026-10-20 levavam tokens e hashes de senha — saem todos
+      if (!ler().bancoSemSegredos) {
+        for (const velho of (await c.listar(pastaBanco)).filter(a => a.name !== nomeBanco)) { await c.excluir(velho.id); apagados++ }
+        atualizar({ bancoSemSegredos: true })
+      }
       for (const [pasta, n] of [[pastaBanco, manter.banco], [pastaBib, manter.biblioteca]]) {
         for (const velho of paraApagar(await c.listar(pasta), n)) { await c.excluir(velho.id); apagados++ }
       }

@@ -143,6 +143,27 @@ test('dois backups no mesmo minuto não geram nomes repetidos', async t => {
   assert.equal(new Set(banco).size, 2)
 })
 
+test('primeiro backup sem segredos apaga do Drive os backups de banco antigos (que tinham segredos)', async t => {
+  const { g, backup, noDrive, userData, avancar } = await preparar(t)
+  await backup.executar()
+  // backups de banco do formato antigo já no Drive, e estado de antes da mudança
+  const pastaBanco = [...g.estado.arquivos.values()].find(a => a.name === 'Banco')
+  for (const nome of ['banco-2026-10-19_230000.json.gz', 'banco-2026-10-19_231500.json.gz']) {
+    g.estado.arquivos.set('velho-' + nome, { id: 'velho-' + nome, name: nome, parents: [pastaBanco.id], conteudo: Buffer.from('x') })
+  }
+  const arq = path.join(userData, 'backup.json')
+  const d = JSON.parse(fs.readFileSync(arq, 'utf8')); delete d.bancoSemSegredos; fs.writeFileSync(arq, JSON.stringify(d))
+
+  avancar(60)
+  const r = await backup.executar()
+  assert.deepEqual(noDrive('Banco'), [r.enviados[0].nome])
+  assert.equal(r.apagados, 3)
+  // depois disso a retenção normal volta a valer
+  avancar(60)
+  await backup.executar()
+  assert.equal(noDrive('Banco').length, 2)
+})
+
 test('biblioteca ausente nesta máquina: faz só o banco e avisa', async t => {
   const { backup, bib } = await preparar(t)
   fs.rmSync(bib, { recursive: true, force: true })

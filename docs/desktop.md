@@ -216,7 +216,7 @@ Plano: `docs/plans/2026-10-20-desktop-backup-drive.md`. Módulos em `electron/ba
 - `retencao.js`: carimbo **com segundos** (o automático e o manual no mesmo minuto geravam nomes iguais) e "manter os N mais recentes por grupo"; arquivos fora do padrão nunca são apagados.
 - `index.js` (`criarBackup`): `status`, `precisaRodar` (conectado e último sucesso há mais de 24 h), `executar` (uma execução por vez, progresso por etapa, temporários sempre apagados). No Drive: `Krakion App/Backups/Banco` e `Krakion App/Backups/Biblioteca`.
 - `main.js`: checa 15 s depois de abrir e a cada hora; IPC `backup:status`/`backup:executar` + eventos `backup:progresso`/`backup:fim`; log `[backup]` no `krakion.log`.
-- **Atenção:** o JSON do banco inclui os tokens Betha (`MunicipioSistema`) e o hash da senha local (`Usuario`). Fica no Drive do próprio Felipe, numa pasta que só o app enxerga (`drive.file`). Cifrar o backup é uma opção futura. Restaurar pelo App também fica para depois.
+- **Sem segredos (decisão do Felipe, 2026-10-20):** tokens e senhas se pegam de novo, então não vão para o backup. `exportarBanco` omite toda coluna com `senha|token|secret|segredo|password` no nome (hoje: `MunicipioSistema.token`, `senhaHash` e `recuperacaoToken[Hash]` de `Usuario`/`Solicitante`) e mascara cabeçalhos de autorização em `Requisicao.headers`. O JSON (`krakion-banco-v2`) lista o que foi omitido em `omitidos`. Conferido no banco real: 4 tokens + 1 hash, nenhum no backup. Uma vez só (`bancoSemSegredos` no `backup.json`), o primeiro backup depois da mudança apagou do Drive os backups de banco antigos, que tinham segredos. Ao restaurar no futuro: criar a senha local de novo e renovar os tokens (Central de Tokens / agente do Betha Admin). Restaurar pelo App fica para depois.
 
 ## Componentes compartilhados
 
@@ -262,7 +262,7 @@ Plano: `docs/plans/2026-10-20-desktop-backup-drive.md`. Módulos em `electron/ba
 - Ferramentas: Analisador JSON (Analisar + Comparar), Checagem (Por Fonte + Por API e marcação de campos), Conhecimento, Notas, Histórico.
 - Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação).
 - Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados. Conexões (Google Drive) tem botão próprio no rodapé do Rail (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
-- Testes: desktop **217**, backend **77** — todos passando (`npm test` em cada pasta).
+- Testes: desktop **219**, backend **77** — todos passando (`npm test` em cada pasta).
 
 **Git:** tudo no branch **`krakion-app`** (nunca no `master` — a VPS faz `git pull` dele). A tag `app-v0.1.0` marca a versão até a API; o que veio depois está commitado no `krakion-app` local — conferir com `git log origin/krakion-app..HEAD` o que ainda falta enviar ao GitHub.
 
