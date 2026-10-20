@@ -114,7 +114,7 @@ export default function ScriptExportacao() {
           <CaixaBusca opcoes={opcoesFonte} valor={chave} onEscolher={escolherFonte} placeholder="Buscar fonte: debitos, imoveis, dividas…" />
           {fonte && (
             <div className="mt-2.5 space-y-1 text-xs">
-              <p><code className="font-mono">Dados.tributos.v2.{fonte.bfc}.{fonte.operacao}</code> <span className="text-suave">{fonte.path}</span></p>
+              <p><code className="font-mono">Dados.tributos.v2.{fonte.bfc}.busca</code> <span className="text-suave">{fonte.path}</span></p>
               {fonte.confirmado
                 ? <p className="text-suave">{fonte.usos ? `Nome confirmado — usado em ${fonte.usos.toLocaleString('pt-BR')} scripts reais.` : 'Nome confirmado no mapa REST → BFC.'}</p>
                 : <p className="flex gap-1.5 text-amber-600 dark:text-amber-400"><Icone nome="alerta" className="mt-px h-3.5 w-3.5 shrink-0" /> “{fonte.bfc}” é o nome da rota REST; no editor da Betha pode ser outro. Confira antes de rodar.</p>}

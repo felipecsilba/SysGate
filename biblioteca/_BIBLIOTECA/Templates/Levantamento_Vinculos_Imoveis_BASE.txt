@@ -1,0 +1,145 @@
+// ---------------------------------------------------------------------------
+// LEVANTAMENTO DE VÍNCULOS DE IMÓVEIS — antes de excluir imóveis por API
+//
+// Para cada imóvel da lista, descobre:
+//   - os FILHOS que travam a exclusão e se excluem por API (com os ids):
+//       proprietários, corresponsáveis, testadas, englobados (imóveis cujo principal é este)
+//       e a quantidade de benefícios fiscais
+//   - a TRAVA FINANCEIRA (só contagem): débitos, dívidas, parcelamentos, lançamentos e
+//     receitas diversas. Imóvel com qualquer um desses NÃO entra no plano de exclusão.
+//
+// NÃO ALTERA NADA — só lê e gera um arquivo.
+//
+// Saída: vinculos_imoveis.zip com vinculos_imoveis.jsonl (uma linha por imóvel). É o arquivo
+// que o Krakion App lê para montar os lotes de exclusão na ordem certa.
+//
+// Não cobertos (a fonte não filtra por imóvel, ou não existe fonte): econômicos, transferências,
+// imagens e informações complementares. Se a exclusão falhar por um deles, a mensagem da API diz.
+//
+// Gerado com o Krakion (biblioteca/_BIBLIOTECA/Templates). Ver o README de mesmo nome.
+// ---------------------------------------------------------------------------
+
+// ============================ CONFIGURAÇÃO =================================
+
+// Cole os ids dos imóveis (id, não o código), separados por vírgula.
+// Comece com 1 imóvel, depois uns 10, e só então a lista inteira.
+IDS_IMOVEIS = [0]
+
+TAMANHO_BLOCO = 200   // ids por consulta nas fontes que aceitam "in (...)"
+
+NOME_ARQUIVO_JSON = "vinculos_imoveis.jsonl"
+NOME_ARQUIVO_ZIP  = "vinculos_imoveis.zip"
+
+// ===========================================================================
+
+ids = IDS_IMOVEIS.findAll { it }.unique()
+if (!ids) {
+  imprimir "Preencha IDS_IMOVEIS na configuração."
+  return
+}
+
+fonte = Dados.tributos.v2
+
+// Chave em texto: id que vem da fonte é Long, o da lista pode ser Integer — como chave de mapa seriam diferentes
+chave = { v -> v == null ? null : v.toString() }
+
+vinculos = [:]
+ids.each { id ->
+  vinculos[chave(id)] = [
+    idImovel  : id,
+    existe    : false,
+    codigo    : null,
+    filhos    : [proprietarios: [], corresponsaveis: [], testadas: [], englobados: [], beneficiosFiscais: 0],
+    financeiro: [debitos: 0, dividas: 0, parcelamentos: 0, lancamentos: 0, receitasDiversas: 0],
+  ]
+}
+
+// soma 1 na contagem financeira do imóvel (ignora id vazio ou zero — bases convertidas usam 0 como nulo)
+contar = { idImovel, tipo ->
+  v = vinculos[chave(idImovel)]
+  if (v && idImovel != 0) v.financeiro[tipo] = v.financeiro[tipo] + 1
+}
+
+blocos = ids.collate(TAMANHO_BLOCO)
+imprimir "Imóveis: " + ids.size() + " em " + blocos.size() + " bloco(s)"
+
+blocos.each { bloco ->
+  lista = bloco.join(',')
+
+  // o imóvel existe?
+  fonte.imoveis.busca(criterio: "id in (" + lista + ")", campos: "id, codigo").each { im ->
+    v = vinculos[chave(im.id)]
+    if (v) { v.existe = true; v.codigo = im.codigo }
+  }
+
+  // filhos em lote — nome no PLURAL (imoveis.*) é a busca em lote com criterio;
+  // no singular (imovel.*) é a de um imóvel só e exige parametros (erro "Os parâmetros 'idImovel' não foram definidos")
+  fonte.imoveis.proprietarios.busca(criterio: "idImovel in (" + lista + ")").each { p ->
+    v = vinculos[chave(p.idImovel)]
+    if (v) v.filhos.proprietarios << p.id
+  }
+  fonte.imoveis.corresponsaveis.busca(criterio: "idImovel in (" + lista + ")").each { c ->
+    v = vinculos[chave(c.idImovel)]
+    if (v) v.filhos.corresponsaveis << c.id
+  }
+  fonte.imoveis.busca(criterio: "idImovelPrincipal in (" + lista + ")", campos: "id, idImovelPrincipal").each { e ->
+    v = vinculos[chave(e.idImovelPrincipal)]
+    if (v) v.filhos.englobados << e.id
+  }
+
+  // trava financeira em lote
+  fonte.debitos.busca(criterio: "idImovel in (" + lista + ")").each { contar(it.idImovel, 'debitos') }
+  fonte.dividas.busca(criterio: "idImovel in (" + lista + ")").each { contar(it.idImovel, 'dividas') }
+  fonte.parcelamentos.busca(criterio: "idImovel in (" + lista + ")").each { contar(it.idImovel, 'parcelamentos') }
+  fonte.lancamentos.busca(criterio: "imovel.id in (" + lista + ")").each { contar(it.imovel ? it.imovel.id : null, 'lancamentos') }
+  fonte.receitasDiversas.busca(criterio: "imovel.id in (" + lista + ")").each { contar(it.imovel ? it.imovel.id : null, 'receitasDiversas') }
+}
+
+// filhos que exigem o id do imóvel como parâmetro: uma consulta por imóvel
+feitos = 0
+ids.each { id ->
+  v = vinculos[chave(id)]
+  if (v.existe) {
+    fonte.imovel.testadas.busca(parametros: ["idImovel": id]).each { t -> v.filhos.testadas << t.id }
+    fonte.imovel.beneficioFiscal.busca(parametros: ["idImovel": id]).each { b -> v.filhos.beneficiosFiscais = v.filhos.beneficiosFiscais + 1 }
+  }
+  feitos = feitos + 1
+  if (feitos % 200 == 0) imprimir "Testadas/benefícios: " + feitos + " de " + ids.size()
+}
+
+// --- arquivo + resumo ---
+
+arquivoJson = Arquivo.novo(NOME_ARQUIVO_JSON, 'txt', [encoding: 'utf-8'])
+livres = 0
+comFinanceiro = []
+inexistentes = []
+totais = [proprietarios: 0, corresponsaveis: 0, testadas: 0, englobados: 0, beneficiosFiscais: 0]
+
+vinculos.values().each { v ->
+  fin = v.financeiro.values().sum()
+  v.livre = v.existe && fin == 0
+  if (!v.existe) inexistentes << v.idImovel
+  else if (fin > 0) comFinanceiro << v.idImovel
+  else livres = livres + 1
+  totais.proprietarios     = totais.proprietarios + v.filhos.proprietarios.size()
+  totais.corresponsaveis   = totais.corresponsaveis + v.filhos.corresponsaveis.size()
+  totais.testadas          = totais.testadas + v.filhos.testadas.size()
+  totais.englobados        = totais.englobados + v.filhos.englobados.size()
+  totais.beneficiosFiscais = totais.beneficiosFiscais + v.filhos.beneficiosFiscais
+  // JSON em maiúsculas — "Json" não existe no BFC
+  arquivoJson.escrever(JSON.escrever(v).replace("\r", " ").replace("\n", " "))
+  arquivoJson.novaLinha()
+}
+
+imprimir "------------------------------------------------------------"
+imprimir "Sem trava financeira (podem seguir para exclusão): " + livres
+imprimir "COM trava financeira (NÃO excluir — revisar): " + comFinanceiro.size() + (comFinanceiro ? " → " + comFinanceiro.take(50).join(',') : "")
+imprimir "Não encontrados (id errado ou já excluído): " + inexistentes.size() + (inexistentes ? " → " + inexistentes.take(50).join(',') : "")
+imprimir "Filhos a excluir antes: proprietários " + totais.proprietarios + " · corresponsáveis " + totais.corresponsaveis +
+         " · testadas " + totais.testadas + " · englobados " + totais.englobados + " · benefícios fiscais " + totais.beneficiosFiscais
+imprimir "------------------------------------------------------------"
+
+zip = Arquivo.novo(NOME_ARQUIVO_ZIP, 'zip', [encoding: 'utf-8'])
+zip.adicionar(arquivoJson)
+Resultado.nome(NOME_ARQUIVO_ZIP)
+Resultado.arquivo(zip)

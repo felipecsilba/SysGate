@@ -105,6 +105,17 @@ if __name__ == "__main__":
             "imoveis.camposAdicionais",
         "imoveis|buscaCamposAdicionais|/imoveis/{idImovel}/campos-adicionais":
             "imovel.camposAdicionais",
+        # Mesmo padrão em proprietários e corresponsáveis — confirmado no Studio em 20/10/2026
+        # (imovel.proprietarios com criterio deu o erro do parâmetro) e no corpus
+        # (imoveis.corresponsaveis.busca(criterio: "idImovel = ...") em produção).
+        "imoveis|buscaProprietarios|/imoveis/proprietarios":
+            "imoveis.proprietarios",
+        "imoveis|buscaProprietarios|/imoveis/{idImovel}/proprietarios":
+            "imovel.proprietarios",
+        "imoveis|buscaCorresponsaveis|/imoveis/corresponsaveis":
+            "imoveis.corresponsaveis",
+        "imoveis|buscaCorresponsaveisPorImovel|/imoveis/{idImovel}/corresponsaveis":
+            "imovel.corresponsaveis",
     }
 
     bfc_para_rest, orfaos = {}, []

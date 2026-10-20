@@ -52,9 +52,17 @@ test('montarScript: parâmetro obrigatório vai em parametros:, sem CSV não tem
   const testadas = { bfc: 'imoveis', operacao: 'buscaTestadas', confirmado: false, ordenacao: [] }
   const s = montarScript({ fonte: testadas, parametros: [{ nome: 'idImovel', tipo: 'Long', valor: '' }], csv: false })
   assert.match(s, /idImovel = 0   \/\/ obrigatório/)
-  assert.match(s, /buscaTestadas\(parametros: \["idImovel": idImovel\], criterio: CRITERIO\)/)
-  assert.match(s, /buscaTestadas\(parametros: \["idImovel": idImovel\]\)/)
+  assert.match(s, /\.busca\(parametros: \["idImovel": idImovel\], criterio: CRITERIO\)/)
+  assert.match(s, /\.busca\(parametros: \["idImovel": idImovel\]\)/)
   assert.doesNotMatch(s, /arquivoCsv|1ª passada/)
   assert.match(s, /ATENÇÃO: "imoveis" é o nome da rota REST/)
-  assert.match(montarScript({ fonte: { ...testadas, bfc: 'certidoes-negativas' } }), /Dados\.tributos\.v2\["certidoes-negativas"\]\.buscaTestadas/)
+  assert.match(montarScript({ fonte: { ...testadas, bfc: 'certidoes-negativas' } }), /Dados\.tributos\.v2\["certidoes-negativas"\]\.busca\(/)
+})
+
+test('montarScript: no BFC o método é sempre .busca — o nome de operação do catálogo é o da API REST', () => {
+  // imovel.testadas tem operação "buscaTestadas" no catálogo; em produção a chamada é imovel.testadas.busca(...) (77 usos)
+  const testadas = { bfc: 'imovel.testadas', operacao: 'buscaTestadas', confirmado: true, ordenacao: [] }
+  const s = montarScript({ fonte: testadas, parametros: [{ nome: 'idImovel', tipo: 'Long', valor: '1' }] })
+  assert.match(s, /Dados\.tributos\.v2\.imovel\.testadas\.busca\(parametros:/)
+  assert.doesNotMatch(s, /\.buscaTestadas\(/)
 })

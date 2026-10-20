@@ -142,14 +142,14 @@
       "via": "path"
     },
     "imoveis|buscaProprietarios|/imoveis/proprietarios": {
-      "bfc": "imovel.proprietarios",
-      "usos_producao": 168,
-      "via": "path"
+      "bfc": "imoveis.proprietarios",
+      "usos_producao": 5,
+      "via": "confirmado"
     },
     "imoveis|buscaProprietarios|/imoveis/{idImovel}/proprietarios": {
       "bfc": "imovel.proprietarios",
       "usos_producao": 168,
-      "via": "path"
+      "via": "confirmado"
     },
     "dividas|busca|/dividas/{idDivida}/receitas": {
       "bfc": "dividas.receitas",
@@ -327,14 +327,14 @@
       "via": "path"
     },
     "imoveis|buscaCorresponsaveis|/imoveis/corresponsaveis": {
-      "bfc": "imovel.corresponsaveis",
-      "usos_producao": 48,
-      "via": "path"
+      "bfc": "imoveis.corresponsaveis",
+      "usos_producao": 32,
+      "via": "confirmado"
     },
     "imoveis|buscaCorresponsaveisPorImovel|/imoveis/{idImovel}/corresponsaveis": {
       "bfc": "imovel.corresponsaveis",
       "usos_producao": 48,
-      "via": "path"
+      "via": "confirmado"
     },
     "integracoesContabeis|busca|/integracoes-contabeis": {
       "bfc": "integracoesContabeis",

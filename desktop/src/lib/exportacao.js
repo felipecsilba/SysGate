@@ -50,6 +50,9 @@ export function montarCriterio(condicoes) {
 // Texto que vai dentro de "…" no Groovy: escapa \, " e $ (senão vira interpolação)
 const strGroovy = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$')
 const nomeArquivo = s => String(s || 'exportacao').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '') || 'exportacao'
+// No BFC o método de leitura é sempre .busca — o "operacao" do catálogo (buscaTestadas, buscarCampos…) é o nome da
+// operação na API REST. Ex.: imovel.testadas.busca(parametros: …), 77 usos em produção.
+const METODO = 'busca'
 const acessoFonte = bfc => (/^[A-Za-z_][\w.]*$/.test(bfc) ? `.${bfc}` : `["${strGroovy(bfc)}"]`)
 
 /**
@@ -62,7 +65,7 @@ export function montarScript({ fonte, criterio = '', parametros = [], limite = 0
   const L = []
   L.push('// ---------------------------------------------------------------------------')
   L.push(`// Exporta: ${titulo}`)
-  L.push(`// Fonte: Dados.tributos.v2${acessoFonte(fonte.bfc)}.${fonte.operacao}`)
+  L.push(`// Fonte: Dados.tributos.v2${acessoFonte(fonte.bfc)}.${METODO}  (operação ${fonte.operacao} no catálogo)`)
   if (!fonte.confirmado) {
     L.push(`// ATENÇÃO: "${fonte.bfc}" é o nome da rota REST no catálogo. O nome no editor da Betha`)
     L.push('//   pode ser diferente — confira na lista de fontes do editor antes de rodar.')
@@ -102,8 +105,8 @@ export function montarScript({ fonte, criterio = '', parametros = [], limite = 0
   if (parametros.length) args.push(`parametros: [${parametros.map(p => `"${p.nome}": ${p.nome}`).join(', ')}]`)
   const comOrdem = (fonte.ordenacao || []).includes('id')
   L.push('buscar = {')
-  L.push(`  if (CRITERIO) return Dados.tributos.v2${acessoFonte(fonte.bfc)}.${fonte.operacao}(${[...args, 'criterio: CRITERIO', comOrdem ? 'ordenacao: "id asc"' : null].filter(Boolean).join(', ')})`)
-  L.push(`  return Dados.tributos.v2${acessoFonte(fonte.bfc)}.${fonte.operacao}(${[...args, comOrdem ? 'ordenacao: "id asc"' : null].filter(Boolean).join(', ')})`)
+  L.push(`  if (CRITERIO) return Dados.tributos.v2${acessoFonte(fonte.bfc)}.${METODO}(${[...args, 'criterio: CRITERIO', comOrdem ? 'ordenacao: "id asc"' : null].filter(Boolean).join(', ')})`)
+  L.push(`  return Dados.tributos.v2${acessoFonte(fonte.bfc)}.${METODO}(${[...args, comOrdem ? 'ordenacao: "id asc"' : null].filter(Boolean).join(', ')})`)
   L.push('}')
   L.push('')
   L.push('imprimir "Critério: " + (CRITERIO ? CRITERIO : "(nenhum)")') // só sintaxe já usada em produção (sem o Elvis ?:)
