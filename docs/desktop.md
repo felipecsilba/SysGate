@@ -205,7 +205,7 @@ Tela: botão de plugue no rodapé do Rail, acima do tema (grupo `conexoes` com `
 - Escopo **`drive.file`**: o app só enxerga o que criou (pasta **Krakion App**). O app OAuth precisa estar **Em produção** no Google Cloud (em Teste o refresh token expira em 7 dias).
 - IPC `drive:*` (via `comErro`) + `window.krakion.drive`. A URL da pasta para "Abrir no Drive" sai do status guardado, nunca da tela.
 - Testes: `oauth.test.js` (8), `cliente.test.js` (5) e `index.test.js` (11) contra `googleFalso.js` (OAuth + Drive falsos em memória; `KRAKION_GOOGLE_BASE` aponta o app para ele). `safeStorage` real conferido num smoke dentro do Electron.
-- **Ainda não testado contra o Google de verdade** — depende do Felipe criar o app no Google Cloud.
+- **Conectado no Google de verdade em 2026-10-20** (conta do Felipe; projeto `Krakion App` no Google Cloud, app OAuth **Em produção**, cliente "App para computador"). Para publicar, o Google exigiu página inicial + política de privacidade: `https://krakionlabs.cloud` e `https://krakionlabs.cloud/privacidade.html` (arquivo estático `frontend/public/privacidade.html`, no `master`). Sem logo no Branding (logo obrigaria verificação). Cliente sem a opção "AI-powered agent" — agentes futuros usam um cliente separado.
 - Próximo passo: backup automático (banco local + corpus da `biblioteca/`) usando `drive.cliente().enviar()` + `drive.pastaApp()`.
 
 ## Componentes compartilhados
