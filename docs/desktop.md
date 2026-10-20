@@ -274,15 +274,46 @@ Plano: `docs/plans/2026-10-20-desktop-mapa-dependencias.md`. Nasceu do caso dos 
 - **`ELECTRON_RUN_AS_NODE=1`**: processos iniciados pelo VS Code herdam essa variável e o Electron roda como Node puro (`does not provide an export named 'BrowserWindow'`). `electron/abrir.js` remove a variável antes de abrir — por isso o `npm run dev` usa ele em vez de `electron .`.
 - O backend roda com o `node` do PATH, não com o do Electron (o engine do Prisma é compilado para o Node).
 
-## Estado e próximos passos (2026-10-19)
+## Estado e próximos passos (2026-10-20)
 
-**No app (todos os módulos do menu têm página — nenhum "Em construção"):**
+### ▶ Retomar aqui (trabalho em andamento)
+
+**Exclusão dos imóveis migrados errado de Placas, códigos 11 a 2402 (~2.392 imóveis).** O Felipe deixou o
+**Levantamento de vínculos rodando no Studio** em 2026-10-20 (leva horas). Ao voltar:
+1. Ele baixa o `vinculos_imoveis.zip` e cola o `.jsonl` em **Mapa de dependências → Imóvel → cartão "Levantamento de
+   vínculos" → "Analisar resultado →"** (`/mapa/exclusao`).
+2. Conferir a análise. Pelo padrão visto nos 91 já levantados (códigos 10 e 11–100), espera-se que **todos estejam
+   livres e só com 1 movimentação de inscrição imobiliária** (`idMovimentacao: 0`), sem proprietário, movimentação,
+   histórico ou financeiro. Qualquer coisa fora disso aparece em "Fora do plano".
+3. Enviar a etapa **Reprocessar inscrição** (PUT, ~48 lotes de 50) → esperar alguns minutos → **rodar o levantamento de
+   novo** e colar → a inscrição deve vir vazia → enviar **Excluir imóveis** (DELETE, ~48 lotes).
+4. **Primeiro uso real da tela de envio** (até agora só testada com backend falso). Sugestão: começar pelos 90 dos
+   códigos 11–100 (bodies prontos também em `ArquivosTemporarios/exclusao-imoveis-placas-cod-11-100/`, fora do git)
+   e observar o primeiro lote antes de soltar o resto.
+5. Se algo falhar: a Varredura (`_BIBLIOTECA/Templates/Varredura_Vinculos_Imovel_BASE.txt`) diz o que ainda usa um
+   imóvel. Registrar o aprendizado em `biblioteca/FontesDeDados/dependencias_confirmadas.json` e no caso
+   `biblioteca/_CONHECIMENTO/Imoveis/casos/`.
+
+Já excluído de verdade: imóvel **34631456** (código 10), pela receita completa, passo a passo.
+
+**Validado na prática (2026-10-20):** a receita (proprietários → movimentações → PUT de inscrição → imóvel), o
+Levantamento e a Varredura no Studio, o `Lista_Ids_Imoveis_por_Codigo_BASE` (faixa de códigos → ids; corrigido o
+`imprimir (a) + b` após o 1º uso, a versão corrigida ainda não rodou).
+**Ainda não validado:** a tela de envio da exclusão em cascata contra a Betha; excluir corresponsáveis, testadas,
+englobados ou benefícios (imóvel com eles fica fora do plano); qualquer exclusão com vínculo financeiro.
+
+**Git:** 7 commits locais no `krakion-app` ainda **não enviados** ao GitHub (de `927bd25` a `5a7811b`). Push só
+quando o Felipe pedir. Nunca no `master` (a VPS faz `git pull` dele), exceto a página `frontend/public/privacidade.html`,
+que foi para o master e a VPS a pedido (exigência do Google para o OAuth).
+
+### O que existe no app
+
 - Ferramentas: Analisador JSON (Analisar + Comparar), Checagem (Por Fonte + Por API e marcação de campos), Conhecimento, Notas, Histórico.
-- Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação).
-- Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados. Conexões (Google Drive) tem botão próprio no rodapé do Rail (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
-- Testes: desktop **240**, backend **77** — todos passando (`npm test` em cada pasta).
-
-**Git:** tudo no branch **`krakion-app`** (nunca no `master` — a VPS faz `git pull` dele). A tag `app-v0.1.0` marca a versão até a API; o que veio depois está commitado no `krakion-app` local — conferir com `git log origin/krakion-app..HEAD` o que ainda falta enviar ao GitHub.
+- Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação), **Mapa de dependências** (cadastro → dependentes, endpoints, fonte BFC, notas da prática, scripts validados e exclusão em cascata de imóveis).
+- Rodapé do Rail: **Conexões** (plugue): Google Drive conectado (conta do Felipe) + **backup automático** (banco sem segredos + biblioteca por pasta, a cada 24 h).
+- Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
+- A base BFC mora em `biblioteca/` (ex-`Desktop/Scripts Formulas e Relatorios`). Ver `biblioteca/LEIAME-KRAKION.md`.
+- Testes: desktop **240**, backend **77**, todos passando (`npm test` em cada pasta).
 
 **Pendências conhecidas:**
 - **Gerador de Extensões**: fica como está (só o script de exportação) até o Felipe decidir — a geração de scripts e fórmulas está sendo desenhada por ele no VS Code com Claude Code e agentes, agora dentro do próprio Krakion (`biblioteca/` + `.claude/agents/`, desde 2026-10-19). **Não adiantar** Templates, Funções prontas ou geração no app sem o plano dele. O script de exportação ainda não foi rodado no Studio (primeiro uso com LIMITE pequeno).
@@ -293,6 +324,11 @@ Plano: `docs/plans/2026-10-20-desktop-mapa-dependencias.md`. Nasceu do caso dos 
 **Roadmap:**
 
 - Agente de tokens: login real (pulado pelo Felipe por custo — ver seção própria).
+- **Mapa de dependências:** confirmar outros cadastros (Pessoa, Econômico…) conforme os casos reais aparecerem. Script de levantamento na tela só depois de validado no Studio.
+- **Exclusão em cascata:** guardar o progresso do envio (hoje fica só na tela) e generalizar para outros cadastros quando houver receita validada.
+- **Backup:** restaurar pelo App (junto com o instalador).
+- **Processos de BFC** (`skills/bfc/`): criação e debug de fórmulas/scripts, a partir de casos reais (combinado no início de 2026-10-19).
+- Ideias anotadas: conector Claude API (perguntar à legislação e cruzar com a biblioteca); NotebookLM com a legislação no Drive (sem API pessoal: o Krakion só poria os PDFs na pasta).
 - Instalador `.exe` (empacotar Node + backend + binários do Postgres) — necessário para levar ao notebook; hoje o atalho depende do repositório nesta máquina.
 - Sincronização com a VPS (ids globais, `atualizadoEm`, exclusão lógica).
 - Chat com agentes (Claude Code local — `claude` 2.1 instalado em `~/.local/bin`). Abordagem sugerida: Agent SDK no processo main com ferramentas MCP do próprio app. Decisões pendentes (o Felipe pulou por ora): o que o agente pode fazer (sugestão: ler/preparar, **nunca** disparar chamada à Betha), onde pode criar arquivos, onde o chat aparece (sugestão: ícone próprio no Rail).

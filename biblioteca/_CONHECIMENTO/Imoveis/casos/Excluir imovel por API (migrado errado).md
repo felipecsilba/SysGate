@@ -36,9 +36,19 @@ Se houver corresponsáveis, testadas ou englobados, eles saem no passo 1, com as
 - A movimentação de inscrição do imóvel veio com `idImovelMovimentacao = 0`: é a linha "inicial", não ligada a
   nenhuma movimentação.
 
+## Padrão em volume (2026-10-20)
+
+Levantamento de 91 imóveis migrados errado da mesma base (códigos 10 e 11–100, todos **desativados**): **todos
+livres e só com 1 movimentação de inscrição imobiliária** (`idImovelMovimentacao = 0`). O código 10 era o único com
+proprietário, movimentações e histórico. Para esse perfil, a receita encurta para **PUT de inscrição → DELETE do
+imóvel**. Para achar os ids por faixa de código: `_BIBLIOTECA/Templates/Lista_Ids_Imoveis_por_Codigo_BASE.txt`.
+
+No Krakion App, a tela **Mapa de dependências → Imóvel → Levantamento de vínculos → "Analisar resultado"** lê o JSONL,
+separa o que fica fora do plano e envia as etapas em lotes de 50, consultando cada idLote.
+
 ## Em aberto
 
-- Validado em **1** imóvel. Repetir com ~10 antes da lista inteira (~3.000).
+- Receita completa validada em **1** imóvel; o perfil "só inscrição" foi levantado em 91 e excluído em 0 até agora. Lista inteira: códigos 11 a 2402.
 - Imóveis com movimento financeiro: fora desta receita (débitos, dívidas e lançamentos não foram testados).
 - Não cobertos pelo levantamento (nenhum apareceu neste caso): econômicos, transferências, imagens, informações
   complementares, origem do imóvel.
