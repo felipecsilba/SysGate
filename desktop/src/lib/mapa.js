@@ -1,7 +1,7 @@
 // Mapa de dependências — lógica pura da tela (agrupar, filtrar, textos do painel)
 
 export const CATEGORIAS = [
-  { categoria: 'cadastro', rotulo: 'Cadastro' },
+  { categoria: 'cadastro', rotulo: 'Dados cadastrais' },
   { categoria: 'financeiro', rotulo: 'Financeiro' },
   { categoria: 'documentos', rotulo: 'Documentos' },
   { categoria: 'outros', rotulo: 'Outros' },
@@ -28,4 +28,16 @@ export function descricaoAcao(no, rotuloDe = r => r) {
   if (no.acao === 'naoExcluir') return 'Não excluir'
   if (no.temDelete) return 'Excluir pelo DELETE'
   return 'Sem DELETE na API'
+}
+
+// Notas que começam com ⚠ são perigo (ex.: PUT com body vazio reprocessa a entidade toda) — vão em destaque
+export function separarNotas(lista = []) {
+  const alertas = []
+  const notas = []
+  for (const n of lista || []) {
+    const t = String(n).trim()
+    if (t.startsWith('⚠')) alertas.push(t.replace(/^⚠\s*/, ''))
+    else notas.push(t)
+  }
+  return { alertas, notas }
 }

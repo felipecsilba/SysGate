@@ -14,7 +14,7 @@ async function chamar(fn, ...args) {
   return r.dados
 }
 
-// Mapa de dependências: entidade → dependentes diretos → (clicando) dependentes do dependente, em colunas.
+// Mapa de dependências: cadastro (Imóvel, Pessoa, Dívida… — não confundir com entidade = prefeitura) → dependentes diretos → (clicando) dependentes do dependente, em colunas.
 // A exclusão segue da coluna mais à direita para a entidade.
 export default function Mapa() {
   const [entidades, setEntidades] = useState([])
@@ -97,7 +97,7 @@ export default function Mapa() {
         <div className="w-72">
           <CaixaBusca
             opcoes={entidades.map(e => ({ valor: e.recurso, rotulo: `${e.rotulo} · ${e.qtdDependentes} dep.${e.modulo ? ` — ${e.modulo}` : ''}` }))}
-            valor={entidade} onEscolher={setEntidade} placeholder="Entidade"
+            valor={entidade} onEscolher={setEntidade} placeholder="Cadastro (Imóvel, Pessoa, Dívida…)"
           />
         </div>
         <div className="flex flex-wrap gap-1">
@@ -121,14 +121,14 @@ export default function Mapa() {
         <div className="flex min-w-0 flex-1 gap-3 overflow-x-auto p-4">
           {colunas.length > 0 && (
             <div className="w-52 shrink-0">
-              <TituloColuna>Entidade</TituloColuna>
+              <TituloColuna>Cadastro</TituloColuna>
               <button type="button" onClick={() => { setDetalhe(colunas[0].info); setSelecionados([]); setColunas(colunas.slice(0, 1)) }}
                 className={`w-full rounded-xl border-2 px-3 py-3 text-left transition ${!selecionados.length ? 'border-acento bg-acento/5' : 'border-borda hover:border-acento/40'}`}>
                 <div className="text-sm font-semibold">{colunas[0].info.rotulo}</div>
                 <div className="font-mono text-[11px] text-suave">{colunas[0].info.recurso}</div>
                 <div className="mt-2 text-xs text-suave">{colunas[0].dependentes.length} dependentes diretos</div>
               </button>
-              <p className="mt-3 text-[11px] leading-relaxed text-suave">Exclusão: da coluna mais à direita para a entidade.</p>
+              <p className="mt-3 text-[11px] leading-relaxed text-suave">Exclusão: da coluna mais à direita para o cadastro.</p>
             </div>
           )}
           {colunas.map((col, i) => (
@@ -163,10 +163,15 @@ function Coluna({ titulo, grupos, total, selecionado, onEscolher }) {
         {grupos.length === 0 && <p className="text-xs text-suave">Nada com os filtros atuais.</p>}
         {grupos.map(g => (
           <div key={g.categoria}>
-            <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-suave">
-              {g.categoria === 'financeiro' && <Icone nome="alerta" className="h-3 w-3 text-amber-500" />}
-              {g.rotulo} <span className="text-suave/70">{g.nos.length}</span>
-            </div>
+            {g.categoria === 'financeiro' ? (
+              <div className="mb-1.5 flex items-center gap-1.5 rounded-md bg-amber-500/15 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                <Icone nome="alerta" className="h-3.5 w-3.5" /> {g.rotulo} — trava exclusão em massa <span className="ml-auto font-normal">{g.nos.length}</span>
+              </div>
+            ) : (
+              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-suave">
+                {g.rotulo} <span className="text-suave/70">{g.nos.length}</span>
+              </div>
+            )}
             <div className="space-y-1">
               {g.nos.map(no => <CartaoNo key={`${no.recurso}-${no.campo}`} no={no} ativo={selecionado === no.recurso} onClick={() => onEscolher(no)} />)}
             </div>
@@ -181,7 +186,7 @@ function CartaoNo({ no, ativo, onClick }) {
   const confirmado = no.status === 'confirmado'
   return (
     <button type="button" onClick={onClick}
-      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition ${confirmado ? 'border' : 'border border-dashed'} ${ativo ? 'border-acento bg-acento/5' : 'border-borda hover:border-acento/40 hover:bg-texto/[0.02]'}`}>
+      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition ${confirmado ? 'border' : 'border border-dashed'} ${ativo ? 'border-acento bg-acento/5' : 'border-borda hover:border-acento/40 hover:bg-texto/[0.02]'} ${no.categoria === 'financeiro' ? 'border-l-[3px] !border-l-amber-500' : ''} ${no.acao === 'reprocessar' ? 'border-l-[3px] !border-l-red-500' : ''}`}>
       <span className="w-4 shrink-0 text-center text-xs">{simbolo(no)}</span>
       <span className="min-w-0 flex-1">
         <span className={`block truncate text-[13px] ${confirmado ? 'font-medium' : ''}`}>{no.rotulo}</span>

@@ -1,6 +1,7 @@
 import JsonColorido from '../../components/JsonColorido'
 import MetodoBadge from '../../components/MetodoBadge'
-import { chamadaFonte, descricaoAcao } from '../../lib/mapa'
+import Icone from '../../components/Icone'
+import { chamadaFonte, descricaoAcao, separarNotas } from '../../lib/mapa'
 
 const dataBr = iso => (iso ? new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR') : '')
 
@@ -8,6 +9,7 @@ const dataBr = iso => (iso ? new Date(`${iso}T12:00:00`).toLocaleDateString('pt-
 export default function PainelNo({ no, rotuloDe, paiRotulo }) {
   const confirmado = no.status === 'confirmado'
   const chamada = chamadaFonte(no.fonte)
+  const { alertas, notas } = separarNotas(no.notas)
   return (
     <div className="space-y-5 px-5 py-5 text-sm">
       <div>
@@ -29,17 +31,26 @@ export default function PainelNo({ no, rotuloDe, paiRotulo }) {
         )}
       </div>
 
+      {alertas.map((a, i) => <Alerta key={i} tipo="perigo" titulo="Cuidado">{a}</Alerta>)}
+
+      {no.categoria === 'financeiro' && no.campo && (
+        <Alerta tipo="atencao" titulo="Vínculo financeiro">
+          Registro com isto não entra numa exclusão em massa sem revisão. Excluir dado financeiro por API ainda não foi testado na prática.
+        </Alerta>
+      )}
+
       {no.campo && (
         <Secao titulo="O que fazer">
-          <p className={no.acao === 'reprocessar' || no.acao === 'saiJunto' ? 'font-medium' : ''}>{descricaoAcao(no, rotuloDe)}</p>
-          {no.categoria === 'financeiro' && <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">Vínculo financeiro: imóvel com isto não entra numa exclusão em massa sem revisão.</p>}
+          {no.acao === 'reprocessar' || no.acao === 'saiJunto' ? (
+            <p className="rounded-lg border border-acento/30 bg-acento/10 px-3 py-2 font-medium">{descricaoAcao(no, rotuloDe)}</p>
+          ) : <p>{descricaoAcao(no, rotuloDe)}</p>}
         </Secao>
       )}
 
-      {no.notas.length > 0 && (
+      {notas.length > 0 && (
         <Secao titulo="O que a prática ensinou">
           <ul className="space-y-1.5">
-            {no.notas.map((n, i) => <li key={i} className="flex gap-2 text-[13px] leading-snug"><span className="text-suave">•</span><span>{n}</span></li>)}
+            {notas.map((n, i) => <li key={i} className="flex gap-2 text-[13px] leading-snug"><span className="text-suave">•</span><span>{n}</span></li>)}
           </ul>
         </Secao>
       )}
@@ -81,5 +92,21 @@ function Secao({ titulo, children }) {
       <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-suave">{titulo}</h4>
       {children}
     </section>
+  )
+}
+
+// Caixa de alerta: perigo (vermelho) para o que causa estrago, atenção (âmbar) para o que exige revisão
+function Alerta({ tipo, titulo, children }) {
+  const cor = tipo === 'perigo'
+    ? 'border-red-500/50 bg-red-500/10 text-red-800 dark:text-red-300'
+    : 'border-amber-500/50 bg-amber-500/10 text-amber-900 dark:text-amber-200'
+  return (
+    <div className={`flex gap-2.5 rounded-xl border-2 px-3.5 py-3 ${cor}`}>
+      <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
+      <div className="text-[13px] leading-snug">
+        <div className="font-semibold">{titulo}</div>
+        <div>{children}</div>
+      </div>
+    </div>
   )
 }

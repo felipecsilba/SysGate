@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { agruparPorCategoria, chamadaFonte, descricaoAcao } from './mapa.js'
+import { agruparPorCategoria, chamadaFonte, descricaoAcao, separarNotas } from './mapa.js'
 
 const nos = [
   { recurso: 'a', categoria: 'cadastro', status: 'confirmado' },
@@ -13,6 +13,7 @@ test('agruparPorCategoria: na ordem Cadastro, Financeiro, Documentos, só os gru
   const g = agruparPorCategoria(nos)
   assert.deepEqual(g.map(x => x.categoria), ['cadastro', 'financeiro', 'documentos'])
   assert.deepEqual(g[0].nos.map(n => n.recurso), ['a', 'c'])
+  assert.equal(g[0].rotulo, 'Dados cadastrais') // "cadastro" é o que se escolhe no topo (Imóvel, Pessoa…)
   assert.equal(g[1].rotulo, 'Financeiro')
 })
 
@@ -34,4 +35,11 @@ test('descricaoAcao: o que fazer com o nó', () => {
   assert.equal(descricaoAcao({ acao: 'reprocessar' }), 'Derivado — reprocessar (sem DELETE)')
   assert.equal(descricaoAcao({ acao: 'excluir', temDelete: true }), 'Excluir pelo DELETE')
   assert.equal(descricaoAcao({ acao: null, temDelete: false }), 'Sem DELETE na API')
+})
+
+test('separarNotas: as que começam com ⚠ viram alerta, o resto fica como nota', () => {
+  const r = separarNotas(['Registro derivado.', '⚠ NUNCA com body vazio: reprocessa todos.', '  ⚠ outra'])
+  assert.deepEqual(r.alertas, ['NUNCA com body vazio: reprocessa todos.', 'outra'])
+  assert.deepEqual(r.notas, ['Registro derivado.'])
+  assert.deepEqual(separarNotas(undefined), { alertas: [], notas: [] })
 })
