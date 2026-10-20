@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de Privacidade — Krakion App</title>
+  <link rel="icon" href="/favicon.png">
+  <style>
+    :root { --fundo: #f8fafc; --cartao: #ffffff; --texto: #1e293b; --suave: #64748b; --borda: #e2e8f0; --acento: #4f46e5; }
+    @media (prefers-color-scheme: dark) {
+      :root { --fundo: #0f1117; --cartao: #161922; --texto: #e2e8f0; --suave: #94a3b8; --borda: #262a36; --acento: #818cf8; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fundo); color: var(--texto); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 48px 16px 64px; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+    header img { width: 40px; height: 40px; object-fit: contain; }
+    h1 { font-size: 1.6rem; line-height: 1.25; margin: 0; }
+    .data { color: var(--suave); font-size: .9rem; margin: 4px 0 0; }
+    section { background: var(--cartao); border: 1px solid var(--borda); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+    h2 { font-size: 1.05rem; margin: 0 0 8px; }
+    p, li { margin: 0 0 8px; }
+    ul { padding-left: 20px; margin: 0; }
+    a { color: var(--acento); }
+    code { font-size: .9em; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="/nova-logo.webp" alt="">
+      <div>
+        <h1>Política de Privacidade — Krakion App</h1>
+        <p class="data">Atualizada em 19 de outubro de 2026</p>
+      </div>
+    </header>
+
+    <section>
+      <h2>O que é o Krakion App</h2>
+      <p>O Krakion App é uma ferramenta interna de apoio ao trabalho de implantação de sistemas, instalada e usada no computador do próprio usuário. Não é um serviço aberto ao público.</p>
+    </section>
+
+    <section>
+      <h2>Acesso ao Google Drive</h2>
+      <ul>
+        <li>O app pede apenas a permissão <code>drive.file</code>: acesso somente aos arquivos que ele mesmo cria, numa pasta chamada “Krakion App” no Drive do usuário.</li>
+        <li>Ele usa essa pasta para guardar cópias de segurança dos dados do próprio usuário.</li>
+        <li>Ele não lê, lista nem altera nenhum outro arquivo do Drive.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>O que acontece com os dados</h2>
+      <ul>
+        <li>Os dados do Google acessados pelo app são usados apenas para a finalidade acima.</li>
+        <li>Nada é vendido, compartilhado com terceiros nem usado para publicidade ou treinamento de modelos.</li>
+        <li>As credenciais de acesso ficam cifradas no computador do usuário, protegidas pelo sistema operacional, e não são enviadas a nenhum servidor do Krakion.</li>
+      </ul>
+      <p>O uso de informações recebidas das APIs do Google segue a <a href="https://developers.google.com/terms/api-services-user-data-policy">Política de Dados do Usuário dos Serviços de API do Google</a>, incluindo os requisitos de uso limitado.</p>
+    </section>
+
+    <section>
+      <h2>Como revogar o acesso</h2>
+      <p>No próprio app, em Conexões → Google Drive → Desconectar. Ou a qualquer momento em <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Os arquivos já criados na pasta continuam no Drive do usuário, que pode apagá-los quando quiser.</p>
+    </section>
+
+    <section>
+      <h2>Contato</h2>
+      <p><a href="mailto:felipecsilba@gmail.com">felipecsilba@gmail.com</a></p>
+    </section>
+  </main>
+</body>
+</html>
