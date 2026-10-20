@@ -18,6 +18,7 @@ export async function subirGoogleFalso({ clientId = 'cid-teste', clientSecret = 
     sessoes: new Map(), // id → { meta, total, recebido: Buffer[] }
     partesRecebidas: 0,
     duracaoAcesso,
+    falharEnvio: null, // nome => true faz o envio daquele arquivo falhar (testes de falha no meio)
   }
   let seq = 0
   const novoId = p => `${p}${++seq}`
@@ -80,7 +81,7 @@ export async function subirGoogleFalso({ clientId = 'cid-teste', clientSecret = 
       const pai = /'([^']+)' in parents/.exec(q)?.[1]
       const files = [...estado.arquivos.values()]
         .filter(a => (!nome || a.name === nome) && (!soPasta || a.mimeType === PASTA) && (!pai || a.parents?.includes(pai)))
-        .map(({ id, name, mimeType }) => ({ id, name, mimeType }))
+        .map(({ id, name, mimeType, conteudo }) => ({ id, name, mimeType, size: String(conteudo?.length ?? 0) }))
       return json(res, 200, { files })
     }
     if (u.pathname === '/drive/v3/files' && req.method === 'POST') {
@@ -100,6 +101,7 @@ export async function subirGoogleFalso({ clientId = 'cid-teste', clientSecret = 
     if (sessao && req.method === 'PUT') {
       const s = estado.sessoes.get(sessao)
       if (!s) return erroApi(res, 404, 'Sessão de upload não encontrada.')
+      if (estado.falharEnvio?.(s.meta.name)) return erroApi(res, 503, 'Backend Error')
       const m = /bytes (\d+)-(\d+)\/(\d+)/.exec(req.headers['content-range'] || '')
       const jaTem = s.recebido.reduce((n, b) => n + b.length, 0)
       if (!m || Number(m[1]) !== jaTem || Number(m[2]) - Number(m[1]) + 1 !== corpo.length || Number(m[3]) !== s.total) return erroApi(res, 400, 'Content-Range inválido.')

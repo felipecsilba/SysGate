@@ -65,6 +65,19 @@ test('enviar arquivo grande do disco vai em partes e chega íntegro', async t =>
   assert.equal(progresso.at(-1).enviado, dados.length)
 })
 
+test('listar devolve os arquivos de uma pasta (com tamanho), sem os de outras', async t => {
+  const { g, cliente } = await preparar()
+  t.after(g.fechar)
+  const a = await cliente.garantirPasta('A')
+  const b = await cliente.garantirPasta('B')
+  await cliente.enviar({ pastaId: a, nome: 'um.txt', conteudo: '123' })
+  await cliente.enviar({ pastaId: a, nome: 'dois.txt', conteudo: '12' })
+  await cliente.enviar({ pastaId: b, nome: 'outro.txt', conteudo: 'x' })
+  const lista = await cliente.listar(a)
+  assert.deepEqual(lista.map(f => f.name).sort(), ['dois.txt', 'um.txt'])
+  assert.equal(lista.find(f => f.name === 'um.txt').tamanho, 3)
+})
+
 test('acesso vencido no meio do caminho: renova uma vez e repete', async t => {
   const { g, cliente, renovacoes } = await preparar()
   t.after(g.fechar)

@@ -15,6 +15,9 @@ import * as biblioteca from './biblioteca.js'
 import * as catalogoFontes from './catalogoFontes.js'
 import * as municipiosDocs from './municipiosDocs.js'
 import { criarConexaoDrive } from './conexoes/googleDrive/index.js'
+import { criarBackup } from './backup/index.js'
+import { exportarBanco } from './backup/exportarBanco.js'
+import pg from 'pg'
 
 // Dev (npm run dev → abrir.js): interface pelo Vite com hot reload.
 // Fora disso (atalho / instalador): interface compilada em dist/.
@@ -236,6 +239,39 @@ registrarDrive('desconectar', () => drive.desconectar())
 // A URL sai do status guardado, não da tela
 registrarDrive('abrir-pasta', () => { const url = drive.status().pastaUrl; if (url) shell.openExternal(url) })
 
+// Backup no Drive: banco (JSON via pg — o Postgres embutido não traz pg_dump) todo dia; biblioteca por pasta quando muda.
+// Roda sozinho 15 s depois de abrir e a cada hora com o app aberto, se o último sucesso tiver mais de 24 h.
+let databaseUrl = null // preenchido quando o banco local sobe
+const backup = criarBackup({
+  userData: dadosApp(),
+  drive,
+  pastaBiblioteca,
+  exportarBanco: async () => {
+    if (!databaseUrl) throw Object.assign(new Error('O banco local ainda não está pronto.'), { amigavel: true })
+    const cliente = new pg.Client({ connectionString: databaseUrl })
+    await cliente.connect()
+    try { return await exportarBanco(async sql => (await cliente.query(sql)).rows) } finally { await cliente.end() }
+  },
+})
+function rodarBackup(origem) {
+  console.log('[backup] início', origem)
+  const enviar = (canal, dados) => { if (janela && !janela.isDestroyed()) janela.webContents.send(canal, dados) }
+  return backup.executar({ aoProgresso: p => enviar('backup:progresso', p) })
+    .then(r => {
+      console.log('[backup] ok —', r.enviados.map(e => `${e.nome} (${e.tamanho} B)`).join(', '), '| sem mudança:', r.pulados.join(',') || '-', '| apagados:', r.apagados)
+      return r
+    })
+    .catch(err => { console.error('[backup] falhou:', err.amigavel ? err.message : err); throw err })
+    .finally(() => enviar('backup:fim', backup.status()))
+}
+function agendarBackup() {
+  const checar = () => { if (backup.precisaRodar()) rodarBackup('automático').catch(() => {}) }
+  setTimeout(checar, 15_000)
+  setInterval(checar, 60 * 60 * 1000)
+}
+ipcMain.handle('backup:status', comErro(() => backup.status()))
+ipcMain.handle('backup:executar', comErro(() => rodarBackup('manual')))
+
 let filaBetha = Promise.resolve() // uma renovação por vez — nada de várias janelas no Betha ao mesmo tempo
 ipcMain.handle('betha:renovar', (e, pedido) => {
   const executar = async () => {
@@ -276,6 +312,7 @@ async function iniciar() {
   await new Promise(r => janela.webContents.once('did-finish-load', r))
   try {
     const credenciais = await bancoLocal.iniciar(app.getPath('userData'), status)
+    databaseUrl = credenciais.databaseUrl
 
     status('Iniciando serviços…')
     backendLocal.iniciar(credenciais)
@@ -294,6 +331,7 @@ async function iniciar() {
       await janela.loadURL(`${protocolo.ORIGEM}/index.html`)
       vigiarNovaVersao()
     }
+    agendarBackup()
   } catch (e) {
     console.error('[main]', e)
     erro(`${e.message}\n\nDados do app: ${app.getPath('userData')}`)

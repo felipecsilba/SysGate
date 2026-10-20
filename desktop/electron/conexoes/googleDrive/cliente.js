@@ -106,6 +106,21 @@ export function criarCliente({ api, obterAcesso, fetch: f = fetch }) {
     }
   }
 
+  // Arquivos (não apagados) dentro de uma pasta, seguindo a paginação
+  async function listar(pastaId) {
+    const arquivos = []
+    let pagina
+    do {
+      const params = new URLSearchParams({ q: `'${pastaId}' in parents and trashed = false`, fields: 'nextPageToken,files(id,name,size)', pageSize: '1000', spaces: 'drive' })
+      if (pagina) params.set('pageToken', pagina)
+      const resp = await exigirOk(await requisitar(`/drive/v3/files?${params}`), 'Drive (listar)')
+      const dados = await resp.json()
+      arquivos.push(...(dados.files || []).map(f => ({ id: f.id, name: f.name, tamanho: Number(f.size ?? 0) })))
+      pagina = dados.nextPageToken
+    } while (pagina)
+    return arquivos
+  }
+
   async function baixarTexto(id) {
     const resp = await exigirOk(await requisitar(`/drive/v3/files/${encodeURIComponent(id)}?alt=media`), 'Drive (baixar)')
     return resp.text()
@@ -115,5 +130,5 @@ export function criarCliente({ api, obterAcesso, fetch: f = fetch }) {
     await exigirOk(await requisitar(`/drive/v3/files/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Drive (excluir)')
   }
 
-  return { sobre, garantirPasta, enviar, baixarTexto, excluir }
+  return { sobre, garantirPasta, enviar, listar, baixarTexto, excluir }
 }

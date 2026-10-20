@@ -206,7 +206,17 @@ Tela: botão de plugue no rodapé do Rail, acima do tema (grupo `conexoes` com `
 - IPC `drive:*` (via `comErro`) + `window.krakion.drive`. A URL da pasta para "Abrir no Drive" sai do status guardado, nunca da tela.
 - Testes: `oauth.test.js` (8), `cliente.test.js` (5) e `index.test.js` (11) contra `googleFalso.js` (OAuth + Drive falsos em memória; `KRAKION_GOOGLE_BASE` aponta o app para ele). `safeStorage` real conferido num smoke dentro do Electron.
 - **Conectado no Google de verdade em 2026-10-20** (conta do Felipe; projeto `Krakion App` no Google Cloud, app OAuth **Em produção**, cliente "App para computador"). Para publicar, o Google exigiu página inicial + política de privacidade: `https://krakionlabs.cloud` e `https://krakionlabs.cloud/privacidade.html` (arquivo estático `frontend/public/privacidade.html`, no `master`). Sem logo no Branding (logo obrigaria verificação). Cliente sem a opção "AI-powered agent" — agentes futuros usam um cliente separado.
-- Próximo passo: backup automático (banco local + corpus da `biblioteca/`) usando `drive.cliente().enviar()` + `drive.pastaApp()`.
+
+## Backup no Google Drive (Conexões → Google Drive → cartão Backup, 2026-10-20)
+
+Plano: `docs/plans/2026-10-20-desktop-backup-drive.md`. Módulos em `electron/backup/`:
+- **Banco, todo backup:** `exportarBanco.js` exporta todas as tabelas do schema public para JSON compactado (`banco-AAAA-MM-DD_HHMMSS.json.gz`), lendo com `pg`. O Postgres embutido **não traz `pg_dump`**. No banco real: 30 tabelas, 352 KB, 0,2 s. Guarda **30**.
+- **Biblioteca, só o que mudou:** um zip por pasta principal de `biblioteca/` (mais `_raiz` para os arquivos soltos). `impressao.js` (caminho + tamanho + data, sem ler conteúdo; ignora `__pycache__`) fica em `<userData>/backup.json` e é gravada logo depois de cada pasta subir, então uma falha no meio não reenvia o que já foi. Guarda **3** versões por pasta.
+- `zip.js`: zip próprio, sem dependência (deflate, nomes UTF-8, prefixo `\?\` para caminhos longos, limites sem zip64 checados). Conferido com o `zipfile` do Python na biblioteca real: Relatorios (8.717 arquivos, 146 → 30 MB em ~5 s), `_RASCUNHOS-TESTES` (caminhos > 260) e Formulas byte a byte.
+- `retencao.js`: carimbo **com segundos** (o automático e o manual no mesmo minuto geravam nomes iguais) e "manter os N mais recentes por grupo"; arquivos fora do padrão nunca são apagados.
+- `index.js` (`criarBackup`): `status`, `precisaRodar` (conectado e último sucesso há mais de 24 h), `executar` (uma execução por vez, progresso por etapa, temporários sempre apagados). No Drive: `Krakion App/Backups/Banco` e `Krakion App/Backups/Biblioteca`.
+- `main.js`: checa 15 s depois de abrir e a cada hora; IPC `backup:status`/`backup:executar` + eventos `backup:progresso`/`backup:fim`; log `[backup]` no `krakion.log`.
+- **Atenção:** o JSON do banco inclui os tokens Betha (`MunicipioSistema`) e o hash da senha local (`Usuario`). Fica no Drive do próprio Felipe, numa pasta que só o app enxerga (`drive.file`). Cifrar o backup é uma opção futura. Restaurar pelo App também fica para depois.
 
 ## Componentes compartilhados
 
@@ -252,7 +262,7 @@ Tela: botão de plugue no rodapé do Rail, acima do tema (grupo `conexoes` com `
 - Ferramentas: Analisador JSON (Analisar + Comparar), Checagem (Por Fonte + Por API e marcação de campos), Conhecimento, Notas, Histórico.
 - Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação).
 - Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados. Conexões (Google Drive) tem botão próprio no rodapé do Rail (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
-- Testes: desktop **198**, backend **77** — todos passando (`npm test` em cada pasta).
+- Testes: desktop **217**, backend **77** — todos passando (`npm test` em cada pasta).
 
 **Git:** tudo no branch **`krakion-app`** (nunca no `master` — a VPS faz `git pull` dele). A tag `app-v0.1.0` marca a versão até a API; o que veio depois está commitado no `krakion-app` local — conferir com `git log origin/krakion-app..HEAD` o que ainda falta enviar ao GitHub.
 

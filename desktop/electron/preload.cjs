@@ -57,6 +57,21 @@ contextBridge.exposeInMainWorld('krakion', {
     desconectar: () => ipcRenderer.invoke('drive:desconectar'),
     abrirPasta: () => ipcRenderer.invoke('drive:abrir-pasta'),
   },
+  // Backup no Google Drive (banco + biblioteca). O progresso chega por evento enquanto roda.
+  backup: {
+    status: () => ipcRenderer.invoke('backup:status'),
+    executar: () => ipcRenderer.invoke('backup:executar'),
+    aoProgresso: callback => {
+      const ouvinte = (_evento, p) => callback(p)
+      ipcRenderer.on('backup:progresso', ouvinte)
+      return () => ipcRenderer.removeListener('backup:progresso', ouvinte)
+    },
+    aoFim: callback => {
+      const ouvinte = (_evento, s) => callback(s)
+      ipcRenderer.on('backup:fim', ouvinte)
+      return () => ipcRenderer.removeListener('backup:fim', ouvinte)
+    },
+  },
   // Gerador de Extensões: catálogo de fontes BFC da pasta da biblioteca (somente leitura)
   gerador: {
     fontes: () => ipcRenderer.invoke('gerador:fontes'),

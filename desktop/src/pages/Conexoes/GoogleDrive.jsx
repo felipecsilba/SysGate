@@ -6,6 +6,7 @@ import Pagina from '../../components/Pagina'
 import { conexaoPorId } from '../../lib/conexoes'
 import LogoConexao from './LogoConexao'
 import { chamar, dataHora, drive } from './comum'
+import CartaoBackup from './CartaoBackup'
 
 const CONSOLE = 'https://console.cloud.google.com/'
 
@@ -68,12 +69,15 @@ export default function GoogleDrive() {
               )}
 
               {estado.conectado && !trocandoApp ? (
-                <Conectado
-                  estado={estado} ocupado={ocupado}
-                  onTestar={() => executar('testar', () => chamar(drive.testar), r => `Tudo certo: gravou, leu e apagou um arquivo de teste em ${r.ms < 1000 ? 'menos de 1 s' : `${(r.ms / 1000).toFixed(1).replace('.', ',')} s`}.`)}
-                  onDesconectar={() => setConfirmarSaida(true)}
-                  onTrocarApp={() => setTrocandoApp(true)}
-                />
+                <>
+                  <Conectado
+                    estado={estado} ocupado={ocupado}
+                    onTestar={() => executar('testar', () => chamar(drive.testar), r => `Tudo certo: gravou, leu e apagou um arquivo de teste em ${r.ms < 1000 ? 'menos de 1 s' : `${(r.ms / 1000).toFixed(1).replace('.', ',')} s`}.`)}
+                    onDesconectar={() => setConfirmarSaida(true)}
+                    onTrocarApp={() => setTrocandoApp(true)}
+                  />
+                  <CartaoBackup />
+                </>
               ) : (
                 <PassoAPasso
                   estado={estado} ocupado={ocupado} trocandoApp={trocandoApp || !estado.appConfigurado}
