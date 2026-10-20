@@ -1,0 +1,984 @@
+/***********************************************************************************************************************************/
+/*				EMISSÃO DE BOLETOS PELO WEBSERVICE DO BANCO DO BRASIL - COBRANÇAS COM PIX										   */
+/***********************************************************************************************************************************/
+/* Desenvolvido por Gabriel Aita Rocha																							   */
+/* Dia 10/11/2024																												   */
+/* Versão 2.0 - Conforme Manual 																								   */
+/* Alterações 14 a 16/10/2026 (validadas em Rurópolis) - trechos marcados com // ALTERADO:                                    */
+/*  - campo "endereco" conforme o referente: IMÓVEL -> localização do imóvel; ECONÔMICO -> localização do econômico;          */
+/*    demais -> endereço do contribuinte. Reserva: correspondência do referente, depois do contribuinte.                       */
+/*    O endereço do contribuinte também vai em "enderecoContribuinte".                                                         */
+/*  - PARCELAMENTO: referente, inscrição, quadra/lote e endereço lidos das composições do parcelamento (ids "0" descartados)   */
+/*  - inscrição/quadra/lote/loteamento vazios (e não "0") quando não houver                                                    */
+/*  - novo campo "abreviaturaCredito"; receitas vazias em parcelamento viram uma linha "PARC nº - parcela/total"               */
+/*  - ano do parcelamento sem ano vazio/repetido                                                                               */
+/* Modelo Jasper correspondente: Guia_Registrada_BB_PIX_V2_BASE.jrxml (ver README - Guia Registrada BB PIX V2.md)              */
+/**********************************************************************************************************************************/
+
+// Variaveis Globais
+dadosConexao = []
+
+// Fontes usadas
+fonteTabelasAuxiliares = Dados.tributos.v2.tabelasAuxiliares;
+fonteRegistros = Dados.tributos.v2.tabelaAuxiliar.registros;
+
+esquema = [
+  idTransferenciaImoveis: Esquema.caracter,
+  nroConvenio: Esquema.caracter,
+  numeroVariacaoCarteira: Esquema.caracter,
+  boletoNumero: Esquema.caracter,
+  nroBaixa: Esquema.caracter,
+  idReceitaDiversa: Esquema.caracter,
+  receitas: Esquema.lista(
+    Esquema.objeto([
+      descricao: Esquema.caracter,
+      abreviatura: Esquema.caracter,
+      valor: Esquema.numero
+    ])
+  ),
+  nroParcela: Esquema.inteiro,
+  classificacaoGuia: Esquema.caracter,
+  idImovel: Esquema.caracter,
+  parcelaUnica: Esquema.caracter,
+  idContribuinte: Esquema.caracter,
+  nomeContribuinte: Esquema.caracter,
+  ano: Esquema.caracter,
+  valorDocumento: Esquema.numero,
+  valorTaxas: Esquema.numero,
+  valorDevido: Esquema.numero,
+  valorJuro: Esquema.numero,
+  valorMulta: Esquema.numero,
+  valorCorrecao: Esquema.numero,
+  valorTributo: Esquema.numero,
+  valorDesconto: Esquema.numero,
+  valorBeneficios: Esquema.numero,
+  valorJurosFinan: Esquema.numero,
+  valorTotal: Esquema.numero,
+  idContribuicoes: Esquema.caracter,
+  idEconomico: Esquema.caracter,
+  dataVencimento: Esquema.caracter,
+  totalAcrescimos: Esquema.numero,
+  endereco: Esquema.caracter,
+  enderecoContribuinte: Esquema.caracter, // ALTERADO - endereço do contribuinte continua disponível no relatório
+  quantidadeParcelas: Esquema.inteiro,
+  tipoCadastro: Esquema.caracter,
+  descricaoServico: Esquema.caracter,
+  observacao: Esquema.caracter,
+  descricaoCreditoTributario: Esquema.caracter,
+  abreviaturaCredito: Esquema.caracter, // ALTERADO - abreviatura do crédito tributário
+  dataVencimentoOriginal: Esquema.caracter,
+  nroParcelamento: Esquema.caracter,
+  cedente: Esquema.caracter,
+  carteira: Esquema.caracter,
+  referente: Esquema.caracter,
+  inscricaoImobiliaria: Esquema.caracter,
+  quadra: Esquema.caracter,
+  lote: Esquema.caracter,
+  enderecoImo: Esquema.caracter,
+  loteamento: Esquema.caracter,
+  cpfCnpj: Esquema.caracter,
+  qrCodeUrl: Esquema.caracter,
+  qrCodeTxId: Esquema.caracter,
+  qrCodeEmv: Esquema.caracter,
+  linhaDigitavel: Esquema.caracter,
+  codigoBarraNumerico: Esquema.caracter,
+  beneficiarioAgencia: Esquema.caracter,
+  nomeEntidade: Esquema.caracter,
+  cnpjEntidade: Esquema.caracter,
+  qtdDiasAposVenc: Esquema.caracter
+];
+registraLinha = []
+gerarGuias = []
+
+fonte = Dados.dinamico.v2.novo(esquema);
+
+FONTE_TRIBUTOS = Dados.tributos.v2;
+
+enumerador = importar "enumerador";
+ocultarCPF = importar "formata_cpfcnpj";
+
+emitir = FONTE_TRIBUTOS.emissaoGuias.busca(parametros: [ protocoloEmissao: parametros.protocolo?.valor ]);
+
+composicoes = [];
+idsParcelamentos = emitir.collect { it.parcela?.parcelamento?.id }.findAll { it != null}.collate(10);
+idsParcelamentos.each { values ->
+  idString = values.join(',');
+  se (idString && !idString.vazio()) {
+    composicoes += FONTE_TRIBUTOS.parcelamentos.composicoes.agrupadas
+    .busca(criterio: "parcelamento.id in ($idString)")
+    .collect { item -> item };
+      }
+}
+
+agrp = emitir.groupBy { it -> it.numeroBaixa };
+
+  agrp.each { numeroBaixa, guias ->
+
+    percorrer(guias) { guia->
+
+      idEconomico = null
+      idTransferenciaImoveis = null
+      idReceitaDiversa = null
+      idProjeto = null
+      nroParcela = null
+      idImovel = null
+      parcelaUnica = 'NAO'
+      idContribuinte=null
+      codigoContribuinte=null
+      nomeContribuinte = null
+      ano = ''
+      idContribuicoes = null
+      tipoCadastro = null
+      receitas = []
+      valorTaxas = 0
+      valorDesconto = 0
+      valorBeneficio = 0
+      quantidadeParcelas = 0
+      descricaoServico = null
+      observacao = null
+      descricaoCredito = null
+      abreviaturaCredito = "" // ALTERADO
+      nroParcelamento = ""
+      codigoContribuinte = null
+      valorMulta = 0
+      valorJuro = 0
+      valorCorrecao = 0
+      valorTributo = 0
+      inscricaoImobiliaria = ""
+      quadra = ""
+      lote = ""
+      loteamento = ""
+      cpfCnpj = ""
+      criterioEndereco = ""
+      enderecoImo = ""
+      enderecoEco = "" // ALTERADO - localização do econômico
+      referente = null
+      convenioNro = ""
+      qtdDiasAposVenc = 0
+      qtdDiasProtesto = 0
+      qtdDiasNegativ 	= 0
+      orgaoNegativad	= ""
+      vlrMulta	    = ""
+      vlrJuros 	    = ""
+      VariacaoCarteir = ""
+      boletoPix		= ""
+      numeroConfig = 0
+      gwAppKey  	= ""
+      clientID 		= ""
+      client_secret = ""
+      autorization 	= ""
+      nomeEntidade	= ""
+      cnpjEntidade   = ""
+      ambienteUsad  = ""
+      entidadeTrib  = ""
+
+      if(enumerador.converter(guia.classificacao).valor == "DEBITO") {
+
+        se(guia.debito.dtVencimento < Datas.hoje()) {
+          dataVencimentoOriginal = guia.dtValidade
+        } senao {
+          dataVencimentoOriginal = guia.debito.dtVencimento
+        }
+        idTransferenciaImoveis = guia.debito.idTransferenciaImoveis;
+        nroConvenio = guia.nroConvenio
+        idReceitaDiversa = guia.debito.idReceitaDiversa;
+        idProjeto = guia.debito.idObra;
+        nroParcela = guia.debito.nroParcela;
+        idImovel = guia.debito.idImovel;
+        parcelaUnica = enumerador.converter(guia.debito.unica).valor;
+        idContribuinte = guia.debito.contribuinte.id;
+        codigoContribuinte = guia.debito.contribuinte.codigo;
+
+
+        nomeContribuinte = guia.debito.contribuinte.nome;
+        idContribuicoes = guia.debito.idContribuicao;
+        idEconomico = guia.debito.idEconomico;
+        ano = '' + guia.debito.ano;
+        tipoCadastro = enumerador.converter(guia.debito.tipoCadastro).valor;
+        descricaoServico = guia.debito.descricaoTipoServico;
+        observacao = guia.debito.comentarioReceitaDiversa;
+        descricaoCredito = guia.debito.descricaoCredito;
+        abreviaturaCredito = guia.debito.abreviaturaCredito?:""; // ALTERADO
+        dataVencimentoOriginal = dataVencimentoOriginal;
+        dataValidade = guia.dtValidade;
+        quantidadeParcelas = guia.debito.qtdParcelas;
+        referente = guia.debito.referente.descricao;
+        cpfCnpj = guia.contribuinte.cpfCnpj;
+
+      } else if (enumerador.converter(guia.classificacao).valor == "DIVIDA_ATIVA") {
+        se(guia.divida.dataVencimento < Datas.hoje()) {
+          dataVencimentoOriginal = guia.dtValidade
+        } senao {
+          dataVencimentoOriginal = guia.divida.dataVencimento
+        }
+        idTransferenciaImoveis = guia.divida.idTransferenciaImoveis
+        nroConvenio = guia.convenio.nroConvenio
+        idReceitaDiversa = guia.divida.idReceitaDiversa;
+        idProjeto = guia.divida.idObra;
+        idContribuicoes = guia.divida.idContribuicaoMelhoria;
+        nroParcela = guia.divida.parcela;
+        idImovel = guia.divida.idImovel;
+        idEconomico = guia.divida.idEconomico;
+        codigoContribuinte = guia.divida.contribuinte.codigo;
+        idContribuinte = guia.divida.contribuinte.id;
+        nomeContribuinte = guia.divida.contribuinte.nome;
+        ano = '' + guia.divida.ano;
+        tipoCadastro = enumerador.converter(guia.divida.referente.tipo).valor;
+        descricaoServico = guia.divida.descricaoTipoServico;
+        observacao = guia.divida.comentarioReceitaDiversa;
+        descricaoCredito = guia.divida.creditoTributario.descricao;
+        abreviaturaCredito = guia.divida.creditoTributario?.abreviatura?:""; // ALTERADO
+        dataVencimentoOriginal = dataVencimentoOriginal;
+        dataValidade = guia.dtValidade;
+        referente = guia.divida.referente.descricao;
+        cpfCnpj = guia.contribuinte.cpfCnpj;
+      } else {
+
+        ano = composicoes.findAll{it.idParcelamento == guia.parcela.parcelamento.id}.collect{it.ano}.findAll{ it }.unique().sort().join(', ');
+        se (ano.vazio()) {
+          ano = guia.parcela.parcelamento.anoParcelamento;
+        }
+        se(guia.parcela.dtVencimento < Datas.hoje()) {
+          dataVencimentoOriginal = guia.dtValidade
+        } senao {
+          dataVencimentoOriginal = guia.parcela.dtVencimento
+        }
+
+        nroParcela = guia.parcela.nroParcela;
+        nroConvenio = guia.convenio.nroConvenio;
+        idContribuinte = guia.parcela.parcelamento.contribuinte.id;
+        codigoContribuinte = guia.parcela.parcelamento.contribuinte.codigo;
+        nomeContribuinte = guia.parcela.parcelamento.contribuinte.nome;
+        tipoCadastro = "PARCELAMENTO";
+        dataVencimentoOriginal = dataVencimentoOriginal;
+        nroParcelamento = guia.parcela.parcelamento.nroParcelamento;
+        quantidadeParcelas = guia.parcela.parcelamento.qtdParcela;
+        descricaoCredito = "Parcelamento";
+        abreviaturaCredito = "PARC"; // ALTERADO - parcelamento não tem crédito próprio
+        descricaoServico = "";
+        cpfCnpj = guia.contribuinte.cpfCnpj;
+      }
+
+      criterioEndereco = "classificacao = 'CONTRIBUINTE' and id = $idContribuinte";
+
+      // ALTERADO - só busca o imóvel se tiver o id, para não quebrar a busca com "id = null"
+      se (tipoCadastro == 'IMOVEIS' && idImovel) {
+        retornoImoveis = FONTE_TRIBUTOS.imoveis.busca(criterio: "id = $idImovel");
+        inscricaoImobiliaria = "";
+        percorrer(retornoImoveis) {
+          inscricaoImobiliaria = item.inscricaoImobiliariaFormatada;
+          quadra = item.quadra;
+          lote = item.lote;
+          loteamento = item.loteamento?.nome
+          enderecoImo = item.enderecoFormatado
+        }
+
+        criterioEndereco = "classificacao = 'IMOVEIS' and id = $idImovel";
+
+      } senao {
+        se (tipoCadastro == 'ECONOMICOS') {
+          criterioEndereco = "classificacao = 'ECONOMICOS' and id = $idEconomico";
+          // ALTERADO - localização do econômico, igual ao que é feito com o imóvel
+          se (idEconomico) {
+            retornoEconomico = FONTE_TRIBUTOS.economicos.busca(criterio: "id = $idEconomico", campos: "id, enderecoFormatado", primeiro: true);
+            enderecoEco = retornoEconomico?.enderecoFormatado ?: "";
+          }
+        } senao {
+          se (tipoCadastro == 'TRANSFERENCIA_IMOVEIS') {
+            imovelIDTran = []
+            inscricaoImobiliariaTotal = []
+            fonteItens = Dados.tributos.v2.transferenciasImoveis.itens;
+            filtroItens = "transferenciaImovel.id = $idTransferenciaImoveis"
+            dadosItens = fonteItens.busca(criterio: filtroItens,campos: "transferenciaImovel(processoGeral), imovel(id), transferenciaImovel(observacao)")
+            percorrer (dadosItens) { itemItens ->
+              imovelIDTran << itemItens.imovel.id
+            }
+            imovelIDTran = imovelIDTran.unique()
+            if (imovelIDTran) {
+              retornoImoveis = FONTE_TRIBUTOS.imoveis.busca(criterio: "id in (${imovelIDTran.join(',')})");
+              inscricaoImobiliaria = "";
+              percorrer(retornoImoveis) {
+                inscricaoImobiliariaTotal << item.inscricaoImobiliariaFormatada;
+              }
+              inscricaoImobiliaria = Caracteres.substituir(Caracteres.substituir(inscricaoImobiliariaTotal.unique().toString(), "[", ""), "]", "")
+            }
+          }
+        }
+      }
+
+      // ALTERADO - parcelamento: busca os referentes (imóveis / econômicos) que foram parcelados.
+      // Um imóvel só  -> endereço do imóvel, inscrição, quadra, lote, loteamento.
+      // Vários imóveis -> inscrições separadas por vírgula; endereço continua o do contribuinte.
+      // Econômico(s)   -> referente "Econômico <código> - <nome>"; com um só, usa o endereço do econômico.
+      se (tipoCadastro == 'PARCELAMENTO' && guia.parcela?.parcelamento?.id) {
+        idsImoveisParc = []
+        idsEconomicosParc = []
+        // "referentes" é lista e a fonte não deixa pedir lista em "campos"; por isso lê os
+        // imóveis/econômicos dos débitos e dívidas que compõem o parcelamento.
+        dadosParc = FONTE_TRIBUTOS.parcelamentos.composicoes.busca(criterio: "parcelamento.id = ${guia.parcela.parcelamento.id}", campos: "debito(idImovel, idEconomico), divida(idImovel, idEconomico)")
+        // a composição devolve id "0" quando não tem imóvel/econômico -> descartar
+        idValido = { id -> id != null && id.toString().trim() != '' && id.toString().trim() != '0' }
+        percorrer (dadosParc) { comp ->
+          se (idValido(comp.debito?.idImovel)) { idsImoveisParc << comp.debito.idImovel }
+          se (idValido(comp.debito?.idEconomico)) { idsEconomicosParc << comp.debito.idEconomico }
+          se (idValido(comp.divida?.idImovel)) { idsImoveisParc << comp.divida.idImovel }
+          se (idValido(comp.divida?.idEconomico)) { idsEconomicosParc << comp.divida.idEconomico }
+        }
+        // filtra de novo e testa por tamanho: uma lista vazia aqui gerava "id in ()" e a busca quebrava
+        idsImoveisParc = idsImoveisParc.findAll { idValido(it) }.collect { it.toString().trim() }.unique()
+        idsEconomicosParc = idsEconomicosParc.findAll { idValido(it) }.collect { it.toString().trim() }.unique()
+        temImoveisParc = idsImoveisParc.size() > 0
+        temEconomicosParc = idsEconomicosParc.size() > 0
+        imprimir "Parcelamento ${nroParcelamento}: imóveis ${idsImoveisParc} / econômicos ${idsEconomicosParc}"
+
+        referentesParc = []
+        se (temImoveisParc) {
+          inscricoesParc = []
+          retornoImoveis = FONTE_TRIBUTOS.imoveis.busca(criterio: "id in (${idsImoveisParc.join(',')})", campos: "id, codigo, lote, quadra, loteamento(nome), inscricaoImobiliariaFormatada, enderecoFormatado");
+          percorrer (retornoImoveis) { imo ->
+            inscricoesParc << imo.inscricaoImobiliariaFormatada
+            referentesParc << "Imóvel " + imo.codigo
+            se (idsImoveisParc.size() == 1) {
+              quadra = imo.quadra
+              lote = imo.lote
+              loteamento = imo.loteamento?.nome
+              enderecoImo = imo.enderecoFormatado
+            }
+          }
+          inscricaoImobiliaria = inscricoesParc.findAll { it }.unique().join(', ')
+          se (idsImoveisParc.size() == 1) {
+            criterioEndereco = "classificacao = 'IMOVEIS' and id = ${idsImoveisParc[0]}";
+          }
+        }
+        se (temEconomicosParc) {
+          retornoEconomicos = FONTE_TRIBUTOS.economicos.busca(criterio: "id in (${idsEconomicosParc.join(',')})", campos: "id, codigo, nome, enderecoFormatado");
+          percorrer (retornoEconomicos) { eco ->
+            referentesParc << "Econômico " + eco.codigo + " - " + eco.nome
+            se (idsEconomicosParc.size() == 1 && !temImoveisParc) {
+              enderecoEco = eco.enderecoFormatado ?: ""
+            }
+          }
+          se (idsEconomicosParc.size() == 1 && !temImoveisParc) {
+            criterioEndereco = "classificacao = 'ECONOMICOS' and id = ${idsEconomicosParc[0]}";
+          }
+        }
+        se (referentesParc) {
+          referente = referentesParc.unique().join(', ')
+        }
+      }
+
+      // ALTERADO - endereço que sai na guia, conforme o referente:
+      //   IMÓVEL    -> localização do imóvel (enderecoFormatado)
+      //   ECONÔMICO -> localização do econômico (enderecoFormatado)
+      //   demais    -> endereço do contribuinte
+      // Se o do referente vier vazio, usa o endereço de correspondência do referente e, por último, o do contribuinte.
+      montaEnderecoCorrespondencia = { criterio ->
+        endCorr = FONTE_TRIBUTOS.enderecoCorrespondencia.busca(criterio: criterio, primeiro: true);
+        se (!endCorr?.logradouro?.nome) { retornar '' } // registro sem logradouro preenchido = sem endereço
+        retornar endCorr.logradouro?.tipoLogradouroDescricao + ' ' +
+          endCorr.logradouro?.nome + ', Nº ' + endCorr.numero + ' - ' +
+          endCorr.bairro?.nome + '  - ' + endCorr.logradouro?.municipio?.nome +
+          "(" + endCorr.logradouro?.municipio?.estado?.uf + ")" + "(" + endCorr.cep + ")";
+      }
+
+      enderecoContribuinte = montaEnderecoCorrespondencia("classificacao = 'CONTRIBUINTE' and id = $idContribuinte");
+      se (!enderecoContribuinte && guia.contribuinte?.endereco?.logradouro) {
+        endC = guia.contribuinte.endereco
+        enderecoContribuinte = (endC.logradouro?.nome ?: '') + ', Nº ' + (endC.numero ?: 'S/N') + ' - ' +
+          (endC.bairro?.nome ?: '') + '  - ' + (endC.municipio?.nome ?: '') +
+          "(" + (endC.municipio?.estado?.uf ?: '') + ")" + "(" + (endC.cep ?: '') + ")";
+      }
+
+      enderecoReferente = enderecoImo ?: enderecoEco;
+      se (!enderecoReferente && !criterioEndereco.contains('CONTRIBUINTE')) {
+        enderecoReferente = montaEnderecoCorrespondencia(criterioEndereco);
+      }
+      enderecoDescritivo = enderecoReferente ?: enderecoContribuinte;
+      imprimir "Endereço da guia ${guia.numeroBaixa} (${tipoCadastro}): ${enderecoDescritivo}"
+
+      percorrer(guia.receitas) { r ->
+        receitas << [descricao: r.receita.descricao, abreviatura: r.receita.abreviatura, valor: (r.valorOriginal)];
+      }
+
+      // ALTERADO - se a guia não trouxer receitas (ex.: parcela de parcelamento), a tabela "Receita / Valor"
+      // do relatório some inteira. Nesse caso manda uma linha com o próprio parcelamento.
+      imprimir "Receitas da guia ${guia.numeroBaixa} (${tipoCadastro}): ${receitas.size()}"
+      se (!receitas && tipoCadastro == 'PARCELAMENTO') {
+        receitas << [descricao: 'Parcelamento', abreviatura: 'PARC ' + nroParcelamento + ' - ' + nroParcela + '/' + quantidadeParcelas, valor: guia.valorOriginal];
+      }
+
+      dtVencimento = Datas.dataHora(guia.dataVcto?.ano, guia.dataVcto?.mes, guia.dataVcto?.dia, 12, 00);
+      dataValidade = guia.dtValidade;
+
+      filtroTabelasAuxiliaresBol = "descricao = 'Configuração Registro Pix - BB Negocial'"
+      codigoTabelaBol = fonteTabelasAuxiliares.busca(criterio: filtroTabelasAuxiliaresBol, campos: "codigoTabelaAuxiliar", ordenacao: "id desc", primeiro: true).codigoTabelaAuxiliar
+      imprimir nroConvenio.toString()
+      dadosRegistrosBol = fonteRegistros.busca(criterios: "campo1 = '${nroConvenio}'",parametros:["codigoTabelaAuxiliar":codigoTabelaBol])
+      percorrer (dadosRegistrosBol) { itemRegistros ->
+        if (itemRegistros.campo1 == nroConvenio.toString()) {
+          convenioNro  	= itemRegistros?.campo1?:""
+          qtdDiasAposVenc = Numeros.inteiro(itemRegistros?.campo2?:'0')
+          qtdDiasProtesto = Numeros.inteiro(itemRegistros?.campo3?:'0')
+          qtdDiasNegativ 	= Numeros.inteiro(itemRegistros?.campo4?:'0')
+          orgaoNegativad	= Numeros.inteiro(itemRegistros?.campo5?:'0')
+          vlrMulta	    = itemRegistros?.campo6?:""
+          vlrJuros 	    = itemRegistros?.campo7?:""
+          VariacaoCarteir = itemRegistros?.campo8?:""
+          boletoPix		= Caracteres.maiusculo(itemRegistros?.campo9?:"")
+          numeroConfig  	= Numeros.inteiro(itemRegistros?.campo10?:'0')
+        }
+      }
+
+      if (orgaoNegativad == 0 && qtdDiasNegativ > 0) {
+        Notificacao.nova("O Órgão Negativador deve ser Preenchido quando a quantidade de dias para negativação for maior que 0. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Registro Pix - BB Negocial")
+        .para(usuario.id)
+        .enviar()
+
+        suspender 'O Órgão Negativador deve ser Preenchido quando a quantidade de dias para negativação for maior que 0. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Registro Pix - BB Negocial'
+      }
+
+      if (convenioNro == "" || VariacaoCarteir == "" || boletoPix == "" || numeroConfig == 0) {
+        Notificacao.nova("Os campos Número do Convênio, Variação da Carteira, Aceita Pix e Número da Configuração são obrigatórios. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Registro Pix - BB Negocial")
+        .para(usuario.id)
+        .enviar()
+
+        suspender 'Os campos Número do Convênio, Variação da Carteira, Aceita Pix e Número da Configuração são obrigatórios. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Registro Pix - BB Negocial'
+      }
+
+      if (boletoPix != "SIM" && boletoPix != "NAO") {
+        Notificacao.nova("Informar o campo Aceita Pix como SIM, para que tenha o QRCode e NAO para que seja sem o QRCode. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Registro Pix - BB Negocial")
+        .para(usuario.id)
+        .enviar()
+
+        suspender 'Os campos Número do Convênio, Variação da Carteira, Aceita Pix e Número da Configuração são obrigatórios. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Registro Pix - BB Negocial'
+      }
+
+      filtroTabelasAuxiliaresAPI = "descricao = 'Configuração Dados API - BB'"
+      codigoTabelaAPI = fonteTabelasAuxiliares.busca(criterio: filtroTabelasAuxiliaresAPI, campos: "codigoTabelaAuxiliar", ordenacao: "id desc", primeiro: true).codigoTabelaAuxiliar
+
+      dadosRegistrosAPI = fonteRegistros.busca(criterios: "campo9int = ${numeroConfig}",parametros:["codigoTabelaAuxiliar":codigoTabelaAPI])
+      percorrer (dadosRegistrosAPI) { itemRegistros ->
+        if (itemRegistros.campo9.toString() == numeroConfig.toString()) {
+          gwAppKey  	= itemRegistros?.campo1?:""
+          clientID 		= itemRegistros?.campo2?:""
+          client_secret = itemRegistros?.campo3?:""
+          autorization 	= itemRegistros?.campo4?:""
+          nomeEntidade	= itemRegistros?.campo5?:""
+          cnpjEntidade   = itemRegistros?.campo6?:""
+          ambienteUsad  = Caracteres.maiusculo(itemRegistros?.campo7?:"")
+          entidadeTrib  = Caracteres.maiusculo(itemRegistros?.campo8?:"")
+          numeroConfig  = Numeros.inteiro(itemRegistros?.campo9?:'0')
+        }
+      }
+
+      if (gwAppKey == "" || clientID == "" || client_secret == "" || autorization == "" || ambienteUsad == "" || numeroConfig == 0) {
+        Notificacao.nova("Os campos AppKey, Client ID, Client Secreat, Autorization, Ambiente usado e Número da Configuração são obrigatórios. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB")
+        .para(usuario.id)
+        .enviar()
+
+        suspender 'Os campos AppKey, Client ID, Client Secreat, Autorization, Ambiente usado e Número da Configuração são obrigatórios. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB'
+      }
+
+      if (Caracteres.maiusculo(ambienteUsad) == "HOMOLOGACAO") {
+        urlAuth = "https://oauth.hm.bb.com.br/oauth/token"
+        urlBoleto = "https://api.hm.bb.com.br/cobrancas/v2"
+      } else if (Caracteres.maiusculo(ambienteUsad) == "PRODUCAO") {
+        urlAuth = "https://oauth.bb.com.br/oauth/token"
+        urlBoleto = "https://api.bb.com.br/cobrancas/v2"
+      } else {
+        Notificacao.nova("O campo Ambiente deve ser igual a 'PRODUCAO' ou 'Homologacao'. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB")
+        .para(usuario.id)
+        .enviar()
+
+        suspender "O campo Ambiente deve ser igual a 'PRODUCAO' ou 'HOMOLOGACAO'. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB"
+      }
+
+      if (entidadeTrib != "SIM" && entidadeTrib != "NAO") {
+        Notificacao.nova("O campo Mesma Entidade do Tributos deve ser igual a 'SIM' ou 'NAO'. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB")
+        .para(usuario.id)
+        .enviar()
+
+        suspender "O campo Mesma Entidade do Tributos deve ser igual a 'SIM' ou 'NAO'. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB"
+      }
+
+      if (entidadeTrib == "NAO" && (nomeEntidade == "" || cnpjEntidade == "")) {
+        Notificacao.nova("É obrigatório o preenchimento do campo nome da entidade e/ou o cnpj da Entidade nas hipóteses que não for a mesma entidade do Tributos. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB")
+        .para(usuario.id)
+        .enviar()
+
+        suspender "É obrigatório o preenchimento do campo nome da entidade e/ou o cnpj da Entidade nas hipóteses que não for a mesma entidade do Tributos. Verifique a configuração em Configurando >> Tabelas >> Cadastros Gerais >> Configuração Dados API - BB"
+      }
+
+      if (entidadeTrib == "SIM") {
+        fonteEntidades = Dados.suite.licenciamento.v1.entidades;
+        filtroEntidades = "id = $contextoExecucao.idEntidade"
+        dadosEntidades = fonteEntidades.busca(criterio: filtroEntidades,campos: "nome, cnpj, cep, endereco, bairro, municipio(nome, estado(uf))")
+
+        percorrer (dadosEntidades) { itemEntidades ->
+          nomeEntidade = itemEntidades.nome
+          cnpjEntidade = itemEntidades.cnpj
+        }
+      }
+
+      linha = [
+        idTransferenciaImoveis: idTransferenciaImoveis,
+        nroConvenio: nroConvenio,
+        numeroVariacaoCarteira: VariacaoCarteir,
+        boletoNumero: "000" + guia.convenio.nroConvenio + Caracteres.repetir('0',10 - Caracteres.tamanho(guia.numeroBaixa+'')) + guia.numeroBaixa,
+        nroBaixa: guia.numeroBaixa,
+        idReceitaDiversa: idReceitaDiversa,
+        idProjeto: idProjeto,
+        nroParcela: nroParcela,
+        classificacaoGuia: enumerador.converter(guia.classificacao).valor,
+        idImovel: idImovel,
+        parcelaUnica: parcelaUnica,
+        idContribuinte: codigoContribuinte,
+        nomeContribuinte: nomeContribuinte,
+        codigoIdCont: idContribuinte,
+        ano: ano,
+        valorDocumento: guia.valorOriginal,
+        receitas: receitas,
+        valorTaxas: valorTaxas,
+        valorDevido: guia.valorOriginal + guia.valorJuroFinanciamento + guia.valorJuro + guia.valorMulta + guia.valorCorrecao,
+        valorJuro: guia.valorJuro,
+        valorMulta: guia.valorMulta,
+        valorCorrecao: guia.valorCorrecao,
+        valorTributo: guia.valorDevido,
+        valorDesconto: guia.valorDesconto,
+        valorBeneficios: guia.valorBeneficio,
+        valorJurosFinan: guia.valorJuroFinanciamento,
+        idContribuicoes: idContribuicoes,
+        idEconomico: idEconomico,
+        dataVencimento: dtVencimento,
+        dataValidade: guia.dtValidade,
+        totalAcrescimos: guia.valorCorrecao + guia.valorJuro + guia.valorMulta,
+        endereco: enderecoDescritivo,
+        enderecoContribuinte: enderecoContribuinte, // ALTERADO
+        quantidadeParcelas: quantidadeParcelas,
+        tipoCadastro: tipoCadastro,
+        descricaoServico: descricaoServico,
+        observacao: observacao,
+        descricaoCreditoTributario: descricaoCredito,
+        abreviaturaCredito: abreviaturaCredito, // ALTERADO
+        dataVencimentoOriginal: dataVencimentoOriginal,
+        nroParcelamento: nroParcelamento?:0,
+        cedente: guia.convenio.cedente,
+        aceite: 'SIM',
+        carteira: guia.convenio.carteira,
+        moeda: 'R$',
+        referente: referente,
+        // ALTERADO - vazio em vez de 0, para não imprimir "0" na guia quando não for imóvel
+        inscricaoImobiliaria: inscricaoImobiliaria?:'',
+        quadra: quadra?:'',
+        lote: lote?:'',
+        loteamento: loteamento?:'',
+        cpfCnpj: cpfCnpj,
+        tipoPessoa: guia.contribuinte.tipoPessoa,
+        logradouro: guia.contribuinte.endereco.logradouro.nome,
+        cep: guia.contribuinte.endereco.cep,
+        cidade: guia.contribuinte.endereco.municipio.nome,
+        bairro: guia.contribuinte.endereco.bairro.nome,
+        uf: guia.contribuinte.endereco.municipio.estado.uf,
+        enderecoImo: enderecoImo,
+        valorTotal: (guia.valorOriginal + guia.valorJuroFinanciamento + guia.valorJuro + guia.valorMulta + guia.valorCorrecao) - (guia.valorDesconto + guia.valorBeneficio),
+        convenioNro : convenioNro,
+        qtdDiasAposVenc : qtdDiasAposVenc,
+        qtdDiasProtesto : qtdDiasProtesto,
+        qtdDiasNegativ 	: qtdDiasNegativ,
+        orgaoNegativad	: orgaoNegativad,
+        vlrMulta	    : vlrMulta,
+        vlrJuros 	    : vlrJuros,
+        VariacaoCarteir : VariacaoCarteir,
+        boletoPix		: boletoPix,
+        numeroConfig : numeroConfig,
+        gwAppKey  	: gwAppKey,
+        clientID 		: clientID,
+        client_secret : client_secret,
+        autorization 	: autorization,
+        nomeEntidade	: nomeEntidade,
+        cnpjEntidade   : cnpjEntidade,
+        ambienteUsad  : ambienteUsad,
+        entidadeTrib  : entidadeTrib,
+        urlAuth : urlAuth,
+        urlBoleto : urlBoleto,
+        agenciaConv: guia.convenio.agenciaBancaria.nroAgencia
+      ];
+      imprimir linha
+      registraLinha << linha
+    }
+  }
+
+//====================================================================
+//AUTENTICANDO E OBTENDO BEARER TOKEN PARA ENVIO
+registraLinha.each { it->
+  if (Cache.contem('token BB ' + it.numeroConfig)) {
+    imprimir "Token recuperado do Cache..."
+    imprimir "Access Token: " + Cache.recuperar('token BB ' + it.numeroConfig, '')
+    accessToken = Cache.recuperar('token BB ' + it.numeroConfig, '')
+  } else {
+
+
+    payload = "grant_type=client_credentials&scope=cobrancas.boletos-info%20cobrancas.boletos-requisicao&client_id=" + it.clientID + "&client_secret=" + it.client_secret
+    imprimir 'Autenticando serviços...'
+
+    respostaAuth = Http.servico(it.urlAuth)
+    .cabecalho("Authorization", it.autorization)
+    .cabecalho("Content-Type", "application/json")
+    .POST(payload, "application/x-www-form-urlencoded")
+
+    if(respostaAuth){
+      imprimir 'autenticação concluída. Obtendo Token de acesso...'
+      imprimir respostaAuth.conteudo()
+    }
+
+    accessToken 	= respostaAuth.json().access_token
+    tokenType		= respostaAuth.json().token_type
+    expiresIn		= respostaAuth.json().expires_in
+
+    //if(accessToken!='' || accessToken != nulo ||  accessToken != 'null'){
+    if(accessToken !=nulo){
+      imprimir 'Token de acesso obtido com Sucesso! Expira em '+ expiresIn/60 + ' minutos.'
+      Cache.adicionar('token BB ' + it.numeroConfig, accessToken, 7.minuto)
+    }else{
+      suspender 'Erro ao obter Token de Acesso!'
+    }
+  }
+}
+
+registraLinha.each { it ->
+  carteiraRet = ""
+  QRCodeURL = ""
+  QRCodeTXID = ""
+  QRCodeTXEMV = ""
+  linhaDigitavelRet = ""
+  codigoBarrasRet = ""
+  agenciaRet = ""
+
+
+  tipoDesconto = ''
+  if(it.valorDesconto == 0.00){
+    tipoDesconto = 0
+  } else {
+    if(it.valorDesconto > 0.00){
+      tipoDesconto = 1
+    }
+  }
+
+  dataExpiracao = ''
+  if(tipoDesconto == 1){
+    dataExpiracao = Datas.formatar(it.dataVencimento, 'dd/MM/yyyy')
+  }
+
+  valorDesconto = ''
+  if(tipoDesconto == 1){
+    valorDesconto = it.valorDesconto
+  }
+
+  tipoJuros = ''
+  if(it.qtdDiasAposVenc.toString() == '0'){
+    tipoJuros = 0
+    variavelJuros = ""
+  } else {
+    tipoJuros = 2
+  }
+
+  valorJuros = ''
+  if(tipoJuros == 2){
+    valorJuros = it.vlrJuros
+  }
+
+  tipoMulta = ''
+  if(it.qtdDiasAposVenc.toString() == '0'){
+    tipoMulta = 0
+  } else {
+    tipoMulta = 2
+  }
+
+  dataMulta = ''
+  if(tipoMulta == 2){
+    dataMulta = Datas.formatar(it.dataValidade+1, 'dd/MM/yyyy')
+  }
+
+  valorMulta = ''
+  if(tipoMulta == 2){
+    valorMulta = it.vlrMulta
+  }
+
+  tipoInscricao = ''
+  if(it.tipoPessoa.valor == 'FISICA'){
+    tipoInscricao = "1"
+  } else {
+    if(it.tipoPessoa.valor == 'JURIDICA'){
+      tipoInscricao = "2"
+    }
+  }
+
+  if (it.boletoPix == "SIM") {
+    pixBoleto = "S"
+  } else {
+    pixBoleto = "N"
+  }
+
+  if (it.qtdDiasAposVenc.toString() == '0'){
+    aceiteDiasVenc = "N"
+  } else {
+    aceiteDiasVenc = "S"
+  }
+
+  json = Arquivo.novo ('json', 'json')
+
+  // O pagador registrado no banco continua com o endereço do contribuinte (é quem paga o boleto)
+  json.escreverObjeto ([
+    numeroConvenio: it.nroConvenio,
+    dataVencimento: Datas.formatar(it.dataVencimentoOriginal, 'dd/MM/yyyy'),
+    valorOriginal: it.valorDevido,
+    numeroCarteira: it.carteira,
+    numeroVariacaoCarteira: it.numeroVariacaoCarteira,
+    codigoModalidade: 1,
+    dataEmissao: Datas.formatar(Datas.hoje(), 'dd/MM/yyyy'),
+    valorAbatimento: it.valorBeneficios,
+    quantidadeDiasProtesto: it.qtdDiasProtesto,
+    quantidadeDiasNegativacao: it.qtdDiasNegativ,
+    orgaoNegativador: it.orgaoNegativad,
+    indicadorAceiteTituloVencido: aceiteDiasVenc,
+    numeroDiasLimiteRecebimento: it.qtdDiasAposVenc,
+    codigoAceite: "N",
+    codigoTipoTitulo: 2,
+    descricaoTipoTitulo: "guia de arrecadacao",
+    indicadorPermissaoRecebimentoParcial: "N",
+    numeroTituloBeneficiario: it.nroBaixa,
+    textoCampoUtilizacaoBeneficiario: "arrecadacao municipal",
+    numeroTituloCliente: it.boletoNumero,
+    mensagemBloquetoOcorrencia: Caracteres.esquerda(it.observacao?:'.',30),
+    desconto: [
+      tipo: tipoDesconto,
+      dataExpiracao: dataExpiracao, //Até quando o desconto pode ser dado
+      porcentagem: "",
+      valor: valorDesconto
+    ],
+    segundoDesconto: [			//Usar apenas nas hipóteses de mais de um tipo de desconto no mesmo boleto
+      dataExpiracao: "",
+      porcentagem: "",
+      valor: 0
+    ],
+    terceiroDesconto: [			//Usar apenas nas hipóteses de mais de um tipo de desconto no mesmo boleto
+      dataExpiracao: "",
+      porcentagem: "",
+      valor: 0
+    ],
+    jurosMora: [
+      tipo: tipoJuros,
+      porcentagem: valorJuros
+    ],
+    multa: [
+      tipo: tipoMulta,
+      data: dataMulta,
+      porcentagem: valorMulta
+    ],
+    pagador: [
+      tipoInscricao: tipoInscricao,
+      numeroInscricao: it.cpfCnpj,
+      nome: it.nomeContribuinte,
+      endereco: it.logradouro,
+      cep: it.cep,
+      cidade: it.cidade,
+      bairro: it.bairro,
+      uf: it.uf,
+      telefone: "",
+    ],
+    indicadorPix: pixBoleto
+  ])
+
+  //=====================================================================
+  //=====================================================================
+  // REGISTRANDO DADOS
+  Resultado.arquivo(json)
+
+  imprimir "*******************ENVIANDO POST JSON..."
+
+  envioResposta = Http.servico(it.urlBoleto)
+  .caminho('boletos')
+  .parametro('gw-dev-app-key', it.gwAppKey)
+  .cabecalho('Authorization', 'Bearer ' + accessToken )
+  .cabecalho("Content-Type", "application/json")
+  .POST(json, Http.JSON);
+  imprimir '=================== DADOS ENVIADOS E REGISTRADOS ==================='
+  imprimir envioResposta.conteudo()
+
+  retorno = envioResposta.json()
+
+  statusCode = envioResposta.codigo()
+  imprimir statusCode
+
+  // ########################################## VERIFICA A SEGUNDA VIA #######################################################
+  se (statusCode >= 300 && (statusCode == 400 && retorno.erros?.codigo[0] != '4874915')) {
+    se(retorno.erros){
+      Notificacao.nova("ERRO NA EMISSÃO DA GUIA T. MOTIVO -> " + retorno.erros.mensagem?:'' + ' contribuinte: ' + nomeContribuinte)
+      .para(usuario.id)
+      .enviar()
+      suspender "ERRO NA EMISSÃO DA GUIA T. MOTIVO -> " + retorno.erros.mensagem?:''  + ' contribuinte: ' + nomeContribuinte
+    }
+    se(retorno.errors){
+      Notificacao.nova("ERRO NA EMISSÃO DA GUIA. MOTIVO -> " + retorno.errors.message?:''  + ' contribuinte: ' + nomeContribuinte)
+      .para(usuario.id)
+      .enviar()
+      suspender "ERRO NA EMISSÃO DA GUIA. MOTIVO -> " + retorno.errors.message?:''  + ' contribuinte: ' + nomeContribuinte
+    }
+  }
+
+  se (statusCode >= 200 && statusCode <= 299){
+    carteiraRet = retorno.numeroCarteira
+    QRCodeURL = retorno.qrCode?.url?:''
+    QRCodeTXID = retorno.qrCode?.txId?:''
+    QRCodeTXEMV = retorno.qrCode?.emv?:''
+    linhaDigitavel = retorno.linhaDigitavel
+    codigoBarrasRet = retorno.codigoBarraNumerico
+    agenciaRet = retorno.beneficiario?.agencia?:0
+    dataEmissao = Datas.formatar(Datas.hoje(),'dd.MM.yyyy')
+  }
+  if (statusCode == 400 && retorno.erros.codigo[0] == '4874915') {
+    paramConvenio = it.nroConvenio;
+
+    paramNroBaixa = it.nroBaixa;
+    enumerador = importar "enumerador";
+    FONTE_TRIBUTOS = Dados.tributos.v2
+
+    imprimir "*******************CAPTURANDO GET JSON...***************************"
+
+    envioRespostaC = Http.servico(it.urlBoleto)
+    .caminho("boletos/"+it.boletoNumero)
+    .parametro('gw-dev-app-key', it.gwAppKey)
+    .parametro('numeroConvenio', paramConvenio)
+    .cabecalho('Authorization', 'Bearer ' + accessToken )
+    .cabecalho("Content-Type", "application/json")
+    .GET();
+    fechaResposta = Http.close()
+
+    imprimir '=================== DADOS ENVIADOS E REGISTRADOS ==================='
+
+    retornoC = envioRespostaC.json()
+    statusCodeC = envioRespostaC.codigo()
+
+
+    se(retornoC.erros){
+      Notificacao.nova("A CONSULTA DA SEGUNDA VIA NÃO PODE SER FEITA. MOTIVO: " + retornoC.erros.mensagem[0]  + ' contribuinte: ' + nomeContribuinte)
+      .para(usuario.id)
+      .enviar()
+      suspender 'A CONSULTA NÃO PODE SER FEITA.'
+    }
+    se(retornoC.errors){
+      Notificacao.nova("A CONSULTA DA SEGUNDA VIA NÃO PODE SER FEITA. MOTIVO: " + retornoC.errors.message[0]  + ' contribuinte: ' + nomeContribuinte)
+      .para(usuario.id)
+      .enviar()
+      suspender 'A CONSULTA NÃO PODE SER FEITA.'
+    }
+
+    linhaDigitavel = retornoC.codigoLinhaDigitavel
+    codigoBarrasRet = retornoC.textoCodigoBarrasTituloCobranca
+    agenciaRet = it.agenciaConv
+    dataEmissao = retornoC.dataEmissaoTituloCobranca
+
+    // BUSCA QRCODE
+
+    httpQrcode = it.urlBoleto + "/boletos/" + it.boletoNumero + '/pix'
+
+    envioRespostaQrcode = Http.servico(httpQrcode)
+    .parametro('gw-dev-app-key', it.gwAppKey)
+    .parametro('numeroConvenio', paramConvenio)
+    .cabecalho('Authorization', 'Bearer ' + accessToken )
+    .cabecalho("Content-Type", "application/json")
+    .GET();
+    fechaRespostaQrcode = Http.close()
+
+    retornoQrcode = envioRespostaQrcode.json()
+
+    statusCodeQrcode = envioRespostaQrcode.codigo()
+
+    se (statusCodeQrcode >= 200 && statusCodeQrcode <= 299) {
+      imprimir 'entrei'
+      QRCodeURL = retornoQrcode.'qrCode.url'
+      QRCodeTXID = retornoQrcode.'qrCode.txId'
+      QRCodeTXEMV = retornoQrcode.'qrCode.emv'
+    }
+
+    se(statusCodeQrcode == 403 && retornoQrcode.erros.codigo[0] != '5208499'){
+      se (statusCodeQrcode >= 300){
+        se(retornoQrcode.erros){
+          Notificacao.nova("A CONSULTA NÃO PODE SER FEITA. MOTIVO: " + retornoQrcode.erros.mensagem[0]  + ' contribuinte: ' + nomeContribuinte)
+          .para(usuario.id)
+          .enviar()
+          suspender 'A CONSULTA NÃO PODE SER FEITA.'
+        }
+        se(retornoQrcode.errors){
+          Notificacao.nova("A CONSULTA NÃO PODE SER FEITA. MOTIVO: " + retornoQrcode.errors.message[0]  + ' contribuinte: ' + nomeContribuinte)
+          .para(usuario.id)
+          .enviar()
+          suspender 'A CONSULTA NÃO PODE SER FEITA.'
+        }
+      }
+    }
+  }
+
+  esquemaGuias = [
+    idTransferenciaImoveis: it.idTransferenciaImoveis,
+    nroConvenio: it.nroConvenio,
+    boletoNumero: it.boletoNumero,
+    nroBaixa: it.nroBaixa,
+    idReceitaDiversa: it.idReceitaDiversa,
+    nroParcela: it.nroParcela,
+    classificacaoGuia: it.classificacaoGuia,
+    idImovel: it.idImovel,
+    parcelaUnica: it.parcelaUnica,
+    idContribuinte: it.idContribuinte,
+    nomeContribuinte: it.nomeContribuinte,
+    ano: it.ano,
+    valorDocumento: it.valorDocumento,
+    valorTotal: it.valorTotal,
+    receitas: it.receitas,
+    valorTaxas: it.valorTaxas,
+    valorDevido: it.valorDevido,
+    valorJuro: it.valorJuro,
+    valorMulta: it.valorMulta,
+    valorCorrecao: it.valorCorrecao,
+    valorTributo: it.valorTributo,
+    valorDesconto: it.valorDesconto,
+    valorBeneficios: it.valorBeneficios,
+    valorJurosFinan: it.valorJurosFinan,
+    idContribuicoes: it.idContribuicoes,
+    idEconomico: it.idEconomico,
+    dataVencimento: Datas.formatar(it.dataVencimento, 'dd/MM/yyyy'),
+    totalAcrescimos: it.totalAcrescimos,
+    endereco: it.endereco,
+    enderecoContribuinte: it.enderecoContribuinte, // ALTERADO
+    quantidadeParcelas: it.quantidadeParcelas,
+    tipoCadastro: it.tipoCadastro,
+    descricaoServico: it.descricaoServico,
+    observacao: it.observacao,
+    descricaoCreditoTributario: it.descricaoCreditoTributario,
+    abreviaturaCredito: it.abreviaturaCredito, // ALTERADO
+    dataVencimentoOriginal: Datas.formatar(it.dataVencimentoOriginal, 'dd/MM/yyyy'),
+    nroParcelamento: it.nroParcelamento,
+    cedente: it.cedente,
+    carteira: it.carteira,
+    referente: it.referente,
+    inscricaoImobiliaria: it.inscricaoImobiliaria,
+    quadra: it.quadra,
+    lote: it.lote,
+    loteamento: it.loteamento,
+    enderecoImo: it.enderecoImo,
+    cpfCnpj: ocultarCPF.retornoSimples(it.cpfCnpj),
+    qrCodeUrl: QRCodeURL?:'',
+    qrCodeTxId: QRCodeTXID?:'',
+    qrCodeEmv: QRCodeTXEMV?:'',
+    linhaDigitavel: linhaDigitavel,
+    codigoBarraNumerico: codigoBarrasRet,
+    beneficiarioAgencia: agenciaRet,
+    dataEmissaoTituloCobranca: dataEmissao,
+    nomeEntidade: it.nomeEntidade,
+    cnpjEntidade: it.cnpjEntidade,
+    qtdDiasAposVenc: it.qtdDiasAposVenc
+  ]
+  fonte.inserirLinha(esquemaGuias)
+  imprimir 'ver fonte: ' + esquemaGuias
+}
+retornar fonte

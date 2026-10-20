@@ -11,3 +11,20 @@ backend/nul
 
 # extratos de base para teste da Checagem (contêm CPF/CNPJ)
 ArquivosTemporarios/
+
+# biblioteca/ — corpus de clientes fica FORA do git (455 MB, material de prefeitura).
+# Entram no git só o conhecimento e as ferramentas: CONTEXTO, README, _BIBLIOTECA,
+# _CONHECIMENTO e FontesDeDados (scripts, mapas e catalogo_v2 que o Gerador usa).
+# Backup do corpus: ver biblioteca/LEIAME-KRAKION.md
+biblioteca/Formulas/
+biblioteca/Scripts/
+biblioteca/Relatorios/
+biblioteca/Municipios/
+biblioteca/_RASCUNHOS-TESTES/
+biblioteca/*.pdf
+biblioteca/*.jrxml
+biblioteca/FontesDeDados/raw/
+biblioteca/FontesDeDados/_obsoleto/
+biblioteca/FontesDeDados/swagger/*.json
+biblioteca/FontesDeDados/fontes_catalog_completo.json
+__pycache__/

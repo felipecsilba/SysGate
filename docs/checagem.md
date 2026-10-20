@@ -50,7 +50,7 @@ script de exportação  ──►  .jsonl (ex.: 29 MB, 16 mil débitos)
 
 ### Formato de entrada (o padrão)
 
-**Script de exportação:** `docs/scripts-bfc/exporta-debitos-por-credito.groovy` (cópia versionada; configure `ID_CREDITO_TRIBUTARIO` e rode no Studio). Gera um zip com CSV + JSONL.
+**Script de exportação:** `biblioteca/_BIBLIOTECA/Templates/Exporta_Debitos_Completo_por_Credito_BASE.txt` (versionado; configure `ID_CREDITO_TRIBUTARIO` e rode no Studio). Gera um zip com CSV + JSONL.
 
 O formato padrão é **JSONL**: um registro por linha, UTF-8, exatamente como a fonte devolveu (sem achatar). O script de exportação gera um zip com um CSV e um JSONL — **o CSV é só para consulta humana; o Krakion lê o JSONL**.
 
@@ -124,7 +124,7 @@ model RegraChecagem {
 
 ### Como escrever uma regra
 
-1. **Confira os nomes na fonte.** Cada fonte tem seus nomes: `debitos` usa `dtVencimento` e `referente.tipo`/`tipoCadastro`; `dividas` usa `tipoReferente`/`creditoTributario.tipoCadastro`. Regra copiada de outra fonte não se aplica a nada (falha silenciosa: "0 alcançados") ou acusa 100%. Consulte com `python fonte.py ver <fonte>` (catálogo em `Desktop\Scripts Formulas e Relatorios\FontesDeDados\`) ou pelo quadrado do campo na própria tela.
+1. **Confira os nomes na fonte.** Cada fonte tem seus nomes: `debitos` usa `dtVencimento` e `referente.tipo`/`tipoCadastro`; `dividas` usa `tipoReferente`/`creditoTributario.tipoCadastro`. Regra copiada de outra fonte não se aplica a nada (falha silenciosa: "0 alcançados") ou acusa 100%. Consulte com `python fonte.py ver <fonte>` (catálogo em `biblioteca/FontesDeDados/`) ou pelo quadrado do campo na própria tela.
 2. **Calibre com um gabarito.** Rode contra um arquivo sabidamente correto (base de teste feita pela tela): regra que acusa o gabarito está errada. Depois, contra um caso que funciona (zero achados) e um que quebra (exatamente os achados certos).
 3. **Texto genérico.** `porque`, `naoSabemos` e `comoCorrigir` são lidos em qualquer base — explicam o motivo, nunca citam a base, o contribuinte ou a contagem de onde a regra nasceu. A origem vai em comentário no seed.
 4. **Nunca invente valor** em `esperado` nem em `comoCorrigir`. Mostre a forma; se não se sabe o caminho da correção, deixe `comoCorrigir` vazio (a seção some do laudo).

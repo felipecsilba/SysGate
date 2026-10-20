@@ -1,0 +1,149 @@
+// Título            : Atualiza Valor Venal - BASE (template validado)
+// Uso                : Copiar este arquivo para o município novo. Ajustar:
+//                        - os nomes dos Campos Adicionais (BCI) na seção TERRITORIAL/PREDIAL
+//                        - os números das Tabelas de Cálculo (buscarTabela(codigo, ...))
+//                        - a data de referência do indexador (buscarValorIndexador)
+//                        - a fórmula dos fatores corretivos e da alíquota
+//                      Estrutura validada e testada em produção (funcionando 100%).
+
+// =========================================================
+// 1. PARÂMETRO DE ENTRADA
+// =========================================================
+codigoDoImovel         = parametros.codigo.valor
+ano                    = Datas.hoje().ano
+atualizarValoresVenais = parametros.atualizarValoresVenais?.selecionado?.valor ?: 'Nao'
+
+// =========================================================
+// 2. FONTES
+// =========================================================
+fonteImoveis          = Dados.tributos.v2.imoveis
+fonteCamposAdicionais = Dados.tributos.v2.imovel.camposAdicionais
+fonteTabelasCalculos  = Dados.tributos.v2.tabelascalculos.imoveis
+fonteIndexadores      = Dados.tributos.v2.indexadores.movimentacoes
+fonteCampoAdicional   = Dados.tributos.v2.imovel.campoAdicional
+
+// =========================================================
+// 3. FUNÇÕES UTILITÁRIAS (reutilizar em qualquer município, sem alterar)
+// =========================================================
+
+// Busca um valor de Tabela de Cálculo (as tabelas numeradas usadas na fórmula de IPTU:
+// frente, situação, topografia, pedologia, categoria, padrão, conservação, etc.)
+def buscarTabela(codigoTabela, ano, idImovel) {
+  def dado = fonteTabelasCalculos.busca(
+    parametros: [ano: ano, codigoTabela: codigoTabela, idImovel: idImovel],
+    primeiro: true
+  )
+  return dado?.valor ?: 0
+}
+
+// Busca o valor de um indexador pela sigla, vigente numa data específica
+// (pega a última movimentação com dtMovimentacao <= dataReferencia)
+def buscarValorIndexador(sigla, dataReferencia) {
+  def dado = fonteIndexadores.busca(
+    criterio: "indexador.sigla = '${sigla}' and dtMovimentacao <= '${dataReferencia}'",
+    ordem: "dtMovimentacao desc",
+    primeiro: true
+  )
+  return dado?.vlMovimentacao ?: 0
+}
+
+// Lê um Campo Adicional do imóvel diretamente na fonte. Retorna valorPadrao se não existir.
+def buscarCampoAdicional(idImovel, nomeCampo, ano, valorPadrao = 0) {
+  def dado = fonteCamposAdicionais.busca(
+    criterio: "campoAdicional.titulo = '${nomeCampo}'",
+    parametros: ["idImovel": idImovel, "ano": ano],
+    primeiro: true
+  )
+  return dado?.vlCampo ?: valorPadrao
+}
+
+// Grava (ou sobrescreve) um Campo Adicional do imóvel
+def preencherCampo(idImovel, ano, nomeCampo, valor) {
+  imprimir "Gravando -> idImovel:${idImovel} ano:${ano} campo:'${nomeCampo}' valor:${valor}"
+  fonteCampoAdicional.preenche(conteudo: [
+    idImovel : idImovel,
+    ano      : ano,
+    nomeCampo: nomeCampo,
+    valor    : valor
+  ])
+}
+
+// =========================================================
+// 4. BUSCA DO IMÓVEL
+// =========================================================
+imovel = fonteImoveis.busca(
+  criterio: "codigo = ${codigoDoImovel} and situacao != 'DESATIVADO'",
+  primeiro: true
+)
+
+imprimir "Codigo digitado: " + codigoDoImovel + " -> id do imovel: " + imovel?.id
+
+// =========================================================
+// 5. INDEXADOR (ajustar sigla e data de referência do município)
+// =========================================================
+valorUfm = buscarValorIndexador('UFM', '2018-12-31')
+
+// =========================================================
+// 6. TERRITORIAL
+//    >>> AJUSTAR: nomes dos Campos Adicionais e números das Tabelas de Cálculo
+//        conforme a fórmula de IPTU vigente deste município.
+// =========================================================
+numeroAreaTerreno  = buscarCampoAdicional(imovel.id, 'Numero Area Terreno', ano)
+valorMetro2Terreno = buscarCampoAdicional(imovel.id, 'Valor Metro2 Terreno', ano) * valorUfm
+
+// Fator Correção do Terreno (FCT)
+situacao   = buscarTabela(28, ano, imovel.id)
+topografia = buscarTabela(29, ano, imovel.id)
+pedologia  = buscarTabela(30, ano, imovel.id)
+
+fatorCorretivoTerritorial = situacao * topografia * pedologia
+
+valorVenalTerritorial = (numeroAreaTerreno * valorMetro2Terreno) * fatorCorretivoTerritorial
+
+// =========================================================
+// 7. PREDIAL
+//    >>> AJUSTAR: nomes dos Campos Adicionais e números das Tabelas de Cálculo
+//        conforme a fórmula de IPTU vigente deste município.
+// =========================================================
+numeroAreaConstrucao = buscarCampoAdicional(imovel.id, 'Numero Area Construcao', ano)
+valorM2PredialEmUFM  = buscarTabela(36, ano, imovel.id) * valorUfm
+
+// Fator Correção Predial (FCP)
+estrutura    = buscarTabela(31, ano, imovel.id)
+cobertura    = buscarTabela(32, ano, imovel.id)
+parede       = buscarTabela(33, ano, imovel.id)
+revestimento = buscarTabela(34, ano, imovel.id)
+conservacao  = buscarTabela(35, ano, imovel.id)
+
+fatorCorretivoPredial = estrutura * cobertura * parede * revestimento * conservacao
+
+valorVenalPredial = (numeroAreaConstrucao * valorM2PredialEmUFM) * fatorCorretivoPredial
+
+// =========================================================
+// 8. VALOR DO IMÓVEL
+// =========================================================
+valorVenalDoImovel = valorVenalTerritorial + valorVenalPredial
+
+imprimir "Valor Venal Territorial: " + valorVenalTerritorial
+imprimir "Valor Venal Predial: " + valorVenalPredial
+imprimir "Valor Venal do Imovel: " + valorVenalDoImovel
+
+// =========================================================
+// 9. ALÍQUOTA (regra própria de cada município — ajustar)
+// =========================================================
+if (valorVenalPredial > 0) {
+  aliquota = 0.5
+} else {
+  aliquota = 1.0
+}
+
+// =========================================================
+// 10. GRAVAÇÃO DOS CAMPOS ADICIONAIS
+//     Só grava se o parâmetro atualizarValoresVenais = 'Sim'.
+//     Ajustar os nomes dos Campos Adicionais de destino conforme o BCI do município.
+// =========================================================
+se (atualizarValoresVenais == 'Sim') {
+  preencherCampo(imovel.id, ano, 'Valor Venal Territorial', valorVenalTerritorial)
+  preencherCampo(imovel.id, ano, 'Valor Venal Predial', valorVenalPredial)
+  preencherCampo(imovel.id, ano, 'Valor Venal do Imovel', valorVenalDoImovel)
+}

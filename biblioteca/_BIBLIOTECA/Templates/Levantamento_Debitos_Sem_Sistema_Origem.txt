@@ -1,0 +1,202 @@
+// ---------------------------------------------------------------------------
+// Levantamento: débitos com situação DIFERENTE de "Paga" e de "Cancelada"
+// e qual o SISTEMA DE ORIGEM de cada um (quantos têm / quantos não têm).
+//
+// Motivo: débito migrado sem 'sistemaOrigem' preenchido não permite
+// cancelamento pela rotina do sistema. Este script mapeia o universo afetado.
+//
+// Saída:
+//   - CSV com: id do débito, id do contribuinte, sistema de origem (chave e
+//     descrição), situação, ano, nº parcela, cadastro referente (tipo e código)
+//     e crédito.
+//   - Resumo impresso no console: total, quantos COM origem, quantos SEM,
+//     quebra por sistema de origem e por situação.
+//
+// Fonte usada:
+//   Dados.tributos.v2.debitos  (GET /debitos)
+//     situacao      -> enum SituacaoParcela (filtrável)
+//     sistemaOrigem -> enum Sistemas        (filtrável)
+// ---------------------------------------------------------------------------
+
+// ============================ CONFIGURAÇÃO =================================
+
+// Situações a considerar.
+// Vazio []  -> TUDO que NÃO estiver em SITUACOES_EXCLUIDAS (o levantamento pedido).
+// Ou liste explicitamente, ex.: ["CANCELADA", "INSCRITA", "PARCELADA"]
+//
+// Valores possíveis (SituacaoParcela):
+//   ABERTO ............... Em aberto
+//   PAGA ................. Paga
+//   CANCELADA ............ Cancelada
+//   SUSPENSA ............. Suspensa
+//   INSCRITA ............. Inscrita em dívida
+//   INSCRITA_ENGLOBADA ... Inscrita em dívida (Englobada)
+//   ISENTA ............... Isenta
+//   ENGLOBADA ............ Englobada
+//   PAGA_ENGLOBADA ....... Paga (Englobada)
+//   SIMULADA ............. Simulação
+//   PARCELADA ............ Parcelada
+//   ELIMINADA ............ Eliminada
+//   PAGA_PARCELAMENTO .... Quitada no parcelamento
+//   PRESCRITA ............ Prescrita
+//   REMIDA ............... Remida
+//   ABAIXO_LIMITE ........ Abaixo do limite
+SITUACOES = []
+
+// Situações descartadas quando SITUACOES está vazio.
+// Débito já pago ou já cancelado não é alvo do levantamento; todo o resto
+// entra, inclusive os em aberto.
+// Se quiser tirar também as pagas em englobado/parcelamento, acrescente
+// "PAGA_ENGLOBADA" e "PAGA_PARCELAMENTO" aqui.
+SITUACOES_EXCLUIDAS = ["PAGA", "CANCELADA"]
+
+// Recorte por crédito tributário (id). null = todos os créditos.
+ID_CREDITO_TRIBUTARIO = null
+
+// Recorte por ano do débito (limita volume). null = sem limite.
+ANO_MINIMO = null
+ANO_MAXIMO = null
+
+// true  -> CSV traz SÓ os débitos SEM sistema de origem (os problemáticos)
+// false -> CSV traz todos, com a coluna preenchida ou vazia
+// O resumo impresso é sempre sobre o total, independente desta opção.
+SOMENTE_SEM_ORIGEM = false
+
+NOME_ARQUIVO = "debitos_sem_sistema_origem.csv"
+
+// ===========================================================================
+
+limpar = { valor ->
+  return valor == null ? "" : valor.toString().replace(";", " ").replace("\n", " ").trim()
+}
+
+// Enums desta fonte podem vir como String pura ("E_NOTA") ou como objeto
+// ({valor, descricao}), dependendo da versão da API. Estes dois helpers
+// aceitam as duas formas.
+chaveEnum = { valor ->
+  if (valor == null) return ""
+  if (valor instanceof String) return limpar(valor)
+  return limpar(valor.valor)
+}
+
+descEnum = { valor ->
+  if (valor == null) return ""
+  if (valor instanceof String) return limpar(valor)
+  return limpar(valor.descricao)
+}
+
+// --- 1) Monta o critério ---------------------------------------------------
+
+if (SITUACOES != null && SITUACOES.size() > 0) {
+  criterio = "situacao in ('${SITUACOES.join("','")}')"
+} else {
+  criterio = "situacao not in ('${SITUACOES_EXCLUIDAS.join("','")}')"
+}
+
+if (ID_CREDITO_TRIBUTARIO != null) {
+  criterio += " and idCredito = ${ID_CREDITO_TRIBUTARIO}"
+}
+
+if (ANO_MINIMO != null) {
+  criterio += " and ano >= ${ANO_MINIMO}"
+}
+if (ANO_MAXIMO != null) {
+  criterio += " and ano <= ${ANO_MAXIMO}"
+}
+
+imprimir "Critério: " + criterio
+
+// --- 2) Percorre os débitos, conta e escreve o CSV -------------------------
+
+arquivo = Arquivo.novo(NOME_ARQUIVO, 'csv', [delimitador: ';', entreAspas: 'N', encoding: 'iso-8859-1'])
+
+arquivo.escrever(
+  "id_debito;id_contribuinte;sistema_origem;sistema_origem_descricao;" +
+  "tem_origem;situacao;situacao_descricao;ano;nro_parcela;tipo_cadastro;codigo_cadastro;id_credito;credito"
+)
+arquivo.novaLinha()
+
+total       = 0
+comOrigem   = 0
+semOrigem   = 0
+porSistema  = [:]   // chave do sistema de origem -> quantidade
+porSituacao = [:]   // chave da situação          -> [total, sem]
+
+Dados.tributos.v2.debitos.busca(
+  criterio: criterio,
+  ordenacao: "id asc",
+  campos: "id, idContribuinte, sistemaOrigem, idCredito, situacao, ano, nroParcela, referente(tipo, tipoDescricao, codigo), abreviaturaCredito, descricaoCredito"
+).each { debito ->
+
+  total = total + 1
+
+  origemChave = chaveEnum(debito.sistemaOrigem)
+  origemDesc  = descEnum(debito.sistemaOrigem)
+  temOrigem   = origemChave != ""
+
+  situacaoChave = chaveEnum(debito.situacao)
+  situacaoDesc  = descEnum(debito.situacao)
+
+  if (temOrigem) {
+    comOrigem = comOrigem + 1
+  } else {
+    semOrigem = semOrigem + 1
+  }
+
+  // quebra por sistema de origem (SEM ORIGEM entra como grupo próprio)
+  chaveSis = temOrigem ? origemChave : "(SEM ORIGEM)"
+  porSistema[chaveSis] = (porSistema[chaveSis] ?: 0) + 1
+
+  // quebra por situação: total e quantos sem origem
+  acumulado = porSituacao[situacaoChave] ?: [tot: 0, sem: 0]
+  acumulado.tot = acumulado.tot + 1
+  if (!temOrigem) {
+    acumulado.sem = acumulado.sem + 1
+  }
+  porSituacao[situacaoChave] = acumulado
+
+  // --- linha do CSV ---
+  if (!SOMENTE_SEM_ORIGEM || !temOrigem) {
+
+    idContrib = debito.idContribuinte
+
+    arquivo.escrever(
+      limpar(debito.id) + ';' +
+      limpar(idContrib) + ';' +
+      origemChave + ';' +
+      origemDesc + ';' +
+      (temOrigem ? "SIM" : "NAO") + ';' +
+      situacaoChave + ';' +
+      situacaoDesc + ';' +
+      limpar(debito.ano) + ';' +
+      limpar(debito.nroParcela) + ';' +
+      (debito.referente == null ? "" : descEnum(debito.referente.tipoDescricao ?: debito.referente.tipo)) + ';' +
+      limpar(debito.referente == null ? "" : debito.referente.codigo) + ';' +
+      limpar(debito.idCredito) + ';' +
+      limpar(debito.abreviaturaCredito ?: debito.descricaoCredito)
+    )
+    arquivo.novaLinha()
+  }
+}
+
+// --- 3) Resumo no console -------------------------------------------------
+
+imprimir "==================================================="
+imprimir "RESUMO - debitos pelo criterio de situacao acima"
+imprimir "==================================================="
+imprimir "Total analisado ......: " + total
+imprimir "COM sistema origem ...: " + comOrigem
+imprimir "SEM sistema origem ...: " + semOrigem
+imprimir ""
+imprimir "--- Por sistema de origem ---"
+porSistema.each { chave, quantidade ->
+  imprimir "  " + chave + " : " + quantidade
+}
+imprimir ""
+imprimir "--- Por situacao (total / sem origem) ---"
+porSituacao.each { chave, dados ->
+  imprimir "  " + chave + " : " + dados.tot + " / " + dados.sem
+}
+imprimir "==================================================="
+
+Resultado.arquivo(arquivo)

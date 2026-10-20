@@ -1,0 +1,1781 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="guia-padrao" pageWidth="595" pageHeight="842" columnWidth="551" leftMargin="22" rightMargin="22" topMargin="22" bottomMargin="10" uuid="41b844e4-13e9-4b26-a3ac-74cb6eb80920">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<subDataset name="Receitas" uuid="2d00d76f-5039-4339-a1f8-ba8491b06ba6">
+		<queryString>
+			<![CDATA[]]>
+		</queryString>
+		<field name="abreviatura" class="java.lang.String"/>
+		<field name="valor" class="java.math.BigDecimal"/>
+	</subDataset>
+	<parameter name="protocolo" class="java.lang.String"/>
+	<parameter name="SUB_REPORT_JASPERS" class="java.util.Map"/>
+	<parameter name="SUB_REPORT_DATA_SOURCES" class="java.util.Map"/>
+	<parameter name="RELATORIO_TITULO" class="java.lang.String"/>
+	<parameter name="RELATORIO_PARAMETROS" class="java.lang.String"/>
+	<parameter name="RELATORIO_PROTOCOLO_EXECUCAO" class="java.lang.String"/>
+	<parameter name="RELATORIO_FORMATO_EXPORTACAO" class="java.lang.String"/>
+	<parameter name="RELATORIO_VERSAO_NUM" class="java.lang.String"/>
+	<parameter name="RELATORIO_VERSAO_DATA" class="java.lang.String"/>
+	<parameter name="ENTIDADE_NOME" class="java.lang.String"/>
+	<parameter name="ENTIDADE_BRASAO" class="java.awt.Image"/>
+	<parameter name="BTH_ENTIDADE" class="java.util.Map"/>
+	<parameter name="BTH_ENTIDADE_ESTADO" class="java.lang.String"/>
+	<parameter name="USUARIO_ID" class="java.lang.String"/>
+	<parameter name="USUARIO_NOME" class="java.lang.String"/>
+	<parameter name="USUARIO_EMAIL" class="java.lang.String"/>
+	<parameter name="SISTEMA_NOME" class="java.lang.String"/>
+	<parameter name="DESENVOLVEDOR_NOME" class="java.lang.String"/>
+	<queryString language="JSON">
+		<![CDATA[]]>
+	</queryString>
+	<field name="idTransferenciaImoveis" class="java.lang.String"/>
+	<field name="nroConvenio" class="java.lang.String"/>
+	<field name="boletoNumero" class="java.lang.String"/>
+	<field name="nroBaixa" class="java.lang.String"/>
+	<field name="idReceitaDiversa" class="java.lang.String"/>
+	<field name="nroParcela" class="java.lang.Long"/>
+	<field name="classificacaoGuia" class="java.lang.String"/>
+	<field name="idImovel" class="java.lang.String"/>
+	<field name="parcelaUnica" class="java.lang.String"/>
+	<field name="nomeContribuinte" class="java.lang.String"/>
+	<field name="ano" class="java.lang.String"/>
+	<field name="valorDocumento" class="java.math.BigDecimal"/>
+	<field name="valorTaxas" class="java.math.BigDecimal"/>
+	<field name="valorDevido" class="java.math.BigDecimal"/>
+	<field name="valorJuro" class="java.math.BigDecimal"/>
+	<field name="valorMulta" class="java.math.BigDecimal"/>
+	<field name="valorCorrecao" class="java.math.BigDecimal"/>
+	<field name="valorTributo" class="java.math.BigDecimal"/>
+	<field name="valorDesconto" class="java.math.BigDecimal"/>
+	<field name="valorBeneficios" class="java.math.BigDecimal"/>
+	<field name="valorJurosFinan" class="java.math.BigDecimal"/>
+	<field name="idContribuicoes" class="java.lang.String"/>
+	<field name="idEconomico" class="java.lang.String"/>
+	<field name="dataVencimento" class="java.lang.String"/>
+	<field name="totalAcrescimos" class="java.math.BigDecimal"/>
+	<field name="endereco" class="java.lang.String"/>
+	<field name="quantidadeParcelas" class="java.lang.Long"/>
+	<field name="tipoCadastro" class="java.lang.String"/>
+	<field name="descricaoServico" class="java.lang.String"/>
+	<field name="observacao" class="java.lang.String"/>
+	<field name="descricaoCreditoTributario" class="java.lang.String"/>
+	<field name="dataVencimentoOriginal" class="java.lang.String"/>
+	<field name="nroParcelamento" class="java.lang.String"/>
+	<field name="cedente" class="java.lang.String"/>
+	<field name="carteira" class="java.lang.String"/>
+	<field name="referente" class="java.lang.String"/>
+	<field name="inscricaoImobiliaria" class="java.lang.String"/>
+	<field name="lote" class="java.lang.String"/>
+	<field name="quadra" class="java.lang.String"/>
+	<field name="cpfCnpj" class="java.lang.String"/>
+	<field name="qrCodeUrl" class="java.lang.String"/>
+	<field name="qrCodeTxId" class="java.lang.String"/>
+	<field name="qrCodeEmv" class="java.lang.String"/>
+	<field name="linhaDigitavel" class="java.lang.String"/>
+	<field name="codigoBarraNumerico" class="java.lang.String"/>
+	<field name="beneficiarioAgencia" class="java.lang.String"/>
+	<field name="receitas" class="java.util.List"/>
+	<field name="codigoContribuinte" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="valorTotal" class="java.math.BigDecimal"/>
+	<field name="idContribuinte" class="java.lang.String"/>
+	<field name="nomeEntidade" class="java.lang.String"/>
+	<field name="cnpjEntidade" class="java.lang.String"/>
+	<field name="qtdDiasAposVenc" class="java.lang.String"/>
+	<sortField name="nroParcela"/>
+	<group name="Group1">
+		<groupExpression><![CDATA[$F{nroBaixa}]]></groupExpression>
+		<groupHeader>
+			<band height="522" splitType="Prevent">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<image scaleImage="FillFrame" onErrorType="Blank">
+					<reportElement x="109" y="0" width="75" height="24" uuid="388288d3-b22b-45ec-951c-fa5440b89aa9"/>
+					<imageExpression><![CDATA["https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Banco_do_Brasil_logo.svg/248px-Banco_do_Brasil_logo.svg.png"]]></imageExpression>
+				</image>
+				<image scaleImage="FillFrame" onErrorType="Blank">
+					<reportElement x="1" y="0" width="102" height="24" uuid="410a1e77-e9ae-4b45-8066-8f92eee5d323"/>
+					<imageExpression><![CDATA["https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Banco_do_Brasil_logo.svg/248px-Banco_do_Brasil_logo.svg.png"]]></imageExpression>
+				</image>
+				<rectangle>
+					<reportElement mode="Transparent" x="1" y="24" width="105" height="176" uuid="8d5df445-d3a0-483b-b371-0f96504ec613">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</rectangle>
+				<rectangle>
+					<reportElement mode="Transparent" x="110" y="24" width="433" height="176" uuid="aba8903c-e075-4a05-a99b-7bfb730b7ada">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</rectangle>
+				<line>
+					<reportElement mode="Transparent" x="110" y="44" width="433" height="1" uuid="1d90b192-11e3-433b-a28c-c6cee8419561"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="110" y="58" width="433" height="2" uuid="88033ed5-8e56-48b9-b7bb-45f02cbf014d"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="110" y="76" width="433" height="1" uuid="62c9210f-3079-4b3e-8738-022dbe343292"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="110" y="94" width="433" height="1" uuid="22590f3c-a8bd-4157-a307-d977378c78bc"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="172" y="58" width="1" height="36" uuid="27ca723d-fd69-4645-b7ab-717e128d7352"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="243" y="58" width="1" height="36" uuid="686214ff-08b5-40db-839d-a53455153cbc"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="316" y="59" width="1" height="35" uuid="62303efa-ad5a-4fb9-8cc7-6657a31935f1"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="355" y="59" width="1" height="20" uuid="58bf2ffe-1fd2-49b4-b5c5-dc0215867f97"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="206" y="76" width="1" height="18" uuid="1604c8a9-b4e3-43e0-a5f6-9fa08451060f"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="292" y="95" width="1" height="84" uuid="f5de99a7-c884-4fa9-b043-53939e0a428e">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="439" y="28" width="1" height="151" uuid="89116217-4db1-4d5a-a30f-4fb2878c2989">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="320" y="60" width="25" height="10" uuid="3ac1f68d-5236-4b64-8503-0c69bfee2436"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[ACEITE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="443" y="45" width="100" height="10" uuid="3238f4f2-5119-40ac-a4de-b6762b3e2cf8"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[AGÊNCIA / CÓDIGO CEDENTE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="319" y="78" width="34" height="10" uuid="1beb4acf-c551-4544-8aa0-9248f9bb9e4d"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[QUANTIDADE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="173" y="77" width="30" height="10" uuid="ced9f6a6-07ae-4ea6-a223-77f03436e0da"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CARTEIRA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="112" y="45" width="30" height="10" uuid="66132c39-a3e2-4cf6-bc1b-88ae5f8b426f"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CEDENTE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="113" y="59" width="60" height="10" uuid="251b00f1-35e0-48ce-91e6-65ab64f8e2fb"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[DATA DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="357" y="60" width="75" height="10" uuid="afc9b327-32e5-4520-96d0-b97fd2267ef2"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[DATA DO PROCESSAMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="245" y="60" width="69" height="10" uuid="f5b4c82f-14ab-4e5c-a828-08d1736085c1"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[ESPÉCIE DE DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="114" y="26" width="70" height="10" uuid="ae376e17-d419-485b-aa59-bc04a9661997"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[LOCAL DE PAGAMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="209" y="77" width="25" height="10" uuid="15e2f6f3-e2c6-4e54-b302-44f6cc1ee5a4"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[MOEDA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="443" y="60" width="60" height="10" uuid="8c5152cb-0ae3-4cde-a04e-5b1d2b53ba93"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[NOSSO NÚMERO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="175" y="59" width="60" height="10" uuid="66e4dec7-3478-4969-b4cb-a36203591e2b"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Nº DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="115" y="77" width="35" height="10" uuid="927b856c-a903-45fd-9b2f-1f341968b945"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PARCELA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="112" y="181" width="34" height="8" uuid="701db046-aa3a-4192-85bf-f433011cdc95"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PAGADOR:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="444" y="78" width="99" height="10" uuid="42404576-f140-4750-b9f5-47275223a41d"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[=VALOR DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="443" y="29" width="50" height="10" uuid="27a07813-335b-4841-ba22-cc6c1a74fd88"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[VENCIMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="442" y="116" width="99" height="6" uuid="a8e12cdd-d2e4-4166-9601-f7390c5c4d4e">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[=VALOR DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="444" y="137" width="99" height="10" uuid="fffbb284-9fb6-40bc-96fb-48d983533b4d"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[(+)MORA/MULTA/JUROS]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="444" y="159" width="99" height="10" uuid="77cd9792-b431-4861-bb3a-c7d402d7622e"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[(+)OUTROS ACRÉSCIMOS]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="444" y="96" width="99" height="10" uuid="52ef1618-a017-43b0-8345-3805e6b506e2"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[(-) DESCONTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="439" y="33" width="104" height="13" uuid="6467a10d-6d14-4e14-bda8-dc7cab44a723"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dataVencimento}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement mode="Transparent" x="245" y="77" width="65" height="10" uuid="b8df7740-c747-42ac-bf9f-584be02fdae8"/>
+					<textElement markup="none">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Referente"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="113" y="64" width="60" height="12" uuid="1b623760-eae4-482c-aee0-a606d635cd76"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[TODAY( )]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="118" y="82" width="42" height="12" uuid="26ff2750-31c6-4257-a8fe-f934e6f4a424"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{parcelaUnica}, "SIM" ) ? $F{nroParcela}.toString() + " / Unica" : $F{nroParcela}.toString()+"/" +$F{quantidadeParcelas}.toString()]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="114" y="31" width="321" height="13" uuid="3af0c3a8-3fbe-4cf7-9896-8e68b2de62fc"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["PAGÁVEl EM QUALQUER AGENTE BANCÁRIO"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="111" y="50" width="319" height="12" uuid="8c468c0c-bd0b-48dc-a0cd-5a24aecce326"/>
+					<textElement>
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nomeEntidade} + " - " + $F{cnpjEntidade}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="444" y="50" width="96" height="13" uuid="b568a20f-fbd5-47c2-a6c4-07304d031c1b"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{beneficiarioAgencia}+"/" +$F{cedente}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="244" y="64" width="65" height="12" uuid="1eea1cec-c56f-475e-b8b6-33e6fcaa9206"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["DM"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="172" y="82" width="30" height="12" uuid="dcb8d568-9c1f-48b9-9c16-22d0f173cfec"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{carteira}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="439" y="63" width="104" height="12" uuid="27a576d6-eb75-4c31-ab71-af04162a61e9"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{boletoNumero}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="359" y="63" width="70" height="12" uuid="f68872b4-1f81-4477-89bc-53f7d5fb91a5"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[TODAY( )]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="209" y="82" width="28" height="12" uuid="2572510d-6044-418c-bc2f-509c9937dee0"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["R$"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="172" y="64" width="68" height="12" uuid="b040de7c-e89e-41f9-b5df-995c457bae94"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{boletoNumero}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="110" y="179" width="433" height="1" uuid="55208d85-758f-4782-954e-6e1c6074e5ef"/>
+				</line>
+				<textField isStretchWithOverflow="true">
+					<reportElement mode="Transparent" x="146" y="181" width="390" height="8" uuid="1cd8ed35-8593-4e17-8b63-66abeafdcf6d"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{idContribuinte} +" - " + $F{nomeContribuinte}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="405" y="201" width="136" height="15" uuid="27926527-b3ea-413a-93a9-98d5ce14d138"/>
+					<textElement textAlignment="Right">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Autenticação mecânica/ficha de compensação]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="188" y="95" width="79" height="8" uuid="199ab015-5a6f-4f6b-9874-611c120d4035"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dataVencimentoOriginal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="112" y="95" width="102" height="8" uuid="1fad014f-72b7-4737-a99b-1f7dd9e89c89">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["VENCIMENTO ORIGINAL: "]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="243" y="82" width="73" height="12" uuid="3b5fecd6-6503-43ed-aca5-949fee8f8669"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{referente}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="318" y="64" width="35" height="12" uuid="ea152ef0-0db0-4054-899c-0da41e372a9a"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["N"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="112" y="118" width="181" height="8" uuid="9dcbb495-c54e-4820-b144-0a3d3f623281">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{classificacaoGuia}, "PARCELAMENTO" ) ? "Parcelameto: "+ $F{nroParcelamento}  :  $F{referente}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="422" y="189" width="40" height="10" uuid="b76b58c4-f39e-4347-876e-0dfe04c28056">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Bottom">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CPF/CNPJ:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="112" y="126" width="63" height="8" uuid="3b5a4798-7a24-488d-b692-e905f7f2d4c0">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<printWhenExpression><![CDATA[$F{inscricaoImobiliaria} != null && !$F{inscricaoImobiliaria}.trim().isEmpty() && !$F{inscricaoImobiliaria}.equals("0")]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Inscrição Imobiliária:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="175" y="126" width="78" height="8" uuid="a498b150-cb1a-4ff5-bee3-640dae894faa">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<printWhenExpression><![CDATA[$F{inscricaoImobiliaria} != null && !$F{inscricaoImobiliaria}.trim().isEmpty() && !$F{inscricaoImobiliaria}.equals("0")]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{inscricaoImobiliaria}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="463" y="189" width="80" height="10" uuid="3f971847-7ef5-4981-9dcb-ce0f668a0c64"/>
+					<textElement textAlignment="Left" verticalAlignment="Bottom">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[(($F{cpfCnpj}==null || $F{cpfCnpj}.isEmpty()?"": $F{cpfCnpj}.length() == 11 ? $F{cpfCnpj}.substring(0, 3)+ "." + $F{cpfCnpj}.substring(3, 6)+ "."+ $F{cpfCnpj}.substring(6, 9)+ "-"+ $F{cpfCnpj}.substring(9, 11) : ($F{cpfCnpj}.length() == 14 ? $F{cpfCnpj}.substring(0, 2)+ "." + $F{cpfCnpj}.substring(2, 5)+ "."+ $F{cpfCnpj}.substring(5, 8)+ "/"+ $F{cpfCnpj}.substring(8, 12)+ "-"+ $F{cpfCnpj}.substring(12, 14): $F{cpfCnpj})))]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="112" y="189" width="34" height="11" uuid="38c4e8e5-6e27-4d10-a088-cfca5f03c969"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Endereço:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="146" y="189" width="276" height="11" uuid="ae8659fd-1c0d-47e9-aab7-5bd39c298261"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{endereco}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToBandHeight" x="112" y="102" width="180" height="16" uuid="d04d0324-04e5-4576-93ed-d70eb698821b">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{observacao}  != null  ? "Observação: " + $F{observacao} : ""]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement mode="Transparent" x="2" y="128" width="104" height="10" forecolor="#050505" uuid="760fcb45-12e0-4090-b5fc-7b3836331c63"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+						<font fontName="Arial" size="5" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{descricaoCreditoTributario}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="214" y="10" width="328" height="18" uuid="80642ae3-74f5-4038-8cd4-3e57728d8fb8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Arial" size="10"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[MID($F{linhaDigitavel},1,5) + "."+MID($F{linhaDigitavel},6,5) + "  " + MID($F{linhaDigitavel},11,5) + "." + MID($F{linhaDigitavel},16,6) + "  "+ MID($F{linhaDigitavel},22,5) + "." + MID($F{linhaDigitavel},27,6) + "  "+ MID($F{linhaDigitavel},33,1) + "  " + MID($F{linhaDigitavel},34,14)]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement key="cab_estado" x="185" y="6" width="64" height="18" uuid="36513af4-b4cf-49c4-bd0e-35cbc264c3c3"/>
+					<textElement>
+						<font fontName="Arial" size="15" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["|001-9|"]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="355" y="79" width="1" height="15" uuid="2ab9a68f-2f35-4b32-8716-91af12ec8e53"/>
+				</line>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="459" y="85" width="80" height="12" uuid="46e969c5-e476-4807-9486-87458a2f6d08"/>
+					<textElement textAlignment="Right" verticalAlignment="Top">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{valorDevido}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="293" y="95" width="142" height="7" uuid="28310b93-4c78-4ec9-b229-a39cbea7c1d9"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="4" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[INSTRUÇÕES (TEXTO DE RESPONSABILIDADE DO CEDENTE)]]></text>
+				</staticText>
+				<line>
+					<reportElement mode="Transparent" x="439" y="157" width="104" height="1" uuid="f14c9507-5928-4805-89e8-a233d6b34711"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="439" y="135" width="104" height="1" uuid="430a74e2-9dff-48c5-a002-597c36225dd7"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="439" y="115" width="104" height="1" uuid="b8b13a20-17db-4acd-98fa-95055cc75eef"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="7" y="25" width="30" height="7" uuid="baa7b950-2632-49d9-b66f-5efab262a0f8">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CEDENTE]]></text>
+				</staticText>
+				<line>
+					<reportElement mode="Transparent" x="1" y="157" width="105" height="1" uuid="d5de3b16-064e-4a92-b8a8-79badf9c8e30"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="1" y="48" width="105" height="1" uuid="6c8cc559-17c5-4e7b-a982-e55e99dc1401"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="3" y="159" width="84" height="10" uuid="2b47694f-70fa-4d50-a2d8-ed89d803babe"/>
+					<textElement>
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PAGADOR]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement mode="Transparent" x="4" y="167" width="99" height="20" uuid="e4d26bf8-99eb-4ef6-8b9e-d236030a2dbf"/>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{idContribuinte} +" - " + $F{nomeContribuinte}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="3" y="183" width="36" height="10" uuid="f463ce8f-0200-400a-bfa2-3db0fd7eb87a">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CPF/CNPJ:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="5" y="190" width="100" height="10" uuid="07366284-462e-4d98-9525-546e2872e4ec"/>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[(($F{cpfCnpj}==null || $F{cpfCnpj}.isEmpty()?"": $F{cpfCnpj}.length() == 11 ? $F{cpfCnpj}.substring(0, 3)+ "." + $F{cpfCnpj}.substring(3, 6)+ "."+ $F{cpfCnpj}.substring(6, 9)+ "-"+ $F{cpfCnpj}.substring(9, 11) : ($F{cpfCnpj}.length() == 14 ? $F{cpfCnpj}.substring(0, 2)+ "." + $F{cpfCnpj}.substring(2, 5)+ "."+ $F{cpfCnpj}.substring(5, 8)+ "/"+ $F{cpfCnpj}.substring(8, 12)+ "-"+ $F{cpfCnpj}.substring(12, 14): $F{cpfCnpj})))]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="1" y="126" width="105" height="1" uuid="a9db0e17-ff46-448a-8702-b9c723d6eecd"/>
+				</line>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="2" y="139" width="103" height="17" uuid="236c4df0-dda8-4308-8bd2-a81f61dd215b">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{classificacaoGuia}, "PARCELAMENTO" ) ? "Parcelamento: "+ $F{nroParcelamento}  :  $F{classificacaoGuia} +" - "+ $F{referente}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="1" y="104" width="105" height="1" uuid="f85b34b1-9879-48b6-94aa-c30ce7f75aba"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="1" y="67" width="105" height="1" uuid="cb457fbb-b76d-4e4e-923d-e87d1791aff4"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="1" y="86" width="105" height="1" uuid="b2913821-a562-4179-a942-3bca40b35a21"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="2" y="49" width="71" height="10" uuid="ab259fc0-c69c-4ad1-b185-733ffc121345"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[DATA DO DOCUMENTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="1" y="55" width="72" height="12" uuid="2958406b-25ec-48e7-a913-c4a7d25fab2f"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="73" y="49" width="1" height="18" uuid="1962258f-36b4-431e-9a62-b68087c18c91"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="73" y="49" width="33" height="10" uuid="35d63792-f205-46c5-8e93-45c31b32a7e7"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PARCELA]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="74" y="54" width="32" height="13" uuid="c0ca1745-7a7c-48f0-ab54-e920524a1c80"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{parcelaUnica}, "SIM" ) ? $F{nroParcela}.toString() + " / Unica" : $F{nroParcela}.toString()+"/" +$F{quantidadeParcelas}.toString()]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="4" y="68" width="35" height="9" uuid="f022e806-6f1b-4f31-9b57-87410de825b7"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="3" isBold="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[VENCIMENTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="3" y="77" width="36" height="6" uuid="945bf636-7c2a-45f6-b642-2d4b76655b2e">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="4"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dataVencimento}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="53" y="69" width="51" height="7" uuid="d59c82eb-c8e1-4af3-af50-2d9b5c721988"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="3"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[VALOR DO DOCUMENTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="53" y="76" width="52" height="6" uuid="fb816453-8fb6-4bc9-ae6a-8f9ab3b9599a"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="4" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{valorTotal}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="4" y="88" width="94" height="6" uuid="14e0d669-4e36-4c66-87cd-da241b25627a"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="4"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Nº DO DOCUMENTO]]></text>
+				</staticText>
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="5" y="94" width="92" height="8" uuid="e9581177-a397-47e0-95ac-329950afa2fd"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font fontName="Arial" size="4" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{boletoNumero}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="4" y="201" width="86" height="15" uuid="1e29b6c1-ddea-4f47-b456-849c4ace9a62"/>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[RECIBO DO SACADO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="114" y="201" width="303" height="14" uuid="b6f126ea-f93a-46ae-9212-3a32d2e50fc8"/>
+					<textElement>
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{codigoBarraNumerico}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="4" y="106" width="100" height="12" forecolor="#050505" uuid="84fc234c-1d4c-4b07-b7f0-25a8b6c93134"/>
+					<textElement textAlignment="Justified" verticalAlignment="Top" markup="none">
+						<font fontName="Arial" size="4"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{observacao}  != null  ? "Observação: " + $F{observacao} +" "+ $F{descricaoServico}: ""]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="1" y="29" width="103" height="18" uuid="ace1ed7c-943c-463d-8848-d7d977db59c4"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="5" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nomeEntidade} + " - " + $F{cnpjEntidade}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="44" y="68" width="1" height="19" uuid="02a4f410-f248-47a2-84c9-1d6ef714c964"/>
+				</line>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="440" y="104" width="100" height="12" uuid="2d4f5dbf-b675-414c-b323-45eaf6896356"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[String.format("%.2f",$F{valorDesconto}.doubleValue() +$F{valorBeneficios}.doubleValue())]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="4" y="118" width="48" height="8" uuid="f1b80eb2-034d-42eb-b986-652dae641d73"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Ano: "+ $F{ano}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement x="3" y="217" width="100" height="36" uuid="b8643730-888a-4634-a6ce-132ea91bc1cd"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font size="10" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{referente}]]></textFieldExpression>
+				</textField>
+				<componentElement>
+					<reportElement stretchType="RelativeToTallestObject" x="114" y="135" width="144" height="42" uuid="61ad3339-03bd-40c5-bf88-e19c9e77f7fe">
+						<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+					</reportElement>
+					<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+						<datasetRun subDataset="Receitas" uuid="8ba053ca-fd3e-4b77-bb4c-f76ed7c14387">
+							<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{receitas})]]></dataSourceExpression>
+						</datasetRun>
+						<jr:column width="66" uuid="6468dc52-5de9-4494-9740-f2dbffbc3804">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+							<jr:columnHeader height="10" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="66" height="10" uuid="b40d0554-9f98-4eb4-9541-d52b15485127"/>
+									<textElement>
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<text><![CDATA[Receita]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:detailCell height="10">
+								<textField>
+									<reportElement x="0" y="0" width="66" height="10" uuid="f6505169-d690-4e0f-8859-169e9f1f1303"/>
+									<textElement>
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{abreviatura}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="60" uuid="91513c53-5fda-4c51-88d0-4b95c9f8a454">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+							<jr:columnHeader height="10" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="60" height="10" uuid="fde3dcc1-89a9-4209-b995-0ed50d0ba670"/>
+									<textElement textAlignment="Right">
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<text><![CDATA[Valor]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:detailCell height="10">
+								<textField pattern="#,##0.00">
+									<reportElement x="0" y="0" width="60" height="10" uuid="03d78a50-05b6-4ffc-a1f1-9e352d65ec21"/>
+									<textElement textAlignment="Right">
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+					</jr:table>
+				</componentElement>
+				<textField>
+					<reportElement x="4" y="253" width="540" height="1" uuid="2f0ab495-11a9-4312-81a0-c244ad797666">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box>
+						<bottomPen lineWidth="0.6" lineStyle="Dashed"/>
+					</box>
+					<textFieldExpression><![CDATA["Text Field"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="440" y="168" width="100" height="12" uuid="17459a14-2f55-45fc-bf42-53e8498f02b7">
+						<printWhenExpression><![CDATA[!EQUALS(DOUBLE_VALUE($F{valorJurosFinan}.toString()),0.00)]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Proportional"/>
+					</textElement>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="442" y="125" width="100" height="14" uuid="92820d37-10a5-4148-ad75-941334dc4922">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Top">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{valorTotal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="442" y="143" width="100" height="14" uuid="6d33c642-6239-4832-b1ac-a6dbd1c7ed3b">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Bottom">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement x="294" y="102" width="140" height="8" uuid="41ca5b5a-04f0-451f-a7a8-0380decfc0d1">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="5" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[IF(EQUALS($F{qtdDiasAposVenc}, "0"), "NÃO RECEBER APÓS O VENCIMENTO", "RECEBER ATÉ " + $F{qtdDiasAposVenc} + " DIAS APÓS O VENCIMENTO")]]></textFieldExpression>
+				</textField>
+				<image scaleImage="FillFrame" onErrorType="Blank">
+					<reportElement x="111" y="268" width="75" height="24" uuid="9881267f-bd62-406a-ab05-28c30aafe9c7"/>
+					<imageExpression><![CDATA["https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Banco_do_Brasil_logo.svg/248px-Banco_do_Brasil_logo.svg.png"]]></imageExpression>
+				</image>
+				<image scaleImage="FillFrame" onErrorType="Blank">
+					<reportElement x="3" y="268" width="102" height="24" uuid="d8938b22-5a79-4237-9b9a-be565e8a6a51"/>
+					<imageExpression><![CDATA["https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Banco_do_Brasil_logo.svg/248px-Banco_do_Brasil_logo.svg.png"]]></imageExpression>
+				</image>
+				<rectangle>
+					<reportElement mode="Transparent" x="3" y="292" width="105" height="176" uuid="6cfc501f-c114-443e-ace3-f3c4f7cfdc73">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</rectangle>
+				<rectangle>
+					<reportElement mode="Transparent" x="112" y="292" width="433" height="176" uuid="8b032841-acfb-4da5-8377-43644ab144c3">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</rectangle>
+				<line>
+					<reportElement mode="Transparent" x="112" y="312" width="433" height="1" uuid="76e79e54-b34e-445b-bd57-d33a2b4f96ff"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="112" y="326" width="433" height="2" uuid="28c9ac24-a119-4aad-a6d1-b953399a261b"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="112" y="344" width="433" height="1" uuid="c8611cfe-0bdd-47bb-88e8-9fba88c0455e"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="112" y="362" width="433" height="1" uuid="40446dcf-ecbb-43c8-9369-d9ec4a190c08"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="174" y="326" width="1" height="36" uuid="b32e2a0e-c4ef-4f20-bdee-c0b2fc5ee067"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="245" y="326" width="1" height="36" uuid="3d1a3cb1-f258-4d8a-8861-eb35db252776"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="318" y="327" width="1" height="35" uuid="39ccc240-adac-49dd-8cbc-b7e9d6b9e847"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="357" y="327" width="1" height="20" uuid="11a367e6-f7ca-45b3-ad44-9a738009d7a6"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="208" y="344" width="1" height="18" uuid="f41094ea-41e8-4709-aff4-6bb27ab6130e"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="294" y="363" width="1" height="84" uuid="0cda4c9d-1527-47c9-98a4-c29d6e48cf0f">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="441" y="296" width="1" height="151" uuid="ecd30bb3-8128-4894-b94e-86058b7d58aa">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="322" y="328" width="25" height="10" uuid="c545dc6b-a452-4648-9e99-722c7ebb5603"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[ACEITE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="445" y="313" width="100" height="10" uuid="d896a379-7395-4ac8-92ec-df1f8f3153be"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[AGÊNCIA / CÓDIGO CEDENTE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="321" y="346" width="34" height="10" uuid="e59ac004-530b-49d4-8c78-a0f97e824553"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[QUANTIDADE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="175" y="345" width="30" height="10" uuid="1acffba7-07a0-485d-a125-c27bb51bc448"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CARTEIRA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="114" y="313" width="30" height="10" uuid="0ecd6f05-7f6f-4d4e-90ed-adb30dba4167"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CEDENTE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="115" y="327" width="60" height="10" uuid="e9ae4a68-5672-49f0-be4a-bbdf24d7e248"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[DATA DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="359" y="328" width="75" height="10" uuid="7687ce20-2add-4472-b1a1-8718a58e114a"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[DATA DO PROCESSAMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="247" y="328" width="69" height="10" uuid="ea4008e6-1f0b-4b04-84ce-42f60df34bcd"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[ESPÉCIE DE DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="116" y="294" width="70" height="10" uuid="2d481275-d751-45f8-a6d4-01c79ca1ba3a"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[LOCAL DE PAGAMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="211" y="345" width="25" height="10" uuid="8be1e834-31ab-465c-ba37-d2f3eea29792"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[MOEDA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="445" y="328" width="60" height="10" uuid="17ae18f9-625a-442b-b368-46a2ab410479"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[NOSSO NÚMERO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="177" y="327" width="60" height="10" uuid="566db92a-3b6d-4bca-b348-f2bb7d8bea28"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Nº DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="117" y="345" width="35" height="10" uuid="f15d0876-bcb7-46e3-aa68-7de711aec0d2"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PARCELA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="114" y="449" width="34" height="8" uuid="140b60ea-82ad-45d7-8201-301da50b7335"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PAGADOR:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="446" y="346" width="99" height="10" uuid="d3ea85f4-de3e-4dec-a31d-191e4de706c1"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[=VALOR DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="445" y="297" width="50" height="10" uuid="bb51c47f-bb8a-43a1-91bc-455d84532be6"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[VENCIMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="444" y="384" width="99" height="6" uuid="c53f0ca0-b1e9-4146-b942-1ae3433a8e33">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[=VALOR DO DOCUMENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="446" y="405" width="99" height="10" uuid="4516d01c-a21f-4c9f-a35b-84c687dd677a"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[(+)MORA/MULTA/JUROS]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="446" y="427" width="99" height="10" uuid="092f6b76-c3a5-40dd-b0e7-54e1e9ba80b3"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[(+)OUTROS ACRÉSCIMOS]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="446" y="364" width="99" height="10" uuid="215a7f12-87a7-4bf0-a7d7-6f56990dbb51"/>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[(-) DESCONTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="441" y="301" width="104" height="13" uuid="2bc63802-f796-45ed-b6c4-b5104755aa9b"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dataVencimento}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement mode="Transparent" x="247" y="345" width="65" height="10" uuid="f789e644-b7e0-4992-a104-5138f09f12e9"/>
+					<textElement markup="none">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Referente"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="115" y="332" width="60" height="12" uuid="bc710695-3c0a-4d00-b0fb-7e73d5549691"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[TODAY( )]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="120" y="350" width="42" height="12" uuid="1555138d-4126-411e-b6d1-1a7880e5173a"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{parcelaUnica}, "SIM" ) ? $F{nroParcela}.toString() + " / Unica" : $F{nroParcela}.toString()+"/" +$F{quantidadeParcelas}.toString()]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="116" y="299" width="321" height="13" uuid="87ee9118-539e-46ba-b20c-406cf8a5b4f4"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["PAGÁVEl EM QUALQUER AGENTE BANCÁRIO"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="113" y="318" width="319" height="12" uuid="ae96f8bf-e26f-48c5-8937-4610ba0616f7"/>
+					<textElement>
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nomeEntidade} + " - " + $F{cnpjEntidade}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="446" y="318" width="96" height="13" uuid="b96593d0-76a7-4240-9f75-f7f5ace4476c"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{beneficiarioAgencia}+"/" +$F{cedente}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="246" y="332" width="65" height="12" uuid="f3bd8ee0-ba29-4665-ae5f-57539176cfbc"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["DM"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="174" y="350" width="30" height="12" uuid="35181b5e-b77f-458d-8133-9fc90a2fe004"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{carteira}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="441" y="331" width="104" height="12" uuid="c9ffe917-76ba-4df8-8ba2-423dec7de8ea"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{boletoNumero}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="361" y="331" width="70" height="12" uuid="73619694-91c2-4231-9865-31e8e45cb62c"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[TODAY( )]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="211" y="350" width="28" height="12" uuid="e6635e88-963f-4877-9bfa-79ea21178af6"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["R$"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="174" y="332" width="68" height="12" uuid="0099f61c-9884-46e7-ad1b-84cc586d4a9b"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{boletoNumero}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="112" y="447" width="433" height="1" uuid="dd6589e2-789c-400e-98fb-44ed4b735828"/>
+				</line>
+				<textField isStretchWithOverflow="true">
+					<reportElement mode="Transparent" x="148" y="449" width="390" height="8" uuid="7ec055eb-02c4-469d-b38f-461e5c31117a"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{idContribuinte} +" - " + $F{nomeContribuinte}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="407" y="469" width="136" height="15" uuid="23e137df-08b2-4cdc-ac08-4781e9f24778"/>
+					<textElement textAlignment="Right">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Autenticação mecânica/ficha de compensação]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="190" y="363" width="79" height="8" uuid="a3fdf476-c07d-4f81-8844-a4fc2b1f6b1b"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dataVencimentoOriginal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="114" y="363" width="102" height="8" uuid="a18a187b-4a16-43f6-947b-8fde542fe8b8">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["VENCIMENTO ORIGINAL: "]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="245" y="350" width="73" height="12" uuid="7d166b36-971b-4965-90fe-3cf4ed781afc"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{referente}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="320" y="332" width="35" height="12" uuid="c22271fe-a774-47ce-b70b-68d3d6180398"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["N"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="114" y="386" width="181" height="8" uuid="1e7722a2-0ea2-4d07-bdd0-cd5120b95b33">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{classificacaoGuia}, "PARCELAMENTO" ) ? "Parcelameto: "+ $F{nroParcelamento}  :  $F{referente}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="424" y="457" width="40" height="10" uuid="914d3fdd-6059-4c94-bcc3-528cb480364a">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Bottom">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CPF/CNPJ:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="114" y="394" width="63" height="8" uuid="ac7616eb-511b-4807-b145-5339d8582994">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<printWhenExpression><![CDATA[$F{inscricaoImobiliaria} != null && !$F{inscricaoImobiliaria}.trim().isEmpty() && !$F{inscricaoImobiliaria}.equals("0")]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Inscrição Imobiliária:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="177" y="394" width="78" height="8" uuid="64a7baf0-5537-461d-a8e0-c0030313b2e5">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<printWhenExpression><![CDATA[$F{inscricaoImobiliaria} != null && !$F{inscricaoImobiliaria}.trim().isEmpty() && !$F{inscricaoImobiliaria}.equals("0")]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{inscricaoImobiliaria}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="465" y="457" width="80" height="10" uuid="c4ea728b-ea55-421c-8289-ff79f3a3cc25"/>
+					<textElement textAlignment="Left" verticalAlignment="Bottom">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[(($F{cpfCnpj}==null || $F{cpfCnpj}.isEmpty()?"": $F{cpfCnpj}.length() == 11 ? $F{cpfCnpj}.substring(0, 3)+ "." + $F{cpfCnpj}.substring(3, 6)+ "."+ $F{cpfCnpj}.substring(6, 9)+ "-"+ $F{cpfCnpj}.substring(9, 11) : ($F{cpfCnpj}.length() == 14 ? $F{cpfCnpj}.substring(0, 2)+ "." + $F{cpfCnpj}.substring(2, 5)+ "."+ $F{cpfCnpj}.substring(5, 8)+ "/"+ $F{cpfCnpj}.substring(8, 12)+ "-"+ $F{cpfCnpj}.substring(12, 14): $F{cpfCnpj})))]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="114" y="457" width="34" height="11" uuid="5bdf5e3a-f62c-480f-b053-70205eb6e5e2"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Endereço:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="148" y="457" width="276" height="11" uuid="64c9a872-d9f7-4272-a904-77e8a7a6813f"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{endereco}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToBandHeight" x="114" y="370" width="180" height="16" uuid="998d1de6-5246-4b60-83dc-3bf35fc39bf2">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{observacao}  != null  ? "Observação: " + $F{observacao} : ""]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement mode="Transparent" x="4" y="396" width="104" height="10" forecolor="#050505" uuid="8a42b6b3-a900-4ad4-8ae6-aa2a24f2f07d"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+						<font fontName="Arial" size="5" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{descricaoCreditoTributario}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="216" y="278" width="328" height="18" uuid="11fe4396-98a0-437b-8b6b-6ddc87909414"/>
+					<textElement textAlignment="Right">
+						<font fontName="Arial" size="10"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[MID($F{linhaDigitavel},1,5) + "."+MID($F{linhaDigitavel},6,5) + "  " + MID($F{linhaDigitavel},11,5) + "." + MID($F{linhaDigitavel},16,6) + "  "+ MID($F{linhaDigitavel},22,5) + "." + MID($F{linhaDigitavel},27,6) + "  "+ MID($F{linhaDigitavel},33,1) + "  " + MID($F{linhaDigitavel},34,14)]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement key="cab_estado" x="187" y="274" width="64" height="18" uuid="e7909c7e-2bbd-4a3c-aff4-672175e4d7d9"/>
+					<textElement>
+						<font fontName="Arial" size="15" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["|001-9|"]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="357" y="347" width="1" height="15" uuid="d0157849-b844-4d25-adda-de22f562c26d"/>
+				</line>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="461" y="353" width="80" height="12" uuid="32ccf24f-0cb8-4ed8-b890-389a424c5064"/>
+					<textElement textAlignment="Right" verticalAlignment="Top">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{valorDevido}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="295" y="363" width="142" height="7" uuid="c9c94438-3471-467c-9b20-898c305f6e5a"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="4" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[INSTRUÇÕES (TEXTO DE RESPONSABILIDADE DO CEDENTE)]]></text>
+				</staticText>
+				<line>
+					<reportElement mode="Transparent" x="441" y="425" width="104" height="1" uuid="aa5cba2e-6087-4509-9270-12d0efcfd106"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="441" y="403" width="104" height="1" uuid="a4eff9ca-4a90-4685-86ff-28df8b257eb5"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="441" y="383" width="104" height="1" uuid="0d5b827a-2603-4f81-a907-2be5534574c5"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="9" y="293" width="30" height="7" uuid="d1c74b0d-32c1-4968-9d59-a806c7788485">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CEDENTE]]></text>
+				</staticText>
+				<line>
+					<reportElement mode="Transparent" x="3" y="425" width="105" height="1" uuid="8d0944c4-01e6-4d8e-bc89-3b3b1fac1499"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="3" y="316" width="105" height="1" uuid="3fb74f87-d951-4e48-bba3-118429cc17d0"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="5" y="427" width="84" height="10" uuid="a69aa4d8-1c26-4c35-8c61-7fe215d30471"/>
+					<textElement>
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PAGADOR]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement mode="Transparent" x="6" y="435" width="99" height="20" uuid="03c688ea-42a2-4645-9ad2-4b0aadc43cf5"/>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{idContribuinte} +" - " + $F{nomeContribuinte}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="5" y="451" width="36" height="10" uuid="ff6a0e7c-f892-49df-b3fb-0747211978aa">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CPF/CNPJ:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="7" y="458" width="100" height="10" uuid="f6998f26-3f5f-4380-9f8d-885025f0ddfd"/>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[(($F{cpfCnpj}==null || $F{cpfCnpj}.isEmpty()?"": $F{cpfCnpj}.length() == 11 ? $F{cpfCnpj}.substring(0, 3)+ "." + $F{cpfCnpj}.substring(3, 6)+ "."+ $F{cpfCnpj}.substring(6, 9)+ "-"+ $F{cpfCnpj}.substring(9, 11) : ($F{cpfCnpj}.length() == 14 ? $F{cpfCnpj}.substring(0, 2)+ "." + $F{cpfCnpj}.substring(2, 5)+ "."+ $F{cpfCnpj}.substring(5, 8)+ "/"+ $F{cpfCnpj}.substring(8, 12)+ "-"+ $F{cpfCnpj}.substring(12, 14): $F{cpfCnpj})))]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="3" y="394" width="105" height="1" uuid="00601520-f520-4b6c-8f8b-8bd2d71025fa"/>
+				</line>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="4" y="407" width="103" height="17" uuid="40f2f5ff-d305-4fd6-a5f8-1e4b2ee3ff8c">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{classificacaoGuia}, "PARCELAMENTO" ) ? "Parcelamento: "+ $F{nroParcelamento}  :  $F{classificacaoGuia} +" - "+ $F{referente}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="3" y="372" width="105" height="1" uuid="cde39d0a-3be3-445f-9552-3e646025167d"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="3" y="335" width="105" height="1" uuid="f4c15201-eea9-482c-bc33-39940cea7125"/>
+				</line>
+				<line>
+					<reportElement mode="Transparent" x="3" y="354" width="105" height="1" uuid="96ec6177-354a-4f30-8559-4d317d19fb08"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="4" y="317" width="71" height="10" uuid="b8eacb50-8fe1-45be-b0ed-10f970714385"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[DATA DO DOCUMENTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="3" y="323" width="72" height="12" uuid="1c979cb0-1fe6-451f-b6b5-fb7eee8d053b"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="75" y="317" width="1" height="18" uuid="f58d6c61-ac9d-46f4-90de-f6240099f249"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="75" y="317" width="33" height="10" uuid="c0e407d7-b8c6-40ee-ae5d-cabb552da0b7"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="5"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PARCELA]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="">
+					<reportElement mode="Transparent" x="76" y="322" width="32" height="13" uuid="fcf3f32d-db0b-48d4-9a35-4b26704b0016"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[EQUALS($F{parcelaUnica}, "SIM" ) ? $F{nroParcela}.toString() + " / Unica" : $F{nroParcela}.toString()+"/" +$F{quantidadeParcelas}.toString()]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="6" y="336" width="35" height="9" uuid="0401308d-72af-47cd-9de9-bcd4506aa198"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="3" isBold="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[VENCIMENTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy">
+					<reportElement mode="Transparent" x="5" y="345" width="36" height="6" uuid="eeddfd4c-9662-4c2b-9692-4d177de3d948">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="4"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dataVencimento}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="55" y="337" width="51" height="7" uuid="5d7854f2-1329-454f-8932-14cda22842c1"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="3"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[VALOR DO DOCUMENTO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="55" y="344" width="52" height="6" uuid="cabe7858-756d-4761-94ca-487cd7a04861"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="4" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{valorTotal}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="6" y="356" width="94" height="6" uuid="733f6f84-3c69-4382-a4b8-d2295f203472"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" size="4"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[Nº DO DOCUMENTO]]></text>
+				</staticText>
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="7" y="362" width="92" height="8" uuid="90f7f959-6c70-4f5e-be67-4cbd00e9b8cf"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font fontName="Arial" size="4" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{boletoNumero}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="6" y="469" width="86" height="15" uuid="c0a3cf50-f884-458f-8b55-a46c6db0a3fa"/>
+					<textElement textAlignment="Left">
+						<font fontName="Arial" size="6" isBold="true"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[RECIBO DO SACADO]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="116" y="469" width="303" height="14" uuid="19b1ab74-f2f2-495f-98cc-38d99db3223b"/>
+					<textElement>
+						<font fontName="Arial" size="6"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{codigoBarraNumerico}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="6" y="374" width="100" height="12" forecolor="#050505" uuid="2eda23b3-7b2e-4448-83ab-2c1358d86807"/>
+					<textElement textAlignment="Justified" verticalAlignment="Top" markup="none">
+						<font fontName="Arial" size="4"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{observacao}  != null  ? "Observação: " + $F{observacao} +" "+ $F{descricaoServico}: ""]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="3" y="297" width="103" height="18" uuid="1f2d6c99-f25f-4f44-9d8b-804feaf81f33"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="5" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nomeEntidade} + " - " + $F{cnpjEntidade}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement mode="Transparent" x="46" y="336" width="1" height="19" uuid="97b36f72-0397-4167-98dd-5bf068adfeb8"/>
+				</line>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="442" y="372" width="100" height="12" uuid="c6ab04f4-3dbe-43ae-ab18-53b63ee8c07a"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[String.format("%.2f",$F{valorDesconto}.doubleValue() +$F{valorBeneficios}.doubleValue())]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="6" y="386" width="48" height="8" uuid="c684a2bc-59ea-49a0-9841-89c891ef06d4"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="5"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Ano: "+ $F{ano}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement x="5" y="480" width="100" height="40" uuid="c5c10e41-cb77-488b-9498-cea5d71ec80f"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font size="10" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{referente}]]></textFieldExpression>
+				</textField>
+				<componentElement>
+					<reportElement x="117" y="480" width="350" height="40" uuid="3c16ae74-6a63-485b-8901-5dba21ebed3b"/>
+					<jr:barbecue xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" type="Int2of5" drawText="false" checksumRequired="false">
+						<jr:codeExpression><![CDATA[$F{codigoBarraNumerico}]]></jr:codeExpression>
+					</jr:barbecue>
+				</componentElement>
+				<componentElement>
+					<reportElement x="364" y="387" width="69" height="56" uuid="db3190f5-2210-4abe-a791-fe182087a487">
+						<property name="com.jaspersoft.studio.unit.margin" value="px"/>
+						<printWhenExpression><![CDATA[!EQUALS($F{qrCodeEmv},"")]]></printWhenExpression>
+					</reportElement>
+					<jr:QRCode xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" margin="1">
+						<jr:codeExpression><![CDATA[$F{qrCodeEmv}]]></jr:codeExpression>
+					</jr:QRCode>
+				</componentElement>
+				<componentElement>
+					<reportElement stretchType="RelativeToTallestObject" x="116" y="403" width="144" height="42" uuid="02eae01b-f7ca-40ea-a037-fdebe6f90092">
+						<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+					</reportElement>
+					<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+						<datasetRun subDataset="Receitas" uuid="c9b81a32-8baa-459a-8a4c-8e9c4e6452a2">
+							<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{receitas})]]></dataSourceExpression>
+						</datasetRun>
+						<jr:column width="66" uuid="7eb28ade-83db-4ad0-875f-94126a771e00">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+							<jr:columnHeader height="10" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="66" height="10" uuid="17370568-411c-4637-b4c5-c3c0a2d5e8fa"/>
+									<textElement>
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<text><![CDATA[Receita]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:detailCell height="10">
+								<textField>
+									<reportElement x="0" y="0" width="66" height="10" uuid="8ef24a25-6163-4305-94d7-689eca1d7a9b"/>
+									<textElement>
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{abreviatura}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="60" uuid="d915608e-835a-481f-bfdc-57e371b81663">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+							<jr:columnHeader height="10" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="60" height="10" uuid="fb005579-c28c-4783-b34a-2de789449006"/>
+									<textElement textAlignment="Right">
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<text><![CDATA[Valor]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:detailCell height="10">
+								<textField pattern="#,##0.00">
+									<reportElement x="0" y="0" width="60" height="10" uuid="ed4c9ded-9333-467c-bcd7-ba0b3ed43ed5"/>
+									<textElement textAlignment="Right">
+										<font fontName="Arial" size="5"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+					</jr:table>
+				</componentElement>
+				<textField>
+					<reportElement x="6" y="521" width="540" height="1" uuid="c7aa7df0-748c-459b-b7b6-c9a1f55baf30">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box>
+						<bottomPen lineWidth="0.6" lineStyle="Dashed"/>
+					</box>
+					<textFieldExpression><![CDATA["Text Field"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="442" y="436" width="100" height="12" uuid="c5ae5d23-a78e-44cd-b978-909ea57eb309">
+						<printWhenExpression><![CDATA[!EQUALS(DOUBLE_VALUE($F{valorJurosFinan}.toString()),0.00)]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Proportional"/>
+					</textElement>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="444" y="393" width="100" height="14" uuid="bc49ddfb-da65-4fcf-967f-9b155a54fc01">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Top">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{valorTotal}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="308" y="398" width="52" height="34" uuid="d5c68d1a-5525-4d59-a6a5-690ab8da05fc">
+						<printWhenExpression><![CDATA[!EQUALS($F{qrCodeEmv},"")]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<text><![CDATA[Pague com PIX]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Transparent" x="444" y="411" width="100" height="14" uuid="49bf04e5-9bb1-4bb5-8aca-5d1085267f81">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Bottom">
+						<font fontName="Arial" size="7"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement x="296" y="370" width="140" height="8" uuid="7c8ecfa8-50f1-4fb9-b816-e84b23dda03d">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Arial" size="5" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[IF(EQUALS($F{qtdDiasAposVenc}, "0"), "NÃO RECEBER APÓS O VENCIMENTO", "RECEBER ATÉ " + $F{qtdDiasAposVenc} + " DIAS APÓS O VENCIMENTO")]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<detail>
+		<band splitType="Immediate">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+		</band>
+	</detail>
+</jasperReport>

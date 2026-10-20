@@ -1,0 +1,65 @@
+// ATENÇÃO: Fórmula (Calculo/Acrescimos/etc.) e Script (Scripts/Scripts,
+// Componentes, Fontes Dinamicas, Criticas) são DUAS linguagens diferentes
+// dentro do mesmo sistema. Confirmado no corpus desta base:
+//   - "def função(){}"     -> 1.203 usos em Scripts/, 0 usos reais em Formulas/
+//   - ".find{}" (closure)   -> 334 usos em Scripts/, 0 usos reais em Formulas/
+//   - "Dados.tributos.*"    -> 4.932 usos em Scripts/, 0 usos reais em Formulas/
+// A versão com "def" abaixo SÓ funciona em Script. Fórmula não aceita
+// declarar função nem usar closures do tipo ".find{ }" — nela o fator por
+// faixa precisa ser feito com se/senao mesmo (não tem como generalizar numa
+// função reutilizável dentro da própria Fórmula).
+
+// =========================================================
+// SCRIPT — versão função, reutilizável
+// =========================================================
+// Origem: PREFEITURA MUNICIPAL DE ANDRADAS — Scripts/Scripts/Atualiza Valor
+// Venal.txt, usado pra fator de profundidade/gleba/idade.
+// Formato das faixas: [inicio, fim, fator]. Intervalo [inicio, fim) —
+// inclui o início, exclui o fim.
+
+def calcularPorFaixa(valor, faixas, padrao = 1) {
+  def encontrado = faixas.find { faixa -> valor >= faixa[0] && valor < faixa[1] }
+  return encontrado ? encontrado[2] : padrao
+}
+
+// Exemplo de uso — fator de profundidade:
+//
+// fatorProfundidade = calcularPorFaixa(profundidade, [
+//   [0, 12, 0.791],
+//   [12, 13, 0.799],
+//   // ...
+//   [90, 100, 0.548],
+//   [101, 150, 0.447],
+//   [151, 200, 0.408],
+//   [201, 99999999, 0.387]
+// ])
+//
+// Exemplo de uso — faixa de multa por dias de atraso:
+//
+// percentualMulta = calcularPorFaixa(diferencaDias, [
+//   [0, 21, 0.03],
+//   [21, 46, 0.06],
+//   [46, 91, 0.10],
+//   [91, 99999999, 0.20]
+// ])
+
+// =========================================================
+// FÓRMULA — mesma lógica, mas sem função reutilizável (copiar e ajustar
+// os limites/valores a cada uso — é assim que toda a base já faz hoje)
+// =========================================================
+// Exemplo real equivalente ao de multa acima (visto em toda
+// FORMULA_ACRESCIMO_* da base):
+//
+// se (diferencaDias <= 20) {
+//   percentualMultaEmDecimal = 0.03
+// } senao {
+//   se (diferencaDias <= 45) {
+//     percentualMultaEmDecimal = 0.06
+//   } senao {
+//     se (diferencaDias <= 90) {
+//       percentualMultaEmDecimal = 0.10
+//     } senao {
+//       percentualMultaEmDecimal = 0.20
+//     }
+//   }
+// }

@@ -1,0 +1,3979 @@
+{
+  "_leia": "Use SEMPRE o nome 'bfc' no script — o nome REST do catálogo frequentemente é diferente. 'por_operacao' é o mapa mais preciso (por path); 'rest_para_bfc' só traz fontes sem ambiguidade entre suas operações.",
+  "por_operacao": {
+    "imoveis|busca|/imoveis": {
+      "bfc": "imoveis",
+      "usos_producao": 1760,
+      "via": "path"
+    },
+    "debitos|busca|/debitos": {
+      "bfc": "debitos",
+      "usos_producao": 1021,
+      "via": "path"
+    },
+    "dividas|busca|/dividas": {
+      "bfc": "dividas",
+      "usos_producao": 928,
+      "via": "path"
+    },
+    "economicos|busca|/economicos": {
+      "bfc": "economicos",
+      "usos_producao": 830,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes": {
+      "bfc": "contribuintes",
+      "usos_producao": 806,
+      "via": "path"
+    },
+    "pagamento|busca|/pagamentos": {
+      "bfc": "pagamentos",
+      "usos_producao": 474,
+      "via": "path"
+    },
+    "imoveis|buscarCampos|/imoveis/campos-adicionais": {
+      "bfc": "imoveis.camposAdicionais",
+      "usos_producao": 407,
+      "via": "confirmado"
+    },
+    "imoveis|preenche|/imoveis/campos-adicionais": {
+      "bfc": "imovel.campoAdicional",
+      "usos_producao": 397,
+      "via": "path"
+    },
+    "imoveis|buscaCamposAdicionais|/imoveis/{idImovel}/campos-adicionais": {
+      "bfc": "imovel.camposAdicionais",
+      "usos_producao": 446,
+      "via": "confirmado"
+    },
+    "contribuinte|busca|/contribuintes/{idContribuinte}/enderecos": {
+      "bfc": "contribuinte.enderecos",
+      "usos_producao": 418,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/enderecos": {
+      "bfc": "contribuinte.enderecos",
+      "usos_producao": 418,
+      "via": "path"
+    },
+    "Números de baixa|altera|/numeros-baixas/{nroBaixa}": {
+      "bfc": "numerosBaixa",
+      "usos_producao": 363,
+      "via": "path"
+    },
+    "Números de baixa|busca|/numeros-baixas": {
+      "bfc": "numerosBaixa",
+      "usos_producao": 363,
+      "via": "path"
+    },
+    "parcelamentos|buscaParcelas|/parcelamentos/parcelas": {
+      "bfc": "parcelamentos.parcelas",
+      "usos_producao": 346,
+      "via": "path"
+    },
+    "parcelamentos|busca|/parcelamentos": {
+      "bfc": "parcelamentos",
+      "usos_producao": 284,
+      "via": "path"
+    },
+    "lancamentos|busca|/lancamentos": {
+      "bfc": "lancamentos",
+      "usos_producao": 267,
+      "via": "path"
+    },
+    "debitos|buscaDebitoReceitas|/debitos/{idDebito}/receitas": {
+      "bfc": "debitos.receitas",
+      "usos_producao": 258,
+      "via": "path"
+    },
+    "debitos|buscaReceitas|/debitos/receitas": {
+      "bfc": "debitos.receitas",
+      "usos_producao": 258,
+      "via": "path"
+    },
+    "parcelamentos|buscaComposicoes|/parcelamentos/composicoes": {
+      "bfc": "parcelamentos.composicoes",
+      "usos_producao": 239,
+      "via": "path"
+    },
+    "economicos|buscaCamposAdicionais|/economicos/{idEconomico}/campos-adicionais": {
+      "bfc": "economico.camposAdicionais",
+      "usos_producao": 232,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/{idContribuinte}/telefones": {
+      "bfc": "contribuinte.telefones",
+      "usos_producao": 224,
+      "via": "path"
+    },
+    "convenios|busca|/convenios": {
+      "bfc": "convenios",
+      "usos_producao": 224,
+      "via": "path"
+    },
+    "receitas-diversas|criar|/receitas-diversas": {
+      "bfc": "receitaDiversa",
+      "usos_producao": 6,
+      "via": "path"
+    },
+    "receitas-diversas|busca|/receitas-diversas": {
+      "bfc": "receitasDiversas",
+      "usos_producao": 193,
+      "via": "path"
+    },
+    "transferenciaImovel|busca|/transferencias-imoveis/itens": {
+      "bfc": "transferenciasImoveis.itens",
+      "usos_producao": 186,
+      "via": "path"
+    },
+    "tabelasAuxiliares|busca|/tabelas-auxiliares": {
+      "bfc": "tabelasAuxiliares",
+      "usos_producao": 176,
+      "via": "path"
+    },
+    "tabelasAuxiliares|cria|/tabelas-auxiliares": {
+      "bfc": "tabelasAuxiliares",
+      "usos_producao": 176,
+      "via": "path"
+    },
+    "creditosTributarios|busca|/creditos-tributarios": {
+      "bfc": "creditosTributarios",
+      "usos_producao": 170,
+      "via": "path"
+    },
+    "imoveis|buscaProprietarios|/imoveis/proprietarios": {
+      "bfc": "imovel.proprietarios",
+      "usos_producao": 168,
+      "via": "path"
+    },
+    "imoveis|buscaProprietarios|/imoveis/{idImovel}/proprietarios": {
+      "bfc": "imovel.proprietarios",
+      "usos_producao": 168,
+      "via": "path"
+    },
+    "dividas|busca|/dividas/{idDivida}/receitas": {
+      "bfc": "dividas.receitas",
+      "usos_producao": 164,
+      "via": "path"
+    },
+    "dividas|busca|/dividas/receitas": {
+      "bfc": "dividas.receitas",
+      "usos_producao": 164,
+      "via": "path"
+    },
+    "esfinge|busca|/esfinge": {
+      "bfc": "esfinge",
+      "usos_producao": 146,
+      "via": "path"
+    },
+    "obras|busca|/obras": {
+      "bfc": "obras",
+      "usos_producao": 142,
+      "via": "path"
+    },
+    "obras|busca|/obras/{idObra}/campos-adicionais": {
+      "bfc": "obra.camposAdicionais",
+      "usos_producao": 139,
+      "via": "path"
+    },
+    "transferenciaImovel|busca|/transferencias-imoveis": {
+      "bfc": "transferenciasImoveis",
+      "usos_producao": 136,
+      "via": "path"
+    },
+    "creditosTributarios|busca|/creditos-tributarios/receitas": {
+      "bfc": "creditosTributarios.receitas",
+      "usos_producao": 130,
+      "via": "path"
+    },
+    "creditosTributarios|busca|/creditos-tributarios/{idCredito}/receitas": {
+      "bfc": "creditosTributarios.receitas",
+      "usos_producao": 130,
+      "via": "path"
+    },
+    "logradouros|busca|/logradouros": {
+      "bfc": "logradouros",
+      "usos_producao": 128,
+      "via": "path"
+    },
+    "imoveis|buscaEnglobados|/imoveis/{idImovel}/englobados": {
+      "bfc": "imovel.englobados",
+      "usos_producao": 111,
+      "via": "path"
+    },
+    "enderecoCorrespondencia|busca|/endereco-correspondencia": {
+      "bfc": "enderecoCorrespondencia",
+      "usos_producao": 109,
+      "via": "path"
+    },
+    "dividas|busca|/dividas/movimentacoes": {
+      "bfc": "dividas.movimentacoes",
+      "usos_producao": 105,
+      "via": "path"
+    },
+    "lancamentos|busca|/lancamentos/receitas": {
+      "bfc": "lancamentos.receitas",
+      "usos_producao": 101,
+      "via": "path"
+    },
+    "transferenciaImovel|busca|/transferencias-imoveis/compra": {
+      "bfc": "transferenciasImoveis.compra",
+      "usos_producao": 100,
+      "via": "path"
+    },
+    "imoveis|buscaTestadas|/imoveis/{idImovel}/testadas": {
+      "bfc": "imovel.testadas",
+      "usos_producao": 94,
+      "via": "path"
+    },
+    "economicos|busca|/economicos/{idEconomico}/atividades": {
+      "bfc": "economico.atividades",
+      "usos_producao": 92,
+      "via": "path"
+    },
+    "economicos|busca|/economicos/atividades": {
+      "bfc": "economico.atividades",
+      "usos_producao": 92,
+      "via": "path"
+    },
+    "debitos|buscaSimulados|/debitos/simulados": {
+      "bfc": "debitos.simulados",
+      "usos_producao": 81,
+      "via": "path"
+    },
+    "PlantasValores|busca|/planta-valores": {
+      "bfc": "plantaValores",
+      "usos_producao": 79,
+      "via": "path"
+    },
+    "guiasUnificadas|buscaUnica|/guias-unificadas/{idGuiaUnificada}": {
+      "bfc": "guiasUnificadas",
+      "usos_producao": 22,
+      "via": "path"
+    },
+    "guiasUnificadas|busca|/guias-unificadas": {
+      "bfc": "guiasUnificadas",
+      "usos_producao": 22,
+      "via": "path"
+    },
+    "imoveis|busca|/imoveis/historico": {
+      "bfc": "imoveis.historico",
+      "usos_producao": 75,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/{idContribuinte}/emails": {
+      "bfc": "contribuinte.emails",
+      "usos_producao": 74,
+      "via": "path"
+    },
+    "certidoes-negativas|busca|/certidoes-negativas": {
+      "bfc": "certidaoNegativa",
+      "usos_producao": 70,
+      "via": "path"
+    },
+    "imoveis|busca|/imoveis/movimentacoes": {
+      "bfc": "imoveis.movimentacoes",
+      "usos_producao": 70,
+      "via": "path"
+    },
+    "receitas-diversas|busca|/receitas-diversas/{idReceitaDiversa}/lancamentos": {
+      "bfc": "receitaDiversa.lancamentos",
+      "usos_producao": 69,
+      "via": "path"
+    },
+    "economicos|busca|/economicos/movimentacoes": {
+      "bfc": "economicos.movimentacoes",
+      "usos_producao": 64,
+      "via": "path"
+    },
+    "bairros|busca|/bairros": {
+      "bfc": "bairros",
+      "usos_producao": 62,
+      "via": "path"
+    },
+    "contador|busca|/contadores": {
+      "bfc": "contadores",
+      "usos_producao": 59,
+      "via": "path"
+    },
+    "manutencoesCalculos|busca|/manutencoes-calculos": {
+      "bfc": "manutencoesCalculos",
+      "usos_producao": 58,
+      "via": "path"
+    },
+    "termos-parcelamento|buscaComposicao|/termos-parcelamento/{nroParcelamento}/composicao": {
+      "bfc": "termoParcelamento.composicao",
+      "usos_producao": 54,
+      "via": "path"
+    },
+    "receitas|busca|/receitas": {
+      "bfc": "receitas",
+      "usos_producao": 52,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/{idContribuinte}/campos-adicionais": {
+      "bfc": "contribuinte.camposAdicionais",
+      "usos_producao": 49,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/campos-adicionais": {
+      "bfc": "contribuinte.camposAdicionais",
+      "usos_producao": 49,
+      "via": "path"
+    },
+    "receitas-diversas|busca|/receitas-diversas/{idReceitaDiversa}/campos-adicionais": {
+      "bfc": "receitaDiversa.camposAdicionais",
+      "usos_producao": 49,
+      "via": "path"
+    },
+    "imoveis|buscaCorresponsaveis|/imoveis/corresponsaveis": {
+      "bfc": "imovel.corresponsaveis",
+      "usos_producao": 48,
+      "via": "path"
+    },
+    "imoveis|buscaCorresponsaveisPorImovel|/imoveis/{idImovel}/corresponsaveis": {
+      "bfc": "imovel.corresponsaveis",
+      "usos_producao": 48,
+      "via": "path"
+    },
+    "integracoesContabeis|busca|/integracoes-contabeis": {
+      "bfc": "integracoesContabeis",
+      "usos_producao": 46,
+      "via": "path"
+    },
+    "contribuicaoMelhoriaImovel|busca|/contribuicoes-melhorias-imoveis": {
+      "bfc": "contribuicoesMelhoriasImoveis",
+      "usos_producao": 46,
+      "via": "path"
+    },
+    "notas-avulsas|busca|/notas-avulsas/{idNota}": {
+      "bfc": "notasAvulsas",
+      "usos_producao": 44,
+      "via": "path"
+    },
+    "notas-avulsas|busca|/notas-avulsas": {
+      "bfc": "notasAvulsas",
+      "usos_producao": 44,
+      "via": "path"
+    },
+    "dividas|busca|/dividas/debitos-inscritos": {
+      "bfc": "dividas.debitosInscritos",
+      "usos_producao": 42,
+      "via": "path"
+    },
+    "transferenciaImovel|busca|/transferencias-imoveis/venda": {
+      "bfc": "transferenciasImoveis.venda",
+      "usos_producao": 42,
+      "via": "path"
+    },
+    "debitos|buscaSimuladosReceitas|/debitos/simulados-receitas": {
+      "bfc": "debitos.simulados.receitas",
+      "usos_producao": 42,
+      "via": "path"
+    },
+    "Emissão de guias|busca|/emissao-guias/{protocoloEmissao}": {
+      "bfc": "emissaoGuias",
+      "usos_producao": 41,
+      "via": "path"
+    },
+    "Emissão de guias|busca|/emissao-guias": {
+      "bfc": "emissaoGuias",
+      "usos_producao": 41,
+      "via": "path"
+    },
+    "indexadores|busca|/indexadores/movimentacoes": {
+      "bfc": "indexadores.movimentacoes",
+      "usos_producao": 39,
+      "via": "path"
+    },
+    "termos-parcelamento|busca|/termos-parcelamento/{nroDocumento}": {
+      "bfc": "termoParcelamento",
+      "usos_producao": 39,
+      "via": "path"
+    },
+    "Alvaras|busca|/alvaras/{tipoAlvara}": {
+      "bfc": "alvara",
+      "usos_producao": 39,
+      "via": "path"
+    },
+    "integracaoContabil|busca|/integracoes-contabeis-detalhamentos": {
+      "bfc": "integracoesContabeisDetalhamentos",
+      "usos_producao": 36,
+      "via": "path"
+    },
+    "solicitacaoTransferenciaImovel|busca|/solicitacoes-transferencias-imoveis": {
+      "bfc": "solicitacaoTransferenciaImovel",
+      "usos_producao": 36,
+      "via": "path"
+    },
+    "economicos|busca|/economicos/{idEconomico}/servicos": {
+      "bfc": "economico.servicos",
+      "usos_producao": 35,
+      "via": "path"
+    },
+    "notificacoes-dividas|busca|/notificacoes-dividas/{idDivida}/receitas": {
+      "bfc": "notificacaoDivida.receitas",
+      "usos_producao": 35,
+      "via": "path"
+    },
+    "horariosFuncionamento|busca|/horarios-funcionamento/dias": {
+      "bfc": "horariosFuncionamento.dias",
+      "usos_producao": 32,
+      "via": "path"
+    },
+    "Documentos|busca|/documentos": {
+      "bfc": "documentos",
+      "usos_producao": 31,
+      "via": "path"
+    },
+    "obras|busca|/obras/{idObra}/responsaveis-tecnicos": {
+      "bfc": "obra.responsaveistecnicos",
+      "usos_producao": 30,
+      "via": "path"
+    },
+    "certidoes-itbi|busca|/certidoes-itbi/{ano}/{nroDocumento}": {
+      "bfc": "certidaoITBI",
+      "usos_producao": 30,
+      "via": "path"
+    },
+    "camposAdicionais|busca|/campos-adicionais": {
+      "bfc": "camposAdicionais",
+      "usos_producao": 29,
+      "via": "path"
+    },
+    "dividas|busca|/dividas/com-acrescimos": {
+      "bfc": "dividas.comAcrescimo",
+      "usos_producao": 29,
+      "via": "path"
+    },
+    "notificacoesDividas|busca|/notificacao-divida": {
+      "bfc": "notificacoesDividas",
+      "usos_producao": 29,
+      "via": "path"
+    },
+    "notificacoes-dividas|busca|/notificacoes-dividas": {
+      "bfc": "notificacoesDividas",
+      "usos_producao": 29,
+      "via": "path"
+    },
+    "notificacoes-dividas|busca|/notificacoes-dividas/{idsDividas}": {
+      "bfc": "notificacoesDividas",
+      "usos_producao": 29,
+      "via": "path"
+    },
+    "Secoes|busca|/secoes": {
+      "bfc": "secoes",
+      "usos_producao": 29,
+      "via": "path"
+    },
+    "Lista de Cnaes|busca|/cnaes": {
+      "bfc": "cnaes",
+      "usos_producao": 27,
+      "via": "path"
+    },
+    "manutencoesCalculos|busca|/manutencoes-calculos/lancamentos": {
+      "bfc": "manutencoesCalculos.lancamentos",
+      "usos_producao": 27,
+      "via": "path"
+    },
+    "notificacoes-dividas|busca|/notificacoes-dividas/{idDivida}/atividades": {
+      "bfc": "notificacaoDivida.atividades",
+      "usos_producao": 26,
+      "via": "path"
+    },
+    "notificacoes-dividas|busca|/notificacoes-dividas/{idDivida}/servicos": {
+      "bfc": "notificacaoDivida.servicos",
+      "usos_producao": 26,
+      "via": "path"
+    },
+    "municipios|busca|/municipios": {
+      "bfc": "municipios",
+      "usos_producao": 25,
+      "via": "path"
+    },
+    "parcelamentos|buscaParcelasTaxas|/parcelamentos/parcelas/taxas": {
+      "bfc": "parcelamentos.parcelas.taxas",
+      "usos_producao": 25,
+      "via": "path"
+    },
+    "CalculoTributarioController|busca|/calculos-tributarios": {
+      "bfc": "calculosTributarios",
+      "usos_producao": 25,
+      "via": "path"
+    },
+    "certidoes-itbi|buscaVendas|/certidoes-itbi/{ano}/{nroDocumento}/item/{idItem}/vendas": {
+      "bfc": "certidaoITBI.item.vendas",
+      "usos_producao": 25,
+      "via": "path"
+    },
+    "ErroCalculoController|busca|/erros-calculos-tributarios": {
+      "bfc": "errosCalculosTributarios",
+      "usos_producao": 25,
+      "via": "path"
+    },
+    "obras|busca|/obras/responsaveis-tecnicos/{idResponsavelTecnico}/atividades": {
+      "bfc": "obra.responsaveistecnicos.atividades",
+      "usos_producao": 24,
+      "via": "path"
+    },
+    "receitas-diversas|busca|/receitas-diversas/lancamentos/{idReceitaDiversaLancamento}/receitas": {
+      "bfc": "receitaDiversa.lancamento.receitas",
+      "usos_producao": 24,
+      "via": "path"
+    },
+    "solicitacaoTransferenciaImovel|busca|/solicitacoes-transferencias-imoveis/itens": {
+      "bfc": "solicitacaoTransferenciaImovel.itens",
+      "usos_producao": 23,
+      "via": "path"
+    },
+    "transferenciaImovel|busca|/transferencias-imoveis/{idTransferenciaImoveis}/processos": {
+      "bfc": "transferenciaImoveis.processos",
+      "usos_producao": 23,
+      "via": "path"
+    },
+    "certidoes-itbi|buscaItens|/certidoes-itbi/{ano}/{nroDocumento}/itens": {
+      "bfc": "certidaoITBI.itens",
+      "usos_producao": 21,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/{idContribuinte}/socios": {
+      "bfc": "contribuinte.socios",
+      "usos_producao": 20,
+      "via": "path"
+    },
+    "contribuinte|buscaSocios|/contribuintes/socios": {
+      "bfc": "contribuinte.socios",
+      "usos_producao": 20,
+      "via": "path"
+    },
+    "guiasUnificadas|buscaComposicao|/guias-unificadas/{idGuiaUnificada}/composicao": {
+      "bfc": "guiaUnificada.composicao",
+      "usos_producao": 20,
+      "via": "path"
+    },
+    "pagamento|busca|/pagamentos/dividas": {
+      "bfc": "pagamentos.dividas",
+      "usos_producao": 19,
+      "via": "path"
+    },
+    "imoveis|buscaTransferencias|/imoveis/transferencias": {
+      "bfc": "imoveis.transferencias",
+      "usos_producao": 19,
+      "via": "path"
+    },
+    "atividadesEconomicas|busca|/atividades-economicas": {
+      "bfc": "atividadesEconomicas",
+      "usos_producao": 19,
+      "via": "path"
+    },
+    "economicos|busca|/economicos/historico": {
+      "bfc": "economicos.historico",
+      "usos_producao": 19,
+      "via": "path"
+    },
+    "manutencaoDeSaldos|busca|/manutencao-saldos": {
+      "bfc": "manutencao.saldos",
+      "usos_producao": 17,
+      "via": "path"
+    },
+    "certidoes-itbi|buscaProcessos|/certidoes-itbi/{ano}/{nroDocumento}/{idImovel}/processos": {
+      "bfc": "certidaoITBI.processos",
+      "usos_producao": 17,
+      "via": "path"
+    },
+    "notas-avulsas|busca|/notas-avulsas/{idNota}/servicos": {
+      "bfc": "notaAvulsa.servicos",
+      "usos_producao": 17,
+      "via": "path"
+    },
+    "integracaoContabil|busca|/integracoes-contabeis-dados-integrados": {
+      "bfc": "integracoesContabeisDadosIntegrados",
+      "usos_producao": 16,
+      "via": "path"
+    },
+    "integracoesContabeis|cria|/integracoes-contabeis/{idIntegracaoContabil}/dados-integrados/{protocoloExecucao}": {
+      "bfc": "integracoesContabeisDadosIntegrados",
+      "usos_producao": 16,
+      "via": "path"
+    },
+    "configGeracaoParcelas|busca|/configGeracaoParcelas": {
+      "bfc": "configGeracaoParcelas",
+      "usos_producao": 15,
+      "via": "path"
+    },
+    "Alvaras|busca|/alvaras/{tipoAlvara}/{ano}/{nroDocumento}/atividades": {
+      "bfc": "alvara.atividades",
+      "usos_producao": 15,
+      "via": "path"
+    },
+    "manutencoesCalculos|busca|/manutencoes-calculos/lancamentos/v2": {
+      "bfc": "manutencoesCalculos.lancamentos.v2",
+      "usos_producao": 14,
+      "via": "path"
+    },
+    "solicitacaoTransferenciaImovel|busca|/solicitacoes-transferencias-imoveis/pareceres": {
+      "bfc": "solicitacaoTransferenciaImovel.pareceres",
+      "usos_producao": 14,
+      "via": "path"
+    },
+    "Secoes|busca|/secoes/{idSecao}/campos-adicionais": {
+      "bfc": "secao.camposAdicionais",
+      "usos_producao": 13,
+      "via": "path"
+    },
+    "Manutenção de pagamentos|busca|/manutencao-pagamentos": {
+      "bfc": "manutencao.pagamentos",
+      "usos_producao": 13,
+      "via": "path"
+    },
+    "notificacoes-debitos|busca|/notificacoes-debitos": {
+      "bfc": "notificacoesDebitos",
+      "usos_producao": 13,
+      "via": "path"
+    },
+    "notificacoes-debitos|busca|/notificacoes-debitos/{idsDebitos}": {
+      "bfc": "notificacoesDebitos",
+      "usos_producao": 13,
+      "via": "path"
+    },
+    "Números de baixa|busca|/numeros-baixas/observacoes": {
+      "bfc": "numerosBaixaObservacoes",
+      "usos_producao": 13,
+      "via": "path"
+    },
+    "manutencoesCalculos|busca|/manutencoes-calculos/creditos-receitas": {
+      "bfc": "manutencoesCalculos.creditosReceitas",
+      "usos_producao": 12,
+      "via": "path"
+    },
+    "loteamentos|busca|/loteamentos": {
+      "bfc": "loteamentos",
+      "usos_producao": 12,
+      "via": "path"
+    },
+    "convenios|busca|/convenios/creditos": {
+      "bfc": "convenios.creditos",
+      "usos_producao": 12,
+      "via": "path"
+    },
+    "pagamento|busca|/pagamentos/debitos": {
+      "bfc": "pagamentos.debitos",
+      "usos_producao": 11,
+      "via": "path"
+    },
+    "obras|busca|/obras/responsaveis-execucao": {
+      "bfc": "obra.responsaveisExecucao",
+      "usos_producao": 11,
+      "via": "path"
+    },
+    "integracaoContabil|busca|/integracoes-contabeis-receitas": {
+      "bfc": "integracoesContabeisReceitas",
+      "usos_producao": 11,
+      "via": "path"
+    },
+    "simulacaoParcelamento|busca|/simulacao-parcelamento": {
+      "bfc": "simulacaoParcelamento",
+      "usos_producao": 11,
+      "via": "path"
+    },
+    "condominios|busca|/condominios": {
+      "bfc": "condominios",
+      "usos_producao": 11,
+      "via": "path"
+    },
+    "encerramento-mensal|buscaPorAno|/encerramento-mensal/{ano}": {
+      "bfc": "encerramentoMensal",
+      "usos_producao": 10,
+      "via": "path"
+    },
+    "encerramento-mensal|buscaPorCompetencia|/encerramento-mensal/{ano}/{mes}": {
+      "bfc": "encerramentoMensal",
+      "usos_producao": 10,
+      "via": "path"
+    },
+    "agrupamento-campo-adicional|busca|/agrupamento-campo-adicional": {
+      "bfc": "agrupamentoCampoAdicional",
+      "usos_producao": 9,
+      "via": "path"
+    },
+    "parcelamentos|buscaComposicoesAgrupadas|/parcelamentos/composicoes/agrupadas": {
+      "bfc": "parcelamentos.composicoes.agrupadas",
+      "usos_producao": 9,
+      "via": "path"
+    },
+    "dividas|busca|/dividas/sinteticas": {
+      "bfc": "dividas.sinteticas",
+      "usos_producao": 9,
+      "via": "path"
+    },
+    "certidoes-itbi|buscaImoveis|/certidoes-itbi/{ano}/{nroDocumento}/imoveis": {
+      "bfc": "certidaoITBI.imoveis",
+      "usos_producao": 9,
+      "via": "path"
+    },
+    "certidoes-itbi|buscaVendas|/certidoes-itbi/{ano}/{nroDocumento}/{idImovel}/vendas": {
+      "bfc": "certidaoITBI.vendas",
+      "usos_producao": 9,
+      "via": "path"
+    },
+    "obras|busca|/obras/{idObra}/movimentacoes": {
+      "bfc": "obra.movimentacoes",
+      "usos_producao": 9,
+      "via": "path"
+    },
+    "imoveis|buscaCampoAdicionalImoveis|/imoveis/campos-adicionais/titulos": {
+      "bfc": "imoveis.camposAdicionais.titulos",
+      "usos_producao": 8,
+      "via": "path"
+    },
+    "parcelamentos|buscaTaxas|/parcelamentos/taxas": {
+      "bfc": "parcelamentos.taxas",
+      "usos_producao": 7,
+      "via": "path"
+    },
+    "termos-parcelamento|buscaParcelas|/termos-parcelamento/{nroParcelamento}/parcelas": {
+      "bfc": "termoParcelamento.parcelas",
+      "usos_producao": 7,
+      "via": "path"
+    },
+    "certidoes-itbi|buscaProcessosImovelRural|/certidoes-itbi/{ano}/{nroDocumento}/processosImovelRural": {
+      "bfc": "certidaoITBI.processosImovelRural",
+      "usos_producao": 7,
+      "via": "path"
+    },
+    "beneficioFiscal|busca|/beneficios-fiscais": {
+      "bfc": "beneficiosFiscais",
+      "usos_producao": 7,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/maiores-devedores": {
+      "bfc": "maioresDevedores",
+      "usos_producao": 7,
+      "via": "tipo_retorno"
+    },
+    "motivo|busca|/motivos": {
+      "bfc": "motivos",
+      "usos_producao": 7,
+      "via": "path"
+    },
+    "imoveis|buscaBeneficioFiscal|/imoveis/{idImovel}/beneficios": {
+      "bfc": "imovel.beneficioFiscal",
+      "usos_producao": 6,
+      "via": "tipo_retorno"
+    },
+    "obras|busca|/obras/{idObra}/construtoras": {
+      "bfc": "obra.construtoras",
+      "usos_producao": 6,
+      "via": "path"
+    },
+    "manutencoesCalculos|busca|/manutencoes-calculos/creditos-tributarios": {
+      "bfc": "manutencoesCalculos.creditosTributarios",
+      "usos_producao": 6,
+      "via": "path"
+    },
+    "Habitese|busca|/habitese/{ano}/{nroDocumento}": {
+      "bfc": "habitese",
+      "usos_producao": 6,
+      "via": "path"
+    },
+    "Habitese|busca|/habitese/{idObra}": {
+      "bfc": "habitese",
+      "usos_producao": 6,
+      "via": "path"
+    },
+    "naturezaJuridica|busca|/naturezas-juridica": {
+      "bfc": "naturezasJuridicas",
+      "usos_producao": 5,
+      "via": "path"
+    },
+    "Emissão de guias|busca|/emissao-guias/{protocoloEmissao}/imoveis-endereco": {
+      "bfc": "emissaoGuias.imoveisEndereco",
+      "usos_producao": 5,
+      "via": "path"
+    },
+    "horariosFuncionamento|busca|/horarios-funcionamento": {
+      "bfc": "horariosFuncionamento",
+      "usos_producao": 4,
+      "via": "path"
+    },
+    "CalculoTributarioController|busca|/calculos-tributarios/campos-adicionais": {
+      "bfc": "calculosTributarios.camposAdicionais",
+      "usos_producao": 4,
+      "via": "path"
+    },
+    "obras|busca|/obras/sisobra-novo": {
+      "bfc": "obras.sisobra.novo",
+      "usos_producao": 4,
+      "via": "path"
+    },
+    "pagamento|busca|/pagamentos/resumido": {
+      "bfc": "pagamentos.resumido",
+      "usos_producao": 4,
+      "via": "path"
+    },
+    "pagamento|busca|/pagamentos/parcelamentos": {
+      "bfc": "pagamentos.parcelamentos",
+      "usos_producao": 4,
+      "via": "path"
+    },
+    "parcelamentos|buscaCreditos|/parcelamentos/creditos": {
+      "bfc": "parcelamentos.creditos",
+      "usos_producao": 3,
+      "via": "path"
+    },
+    "economicos|busca|/economicos/prepostos": {
+      "bfc": "economicos.prepostos",
+      "usos_producao": 3,
+      "via": "path"
+    },
+    "certidaoDeBaixaDeAtividades|busca|/certidoes-baixa-atividade/{ano}/{nroDocumento}": {
+      "bfc": "certidaoBaixaAtividade",
+      "usos_producao": 3,
+      "via": "path"
+    },
+    "Cartorios|busca|/cartorios": {
+      "bfc": "cartorios",
+      "usos_producao": 3,
+      "via": "path"
+    },
+    "TransparenciaTributosArrecadacoes|busca|/transparencia-tributos-arrecadacoes": {
+      "bfc": "TransparenciaTributosArrecadacoes",
+      "usos_producao": 3,
+      "via": "path"
+    },
+    "configAcrescimos|busca|/configuracoes/acrescimos": {
+      "bfc": "configuracoes.acrescimos",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "imobiliarias|busca|/imobiliarias": {
+      "bfc": "imobiliarias",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "solicitacaoTransferenciaImovel|busca|/solicitacoes-transferencias-imoveis/compras": {
+      "bfc": "solicitacaoTransferenciaImovel.compras",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "solicitacaoTransferenciaImovel|busca|/solicitacoes-transferencias-imoveis/vendas": {
+      "bfc": "solicitacaoTransferenciaImovel.vendas",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "distritos|busca|/distritos": {
+      "bfc": "distritos",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "competencias|busca|/competencias": {
+      "bfc": "competencias",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "agrupamentos|busca|/agrupamentos": {
+      "bfc": "agrupamentos",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "resumoValores|busca|/resumo-valores": {
+      "bfc": "resumoValores",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "condominios|busca|/condominios/{idCondominio}/imoveis": {
+      "bfc": "condominios.imoveis",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "esfingeProcesso|busca|/esfinge/processos": {
+      "bfc": "esfinge.processo",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "esfingeProcesso|cria|/esfinge/processos": {
+      "bfc": "esfinge.processo",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "integracoesContabeis|cria|/integracoes-contabeis/{idIntegracaoContabil}/historico": {
+      "bfc": "integracoescontabeis.historico",
+      "usos_producao": 2,
+      "via": "path"
+    },
+    "Emissão de guias|busca|/emissao-guias/{protocoloEmissao}/contribuintes": {
+      "bfc": "emissaoGuias.contribuintes",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "informacoesBaixa|busca|/informacoesbaixa": {
+      "bfc": "informacoesBaixa",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "dividas|busca|/dividas/receitas/simplificadas": {
+      "bfc": "dividas.receitas.simplificadas",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "contribuicaoMelhoria|busca|/contribuicoes-melhorias": {
+      "bfc": "contribuicoesMelhorias",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "sinteseLancamentos|busca|/sintese-lancamentos": {
+      "bfc": "sinteseLancamentos",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "notificacoes-debitos|busca|/notificacoes-debitos/{idDebito}/receitas": {
+      "bfc": "notificacaoDebito.receitas",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "debitos|busca|/debitos/{idDebito}/detalhes": {
+      "bfc": "debito.detalhes",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "imoveis|busca|/imoveis/movimentacoes/inscricao-imobiliaria": {
+      "bfc": "imoveis.movimentacoesInscricaoImobiliaria",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "esfinge|busca|/esfinge/dividas-nao-enviadas/{competencia}": {
+      "bfc": "esfingeDividasNaoEnviadas",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "IncentivoFiscalTransparencia|busca|/incentivo-fiscal-transparencia": {
+      "bfc": "IncentivoFiscalTransparencia",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "IncentivoFiscalTransparencia|busca|/incentivo-fiscal-transparencia/{id}": {
+      "bfc": "IncentivoFiscalTransparencia",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "indexadores|busca|/indexadores": {
+      "bfc": "indexadores",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "esfinge|busca|/esfinge/dados-base-validacao-revisao/{ano}/{mes}": {
+      "bfc": "esfingeDadosBaseValidacaoRevisao",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "esfinge|busca|/esfinge/range-validacao-revisao/{competencia}": {
+      "bfc": "esfingeRangeValidacaoRevisao",
+      "usos_producao": 1,
+      "via": "path"
+    },
+    "contribuinte|busca|/contribuintes/maiores-devedores-debitos": {
+      "bfc": "maioresdevedores.debitos",
+      "usos_producao": 1,
+      "via": "tipo_retorno"
+    }
+  },
+  "rest_para_bfc": {
+    "dividas": {
+      "bfc": "dividas",
+      "usos_producao": 928
+    },
+    "pagamento": {
+      "bfc": "pagamentos",
+      "usos_producao": 474
+    },
+    "parcelamentos": {
+      "bfc": "parcelamentos",
+      "usos_producao": 284
+    },
+    "lancamentos": {
+      "bfc": "lancamentos",
+      "usos_producao": 267
+    },
+    "convenios": {
+      "bfc": "convenios",
+      "usos_producao": 224
+    },
+    "tabelasAuxiliares": {
+      "bfc": "tabelasAuxiliares",
+      "usos_producao": 176
+    },
+    "creditosTributarios": {
+      "bfc": "creditosTributarios",
+      "usos_producao": 170
+    },
+    "logradouros": {
+      "bfc": "logradouros",
+      "usos_producao": 128
+    },
+    "enderecoCorrespondencia": {
+      "bfc": "enderecoCorrespondencia",
+      "usos_producao": 109
+    },
+    "PlantasValores": {
+      "bfc": "plantaValores",
+      "usos_producao": 79
+    },
+    "certidoes-negativas": {
+      "bfc": "certidaoNegativa",
+      "usos_producao": 70
+    },
+    "bairros": {
+      "bfc": "bairros",
+      "usos_producao": 62
+    },
+    "contador": {
+      "bfc": "contadores",
+      "usos_producao": 59
+    },
+    "manutencoesCalculos": {
+      "bfc": "manutencoesCalculos",
+      "usos_producao": 58
+    },
+    "termos-parcelamento": {
+      "bfc": "termoParcelamento",
+      "usos_producao": 39
+    },
+    "receitas": {
+      "bfc": "receitas",
+      "usos_producao": 52
+    },
+    "contribuicaoMelhoriaImovel": {
+      "bfc": "contribuicoesMelhoriasImoveis",
+      "usos_producao": 46
+    },
+    "Emissão de guias": {
+      "bfc": "emissaoGuias",
+      "usos_producao": 41
+    },
+    "indexadores": {
+      "bfc": "indexadores",
+      "usos_producao": 1
+    },
+    "Alvaras": {
+      "bfc": "alvara",
+      "usos_producao": 39
+    },
+    "solicitacaoTransferenciaImovel": {
+      "bfc": "solicitacaoTransferenciaImovel",
+      "usos_producao": 36
+    },
+    "horariosFuncionamento": {
+      "bfc": "horariosFuncionamento",
+      "usos_producao": 4
+    },
+    "Documentos": {
+      "bfc": "documentos",
+      "usos_producao": 31
+    },
+    "certidoes-itbi": {
+      "bfc": "certidaoITBI",
+      "usos_producao": 30
+    },
+    "camposAdicionais": {
+      "bfc": "camposAdicionais",
+      "usos_producao": 29
+    },
+    "notificacoesDividas": {
+      "bfc": "notificacoesDividas",
+      "usos_producao": 29
+    },
+    "Lista de Cnaes": {
+      "bfc": "cnaes",
+      "usos_producao": 27
+    },
+    "municipios": {
+      "bfc": "municipios",
+      "usos_producao": 25
+    },
+    "CalculoTributarioController": {
+      "bfc": "calculosTributarios",
+      "usos_producao": 25
+    },
+    "ErroCalculoController": {
+      "bfc": "errosCalculosTributarios",
+      "usos_producao": 25
+    },
+    "atividadesEconomicas": {
+      "bfc": "atividadesEconomicas",
+      "usos_producao": 19
+    },
+    "manutencaoDeSaldos": {
+      "bfc": "manutencao.saldos",
+      "usos_producao": 17
+    },
+    "configGeracaoParcelas": {
+      "bfc": "configGeracaoParcelas",
+      "usos_producao": 15
+    },
+    "Manutenção de pagamentos": {
+      "bfc": "manutencao.pagamentos",
+      "usos_producao": 13
+    },
+    "loteamentos": {
+      "bfc": "loteamentos",
+      "usos_producao": 12
+    },
+    "simulacaoParcelamento": {
+      "bfc": "simulacaoParcelamento",
+      "usos_producao": 11
+    },
+    "condominios": {
+      "bfc": "condominios",
+      "usos_producao": 11
+    },
+    "encerramento-mensal": {
+      "bfc": "encerramentoMensal",
+      "usos_producao": 10
+    },
+    "agrupamento-campo-adicional": {
+      "bfc": "agrupamentoCampoAdicional",
+      "usos_producao": 9
+    },
+    "beneficioFiscal": {
+      "bfc": "beneficiosFiscais",
+      "usos_producao": 7
+    },
+    "motivo": {
+      "bfc": "motivos",
+      "usos_producao": 7
+    },
+    "Habitese": {
+      "bfc": "habitese",
+      "usos_producao": 6
+    },
+    "naturezaJuridica": {
+      "bfc": "naturezasJuridicas",
+      "usos_producao": 5
+    },
+    "certidaoDeBaixaDeAtividades": {
+      "bfc": "certidaoBaixaAtividade",
+      "usos_producao": 3
+    },
+    "Cartorios": {
+      "bfc": "cartorios",
+      "usos_producao": 3
+    },
+    "TransparenciaTributosArrecadacoes": {
+      "bfc": "TransparenciaTributosArrecadacoes",
+      "usos_producao": 3
+    },
+    "configAcrescimos": {
+      "bfc": "configuracoes.acrescimos",
+      "usos_producao": 2
+    },
+    "imobiliarias": {
+      "bfc": "imobiliarias",
+      "usos_producao": 2
+    },
+    "distritos": {
+      "bfc": "distritos",
+      "usos_producao": 2
+    },
+    "competencias": {
+      "bfc": "competencias",
+      "usos_producao": 2
+    },
+    "agrupamentos": {
+      "bfc": "agrupamentos",
+      "usos_producao": 2
+    },
+    "resumoValores": {
+      "bfc": "resumoValores",
+      "usos_producao": 2
+    },
+    "esfingeProcesso": {
+      "bfc": "esfinge.processo",
+      "usos_producao": 2
+    },
+    "informacoesBaixa": {
+      "bfc": "informacoesBaixa",
+      "usos_producao": 1
+    },
+    "contribuicaoMelhoria": {
+      "bfc": "contribuicoesMelhorias",
+      "usos_producao": 1
+    },
+    "sinteseLancamentos": {
+      "bfc": "sinteseLancamentos",
+      "usos_producao": 1
+    },
+    "IncentivoFiscalTransparencia": {
+      "bfc": "IncentivoFiscalTransparencia",
+      "usos_producao": 1
+    }
+  },
+  "bfc_para_rest": {
+    "imoveis": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/imoveis"
+      ],
+      "via": "path",
+      "usos_producao": 1760
+    },
+    "debitos": {
+      "rest": [
+        "debitos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/debitos"
+      ],
+      "via": "path",
+      "usos_producao": 1021
+    },
+    "dividas": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas"
+      ],
+      "via": "path",
+      "usos_producao": 928
+    },
+    "economicos": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos"
+      ],
+      "via": "path",
+      "usos_producao": 830
+    },
+    "contribuintes": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes"
+      ],
+      "via": "path",
+      "usos_producao": 806
+    },
+    "pagamentos": {
+      "rest": [
+        "pagamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/pagamentos"
+      ],
+      "via": "path",
+      "usos_producao": 474
+    },
+    "imovel.camposAdicionais": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaCamposAdicionais",
+        "buscarCampos",
+        "preenche"
+      ],
+      "paths": [
+        "/imoveis/campos-adicionais",
+        "/imoveis/{idImovel}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 446
+    },
+    "contribuinte.enderecos": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/enderecos",
+        "/contribuintes/{idContribuinte}/enderecos"
+      ],
+      "via": "path",
+      "usos_producao": 418
+    },
+    "imoveis.camposAdicionais": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaCamposAdicionais",
+        "buscarCampos",
+        "preenche"
+      ],
+      "paths": [
+        "/imoveis/campos-adicionais",
+        "/imoveis/{idImovel}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 407
+    },
+    "imovel.campoAdicional": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaCamposAdicionais",
+        "buscarCampos",
+        "preenche"
+      ],
+      "paths": [
+        "/imoveis/campos-adicionais",
+        "/imoveis/{idImovel}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 397
+    },
+    "numerosBaixa": {
+      "rest": [
+        "Números de baixa"
+      ],
+      "operacoes": [
+        "altera",
+        "busca"
+      ],
+      "paths": [
+        "/numeros-baixas",
+        "/numeros-baixas/{nroBaixa}"
+      ],
+      "via": "path",
+      "usos_producao": 363
+    },
+    "parcelamentos.parcelas": {
+      "rest": [
+        "parcelamentos"
+      ],
+      "operacoes": [
+        "buscaParcelas"
+      ],
+      "paths": [
+        "/parcelamentos/parcelas"
+      ],
+      "via": "path",
+      "usos_producao": 346
+    },
+    "parcelamentos": {
+      "rest": [
+        "parcelamentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/parcelamentos"
+      ],
+      "via": "path",
+      "usos_producao": 284
+    },
+    "lancamentos": {
+      "rest": [
+        "lancamentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/lancamentos"
+      ],
+      "via": "path",
+      "usos_producao": 267
+    },
+    "debitos.receitas": {
+      "rest": [
+        "debitos"
+      ],
+      "operacoes": [
+        "buscaDebitoReceitas",
+        "buscaReceitas"
+      ],
+      "paths": [
+        "/debitos/receitas",
+        "/debitos/{idDebito}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 258
+    },
+    "parcelamentos.composicoes": {
+      "rest": [
+        "parcelamentos"
+      ],
+      "operacoes": [
+        "buscaComposicoes"
+      ],
+      "paths": [
+        "/parcelamentos/composicoes"
+      ],
+      "via": "path",
+      "usos_producao": 239
+    },
+    "economico.camposAdicionais": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "buscaCamposAdicionais"
+      ],
+      "paths": [
+        "/economicos/{idEconomico}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 232
+    },
+    "contribuinte.telefones": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/{idContribuinte}/telefones"
+      ],
+      "via": "path",
+      "usos_producao": 224
+    },
+    "convenios": {
+      "rest": [
+        "convenios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/convenios"
+      ],
+      "via": "path",
+      "usos_producao": 224
+    },
+    "receitasDiversas": {
+      "rest": [
+        "receitas-diversas"
+      ],
+      "operacoes": [
+        "busca",
+        "criar"
+      ],
+      "paths": [
+        "/receitas-diversas"
+      ],
+      "via": "path",
+      "usos_producao": 193
+    },
+    "transferenciasImoveis.itens": {
+      "rest": [
+        "transferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/transferencias-imoveis/itens"
+      ],
+      "via": "path",
+      "usos_producao": 186
+    },
+    "tabelasAuxiliares": {
+      "rest": [
+        "tabelasAuxiliares"
+      ],
+      "operacoes": [
+        "busca",
+        "cria"
+      ],
+      "paths": [
+        "/tabelas-auxiliares"
+      ],
+      "via": "path",
+      "usos_producao": 176
+    },
+    "creditosTributarios": {
+      "rest": [
+        "creditosTributarios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/creditos-tributarios"
+      ],
+      "via": "path",
+      "usos_producao": 170
+    },
+    "imovel.proprietarios": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaProprietarios"
+      ],
+      "paths": [
+        "/imoveis/proprietarios",
+        "/imoveis/{idImovel}/proprietarios"
+      ],
+      "via": "path",
+      "usos_producao": 168
+    },
+    "dividas.receitas": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas/receitas",
+        "/dividas/{idDivida}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 164
+    },
+    "esfinge": {
+      "rest": [
+        "esfinge"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/esfinge"
+      ],
+      "via": "path",
+      "usos_producao": 146
+    },
+    "obras": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras"
+      ],
+      "via": "path",
+      "usos_producao": 142
+    },
+    "obra.camposAdicionais": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras/{idObra}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 139
+    },
+    "transferenciasImoveis": {
+      "rest": [
+        "transferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/transferencias-imoveis"
+      ],
+      "via": "path",
+      "usos_producao": 136
+    },
+    "creditosTributarios.receitas": {
+      "rest": [
+        "creditosTributarios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/creditos-tributarios/receitas",
+        "/creditos-tributarios/{idCredito}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 130
+    },
+    "logradouros": {
+      "rest": [
+        "logradouros"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/logradouros"
+      ],
+      "via": "path",
+      "usos_producao": 128
+    },
+    "imovel.englobados": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaEnglobados"
+      ],
+      "paths": [
+        "/imoveis/{idImovel}/englobados"
+      ],
+      "via": "path",
+      "usos_producao": 111
+    },
+    "enderecoCorrespondencia": {
+      "rest": [
+        "enderecoCorrespondencia"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/endereco-correspondencia"
+      ],
+      "via": "path",
+      "usos_producao": 109
+    },
+    "contribuintes.enderecos": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/enderecos",
+        "/contribuintes/{idContribuinte}/enderecos"
+      ],
+      "via": "path",
+      "usos_producao": 109
+    },
+    "dividas.movimentacoes": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas/movimentacoes"
+      ],
+      "via": "path",
+      "usos_producao": 105
+    },
+    "lancamentos.receitas": {
+      "rest": [
+        "lancamentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/lancamentos/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 101
+    },
+    "transferenciasImoveis.compra": {
+      "rest": [
+        "transferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/transferencias-imoveis/compra"
+      ],
+      "via": "path",
+      "usos_producao": 100
+    },
+    "imovel.testadas": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaTestadas"
+      ],
+      "paths": [
+        "/imoveis/{idImovel}/testadas"
+      ],
+      "via": "path",
+      "usos_producao": 94
+    },
+    "economico.atividades": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos/atividades",
+        "/economicos/{idEconomico}/atividades"
+      ],
+      "via": "path",
+      "usos_producao": 92
+    },
+    "economicos.atividades": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos/atividades",
+        "/economicos/{idEconomico}/atividades"
+      ],
+      "via": "path",
+      "usos_producao": 86
+    },
+    "debitos.simulados": {
+      "rest": [
+        "debitos"
+      ],
+      "operacoes": [
+        "buscaSimulados"
+      ],
+      "paths": [
+        "/debitos/simulados"
+      ],
+      "via": "path",
+      "usos_producao": 81
+    },
+    "plantaValores": {
+      "rest": [
+        "PlantasValores"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/planta-valores"
+      ],
+      "via": "path",
+      "usos_producao": 79
+    },
+    "guiaUnificada": {
+      "rest": [
+        "guiasUnificadas"
+      ],
+      "operacoes": [
+        "busca",
+        "buscaUnica"
+      ],
+      "paths": [
+        "/guias-unificadas",
+        "/guias-unificadas/{idGuiaUnificada}"
+      ],
+      "via": "path",
+      "usos_producao": 76
+    },
+    "imoveis.historico": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/imoveis/historico"
+      ],
+      "via": "path",
+      "usos_producao": 75
+    },
+    "contribuinte.emails": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/{idContribuinte}/emails"
+      ],
+      "via": "path",
+      "usos_producao": 74
+    },
+    "certidaoNegativa": {
+      "rest": [
+        "certidoes-negativas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/certidoes-negativas"
+      ],
+      "via": "path",
+      "usos_producao": 70
+    },
+    "imoveis.movimentacoes": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/imoveis/movimentacoes"
+      ],
+      "via": "path",
+      "usos_producao": 70
+    },
+    "receitaDiversa.lancamentos": {
+      "rest": [
+        "receitas-diversas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/receitas-diversas/{idReceitaDiversa}/lancamentos"
+      ],
+      "via": "path",
+      "usos_producao": 69
+    },
+    "divida.receitas": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas/receitas",
+        "/dividas/{idDivida}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 65
+    },
+    "economicos.movimentacoes": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos/movimentacoes"
+      ],
+      "via": "path",
+      "usos_producao": 64
+    },
+    "bairros": {
+      "rest": [
+        "bairros"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/bairros"
+      ],
+      "via": "path",
+      "usos_producao": 62
+    },
+    "contadores": {
+      "rest": [
+        "contador"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contadores"
+      ],
+      "via": "path",
+      "usos_producao": 59
+    },
+    "manutencoesCalculos": {
+      "rest": [
+        "manutencoesCalculos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/manutencoes-calculos"
+      ],
+      "via": "path",
+      "usos_producao": 58
+    },
+    "termoParcelamento.composicao": {
+      "rest": [
+        "termos-parcelamento"
+      ],
+      "operacoes": [
+        "buscaComposicao"
+      ],
+      "paths": [
+        "/termos-parcelamento/{nroParcelamento}/composicao"
+      ],
+      "via": "path",
+      "usos_producao": 54
+    },
+    "receitas": {
+      "rest": [
+        "receitas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 52
+    },
+    "contribuinte.camposAdicionais": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/campos-adicionais",
+        "/contribuintes/{idContribuinte}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 49
+    },
+    "receitaDiversa.camposAdicionais": {
+      "rest": [
+        "receitas-diversas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/receitas-diversas/{idReceitaDiversa}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 49
+    },
+    "imovel.corresponsaveis": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaCorresponsaveis",
+        "buscaCorresponsaveisPorImovel"
+      ],
+      "paths": [
+        "/imoveis/corresponsaveis",
+        "/imoveis/{idImovel}/corresponsaveis"
+      ],
+      "via": "path",
+      "usos_producao": 48
+    },
+    "integracoesContabeis": {
+      "rest": [
+        "integracoesContabeis"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/integracoes-contabeis"
+      ],
+      "via": "path",
+      "usos_producao": 46
+    },
+    "contribuicoesMelhoriasImoveis": {
+      "rest": [
+        "contribuicaoMelhoriaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuicoes-melhorias-imoveis"
+      ],
+      "via": "path",
+      "usos_producao": 46
+    },
+    "notasAvulsas": {
+      "rest": [
+        "notas-avulsas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notas-avulsas",
+        "/notas-avulsas/{idNota}"
+      ],
+      "via": "path",
+      "usos_producao": 44
+    },
+    "dividas.debitosInscritos": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas/debitos-inscritos"
+      ],
+      "via": "path",
+      "usos_producao": 42
+    },
+    "transferenciasImoveis.venda": {
+      "rest": [
+        "transferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/transferencias-imoveis/venda"
+      ],
+      "via": "path",
+      "usos_producao": 42
+    },
+    "debitos.simulados.receitas": {
+      "rest": [
+        "debitos"
+      ],
+      "operacoes": [
+        "buscaSimuladosReceitas"
+      ],
+      "paths": [
+        "/debitos/simulados-receitas"
+      ],
+      "via": "path",
+      "usos_producao": 42
+    },
+    "notaAvulsa": {
+      "rest": [
+        "notas-avulsas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notas-avulsas",
+        "/notas-avulsas/{idNota}"
+      ],
+      "via": "path",
+      "usos_producao": 42
+    },
+    "emissaoGuias": {
+      "rest": [
+        "Emissão de guias"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/emissao-guias",
+        "/emissao-guias/{protocoloEmissao}"
+      ],
+      "via": "path",
+      "usos_producao": 41
+    },
+    "indexadores.movimentacoes": {
+      "rest": [
+        "indexadores"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/indexadores/movimentacoes"
+      ],
+      "via": "path",
+      "usos_producao": 39
+    },
+    "termoParcelamento": {
+      "rest": [
+        "termos-parcelamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/termos-parcelamento/{nroDocumento}"
+      ],
+      "via": "path",
+      "usos_producao": 39
+    },
+    "alvara": {
+      "rest": [
+        "Alvaras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/alvaras/{tipoAlvara}"
+      ],
+      "via": "path",
+      "usos_producao": 39
+    },
+    "integracoesContabeisDetalhamentos": {
+      "rest": [
+        "integracaoContabil"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/integracoes-contabeis-detalhamentos"
+      ],
+      "via": "path",
+      "usos_producao": 36
+    },
+    "solicitacaoTransferenciaImovel": {
+      "rest": [
+        "solicitacaoTransferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/solicitacoes-transferencias-imoveis"
+      ],
+      "via": "path",
+      "usos_producao": 36
+    },
+    "economico.servicos": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos/{idEconomico}/servicos"
+      ],
+      "via": "path",
+      "usos_producao": 35
+    },
+    "notificacaoDivida.receitas": {
+      "rest": [
+        "notificacoes-dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacoes-dividas/{idDivida}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 35
+    },
+    "imoveis.corresponsaveis": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaCorresponsaveis",
+        "buscaCorresponsaveisPorImovel"
+      ],
+      "paths": [
+        "/imoveis/corresponsaveis",
+        "/imoveis/{idImovel}/corresponsaveis"
+      ],
+      "via": "path",
+      "usos_producao": 32
+    },
+    "horariosFuncionamento.dias": {
+      "rest": [
+        "horariosFuncionamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/horarios-funcionamento/dias"
+      ],
+      "via": "path",
+      "usos_producao": 32
+    },
+    "documentos": {
+      "rest": [
+        "Documentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/documentos"
+      ],
+      "via": "path",
+      "usos_producao": 31
+    },
+    "obra.responsaveistecnicos": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras/{idObra}/responsaveis-tecnicos"
+      ],
+      "via": "path",
+      "usos_producao": 30
+    },
+    "certidaoITBI": {
+      "rest": [
+        "certidoes-itbi"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/certidoes-itbi/{ano}/{nroDocumento}"
+      ],
+      "via": "path",
+      "usos_producao": 30
+    },
+    "camposAdicionais": {
+      "rest": [
+        "camposAdicionais"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 29
+    },
+    "dividas.comAcrescimo": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas/com-acrescimos"
+      ],
+      "via": "path",
+      "usos_producao": 29
+    },
+    "notificacoesDividas": {
+      "rest": [
+        "notificacoes-dividas",
+        "notificacoesDividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacao-divida",
+        "/notificacoes-dividas",
+        "/notificacoes-dividas/{idsDividas}"
+      ],
+      "via": "path",
+      "usos_producao": 29
+    },
+    "secoes": {
+      "rest": [
+        "Secoes"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/secoes"
+      ],
+      "via": "path",
+      "usos_producao": 29
+    },
+    "cnaes": {
+      "rest": [
+        "Lista de Cnaes"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/cnaes"
+      ],
+      "via": "path",
+      "usos_producao": 27
+    },
+    "manutencoesCalculos.lancamentos": {
+      "rest": [
+        "manutencoesCalculos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/manutencoes-calculos/lancamentos"
+      ],
+      "via": "path",
+      "usos_producao": 27
+    },
+    "notificacaoDivida.atividades": {
+      "rest": [
+        "notificacoes-dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacoes-dividas/{idDivida}/atividades"
+      ],
+      "via": "path",
+      "usos_producao": 26
+    },
+    "notificacaoDivida.servicos": {
+      "rest": [
+        "notificacoes-dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacoes-dividas/{idDivida}/servicos"
+      ],
+      "via": "path",
+      "usos_producao": 26
+    },
+    "municipios": {
+      "rest": [
+        "municipios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/municipios"
+      ],
+      "via": "path",
+      "usos_producao": 25
+    },
+    "parcelamentos.parcelas.taxas": {
+      "rest": [
+        "parcelamentos"
+      ],
+      "operacoes": [
+        "buscaParcelasTaxas"
+      ],
+      "paths": [
+        "/parcelamentos/parcelas/taxas"
+      ],
+      "via": "path",
+      "usos_producao": 25
+    },
+    "calculosTributarios": {
+      "rest": [
+        "CalculoTributarioController"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/calculos-tributarios"
+      ],
+      "via": "path",
+      "usos_producao": 25
+    },
+    "certidaoITBI.item.vendas": {
+      "rest": [
+        "certidoes-itbi"
+      ],
+      "operacoes": [
+        "buscaVendas"
+      ],
+      "paths": [
+        "/certidoes-itbi/{ano}/{nroDocumento}/item/{idItem}/vendas"
+      ],
+      "via": "path",
+      "usos_producao": 25
+    },
+    "errosCalculosTributarios": {
+      "rest": [
+        "ErroCalculoController"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/erros-calculos-tributarios"
+      ],
+      "via": "path",
+      "usos_producao": 25
+    },
+    "obra.responsaveistecnicos.atividades": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras/responsaveis-tecnicos/{idResponsavelTecnico}/atividades"
+      ],
+      "via": "path",
+      "usos_producao": 24
+    },
+    "receitaDiversa.lancamento.receitas": {
+      "rest": [
+        "receitas-diversas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/receitas-diversas/lancamentos/{idReceitaDiversaLancamento}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 24
+    },
+    "solicitacaoTransferenciaImovel.itens": {
+      "rest": [
+        "solicitacaoTransferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/solicitacoes-transferencias-imoveis/itens"
+      ],
+      "via": "path",
+      "usos_producao": 23
+    },
+    "transferenciaImoveis.processos": {
+      "rest": [
+        "transferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/transferencias-imoveis/{idTransferenciaImoveis}/processos"
+      ],
+      "via": "path",
+      "usos_producao": 23
+    },
+    "notificacoes.dividas": {
+      "rest": [
+        "notificacoes-dividas",
+        "notificacoesDividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacao-divida",
+        "/notificacoes-dividas",
+        "/notificacoes-dividas/{idsDividas}"
+      ],
+      "via": "path",
+      "usos_producao": 23
+    },
+    "guiasUnificadas": {
+      "rest": [
+        "guiasUnificadas"
+      ],
+      "operacoes": [
+        "busca",
+        "buscaUnica"
+      ],
+      "paths": [
+        "/guias-unificadas",
+        "/guias-unificadas/{idGuiaUnificada}"
+      ],
+      "via": "path",
+      "usos_producao": 22
+    },
+    "notificacao.divida": {
+      "rest": [
+        "notificacoes-dividas",
+        "notificacoesDividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacao-divida",
+        "/notificacoes-dividas",
+        "/notificacoes-dividas/{idsDividas}"
+      ],
+      "via": "path",
+      "usos_producao": 22
+    },
+    "certidaoITBI.itens": {
+      "rest": [
+        "certidoes-itbi"
+      ],
+      "operacoes": [
+        "buscaItens"
+      ],
+      "paths": [
+        "/certidoes-itbi/{ano}/{nroDocumento}/itens"
+      ],
+      "via": "path",
+      "usos_producao": 21
+    },
+    "contribuinte.socios": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca",
+        "buscaSocios"
+      ],
+      "paths": [
+        "/contribuintes/socios",
+        "/contribuintes/{idContribuinte}/socios"
+      ],
+      "via": "path",
+      "usos_producao": 20
+    },
+    "guiaUnificada.composicao": {
+      "rest": [
+        "guiasUnificadas"
+      ],
+      "operacoes": [
+        "buscaComposicao"
+      ],
+      "paths": [
+        "/guias-unificadas/{idGuiaUnificada}/composicao"
+      ],
+      "via": "path",
+      "usos_producao": 20
+    },
+    "pagamentos.dividas": {
+      "rest": [
+        "pagamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/pagamentos/dividas"
+      ],
+      "via": "path",
+      "usos_producao": 19
+    },
+    "contribuintes.socios": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca",
+        "buscaSocios"
+      ],
+      "paths": [
+        "/contribuintes/socios",
+        "/contribuintes/{idContribuinte}/socios"
+      ],
+      "via": "path",
+      "usos_producao": 19
+    },
+    "imoveis.transferencias": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaTransferencias"
+      ],
+      "paths": [
+        "/imoveis/transferencias"
+      ],
+      "via": "path",
+      "usos_producao": 19
+    },
+    "atividadesEconomicas": {
+      "rest": [
+        "atividadesEconomicas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/atividades-economicas"
+      ],
+      "via": "path",
+      "usos_producao": 19
+    },
+    "economicos.historico": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos/historico"
+      ],
+      "via": "path",
+      "usos_producao": 19
+    },
+    "contribuinte.campoAdicional": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/campos-adicionais",
+        "/contribuintes/{idContribuinte}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 19
+    },
+    "manutencao.saldos": {
+      "rest": [
+        "manutencaoDeSaldos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/manutencao-saldos"
+      ],
+      "via": "path",
+      "usos_producao": 17
+    },
+    "debito.receita": {
+      "rest": [
+        "debitos"
+      ],
+      "operacoes": [
+        "buscaDebitoReceitas",
+        "buscaReceitas"
+      ],
+      "paths": [
+        "/debitos/receitas",
+        "/debitos/{idDebito}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 17
+    },
+    "certidaoITBI.processos": {
+      "rest": [
+        "certidoes-itbi"
+      ],
+      "operacoes": [
+        "buscaProcessos"
+      ],
+      "paths": [
+        "/certidoes-itbi/{ano}/{nroDocumento}/{idImovel}/processos"
+      ],
+      "via": "path",
+      "usos_producao": 17
+    },
+    "notaAvulsa.servicos": {
+      "rest": [
+        "notas-avulsas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notas-avulsas/{idNota}/servicos"
+      ],
+      "via": "path",
+      "usos_producao": 17
+    },
+    "integracoesContabeisDadosIntegrados": {
+      "rest": [
+        "integracaoContabil",
+        "integracoesContabeis"
+      ],
+      "operacoes": [
+        "busca",
+        "cria"
+      ],
+      "paths": [
+        "/integracoes-contabeis-dados-integrados",
+        "/integracoes-contabeis/{idIntegracaoContabil}/dados-integrados/{protocoloExecucao}"
+      ],
+      "via": "path",
+      "usos_producao": 16
+    },
+    "configGeracaoParcelas": {
+      "rest": [
+        "configGeracaoParcelas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/configGeracaoParcelas"
+      ],
+      "via": "path",
+      "usos_producao": 15
+    },
+    "alvara.atividades": {
+      "rest": [
+        "Alvaras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/alvaras/{tipoAlvara}/{ano}/{nroDocumento}/atividades"
+      ],
+      "via": "path",
+      "usos_producao": 15
+    },
+    "manutencoesCalculos.lancamentos.v2": {
+      "rest": [
+        "manutencoesCalculos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/manutencoes-calculos/lancamentos/v2"
+      ],
+      "via": "path",
+      "usos_producao": 14
+    },
+    "solicitacaoTransferenciaImovel.pareceres": {
+      "rest": [
+        "solicitacaoTransferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/solicitacoes-transferencias-imoveis/pareceres"
+      ],
+      "via": "path",
+      "usos_producao": 14
+    },
+    "secao.camposAdicionais": {
+      "rest": [
+        "Secoes"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/secoes/{idSecao}/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 13
+    },
+    "manutencao.pagamentos": {
+      "rest": [
+        "Manutenção de pagamentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/manutencao-pagamentos"
+      ],
+      "via": "path",
+      "usos_producao": 13
+    },
+    "notificacoesDebitos": {
+      "rest": [
+        "notificacoes-debitos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacoes-debitos",
+        "/notificacoes-debitos/{idsDebitos}"
+      ],
+      "via": "path",
+      "usos_producao": 13
+    },
+    "creditotributario.receitas": {
+      "rest": [
+        "creditosTributarios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/creditos-tributarios/receitas",
+        "/creditos-tributarios/{idCredito}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 13
+    },
+    "numerosBaixaObservacoes": {
+      "rest": [
+        "Números de baixa"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/numeros-baixas/observacoes"
+      ],
+      "via": "path",
+      "usos_producao": 13
+    },
+    "manutencoesCalculos.creditosReceitas": {
+      "rest": [
+        "manutencoesCalculos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/manutencoes-calculos/creditos-receitas"
+      ],
+      "via": "path",
+      "usos_producao": 12
+    },
+    "loteamentos": {
+      "rest": [
+        "loteamentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/loteamentos"
+      ],
+      "via": "path",
+      "usos_producao": 12
+    },
+    "convenios.creditos": {
+      "rest": [
+        "convenios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/convenios/creditos"
+      ],
+      "via": "path",
+      "usos_producao": 12
+    },
+    "numeroBaixa": {
+      "rest": [
+        "Números de baixa"
+      ],
+      "operacoes": [
+        "altera",
+        "busca"
+      ],
+      "paths": [
+        "/numeros-baixas",
+        "/numeros-baixas/{nroBaixa}"
+      ],
+      "via": "path",
+      "usos_producao": 11
+    },
+    "pagamentos.debitos": {
+      "rest": [
+        "pagamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/pagamentos/debitos"
+      ],
+      "via": "path",
+      "usos_producao": 11
+    },
+    "obra.responsaveisExecucao": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras/responsaveis-execucao"
+      ],
+      "via": "path",
+      "usos_producao": 11
+    },
+    "integracoesContabeisReceitas": {
+      "rest": [
+        "integracaoContabil"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/integracoes-contabeis-receitas"
+      ],
+      "via": "path",
+      "usos_producao": 11
+    },
+    "notificacoes.debitos": {
+      "rest": [
+        "notificacoes-debitos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacoes-debitos",
+        "/notificacoes-debitos/{idsDebitos}"
+      ],
+      "via": "path",
+      "usos_producao": 11
+    },
+    "simulacaoParcelamento": {
+      "rest": [
+        "simulacaoParcelamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/simulacao-parcelamento"
+      ],
+      "via": "path",
+      "usos_producao": 11
+    },
+    "condominios": {
+      "rest": [
+        "condominios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/condominios"
+      ],
+      "via": "path",
+      "usos_producao": 11
+    },
+    "encerramentoMensal": {
+      "rest": [
+        "encerramento-mensal"
+      ],
+      "operacoes": [
+        "buscaPorAno",
+        "buscaPorCompetencia"
+      ],
+      "paths": [
+        "/encerramento-mensal/{ano}",
+        "/encerramento-mensal/{ano}/{mes}"
+      ],
+      "via": "path",
+      "usos_producao": 10
+    },
+    "agrupamentoCampoAdicional": {
+      "rest": [
+        "agrupamento-campo-adicional"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/agrupamento-campo-adicional"
+      ],
+      "via": "path",
+      "usos_producao": 9
+    },
+    "parcelamentos.composicoes.agrupadas": {
+      "rest": [
+        "parcelamentos"
+      ],
+      "operacoes": [
+        "buscaComposicoesAgrupadas"
+      ],
+      "paths": [
+        "/parcelamentos/composicoes/agrupadas"
+      ],
+      "via": "path",
+      "usos_producao": 9
+    },
+    "dividas.sinteticas": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas/sinteticas"
+      ],
+      "via": "path",
+      "usos_producao": 9
+    },
+    "certidaoITBI.imoveis": {
+      "rest": [
+        "certidoes-itbi"
+      ],
+      "operacoes": [
+        "buscaImoveis"
+      ],
+      "paths": [
+        "/certidoes-itbi/{ano}/{nroDocumento}/imoveis"
+      ],
+      "via": "path",
+      "usos_producao": 9
+    },
+    "certidaoITBI.vendas": {
+      "rest": [
+        "certidoes-itbi"
+      ],
+      "operacoes": [
+        "buscaVendas"
+      ],
+      "paths": [
+        "/certidoes-itbi/{ano}/{nroDocumento}/{idImovel}/vendas"
+      ],
+      "via": "path",
+      "usos_producao": 9
+    },
+    "obra.movimentacoes": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras/{idObra}/movimentacoes"
+      ],
+      "via": "path",
+      "usos_producao": 9
+    },
+    "imoveis.camposAdicionais.titulos": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaCampoAdicionalImoveis"
+      ],
+      "paths": [
+        "/imoveis/campos-adicionais/titulos"
+      ],
+      "via": "path",
+      "usos_producao": 8
+    },
+    "parcelamentos.taxas": {
+      "rest": [
+        "parcelamentos"
+      ],
+      "operacoes": [
+        "buscaTaxas"
+      ],
+      "paths": [
+        "/parcelamentos/taxas"
+      ],
+      "via": "path",
+      "usos_producao": 7
+    },
+    "termoParcelamento.parcelas": {
+      "rest": [
+        "termos-parcelamento"
+      ],
+      "operacoes": [
+        "buscaParcelas"
+      ],
+      "paths": [
+        "/termos-parcelamento/{nroParcelamento}/parcelas"
+      ],
+      "via": "path",
+      "usos_producao": 7
+    },
+    "certidaoITBI.processosImovelRural": {
+      "rest": [
+        "certidoes-itbi"
+      ],
+      "operacoes": [
+        "buscaProcessosImovelRural"
+      ],
+      "paths": [
+        "/certidoes-itbi/{ano}/{nroDocumento}/processosImovelRural"
+      ],
+      "via": "path",
+      "usos_producao": 7
+    },
+    "beneficiosFiscais": {
+      "rest": [
+        "beneficioFiscal"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/beneficios-fiscais"
+      ],
+      "via": "path",
+      "usos_producao": 7
+    },
+    "maioresDevedores": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/maiores-devedores"
+      ],
+      "via": "tipo_retorno",
+      "usos_producao": 7
+    },
+    "motivos": {
+      "rest": [
+        "motivo"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/motivos"
+      ],
+      "via": "path",
+      "usos_producao": 7
+    },
+    "receitaDiversa": {
+      "rest": [
+        "receitas-diversas"
+      ],
+      "operacoes": [
+        "busca",
+        "criar"
+      ],
+      "paths": [
+        "/receitas-diversas"
+      ],
+      "via": "path",
+      "usos_producao": 6
+    },
+    "imovel.beneficioFiscal": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaBeneficioFiscal"
+      ],
+      "paths": [
+        "/imoveis/{idImovel}/beneficios"
+      ],
+      "via": "tipo_retorno",
+      "usos_producao": 6
+    },
+    "obra.construtoras": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras/{idObra}/construtoras"
+      ],
+      "via": "path",
+      "usos_producao": 6
+    },
+    "manutencoesCalculos.creditosTributarios": {
+      "rest": [
+        "manutencoesCalculos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/manutencoes-calculos/creditos-tributarios"
+      ],
+      "via": "path",
+      "usos_producao": 6
+    },
+    "habitese": {
+      "rest": [
+        "Habitese"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/habitese/{ano}/{nroDocumento}",
+        "/habitese/{idObra}"
+      ],
+      "via": "path",
+      "usos_producao": 6
+    },
+    "naturezasJuridicas": {
+      "rest": [
+        "naturezaJuridica"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/naturezas-juridica"
+      ],
+      "via": "path",
+      "usos_producao": 5
+    },
+    "imoveis.proprietarios": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "buscaProprietarios"
+      ],
+      "paths": [
+        "/imoveis/proprietarios",
+        "/imoveis/{idImovel}/proprietarios"
+      ],
+      "via": "path",
+      "usos_producao": 5
+    },
+    "emissaoGuias.imoveisEndereco": {
+      "rest": [
+        "Emissão de guias"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/emissao-guias/{protocoloEmissao}/imoveis-endereco"
+      ],
+      "via": "path",
+      "usos_producao": 5
+    },
+    "horariosFuncionamento": {
+      "rest": [
+        "horariosFuncionamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/horarios-funcionamento"
+      ],
+      "via": "path",
+      "usos_producao": 4
+    },
+    "calculosTributarios.camposAdicionais": {
+      "rest": [
+        "CalculoTributarioController"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/calculos-tributarios/campos-adicionais"
+      ],
+      "via": "path",
+      "usos_producao": 4
+    },
+    "obras.sisobra.novo": {
+      "rest": [
+        "obras"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/obras/sisobra-novo"
+      ],
+      "via": "path",
+      "usos_producao": 4
+    },
+    "pagamentos.resumido": {
+      "rest": [
+        "pagamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/pagamentos/resumido"
+      ],
+      "via": "path",
+      "usos_producao": 4
+    },
+    "pagamentos.parcelamentos": {
+      "rest": [
+        "pagamento"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/pagamentos/parcelamentos"
+      ],
+      "via": "path",
+      "usos_producao": 4
+    },
+    "parcelamentos.creditos": {
+      "rest": [
+        "parcelamentos"
+      ],
+      "operacoes": [
+        "buscaCreditos"
+      ],
+      "paths": [
+        "/parcelamentos/creditos"
+      ],
+      "via": "path",
+      "usos_producao": 3
+    },
+    "economicos.prepostos": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos/prepostos"
+      ],
+      "via": "path",
+      "usos_producao": 3
+    },
+    "certidaoBaixaAtividade": {
+      "rest": [
+        "certidaoDeBaixaDeAtividades"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/certidoes-baixa-atividade/{ano}/{nroDocumento}"
+      ],
+      "via": "path",
+      "usos_producao": 3
+    },
+    "cartorios": {
+      "rest": [
+        "Cartorios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/cartorios"
+      ],
+      "via": "path",
+      "usos_producao": 3
+    },
+    "TransparenciaTributosArrecadacoes": {
+      "rest": [
+        "TransparenciaTributosArrecadacoes"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/transparencia-tributos-arrecadacoes"
+      ],
+      "via": "path",
+      "usos_producao": 3
+    },
+    "integracoescontabeis.dadosintegrados": {
+      "rest": [
+        "integracaoContabil",
+        "integracoesContabeis"
+      ],
+      "operacoes": [
+        "busca",
+        "cria"
+      ],
+      "paths": [
+        "/integracoes-contabeis-dados-integrados",
+        "/integracoes-contabeis/{idIntegracaoContabil}/dados-integrados/{protocoloExecucao}"
+      ],
+      "via": "path",
+      "usos_producao": 3
+    },
+    "configuracoes.acrescimos": {
+      "rest": [
+        "configAcrescimos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/configuracoes/acrescimos"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "transferenciaImoveis": {
+      "rest": [
+        "transferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/transferencias-imoveis"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "imobiliarias": {
+      "rest": [
+        "imobiliarias"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/imobiliarias"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "solicitacaoTransferenciaImovel.compras": {
+      "rest": [
+        "solicitacaoTransferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/solicitacoes-transferencias-imoveis/compras"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "solicitacaoTransferenciaImovel.vendas": {
+      "rest": [
+        "solicitacaoTransferenciaImovel"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/solicitacoes-transferencias-imoveis/vendas"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "distritos": {
+      "rest": [
+        "distritos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/distritos"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "competencias": {
+      "rest": [
+        "competencias"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/competencias"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "agrupamentos": {
+      "rest": [
+        "agrupamentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/agrupamentos"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "resumoValores": {
+      "rest": [
+        "resumoValores"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/resumo-valores"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "condominios.imoveis": {
+      "rest": [
+        "condominios"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/condominios/{idCondominio}/imoveis"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "esfinge.processo": {
+      "rest": [
+        "esfingeProcesso"
+      ],
+      "operacoes": [
+        "busca",
+        "cria"
+      ],
+      "paths": [
+        "/esfinge/processos"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "integracoescontabeis.historico": {
+      "rest": [
+        "integracoesContabeis"
+      ],
+      "operacoes": [
+        "cria"
+      ],
+      "paths": [
+        "/integracoes-contabeis/{idIntegracaoContabil}/historico"
+      ],
+      "via": "path",
+      "usos_producao": 2
+    },
+    "emissaoGuias.contribuintes": {
+      "rest": [
+        "Emissão de guias"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/emissao-guias/{protocoloEmissao}/contribuintes"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "informacoesBaixa": {
+      "rest": [
+        "informacoesBaixa"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/informacoesbaixa"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "dividas.receitas.simplificadas": {
+      "rest": [
+        "dividas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/dividas/receitas/simplificadas"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "contribuicoesMelhorias": {
+      "rest": [
+        "contribuicaoMelhoria"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuicoes-melhorias"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "economico": {
+      "rest": [
+        "economicos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/economicos"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "sinteseLancamentos": {
+      "rest": [
+        "sinteseLancamentos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/sintese-lancamentos"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "notificacaoDebito.receitas": {
+      "rest": [
+        "notificacoes-debitos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notificacoes-debitos/{idDebito}/receitas"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "notasAvulsasServicos": {
+      "rest": [
+        "notas-avulsas"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/notas-avulsas/{idNota}/servicos"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "debito.detalhes": {
+      "rest": [
+        "debitos"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/debitos/{idDebito}/detalhes"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "imoveis.movimentacoesInscricaoImobiliaria": {
+      "rest": [
+        "imoveis"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/imoveis/movimentacoes/inscricao-imobiliaria"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "esfingeDividasNaoEnviadas": {
+      "rest": [
+        "esfinge"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/esfinge/dividas-nao-enviadas/{competencia}"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "IncentivoFiscalTransparencia": {
+      "rest": [
+        "IncentivoFiscalTransparencia"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/incentivo-fiscal-transparencia",
+        "/incentivo-fiscal-transparencia/{id}"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "indexadores": {
+      "rest": [
+        "indexadores"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/indexadores"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "esfingeDadosBaseValidacaoRevisao": {
+      "rest": [
+        "esfinge"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/esfinge/dados-base-validacao-revisao/{ano}/{mes}"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "esfingeRangeValidacaoRevisao": {
+      "rest": [
+        "esfinge"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/esfinge/range-validacao-revisao/{competencia}"
+      ],
+      "via": "path",
+      "usos_producao": 1
+    },
+    "maioresdevedores.debitos": {
+      "rest": [
+        "contribuinte"
+      ],
+      "operacoes": [
+        "busca"
+      ],
+      "paths": [
+        "/contribuintes/maiores-devedores-debitos"
+      ],
+      "via": "tipo_retorno",
+      "usos_producao": 1
+    }
+  },
+  "sem_correspondencia": [
+    {
+      "nome_bfc": "tabelaAuxiliar.registros",
+      "usos": 889
+    },
+    {
+      "nome_bfc": "pagamentos.detalhes",
+      "usos": 268
+    },
+    {
+      "nome_bfc": "acrescimos.dividas",
+      "usos": 228
+    },
+    {
+      "nome_bfc": "guiasEmitidas",
+      "usos": 177
+    },
+    {
+      "nome_bfc": "acrescimos.debitos",
+      "usos": 176
+    },
+    {
+      "nome_bfc": "acrescimos.parcelamentos",
+      "usos": 87
+    },
+    {
+      "nome_bfc": "baixasAutomaticasHomologadasEstornadas",
+      "usos": 76
+    },
+    {
+      "nome_bfc": "parcelamentos.receitas",
+      "usos": 65
+    },
+    {
+      "nome_bfc": "baixaAutomaticaNaoHomologadas",
+      "usos": 62
+    },
+    {
+      "nome_bfc": "tabelascalculos.imoveis",
+      "usos": 45
+    },
+    {
+      "nome_bfc": "pagamentos.detalhes.valores",
+      "usos": 44
+    },
+    {
+      "nome_bfc": "notificacoesDividas.subLote",
+      "usos": 34
+    },
+    {
+      "nome_bfc": "certidaoITBI.vendas.detalhes",
+      "usos": 20
+    },
+    {
+      "nome_bfc": "logradouros.entidade",
+      "usos": 19
+    },
+    {
+      "nome_bfc": "economicosInfoComplementares",
+      "usos": 19
+    },
+    {
+      "nome_bfc": "contribuintes.historico",
+      "usos": 15
+    },
+    {
+      "nome_bfc": "bairros.entidade",
+      "usos": 10
+    },
+    {
+      "nome_bfc": "movimentacoesMEI",
+      "usos": 9
+    },
+    {
+      "nome_bfc": "acrescimos.dividas.historico",
+      "usos": 8
+    },
+    {
+      "nome_bfc": "simam.lancamentoCredito",
+      "usos": 6
+    },
+    {
+      "nome_bfc": "configuracoesImobiliarias",
+      "usos": 6
+    },
+    {
+      "nome_bfc": "obra.habitese",
+      "usos": 5
+    },
+    {
+      "nome_bfc": "simam.lancamentoCreditoSintetico",
+      "usos": 5
+    },
+    {
+      "nome_bfc": "pagamentos.detalhes.mensal",
+      "usos": 4
+    },
+    {
+      "nome_bfc": "manutencaoDeSaldos",
+      "usos": 4
+    },
+    {
+      "nome_bfc": "condicoesParcelamentos",
+      "usos": 4
+    },
+    {
+      "nome_bfc": "notificacoesDebitos.subLote",
+      "usos": 4
+    },
+    {
+      "nome_bfc": "servicos",
+      "usos": 4
+    },
+    {
+      "nome_bfc": "emissaoAlvara",
+      "usos": 3
+    },
+    {
+      "nome_bfc": "movimentacoesSimples",
+      "usos": 3
+    },
+    {
+      "nome_bfc": "imovel.averbacao",
+      "usos": 3
+    },
+    {
+      "nome_bfc": "contribuinte.camposAdicionais.multiplos",
+      "usos": 2
+    },
+    {
+      "nome_bfc": "simam.arrecadacaoCreditoEstornoSintetico",
+      "usos": 2
+    },
+    {
+      "nome_bfc": "simam.arrecadacaoCreditoSintetico",
+      "usos": 2
+    },
+    {
+      "nome_bfc": "simam.estornoAtualizacaoDividaAtivaSintetico",
+      "usos": 2
+    },
+    {
+      "nome_bfc": "simam",
+      "usos": 2
+    },
+    {
+      "nome_bfc": "emissaoCarnes",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "baixaAutomaticaPgtosNaoHomologadas",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "simam.inscricaoDividaAtivaSintetico",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "simam.arrecadacaoCredito",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "dividas.debitosInscritoscompl",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "esfingeAssunto6EstornoDescontosConcedidosLancamentosPgtos",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "esfingeAssunto6DescontosConcedidosLancamentosPgtos",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "simam.deducaoCreditoSintetico",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "simam.estornoDeducaoCreditoSintetico",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "simam.inscricaoDividaAtiva",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "simam.estornoLancamentoCreditoSintetico",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "englobamentos",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "tabelaAuxiliar.registro",
+      "usos": 1
+    },
+    {
+      "nome_bfc": "protocolos",
+      "usos": 1
+    }
+  ]
+}

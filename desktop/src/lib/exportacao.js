@@ -1,5 +1,5 @@
 // Gerador de Extensões — script de exportação de uma fonte do BFC-Script.
-// O modelo segue o script que já rodou em produção (docs/scripts-bfc/exporta-debitos-por-credito.groovy):
+// O modelo segue o script que já rodou em produção (biblioteca/_BIBLIOTECA/Templates/Exporta_Debitos_Completo_por_Credito_BASE.txt):
 // zip com JSONL (registro como a fonte devolveu — é o que a Checagem lê) e, opcional, CSV achatado para consulta.
 
 // "vazio ou zero": bases convertidas usam 0 no lugar de nulo em ids — procurar só por null perde metade

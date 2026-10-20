@@ -1,0 +1,221 @@
+// ---------------------------------------------------------------------------
+// Exporta dados do imóvel + campos adicionais (CSV)
+//
+// Campos adicionais exportados:
+//   ÁREA DO LOTE ............... numérico
+//   SITUACAO DO LOTE ........... opção
+//   TOPOGRAFIA ................. opção
+//   PEDOLOGIA .................. opção
+//   VALOR VENAL TERRITORIAL .... numérico
+//   VALOR VENAL PREDIAL ........ numérico
+//   VALOR VENAL DO IMÓVEL ...... numérico
+//   ÁREA DA EDIFICAÇÃO ......... numérico
+//   TIPO DE EDIFICAÇÃO, ALINHAMENTO, SITUAÇÃO, DISPOSIÇÃO, CONSERVAÇÃO,
+//   ESTRUTURA, COBERTURA, FORRO, INSTALAÇÃO ELÉTRICA, INSTALAÇÃO SANITÁRIA,
+//   PAREDES, PISO, REVESTIMENTO ....... opção
+//
+// Dados do imóvel: código, inscrição imobiliária, proprietário e bairro.
+//
+// Fontes usadas:
+//   Dados.tributos.v2.imoveis                  (GET /imoveis)
+//   Dados.tributos.v2.imoveis.camposAdicionais  (GET /imoveis/campos-adicionais)
+// ---------------------------------------------------------------------------
+
+// ============================ CONFIGURAÇÃO =================================
+
+// Ano dos campos adicionais.
+// Regra: de CADA campo, pega o ano mais recente em que ele tem valor.
+// Os campos do BCI costumam estar em 2026 e os valores venais no último ano
+// calculado (2025, enquanto o IPTU 2026 não rodar) — assim nada sai em branco.
+// A coluna "Anos utilizados" mostra de que anos vieram os valores da linha.
+//
+// ANO_MAXIMO: teto opcional, para fotografar um exercício específico.
+//   null -> sempre o mais recente
+//   2025 -> ignora o que foi gravado de 2026 em diante
+ANO_MAXIMO = null
+
+// Ano mais antigo a consultar. É só um limite de volume: quanto mais baixo,
+// mais registro trafega. Não afeta o resultado enquanto houver valor recente.
+ANO_MINIMO_BUSCA = 2020
+
+// Filtro dos imóveis (sintaxe de criterio da fonte 'imoveis').
+//   "situacao = 'ATIVADO'"   -> só imóveis ativos
+//   ""                       -> todos os imóveis
+FILTRO_IMOVEIS = "situacao = 'ATIVADO'"
+
+// Decimal com vírgula (Excel pt-BR). Coloque false para manter o ponto.
+DECIMAL_VIRGULA = true
+
+NOME_ARQUIVO = "imoveis_campos_adicionais.csv"
+
+// Quantos imóveis por consulta de campos adicionais.
+TAMANHO_LOTE = 200
+
+// Títulos EXATOS dos campos adicionais no cadastro do município.
+// Se em algum município o título estiver diferente (acento, abreviação),
+// ajuste aqui — a busca é por título exato.
+titulos = [
+  // --- terreno ---
+  "ÁREA DO LOTE",
+  "SITUACAO DO LOTE",
+  "TOPOGRAFIA",
+  "PEDOLOGIA",
+  // --- edificação ---
+  "ÁREA DA EDIFICAÇÃO",
+  "TIPO DE EDIFICAÇÃO",
+  "ALINHAMENTO",
+  "SITUAÇÃO",
+  "DISPOSIÇÃO",
+  "CONSERVAÇÃO",
+  "ESTRUTURA",
+  "COBERTURA",
+  "FORRO",
+  "INSTALAÇÃO ELÉTRICA",
+  "INSTALAÇÃO SANITÁRIA",
+  "PAREDES",
+  "PISO",
+  "REVESTIMENTO",
+  // --- valores ---
+  "VALOR VENAL TERRITORIAL",
+  "VALOR VENAL PREDIAL",
+  "VALOR VENAL DO IMÓVEL"
+]
+
+// Nomes das colunas no CSV, na MESMA ordem de 'titulos' (sem acento, para não
+// depender da conversão de acentuação na escrita do arquivo).
+cabecalhos = [
+  "AREA DO LOTE",
+  "SITUACAO DO LOTE",
+  "TOPOGRAFIA",
+  "PEDOLOGIA",
+  "AREA DA EDIFICACAO",
+  "TIPO DE EDIFICACAO",
+  "ALINHAMENTO",
+  "SITUACAO",
+  "DISPOSICAO",
+  "CONSERVACAO",
+  "ESTRUTURA",
+  "COBERTURA",
+  "FORRO",
+  "INSTALACAO ELETRICA",
+  "INSTALACAO SANITARIA",
+  "PAREDES",
+  "PISO",
+  "REVESTIMENTO",
+  "VALOR VENAL TERRITORIAL",
+  "VALOR VENAL PREDIAL",
+  "VALOR VENAL DO IMOVEL"
+]
+
+// ===========================================================================
+
+limpar = { valor ->
+  return valor == null ? "" : valor.toString().replace(";", " ").replace("\n", " ").trim()
+}
+
+// --- 1) Descobre quais imóveis entram na exportação ------------------------
+
+criterioImoveis = (FILTRO_IMOVEIS != null && FILTRO_IMOVEIS.trim() != "") ? FILTRO_IMOVEIS : "id > 0"
+
+ids = []
+Dados.tributos.v2.imoveis.busca(criterio: criterioImoveis, campos: "id").each { imovel ->
+  ids << imovel.id
+}
+
+// --- 2) Lê os campos adicionais SÓ desses imóveis, em lotes ----------------
+
+valores = [:]   // idImovel -> [ titulo : [ano: Integer, valor: String] ]
+
+filtroTitulos = "campoAdicional.titulo in ('${titulos.join("','")}')"
+filtroAno = " and ano >= ${ANO_MINIMO_BUSCA}"
+if (ANO_MAXIMO != null) {
+  filtroAno += " and ano <= ${ANO_MAXIMO}"
+}
+
+ids.collate(TAMANHO_LOTE).each { loteIds ->
+
+  criterioCampos = "idImovel in (${loteIds.join(',')}) and " + filtroTitulos + filtroAno
+
+  Dados.tributos.v2.imoveis.camposAdicionais.busca(
+    criterio: criterioCampos,
+    campos: "idImovel, ano, vlCampo, opcoes, texto, areaTexto, dhCampo, campoAdicional(titulo)"
+  ).each { campo ->
+
+    titulo = campo.campoAdicional.titulo
+    anoCampo = campo.ano ?: 0
+
+    // extrai o valor conforme o tipo do campo adicional
+    valor = ""
+    if (campo.opcoes != null && campo.opcoes.toString().trim() != "") {
+      valor = campo.opcoes.toString().trim()
+    } else if (campo.vlCampo != null) {
+      valor = campo.vlCampo.toString()
+      if (DECIMAL_VIRGULA) {
+        valor = valor.replace(".", ",")
+      }
+    } else if (campo.texto != null && campo.texto.toString().trim() != "") {
+      valor = campo.texto.toString().trim()
+    } else if (campo.areaTexto != null && campo.areaTexto.toString().trim() != "") {
+      valor = campo.areaTexto.toString().trim()
+    } else if (campo.dhCampo != null) {
+      valor = Datas.formatar(campo.dhCampo, "dd/MM/yyyy")
+    }
+
+    if (valores[campo.idImovel] == null) {
+      valores[campo.idImovel] = [:]
+    }
+
+    atual = valores[campo.idImovel][titulo]
+    // mantém sempre o registro do ano mais recente
+    if (atual == null || anoCampo >= atual.ano) {
+      valores[campo.idImovel][titulo] = [ano: anoCampo, valor: valor]
+    }
+  }
+}
+
+// --- 3) Percorre os imóveis e monta o CSV ----------------------------------
+
+arquivo = Arquivo.novo(NOME_ARQUIVO, 'csv', [delimitador: ';', entreAspas: 'N', encoding: 'iso-8859-1'])
+
+arquivo.escrever(
+  "Codigo do Imovel;Inscricao Imobiliaria;Proprietario;CPF/CNPJ;Bairro;" +
+  cabecalhos.join(';') + ";Anos utilizados"
+)
+arquivo.novaLinha()
+
+Dados.tributos.v2.imoveis.busca(
+  criterio: criterioImoveis,
+  ordenacao: "codigo asc",
+  campos: "id, codigo, inscricaoImobiliariaFormatada, inscricaoIncra, responsavel(nome, cpfCnpj), bairro(nome)"
+).each { imovel ->
+
+  campos = valores[imovel.id] ?: [:]
+
+  // anos de onde vieram os valores desta linha (podem ser diferentes entre si)
+  anosUsados = []
+  titulos.each { titulo ->
+    registro = campos[titulo]
+    if (registro != null && !anosUsados.contains(registro.ano)) {
+      anosUsados << registro.ano
+    }
+  }
+  anosUsados.sort()
+
+  linha = limpar(imovel.codigo) + ';' +
+          limpar(imovel.inscricaoImobiliariaFormatada ?: imovel.inscricaoIncra) + ';' +
+          limpar(imovel.responsavel?.nome) + ';' +
+          limpar(imovel.responsavel?.cpfCnpj) + ';' +
+          limpar(imovel.bairro?.nome)
+
+  titulos.each { titulo ->
+    registro = campos[titulo]
+    linha += ';' + (registro == null ? "" : registro.valor)
+  }
+
+  linha += ';' + anosUsados.reverse().join('/')
+
+  arquivo.escrever(linha)
+  arquivo.novaLinha()
+}
+
+Resultado.arquivo(arquivo)

@@ -1,0 +1,227 @@
+// Título            : Alvará de Localização e Funcionamento Provisório via F4 - BASE (template validado)
+// Uso                : Fonte dinâmica de relatório emitido pelo F4 (Gerenciador de Relatórios), sem alvará
+//                      cadastrado no sistema. Numera e registra cada emissão num Cadastro Geral (tabela auxiliar).
+//                      Validado em produção em 09/2026 (PM Placas). Ajustar:
+//                        - CODIGO_TABELA_CONTROLE (código do Cadastro Geral criado no município)
+//                        - o esquema/linha, se o jrxml do município usar outros campos
+//                      Ver "README - Alvara Provisorio F4 (Controle Tabela Auxiliar).md".
+//
+// Parâmetros (criar no relatório E vincular no botão FONTE DINÂMICA do relatório):
+//   economico       -> Lista simples dinâmica (Listagem de econômicos v2), valor = id
+//   primeiroHorario -> Caracter
+//   segundoHorario  -> Caracter
+//   terceiroHorario -> Caracter
+//   dataValidade    -> Data (obrigatório)
+//
+// Controle: cada emissão é registrada no Cadastro Geral CODIGO_TABELA_CONTROLE
+//   campo1 = Nº Alvará (Número, sequencial) | campo2 = Código do Econômico (Número) | campo3 = Nome do Econômico
+//   campo4 = Validade (dd/MM/yyyy)          | campo5/6/7 = Primeiro/Segundo/Terceiro Horário
+// Se o mesmo econômico já tiver alvará com a mesma validade, é reimpressão: usa o número já
+// gravado e não cria registro novo.
+
+FONTE = Dados.tributos.v2;
+
+enumerador = importar "enumerador";
+
+CODIGO_TABELA_CONTROLE = 14
+
+// Parametros
+p_idEconomico     = parametros.economico?.selecionado?.valor
+p_primeiroHorario = parametros.primeiroHorario?.valor ?: ''
+p_segundoHorario  = parametros.segundoHorario?.valor ?: ''
+p_terceiroHorario = parametros.terceiroHorario?.valor ?: ''
+p_dataValidade    = parametros.dataValidade?.valor
+
+esquema = [
+  ano: Esquema.inteiro,
+  dtEmissao: Esquema.data,
+  dtValidade: Esquema.data,
+  informacoesComplementares: Esquema.caracter,
+  nroDocumento: Esquema.inteiro,
+  tipoAlvara: Esquema.caracter,
+  idEconomico: Esquema.inteiro,
+  nomeContribuinte: Esquema.caracter,
+  cpfCnpj: Esquema.caracter,
+  nomeLogradouro: Esquema.caracter,
+  numero: Esquema.caracter,
+  complemento: Esquema.caracter,
+  cep: Esquema.caracter,
+  nomeBairro: Esquema.caracter,
+  nomeCidade: Esquema.caracter,
+  uf: Esquema.caracter,
+  nomeFantasia: Esquema.caracter,
+  tipoPessoa: enumerador.esquema,
+  informacoesAtividade: Esquema.caracter,
+  observacoes: Esquema.caracter,
+  inscricaoMunicipal: Esquema.caracter,
+  primeiroHorario: Esquema.caracter,
+  segundoHorario: Esquema.caracter,
+  terceiroHorario: Esquema.caracter,
+  atividades: Esquema.lista(Esquema.objeto([
+    cnae: Esquema.caracter,
+    descricaoCnae: Esquema.caracter
+  ]))
+];
+
+fonte = Dados.dinamico.v2.novo(esquema);
+
+// Validações dos parâmetros
+if (!p_idEconomico) {
+  suspender("Informe o econômico para emitir o alvará provisório.")
+}
+
+if (!p_primeiroHorario.trim() && !p_segundoHorario.trim() && !p_terceiroHorario.trim()) {
+  suspender("Informe ao menos um horário de funcionamento (Primeiro, Segundo ou Terceiro Horário).")
+}
+
+if (!p_dataValidade) {
+  suspender("Informe a data de validade do alvará provisório.")
+}
+
+if (p_dataValidade < Datas.hoje()) {
+  suspender("A data de validade (${p_dataValidade.format('dd/MM/yyyy')}) não pode ser anterior a hoje.")
+}
+
+validadeTexto = p_dataValidade.format('dd/MM/yyyy')
+
+// Econômico
+economico = FONTE.economicos.busca(
+  criterio: "id = ${p_idEconomico}",
+  campos: "id, codigo, nome, nomeFantasia, numero, complemento, cep, " +
+          "logradouro(nome, tipoLogradouroDescricao), bairro(nome), municipio(nome, uf), " +
+          "contribuinte(cpfCnpj, tipoPessoa, inscricaoMunicipal), horarioFuncionamento(descricao)",
+  primeiro: true
+);
+
+if (!economico?.id) {
+  suspender("Econômico não encontrado (id = ${p_idEconomico}).")
+}
+
+String formatarCep(String cep) {
+  if (!cep) return ''
+  cep = cep.replaceAll(/\D/, '')
+  return cep.replaceFirst(/(\d{5})(\d{3})/, '$1-$2')
+}
+
+def validaCpfCnpj(stringValidar) {
+  if (!stringValidar) return ''
+
+  stringValidar = stringValidar.replaceAll(/\D/, '')
+  tamanhoString = stringValidar.length()
+
+  cpfCnpj = stringValidar
+
+  if (tamanhoString == 11) {
+    cpfCnpj = "${stringValidar[0..2]}.${stringValidar[3..5]}.${stringValidar[6..8]}-${stringValidar[9..10]}"
+  } else if (tamanhoString == 14) {
+    cpfCnpj = "${stringValidar[0..1]}.${stringValidar[2..4]}.${stringValidar[5..7]}/${stringValidar[8..11]}-${stringValidar[12..13]}"
+  }
+
+  return cpfCnpj
+}
+
+// Atividades do econômico
+atividades = [];
+
+FONTE.economico.atividades.busca(parametros: ["idEconomico": economico.id]).each { item ->
+  if (item.situacao?.valor == 'DESATIVADO') return;
+
+  cnaeFormatado = ''
+  cnaeS = item.atividade?.codigoCnae ?: ''
+  tamanhoCnae = cnaeS.length()
+
+  switch(tamanhoCnae) {
+    case 3:
+    cnaeFormatado = cnaeS.subTexto(0,2)+"."+ cnaeS.subTexto(2,1)
+    break
+    case 5:
+    cnaeFormatado = cnaeS.subTexto(0,2)+"."+ cnaeS.subTexto(2,2)+"-"+cnaeS.subTexto(4,1)
+    break
+    case 7:
+    cnaeFormatado = cnaeS.subTexto(0,4)+"-"+ cnaeS.subTexto(4,1)+"/"+cnaeS.subTexto(5,2)
+    break
+    default:
+      cnaeFormatado = cnaeS
+    break
+  }
+
+  principal = item.principal?.valor ?: 'NAO'
+
+  descricao = item.descricaoPersonalizada
+  if (!descricao) descricao = item.atividade?.descricao
+
+  atividade = [
+    cnae: (principal == 'SIM') ? "${cnaeFormatado} (PRINCIPAL)" : cnaeFormatado,
+    descricaoCnae: descricao
+  ];
+
+  atividades << atividade
+}
+
+contribuinte = economico.contribuinte
+
+// Controle na tabela auxiliar (Cadastro Geral)
+fonteRegistros = FONTE.tabelaAuxiliar.registros
+
+registroExistente = fonteRegistros.busca(
+  criterio: "campo2int = ${economico.codigo} and campo4 = '${validadeTexto}'",
+  parametros: [codigoTabelaAuxiliar: CODIGO_TABELA_CONTROLE],
+  ordenacao: "campo1int desc",
+  primeiro: true
+)
+
+if (registroExistente?.id) {
+  nroAlvara = Numeros.inteiro(registroExistente.campo1)
+  println "Reimpressão: econômico ${economico.codigo} já possui o alvará provisório nº ${nroAlvara} com validade ${validadeTexto}."
+} else {
+  ultimoRegistro = fonteRegistros.busca(
+    parametros: [codigoTabelaAuxiliar: CODIGO_TABELA_CONTROLE],
+    ordenacao: "campo1int desc",
+    primeiro: true
+  )
+  nroAlvara = (ultimoRegistro?.campo1 ? Numeros.inteiro(ultimoRegistro.campo1) : 0) + 1
+
+  fonteRegistros.cria(parametros: [codigoTabelaAuxiliar: CODIGO_TABELA_CONTROLE], conteudo: [
+    campo1: nroAlvara.toString(),
+    campo2: economico.codigo.toString(),
+    campo3: economico.nome,
+    campo4: validadeTexto,
+    campo5: p_primeiroHorario,
+    campo6: p_segundoHorario,
+    campo7: p_terceiroHorario
+  ])
+  println "Registrado alvará provisório nº ${nroAlvara} para o econômico ${economico.codigo} (validade ${validadeTexto})."
+}
+
+linha = [
+  ano: Datas.ano(Datas.hoje()),
+  dtEmissao: Datas.hoje(),
+  dtValidade: p_dataValidade,
+  informacoesComplementares: '',
+  nroDocumento: nroAlvara,
+  tipoAlvara: 'PROVISORIO',
+  idEconomico: economico.codigo,
+  nomeContribuinte: economico.nome,
+  nomeFantasia: economico.nomeFantasia,
+  cpfCnpj: validaCpfCnpj(contribuinte?.cpfCnpj),
+  nomeLogradouro: [economico.logradouro?.tipoLogradouroDescricao, economico.logradouro?.nome].findAll { it }.join(' '),
+  numero: economico.numero,
+  complemento: economico.complemento,
+  cep: formatarCep(economico.cep),
+  nomeBairro: economico.bairro?.nome,
+  nomeCidade: economico.municipio?.nome,
+  uf: economico.municipio?.uf,
+  informacoesAtividade: atividades.collect { it.values().join(" - ") }.join(" | "),
+  tipoPessoa: contribuinte?.tipoPessoa ? enumerador.converter(contribuinte.tipoPessoa) : '',
+  observacoes: economico.horarioFuncionamento?.descricao ? "Observação: ${economico.horarioFuncionamento.descricao}" : '',
+  inscricaoMunicipal: contribuinte?.inscricaoMunicipal,
+  primeiroHorario: p_primeiroHorario,
+  segundoHorario: p_segundoHorario,
+  terceiroHorario: p_terceiroHorario,
+  atividades: atividades
+];
+
+println "linha: ${JSON.escrever(linha)}"
+fonte.inserirLinha(linha)
+
+return fonte;

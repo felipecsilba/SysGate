@@ -1,0 +1,104 @@
+// ORIGEM: Extraído e generalizado a partir de fórmulas reais idênticas (mesma
+// faixa de multa, mesmo % de juro diário) encontradas em:
+//   Formulas/Divida Ativa/*FORMULA_ACRESCIMO_DIVIDA_ATIVA*  (correção por UFM proporcional)
+//   Formulas/Debitos Gerais/*FORMULA_ACRESCIMO_DEBITO*      (correção por INPC acumulado mensal)
+//   Formulas/Parcelamentos/*FORMULA_ACRESCIMO_PARCELAMENTO* (correção por UFM proporcional)
+// Comparado entre Andradas, Divinópolis, Paulo Lopes, Major Vieira, Joaçaba e
+// outros — a estrutura (próximo dia útil -> correção -> juros -> multa por
+// faixa de dias) é praticamente idêntica em toda a base, só muda o índice
+// usado e a composição do valor base (receita.valor vs parcela.valor).
+//
+// USO: isso NÃO é uma função BFC-Script pronta pra colar (a linguagem de
+// Fórmula não tem "def"), é um MODELO/CHECKLIST pra copiar e ajustar em cada
+// FORMULA_ACRESCIMO_* novo, garantindo que os 3 blocos (correção/juros/multa)
+// sigam o mesmo padrão testado, em vez de reescrever do zero.
+
+//=================================================================
+// 1) PRÓXIMO DIA ÚTIL (idêntico nos 3 tipos)
+//=================================================================
+se (Utilitarios.ehFeriado(dataVencimento) > 0) {
+  dataVcto = Utilitarios.proximoDiaUtil(dataVencimento);
+} senao {
+  dataVcto = dataVencimento;
+}
+
+diferencaDias  = Datas.diferencaDias(dataVcto, dataBase);
+diferencaMeses = Datas.diferencaMeses(dataVcto, dataBase);
+
+//=================================================================
+// 2) CORREÇÃO — duas variantes encontradas na base, escolher uma:
+//=================================================================
+
+// --- Variante A: proporção direta de indexador (UFM) — usada em Dívida Ativa e Parcelamento
+valorIndexadorNoVencimento = Utilitarios.buscaValorDoIndexadorPorSiglaNumaDataEspecifica("UFM", dataVcto);
+valorIndexadorNoPagamento  = Utilitarios.buscaValorDoIndexadorPorSiglaNumaDataEspecifica("UFM", dataBase);
+
+percorrer(receitas) { receita ->
+  se(dataVcto < dataBase){
+    valorCorrecao = (receita.valor / valorIndexadorNoVencimento) * valorIndexadorNoPagamento - receita.valor;
+    receita.comCorrecao(Numeros.arredonda(valorCorrecao, 2));
+  }
+}
+
+// --- Variante B: índice acumulado mês a mês (ex. INPC) — usada em Débitos Gerais
+v_soma_idx = 1.00;
+percorrer(Utilitarios.buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo('INPC', dataVcto, dataBase).valor) { valor ->
+  v_soma_idx = Numeros.arredonda((((valor/100) + 1) * v_soma_idx), 7);
+}
+v_soma_idx = (v_soma_idx - 1);
+
+percorrer(receitas) { receita ->
+  se(dataVcto < dataBase){
+    valorCorrecao = ((receita.valor - receita.beneficio) * v_soma_idx);
+    receita.comCorrecao(Numeros.arredonda(valorCorrecao, 2));
+    se (receita.correcao < 0) { receita.comCorrecao(0); } // nunca corrige pra baixo
+  }
+}
+
+//=================================================================
+// 3) JUROS — 0,033% ao dia é o padrão mais comum na base (0.000333)
+//=================================================================
+percentualJuroEmDecimal = 0.000333;
+
+percorrer(receitas) { receita ->
+  se(dataVcto < dataBase){
+    valorReceita = (receita.valor + receita.correcao - receita.remissao - receita.anistiaTributo);
+    valorJuros = (diferencaDias * percentualJuroEmDecimal) * valorReceita;
+    receita.comJuro(Numeros.arredonda(valorJuros, 2));
+  }
+}
+
+//=================================================================
+// 4) MULTA — faixa por dias de atraso, padrão repetido em ~90% dos
+//    municípios da base (3% / 6% / 10% / 20%). CONFIRME com o Código
+//    Tributário do município antes de assumir que é igual aqui.
+//=================================================================
+percorrer(receitas) { receita ->
+  valorReceita = receita.valor + receita.correcao - receita.remissao - receita.anistiaTributo;
+
+  se(dataVcto < dataBase){
+    se (diferencaDias <= 20){
+      percentualMultaEmDecimal = 0.03
+    } senao {
+      se (diferencaDias <= 45){
+        percentualMultaEmDecimal = 0.06
+      } senao {
+        se (diferencaDias <= 90){
+          percentualMultaEmDecimal = 0.10
+        } senao {
+          percentualMultaEmDecimal = 0.20
+        }
+      }
+    }
+    valorMulta = valorReceita * percentualMultaEmDecimal;
+    receita.comMulta(Numeros.arredonda(valorMulta, 2));
+  }
+}
+
+//=================================================================
+// NOTA DE QUALIDADE: nos arquivos originais a condição de multa é escrita
+// como "se(diferencaDias > 20 && diferencaDias <= 45)" dentro de um "senao"
+// que já garante diferencaDias > 20 — o "&&" é redundante. Simplifiquei
+// acima para "se (diferencaDias <= 45)" (mesmo resultado, menos código,
+// menos chance de digitar o limite errado numa das duas pontas).
+//=================================================================

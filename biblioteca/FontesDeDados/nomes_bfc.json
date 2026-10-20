@@ -1,0 +1,2103 @@
+{
+  "imoveis": {
+    "usos": 1760,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - Ajusta Inscrição imobiliária.txt",
+      "Scripts/Andradas - Alteração no campo _Área Total Construída_.txt"
+    ]
+  },
+  "debitos": {
+    "usos": 1021,
+    "raiz": "debitos",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - API - altera situação da guia.txt",
+      "Scripts/Andradas - Atualiza Parcela Única.txt"
+    ]
+  },
+  "dividas": {
+    "usos": 928,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - 03 - REATIVA PARCELAMENTO DIVIDAS.txt",
+      "Scripts/Andradas - Altera Vencimento da Divida.txt"
+    ]
+  },
+  "tabelaAuxiliar.registros": {
+    "usos": 889,
+    "raiz": "tabelaAuxiliar",
+    "exemplos": [
+      "Scripts/Andradas - CNAES - [Eder].txt",
+      "Scripts/Andradas - CNAES2 - [Eder].txt",
+      "Scripts/Andradas - Importa Débitos.txt"
+    ]
+  },
+  "economicos": {
+    "usos": 830,
+    "raiz": "economicos",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - CNAES - [Eder].txt",
+      "Scripts/Andradas - Exporta economicos.txt"
+    ]
+  },
+  "contribuintes": {
+    "usos": 806,
+    "raiz": "contribuintes",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - Douglas Teste Filtro Receita Posicao Divida.txt",
+      "Scripts/Andradas - EXTRAÇÃO DA DIVIDA - MARCON.txt"
+    ]
+  },
+  "pagamentos": {
+    "usos": 474,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Andradas - Exporta pagamentos.txt",
+      "Scripts/Andradas - [ANDRADAS] Fonte duplicidade débitos.txt",
+      "Scripts/Andradas - [Consulta]-Pagamentos-Eder-Duplicado.txt"
+    ]
+  },
+  "imovel.camposAdicionais": {
+    "usos": 446,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Andradas - Atualiza Valor Venal.txt",
+      "Scripts/Andradas - CSV Cadastral dos Imóveis.txt",
+      "Scripts/Andradas - ExportaDados.txt"
+    ]
+  },
+  "contribuinte.enderecos": {
+    "usos": 418,
+    "raiz": "contribuinte",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] Certidão de Lançamento de Imóveis por Contribuinte.txt",
+      "Scripts/Andradas - [CSM] Fonte extrato do contribuinte.txt",
+      "Scripts/Andradas - [CSM] GUIA DE RECOLHIMENTO DE IPTU.txt"
+    ]
+  },
+  "imoveis.camposAdicionais": {
+    "usos": 407,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Andradas - BCI Fator Profundidade.txt",
+      "Scripts/Andradas - Exporta bci imóveis.txt",
+      "Scripts/Andradas - [CSM] GUIA DE RECOLHIMENTO DE IPTU.txt"
+    ]
+  },
+  "imovel.campoAdicional": {
+    "usos": 397,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Andradas - Alteração no campo _Área Total Construída_.txt",
+      "Scripts/Andradas - Atualiza Valor Venal.txt",
+      "Scripts/Andradas - BCI Fator Profundidade.txt"
+    ]
+  },
+  "numerosBaixa": {
+    "usos": 363,
+    "raiz": "numerosBaixa",
+    "exemplos": [
+      "Scripts/Andradas - Teste Evanio.txt",
+      "Scripts/Andradas - [MAYCON] - TESTE.txt",
+      "Scripts/Atibaia - 01 [Baixa Arquivo ZIP] DAM - FEBRABAN.txt"
+    ]
+  },
+  "parcelamentos.parcelas": {
+    "usos": 346,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - 02 - REATIVA ACORDOS PARCELAS.txt",
+      "Scripts/Andradas - EXPORTA PARCELAMENTOS PARA CONFERENCIA POR VALOR.txt"
+    ]
+  },
+  "parcelamentos": {
+    "usos": 284,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Andradas - 01 - REATIVA ACORDOS.txt",
+      "Scripts/Andradas - 02 - REATIVA ACORDOS PARCELAS.txt",
+      "Scripts/Andradas - 03 - REATIVA PARCELAMENTO DIVIDAS.txt"
+    ]
+  },
+  "pagamentos.detalhes": {
+    "usos": 268,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Andradas - SCRIPT - [PagDetalhados] [EDER].txt",
+      "Scripts/Andradas - [SCRIPT]- ConsultasIII-EDER.txt",
+      "Scripts/Andradas - [Script ]Pagtos Detalhados Débitos (3)[Eder].txt"
+    ]
+  },
+  "lancamentos": {
+    "usos": 267,
+    "raiz": "lancamentos",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] Certidão de Lançamento de Imóveis por Contribuinte.txt",
+      "Scripts/Atibaia - BTHSC-142406 - Atualiza Status Movimentações.txt",
+      "Scripts/Atibaia - Claudio Ids Lancamentos e debito.txt"
+    ]
+  },
+  "debitos.receitas": {
+    "usos": 258,
+    "raiz": "debitos",
+    "exemplos": [
+      "Scripts/Andradas - Exporta pagamentos.txt",
+      "Scripts/Andradas - [Script ]Pagtos Detalhados Débitos (3)[Eder].txt",
+      "Scripts/Andradas - [Script] - Consultas Eder.txt"
+    ]
+  },
+  "parcelamentos.composicoes": {
+    "usos": 239,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Andradas - 03 - REATIVA PARCELAMENTO DIVIDAS.txt",
+      "Scripts/Andradas - Douglas Teste Filtro Receita Posicao Divida.txt",
+      "Scripts/Andradas - [Andradas] Fonte posição dívida por receita.txt"
+    ]
+  },
+  "economico.camposAdicionais": {
+    "usos": 232,
+    "raiz": "economico",
+    "exemplos": [
+      "Scripts/Atibaia - Busca Econômicos com inscrição diferente do código.txt",
+      "Scripts/Atibaia - Economicos Divergentes.txt",
+      "Scripts/Atibaia - Edital de Lançamento - Em Desenvolvimento.txt"
+    ]
+  },
+  "acrescimos.dividas": {
+    "usos": 228,
+    "raiz": "acrescimos",
+    "exemplos": [
+      "Scripts/Andradas - Douglas Teste Filtro Receita Posicao Divida.txt",
+      "Scripts/Andradas - Fonte Listagem Contribuintes - Lançamentos em Aberto.txt",
+      "Scripts/Andradas - [ANDRADAS] Fonte dívidas canceladas e prescritas.txt"
+    ]
+  },
+  "contribuinte.telefones": {
+    "usos": 224,
+    "raiz": "contribuinte",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] GUIA DE RECOLHIMENTO DE IPTU.txt",
+      "Scripts/Andradas - [PMA] BB (Pix 2.0) Protocolo.txt",
+      "Scripts/Andradas - [PMA] BB (Pix 2.0).txt"
+    ]
+  },
+  "convenios": {
+    "usos": 224,
+    "raiz": "convenios",
+    "exemplos": [
+      "Scripts/Atibaia - Débito Automático (Baixa do arquivo).txt",
+      "Scripts/Atibaia - Débito Automático - Gerar Remessa.txt",
+      "Scripts/Atibaia - Fonte Pagamentos de Honorários - teste.txt"
+    ]
+  },
+  "receitasDiversas": {
+    "usos": 193,
+    "raiz": "receitasDiversas",
+    "exemplos": [
+      "Scripts/Andradas - [ANDRADAS] Fonte lançamento receitas diversas parcela única eliminada.txt",
+      "Scripts/Atibaia - Boletos em Aberto CSV.txt",
+      "Scripts/Atibaia - PARCELAMENTOS - {'identificador'_ 'CRIACAO', 'tipo'_ 'NATUREZA', 'compartilhado'_ False} - [PMA] - BLOQUEIA PARCELAMENTO DE IMÓVEIS (DATA DE LEILÃO).txt"
+    ]
+  },
+  "transferenciasImoveis.itens": {
+    "usos": 186,
+    "raiz": "transferenciasImoveis",
+    "exemplos": [
+      "Scripts/Andradas - [PMA] BB (Pix 2.0) Protocolo.txt",
+      "Scripts/Andradas - [PMA] BB (Pix 2.0).txt",
+      "Scripts/Andradas - [PMA] Certidão Negativa de Débitos - Imovel.txt"
+    ]
+  },
+  "guiasEmitidas": {
+    "usos": 177,
+    "raiz": "guiasEmitidas",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - [MAYCON] - TESTE.txt",
+      "Scripts/Andradas - [PMA] - Baixa DAM Padrão - Febraban - Teste.txt"
+    ]
+  },
+  "acrescimos.debitos": {
+    "usos": 176,
+    "raiz": "acrescimos",
+    "exemplos": [
+      "Scripts/Andradas - Fonte Listagem Contribuintes - Lançamentos em Aberto.txt",
+      "Scripts/Andradas - [PMA] Notificação de Dívida e Parcelamento.txt",
+      "Scripts/Atibaia - (PMLS) Extrato de Lançamentos.txt"
+    ]
+  },
+  "tabelasAuxiliares": {
+    "usos": 176,
+    "raiz": "tabelasAuxiliares",
+    "exemplos": [
+      "Scripts/Balneário Rincão - Alterar Boleto SICOOB V3.txt",
+      "Scripts/Balneário Rincão - Baixa Pagamentos Automático - WebService - SICOOB V3 - PROCON.txt",
+      "Scripts/Balneário Rincão - Baixa Pagamentos Automático - WebService - SICOOB V3.txt"
+    ]
+  },
+  "creditosTributarios": {
+    "usos": 170,
+    "raiz": "creditosTributarios",
+    "exemplos": [
+      "Scripts/Andradas - Douglas Teste Filtro Receita Posicao Divida.txt",
+      "Scripts/Andradas - [PMA] Notificação de Dívida e Parcelamento.txt",
+      "Scripts/Atibaia - (PMLS) Extrato de Lançamentos.txt"
+    ]
+  },
+  "imovel.proprietarios": {
+    "usos": 168,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] Fonte Espelho Cadastral Imóvel.txt",
+      "Scripts/Andradas - [PMA] Certidão Negativa de Débitos - Imóvel - Detalhado - teste.txt",
+      "Scripts/Andradas - [PMA] Certidão Negativa de Débitos - Imóvel - Detalhado.txt"
+    ]
+  },
+  "dividas.receitas": {
+    "usos": 164,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Andradas - Douglas Teste Filtro Receita Posicao Divida.txt",
+      "Scripts/Andradas - SCRIPT - [PagDetalhados] [EDER].txt",
+      "Scripts/Andradas - [Andradas] Fonte posição dívida por receita.txt"
+    ]
+  },
+  "esfinge": {
+    "usos": 146,
+    "raiz": "esfinge",
+    "exemplos": [
+      "Scripts/Balneário Rincão - ......txt",
+      "Scripts/Balneário Rincão - Excluir dados duplicados jé.txt",
+      "Scripts/Balneário Rincão - [Maria Laura e-Sfinge] Teste.txt"
+    ]
+  },
+  "obras": {
+    "usos": 142,
+    "raiz": "obras",
+    "exemplos": [
+      "Scripts/Balneário Rincão - REABRE OBRA.txt",
+      "Scripts/Balneário Rincão - [Altera] Movimentação de Obras.txt",
+      "Scripts/Balneário Rincão - [FLCRI] - Importa documentos Resp. Técnicos.txt"
+    ]
+  },
+  "obra.camposAdicionais": {
+    "usos": 139,
+    "raiz": "obra",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Fonte - HABITE-SE.txt",
+      "Scripts/Balneário Rincão - [PMBR] Fonte Alvará de Obras.txt",
+      "Scripts/Balneário Rincão - [PMBR] Fonte Habite-se.txt"
+    ]
+  },
+  "transferenciasImoveis": {
+    "usos": 136,
+    "raiz": "transferenciasImoveis",
+    "exemplos": [
+      "Scripts/Andradas - -.txt",
+      "Scripts/Andradas - [CSM] Fonte Certidão de ITBI.txt",
+      "Scripts/Andradas - [PMA] - Baixa DAM Padrão - Febraban - Teste.txt"
+    ]
+  },
+  "creditosTributarios.receitas": {
+    "usos": 130,
+    "raiz": "creditosTributarios",
+    "exemplos": [
+      "Scripts/Andradas - ALTERA CLASSIFICAÇÃO DA RECEITA.txt",
+      "Scripts/Andradas - Exporta bairros.txt",
+      "Scripts/Andradas - Exporta receitas.txt"
+    ]
+  },
+  "logradouros": {
+    "usos": 128,
+    "raiz": "logradouros",
+    "exemplos": [
+      "Scripts/Atibaia - Buscar Logradouros = Planta de valores.txt",
+      "Scripts/Atibaia - Claudio - ENDEREÇOS SEM BAIRROS.txt",
+      "Scripts/Atibaia - Claudio Id Logra.txt"
+    ]
+  },
+  "imovel.englobados": {
+    "usos": 111,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Atibaia - Exporta imóveis sem testadas.txt",
+      "Scripts/Atibaia - Fonte - Ficha de Lançamento Imobiliário.txt",
+      "Scripts/Atibaia - Utilitários - Englobados.txt"
+    ]
+  },
+  "enderecoCorrespondencia": {
+    "usos": 109,
+    "raiz": "enderecoCorrespondencia",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] Fonte Espelho Cadastral Imóvel.txt",
+      "Scripts/Andradas - [CSM] Termo Abertura Livro da Dívida.txt",
+      "Scripts/Andradas - [Tributos] Fonte Listagem de Imóveis - Correspondência.txt"
+    ]
+  },
+  "contribuintes.enderecos": {
+    "usos": 109,
+    "raiz": "contribuintes",
+    "exemplos": [
+      "Scripts/Andradas - Exporta pessoasEnderecos.txt",
+      "Scripts/Atibaia - AJUSTA ENDEREÇOS DE CORRESPONDENCIA NULOS.txt",
+      "Scripts/Atibaia - Busca CEP.txt"
+    ]
+  },
+  "dividas.movimentacoes": {
+    "usos": 105,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Atibaia - (PMLS) Extrato de Lançamentos.txt",
+      "Scripts/Atibaia - Exporta log de movimentação dividas.txt",
+      "Scripts/Balneário Rincão - [PMBR] Fonte extrato do contribuinte arrecadação - detalhado.txt"
+    ]
+  },
+  "lancamentos.receitas": {
+    "usos": 101,
+    "raiz": "lancamentos",
+    "exemplos": [
+      "Scripts/Atibaia - Edital de Lançamento - Em Desenvolvimento.txt",
+      "Scripts/Atibaia - Edital de Lançamento Retroativo.txt",
+      "Scripts/Atibaia - [PMA] Fonte Guia de Econômicos.txt"
+    ]
+  },
+  "transferenciasImoveis.compra": {
+    "usos": 100,
+    "raiz": "transferenciasImoveis",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] Fonte Certidão de ITBI.txt",
+      "Scripts/Atibaia - Exporta idItensTransfImoveis.txt",
+      "Scripts/Atibaia - Exporta ids ItensCompras dos ITBIs calculados.txt"
+    ]
+  },
+  "imovel.testadas": {
+    "usos": 94,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Andradas - Atualiza Valor Venal.txt",
+      "Scripts/Andradas - Exporta testada imóveis.txt",
+      "Scripts/Andradas - [CSM] Fonte Espelho Cadastral Imóvel.txt"
+    ]
+  },
+  "economico.atividades": {
+    "usos": 92,
+    "raiz": "economico",
+    "exemplos": [
+      "Scripts/Atibaia - ALVARÁ AUTORIZAÇÃO DE FUNCIONAMENTO.txt",
+      "Scripts/Atibaia - ALVARÁ AUTORIZAÇÃO DE USO DE PASSEIO PÚBLICO.txt",
+      "Scripts/Atibaia - ALVARÁ LICENÇA DAS ATIVIDADE.txt"
+    ]
+  },
+  "acrescimos.parcelamentos": {
+    "usos": 87,
+    "raiz": "acrescimos",
+    "exemplos": [
+      "Scripts/Andradas - Fonte Listagem Contribuintes - Lançamentos em Aberto.txt",
+      "Scripts/Andradas - [PMA] Notificação de Dívida e Parcelamento.txt",
+      "Scripts/Atibaia - (PMLS) Extrato de Lançamentos.txt"
+    ]
+  },
+  "economicos.atividades": {
+    "usos": 86,
+    "raiz": "economicos",
+    "exemplos": [
+      "Scripts/Andradas - CNAES - [Eder].txt",
+      "Scripts/Andradas - [Tributos] Fonte Gráfica Econômico - CSM.txt",
+      "Scripts/Atibaia - Consulta CNPJ(API Betha Sistemas).txt"
+    ]
+  },
+  "debitos.simulados": {
+    "usos": 81,
+    "raiz": "debitos",
+    "exemplos": [
+      "Scripts/Atibaia - Compara_IPTU_Debito_Simulado_2025.txt",
+      "Scripts/Balneário Rincão - Busca Calculo Simulado - 2026.txt",
+      "Scripts/Balneário Rincão - IPTU_NÃO_LANCADO_2026.txt"
+    ]
+  },
+  "plantaValores": {
+    "usos": 79,
+    "raiz": "plantaValores",
+    "exemplos": [
+      "Scripts/Atibaia - Busca Seção.txt",
+      "Scripts/Atibaia - Buscar Logradouros = Planta de valores.txt",
+      "Scripts/Atibaia - Exporta idLogradouros.txt"
+    ]
+  },
+  "baixasAutomaticasHomologadasEstornadas": {
+    "usos": 76,
+    "raiz": "baixasAutomaticasHomologadasEstornadas",
+    "exemplos": [
+      "Scripts/Atibaia - Fonte Pagamentos de Honorários - teste.txt",
+      "Scripts/Atibaia - Fonte Pagamentos de Honorários(Carrion).txt",
+      "Scripts/Atibaia - Fonte Pagamentos de Honorários.txt"
+    ]
+  },
+  "guiaUnificada": {
+    "usos": 76,
+    "raiz": "guiaUnificada",
+    "exemplos": [
+      "Scripts/Andradas - FONTE GUIA UNIFICADA COM PIX.txt",
+      "Scripts/Atibaia - [Erick - Testes - PARCELAMENTO] - DAM Guia Unificada.txt",
+      "Scripts/Atibaia - [PARCELAMENTO] - DAM Guia Unificada.txt"
+    ]
+  },
+  "imoveis.historico": {
+    "usos": 75,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] Fonte imóveis alterados por data.txt",
+      "Scripts/Atibaia - Claudio Histórico de Alterações - Exportação.txt",
+      "Scripts/Atibaia - Claudio Histórico e Averbacoes - Exportação.txt"
+    ]
+  },
+  "contribuinte.emails": {
+    "usos": 74,
+    "raiz": "contribuinte",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] GUIA DE RECOLHIMENTO DE IPTU.txt",
+      "Scripts/Andradas - [PMA] BB (Pix 2.0) Protocolo.txt",
+      "Scripts/Andradas - [PMA] BB (Pix 2.0).txt"
+    ]
+  },
+  "certidaoNegativa": {
+    "usos": 70,
+    "raiz": "certidaoNegativa",
+    "exemplos": [
+      "Scripts/Andradas - [PMA] Certidão Negativa de Débitos - Imovel.txt",
+      "Scripts/Andradas - [PMA] Certidão Negativa de Débitos - Imóvel - Detalhado - teste.txt",
+      "Scripts/Andradas - [PMA] Certidão Negativa de Débitos - Imóvel - Detalhado.txt"
+    ]
+  },
+  "imoveis.movimentacoes": {
+    "usos": 70,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Andradas - [Tributos] Fonte Listagem de Imóveis - Correspondência.txt",
+      "Scripts/Andradas - [Tributos] Fonte Relatório de decadência.txt",
+      "Scripts/Atibaia - Claudio Histórico de Alterações - Exportação.txt"
+    ]
+  },
+  "receitaDiversa.lancamentos": {
+    "usos": 69,
+    "raiz": "receitaDiversa",
+    "exemplos": [
+      "Scripts/Atibaia - [PMAT] Lançamentos (Por Crédito Tributário).txt",
+      "Scripts/Balneário Rincão - [Tributos] 21 - CW - Debitos - v2 TRIB-63163.txt",
+      "Scripts/Bituruna - [PMSMS] Ajustar dívidas inscritas fora da competência de envio do SIM-AM (via Service Layer).txt"
+    ]
+  },
+  "divida.receitas": {
+    "usos": 65,
+    "raiz": "divida",
+    "exemplos": [
+      "Scripts/Atibaia - (PMLS) Extrato de Lançamentos.txt",
+      "Scripts/Atibaia - Deyvison Script.txt",
+      "Scripts/Atibaia - [PMA] Fonte Extrato do Contribuinte com Informações do Ajuizamento e Protesto - sem honorario.txt"
+    ]
+  },
+  "parcelamentos.receitas": {
+    "usos": 65,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Andradas - [Parcelamentos-Ajuste-de-Saldo]-busca valor das recDividas.txt",
+      "Scripts/Andradas - [SCRIPT] - Ajusta Parcelamentos Saldos Com Rateio - [EDER].txt",
+      "Scripts/Andradas - [Script] - Atualiza Dividas por OrdensRec.txt"
+    ]
+  },
+  "economicos.movimentacoes": {
+    "usos": 64,
+    "raiz": "economicos",
+    "exemplos": [
+      "Scripts/Andradas - [ANDRADAS] Exportar Contribuintes - Nota Nacional.txt",
+      "Scripts/Atibaia - Data de início econômico LFM.txt",
+      "Scripts/Atibaia - [Histórico] Fonte Espelho Economico.txt"
+    ]
+  },
+  "bairros": {
+    "usos": 62,
+    "raiz": "bairros",
+    "exemplos": [
+      "Scripts/Atibaia - Cria tabela Aux - Endereço Correspondência de Econômicos.txt",
+      "Scripts/Atibaia - Exporta Bairro.txt",
+      "Scripts/Atibaia - Exporta bairros.txt"
+    ]
+  },
+  "baixaAutomaticaNaoHomologadas": {
+    "usos": 62,
+    "raiz": "baixaAutomaticaNaoHomologadas",
+    "exemplos": [
+      "Scripts/Atibaia - Débito Automático (Baixa do arquivo).txt",
+      "Scripts/Balneário Rincão - Baixa Pagamentos Automático - WebService - SICOOB V3 - PROCON.txt",
+      "Scripts/Balneário Rincão - Baixa Pagamentos Automático - WebService - SICOOB V3.txt"
+    ]
+  },
+  "contadores": {
+    "usos": 59,
+    "raiz": "contadores",
+    "exemplos": [
+      "Scripts/Andradas - [Tributos] Fonte Gráfica Econômico - CSM.txt",
+      "Scripts/Atibaia - [Histórico] Fonte Espelho Economico.txt",
+      "Scripts/Atibaia - [MITRA] Contribuinte.txt"
+    ]
+  },
+  "manutencoesCalculos": {
+    "usos": 58,
+    "raiz": "manutencoesCalculos",
+    "exemplos": [
+      "Scripts/Atibaia - Fonte - Relatório de contribuintes com Benefício fiscal.txt",
+      "Scripts/Atibaia - Fonte de Isentos_Imunes - Homologação.txt",
+      "Scripts/Atibaia - Relatório de Certidão de Isenção.txt"
+    ]
+  },
+  "termoParcelamento.composicao": {
+    "usos": 54,
+    "raiz": "termoParcelamento",
+    "exemplos": [
+      "Scripts/Andradas - [PMA] Fonte Termo de Parcelamento.txt",
+      "Scripts/Atibaia - [PEA] - Termo de Parcelamento (Ajustado).txt",
+      "Scripts/Atibaia - [PMA] - Termo de Parcelamento 2.0.txt"
+    ]
+  },
+  "receitas": {
+    "usos": 52,
+    "raiz": "receitas",
+    "exemplos": [
+      "Scripts/Andradas - ALTERA CLASSIFICAÇÃO DA RECEITA.txt",
+      "Scripts/Andradas - Douglas Teste Filtro Receita Posicao Divida.txt",
+      "Scripts/Andradas - [DEV] - Trata duplicação de receitas (Descrições e Abreviaturas).txt"
+    ]
+  },
+  "contribuinte.camposAdicionais": {
+    "usos": 49,
+    "raiz": "contribuinte",
+    "exemplos": [
+      "Scripts/Atibaia - Débito Automático - REMESSA.txt",
+      "Scripts/Atibaia - [CUSTOMIZACAO] DAM Carnê IPTU.txt",
+      "Scripts/Atibaia - [Erick - Testes][PMA] DAM Carnê IPTU 2026.txt"
+    ]
+  },
+  "receitaDiversa.camposAdicionais": {
+    "usos": 49,
+    "raiz": "receitaDiversa",
+    "exemplos": [
+      "Scripts/Atibaia - (PMLS) Extrato de Lançamentos.txt",
+      "Scripts/Criciúma - Baixa Pagamentos CIASC (DTT) V.02.txt",
+      "Scripts/Criciúma - Baixa Pagamentos CIASC (DTT).txt"
+    ]
+  },
+  "imovel.corresponsaveis": {
+    "usos": 48,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Atibaia - Alteração de Responsável Divida.txt",
+      "Scripts/Atibaia - [EVANIO_PMA] Ficha Cadastral de Imóveis - v2 (GUARDAR 1 Semana).txt",
+      "Scripts/Atibaia - [EVANIO_PMA] Ficha Cadastral de Imóveis - v2.txt"
+    ]
+  },
+  "integracoesContabeis": {
+    "usos": 46,
+    "raiz": "integracoesContabeis",
+    "exemplos": [
+      "Scripts/Andradas - Extrai id integracao contabil.txt",
+      "Scripts/Atibaia - Deyvison Script.txt",
+      "Scripts/Campo Alegre - [Ipuaçu] Fonte Integrações Contábeis cópia.txt"
+    ]
+  },
+  "contribuicoesMelhoriasImoveis": {
+    "usos": 46,
+    "raiz": "contribuicoesMelhoriasImoveis",
+    "exemplos": [
+      "Scripts/Atibaia - [PMA] Carnê de Contribuição de Melhoria.txt",
+      "Scripts/Balneário Rincão - [PMBR] AJUIZADAS Fonte Carnê Febraban - Oficial (teste).txt",
+      "Scripts/Balneário Rincão - [PMBR] AJUIZADAS Fonte Carnê Febraban - Oficial - Teste Lucimar.txt"
+    ]
+  },
+  "tabelascalculos.imoveis": {
+    "usos": 45,
+    "raiz": "tabelascalculos",
+    "exemplos": [
+      "Scripts/Andradas - Atualiza Valor Venal.txt",
+      "Scripts/Atibaia - Extrai execuções de script - KLC.txt",
+      "Scripts/Braço do Norte - Atualiza Tipo Imóvel e-Sfinge.txt"
+    ]
+  },
+  "pagamentos.detalhes.valores": {
+    "usos": 44,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Andradas - [Tributos] Fonte Relatório Contábil da Dívida Ativa - Copia.txt",
+      "Scripts/Andradas - [Tributos] Fonte Relatório Contábil da Dívida Ativa - teste.txt",
+      "Scripts/Atibaia - [Tributos] utilitarios.txt"
+    ]
+  },
+  "notasAvulsas": {
+    "usos": 44,
+    "raiz": "notasAvulsas",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [Tributos] 21 - CW - Debitos - v2 TRIB-63163.txt",
+      "Scripts/Bituruna - [Tributos] 21 - CW - Debitos - v2 TRIB-63163.txt",
+      "Scripts/Bom Jesus - [PMBJ] Nota Avulsa.txt"
+    ]
+  },
+  "dividas.debitosInscritos": {
+    "usos": 42,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Braço do Norte - crialistabaixa.txt",
+      "Scripts/Criciúma - Altera débito para complementar = Não.txt",
+      "Scripts/Criciúma - André - SEM PARCELA.txt"
+    ]
+  },
+  "transferenciasImoveis.venda": {
+    "usos": 42,
+    "raiz": "transferenciasImoveis",
+    "exemplos": [
+      "Scripts/Atibaia - Importa id compra de itbi.txt",
+      "Scripts/Braço do Norte - [Fonte] Listagem de ITBI.txt",
+      "Scripts/Campos Novos - [PML] Guia Padrão Sem Validação CND[CARNÊ] - Parcelamento.txt"
+    ]
+  },
+  "debitos.simulados.receitas": {
+    "usos": 42,
+    "raiz": "debitos",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [COPIA] Planilha de Cálculo IPTU.txt",
+      "Scripts/Balneário Rincão - [IPTU] Fonte Listagem de Imóveis Lançamento.txt",
+      "Scripts/Balneário Rincão - [PMF] Planilha para Cálculo do IPTU.txt"
+    ]
+  },
+  "notaAvulsa": {
+    "usos": 42,
+    "raiz": "notaAvulsa",
+    "exemplos": [
+      "Scripts/Bituruna - [PMB] Fonte Notificação de Dívida At.txt",
+      "Scripts/Bom Jesus - [PMBJ] Nota Avulsa.txt",
+      "Scripts/Campo Alegre - [CampoAlegre] Fonte Notificação de Dívida.txt"
+    ]
+  },
+  "emissaoGuias": {
+    "usos": 41,
+    "raiz": "emissaoGuias",
+    "exemplos": [
+      "Scripts/Atibaia - [CUSTOMIZACAO] DAM Carnê IPTU.txt",
+      "Scripts/Atibaia - [DEV] - Fonte - Gráfica - Testes - KLC.txt",
+      "Scripts/Atibaia - [DEV] Fonte - Cobrança amigável - V.2.txt"
+    ]
+  },
+  "indexadores.movimentacoes": {
+    "usos": 39,
+    "raiz": "indexadores",
+    "exemplos": [
+      "Scripts/Andradas - Atualiza Valor Venal.txt",
+      "Scripts/Andradas - [CSM] Fonte extrato do contribuinte.txt",
+      "Scripts/Balneário Rincão - [PMBR] Relação de Planta de Valores.txt"
+    ]
+  },
+  "termoParcelamento": {
+    "usos": 39,
+    "raiz": "termoParcelamento",
+    "exemplos": [
+      "Scripts/Andradas - [PMA] Fonte Termo de Parcelamento.txt",
+      "Scripts/Atibaia - [PEA] - Termo de Parcelamento (Ajustado).txt",
+      "Scripts/Atibaia - [PMA] - Termo de Parcelamento 2.0.txt"
+    ]
+  },
+  "alvara": {
+    "usos": 39,
+    "raiz": "alvara",
+    "exemplos": [
+      "Scripts/Balneário Rincão - Fonte Alvará de Funcionamento Provisório.txt",
+      "Scripts/Balneário Rincão - [PMBR] Fonte Alvará de Obras.txt",
+      "Scripts/Bituruna - [PMB] Fonte Alvará de Atividades (Atual).txt"
+    ]
+  },
+  "integracoesContabeisDetalhamentos": {
+    "usos": 36,
+    "raiz": "integracoesContabeisDetalhamentos",
+    "exemplos": [
+      "Scripts/Atibaia - Deyvison Script.txt",
+      "Scripts/Bituruna - [PMB] - Fonte Movimento dos Convênios.txt",
+      "Scripts/Campo Alegre - [Campo Alegre] - Fonte Movimento dos Convênios.txt"
+    ]
+  },
+  "solicitacaoTransferenciaImovel": {
+    "usos": 36,
+    "raiz": "solicitacaoTransferenciaImovel",
+    "exemplos": [
+      "Scripts/Bom Jesus - [PMBJ] Fonte Certidão de ITBI - Resumida.txt",
+      "Scripts/Divinópolis - (DIV) - ITBI POR NATUREZA DA TRANSMISSÃO.txt",
+      "Scripts/Divinópolis - [BTHSC-257301] - Certidão de ITBI - INTERVIVOS.txt"
+    ]
+  },
+  "economico.servicos": {
+    "usos": 35,
+    "raiz": "economico",
+    "exemplos": [
+      "Scripts/Atibaia - [Histórico] Fonte Espelho Economico.txt",
+      "Scripts/Atibaia - [PMA] Fonte Espelho Economico - testeLuz.txt",
+      "Scripts/Atibaia - [PMA] Fonte Espelho Economico.txt"
+    ]
+  },
+  "notificacaoDivida.receitas": {
+    "usos": 35,
+    "raiz": "notificacaoDivida",
+    "exemplos": [
+      "Scripts/Bituruna - [PMB] Fonte Notificação de Dívida At.txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Notificação de Dívida.txt",
+      "Scripts/Bom Jesus - [Tributos] [Bom Jesus] Fonte Notificação de Dívida.txt"
+    ]
+  },
+  "notificacoesDividas.subLote": {
+    "usos": 34,
+    "raiz": "notificacoesDividas",
+    "exemplos": [
+      "Scripts/Andradas - [CSM] Fonte Notificação de Dívida - geral.txt",
+      "Scripts/Bituruna - [PMB] Fonte Notificação de Dívida At.txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Notificação de Dívida.txt"
+    ]
+  },
+  "imoveis.corresponsaveis": {
+    "usos": 32,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Atibaia - Exporta responsáveis dos imóveis.txt",
+      "Scripts/Atibaia - [Atibaia] Fonte Certidão Fiscal Venal.txt",
+      "Scripts/Atibaia - [Erick - PMA] Fonte Extrato do Contribuinte com Informações do Ajuizamento e Protesto.txt"
+    ]
+  },
+  "horariosFuncionamento.dias": {
+    "usos": 32,
+    "raiz": "horariosFuncionamento",
+    "exemplos": [
+      "Scripts/Balneário Rincão - Fonte Alvará de Funcionamento Provisório.txt",
+      "Scripts/Balneário Rincão - Fonte Alvará de Licença - Fonte reutilizada.txt",
+      "Scripts/Bituruna - [PMB] Fonte Alvará de Atividades (Atual).txt"
+    ]
+  },
+  "documentos": {
+    "usos": 31,
+    "raiz": "documentos",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] - Fonte Habite-se Emitidos.txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Habite-se.txt",
+      "Scripts/Criciúma - Cancela doc Algarino - teste joao.txt"
+    ]
+  },
+  "obra.responsaveistecnicos": {
+    "usos": 30,
+    "raiz": "obra",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [FLCRI] - Importa documentos Resp. Técnicos.txt",
+      "Scripts/Balneário Rincão - [PMBR] Fonte Alvará de Obras.txt",
+      "Scripts/Balneário Rincão - [PMNR] - Fonte Alvarás - Obras 2.txt"
+    ]
+  },
+  "certidaoITBI": {
+    "usos": 30,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Fonte Certidão I.T.B.I..txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Certidão de ITBI - Resumida.txt",
+      "Scripts/Campo Belo do Sul - [PMBJS] Fonte Certidão ITBI.txt"
+    ]
+  },
+  "camposAdicionais": {
+    "usos": 29,
+    "raiz": "camposAdicionais",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [Script] - Consultas.txt",
+      "Scripts/Campos Novos - [Tributos] Script UPDATE - Info Economicos.txt",
+      "Scripts/Campos Novos - validaEsfinge2026.txt"
+    ]
+  },
+  "dividas.comAcrescimo": {
+    "usos": 29,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Andradas - [PMA] Notificação de Dívida e Parcelamento.txt",
+      "Scripts/Atibaia - [PmAtibaia] Fonte simulação de parcelamento.txt",
+      "Scripts/Campos Novos - teste dividas.txt"
+    ]
+  },
+  "notificacoesDividas": {
+    "usos": 29,
+    "raiz": "notificacoesDividas",
+    "exemplos": [
+      "Scripts/Bituruna - [PMB] Fonte Notificação de Dívida At.txt",
+      "Scripts/Braço do Norte - [PMD] Fonte Acompanhamento das Dívidas.txt",
+      "Scripts/Campo Alegre - [CampoAlegre] Fonte Notificação de Dívida.txt"
+    ]
+  },
+  "secoes": {
+    "usos": 29,
+    "raiz": "secoes",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [FLCRI] - Atualiza seções.txt",
+      "Scripts/Balneário Rincão - [Script] - API TELA planta valores.txt",
+      "Scripts/Balneário Rincão - [Script] - Consulta Tabela Planta.txt"
+    ]
+  },
+  "cnaes": {
+    "usos": 27,
+    "raiz": "cnaes",
+    "exemplos": [
+      "Scripts/Andradas - CNAES - [Eder].txt",
+      "Scripts/Atibaia - ALVARÁ AUTORIZAÇÃO DE FUNCIONAMENTO.txt",
+      "Scripts/Atibaia - ALVARÁ AUTORIZAÇÃO DE USO DE PASSEIO PÚBLICO.txt"
+    ]
+  },
+  "manutencoesCalculos.lancamentos": {
+    "usos": 27,
+    "raiz": "manutencoesCalculos",
+    "exemplos": [
+      "Scripts/Atibaia - Fonte de Isentos_Imunes - Homologação.txt",
+      "Scripts/Atibaia - Relatório de isenção - V2 - teste.txt",
+      "Scripts/Atibaia - Relatório de isenção - V2.txt"
+    ]
+  },
+  "notificacaoDivida.atividades": {
+    "usos": 26,
+    "raiz": "notificacaoDivida",
+    "exemplos": [
+      "Scripts/Bituruna - [PMB] Fonte Notificação de Dívida At.txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Notificação de Dívida.txt",
+      "Scripts/Bom Jesus - [Tributos] [Bom Jesus] Fonte Notificação de Dívida.txt"
+    ]
+  },
+  "notificacaoDivida.servicos": {
+    "usos": 26,
+    "raiz": "notificacaoDivida",
+    "exemplos": [
+      "Scripts/Bituruna - [PMB] Fonte Notificação de Dívida At.txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Notificação de Dívida.txt",
+      "Scripts/Bom Jesus - [Tributos] [Bom Jesus] Fonte Notificação de Dívida.txt"
+    ]
+  },
+  "municipios": {
+    "usos": 25,
+    "raiz": "municipios",
+    "exemplos": [
+      "Scripts/Atibaia - Consulta CNPJ(API Betha Sistemas).txt",
+      "Scripts/Atibaia - [MITRA] Contribuinte.txt",
+      "Scripts/Atibaia - [MITRA] Econômico.txt"
+    ]
+  },
+  "parcelamentos.parcelas.taxas": {
+    "usos": 25,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Itaúna - Fonte Relação de Parcelamentos com Honorários.txt",
+      "Scripts/Itaúna - [DEV] Fonte - Resultados tributos_taxas.txt",
+      "Scripts/Itaúna - [dev]Listagem de parcelas_honorários.txt"
+    ]
+  },
+  "calculosTributarios": {
+    "usos": 25,
+    "raiz": "calculosTributarios",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [FPSC] Fonte compara lancto x simulado.txt",
+      "Scripts/Balneário Rincão - [Tributos] Fonte compara lancto x simulado - 2.txt",
+      "Scripts/Braço do Norte - Fonte Relatório Inconsistências de Cálculo 2.txt"
+    ]
+  },
+  "certidaoITBI.item.vendas": {
+    "usos": 25,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Fonte Certidão I.T.B.I..txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Certidão de ITBI - Resumida.txt",
+      "Scripts/Campo Belo do Sul - [PMBJS] Fonte Certidão ITBI.txt"
+    ]
+  },
+  "errosCalculosTributarios": {
+    "usos": 25,
+    "raiz": "errosCalculosTributarios",
+    "exemplos": [
+      "Scripts/Andradas - Exporta Debitos do IPTU.txt",
+      "Scripts/Andradas - Exporta IPTU.txt",
+      "Scripts/Atibaia - Exporta Cálculo.txt"
+    ]
+  },
+  "obra.responsaveistecnicos.atividades": {
+    "usos": 24,
+    "raiz": "obra",
+    "exemplos": [
+      "Scripts/Bituruna - [PMB] Alvarás de Obras - teste.txt",
+      "Scripts/Bituruna - [PMB] Alvarás de Obras.txt",
+      "Scripts/Campo Alegre - [AlvaraDeObras] Alvarás de Obras.txt"
+    ]
+  },
+  "receitaDiversa.lancamento.receitas": {
+    "usos": 24,
+    "raiz": "receitaDiversa",
+    "exemplos": [
+      "Scripts/Campo Alegre - teste john.txt",
+      "Scripts/Criciúma - VKE - Teste Dívida.txt",
+      "Scripts/Florianópolis - Claudio Planilha01.txt"
+    ]
+  },
+  "solicitacaoTransferenciaImovel.itens": {
+    "usos": 23,
+    "raiz": "solicitacaoTransferenciaImovel",
+    "exemplos": [
+      "Scripts/Divinópolis - [BTHSC-257301] - Certidão de ITBI - INTERVIVOS.txt",
+      "Scripts/Divinópolis - [BTHSC-257301] GUIA ITBI - COMPRA E VENDA.txt",
+      "Scripts/Divinópolis - [PMD] - Certidão de ITBI - INTERVIVOS - TESTE BTHSC-240995.txt"
+    ]
+  },
+  "transferenciaImoveis.processos": {
+    "usos": 23,
+    "raiz": "transferenciaImoveis",
+    "exemplos": [
+      "Scripts/Braço do Norte - [Fonte] Listagem de ITBI.txt",
+      "Scripts/Campos Novos - [Tributos] Listagem de ITBI.txt",
+      "Scripts/Divinópolis - [BTHSC-257301] - Certidão de ITBI - INTERVIVOS.txt"
+    ]
+  },
+  "notificacoes.dividas": {
+    "usos": 23,
+    "raiz": "notificacoes",
+    "exemplos": [
+      "Scripts/Campo Belo do Sul - Fonte Extrato do Contribuinte com informações do ajuizamento e protesto com composição do parcelamento - copia.txt",
+      "Scripts/Campo Belo do Sul - Fonte Extrato do Contribuinte com informações do ajuizamento e protesto com composição do parcelamento.txt",
+      "Scripts/Divinópolis - Div - PROCESSO TRIBUTÁRIO ADMINISTRATIVO.txt"
+    ]
+  },
+  "guiasUnificadas": {
+    "usos": 22,
+    "raiz": "guiasUnificadas",
+    "exemplos": [
+      "Scripts/Atibaia - [PEA] Controle de Guias Emitidas.txt",
+      "Scripts/Bituruna - Teste MS Consulta N° Guia.txt",
+      "Scripts/Braço do Norte - Consulta Boleto CEF PIX.txt"
+    ]
+  },
+  "notificacao.divida": {
+    "usos": 22,
+    "raiz": "notificacao",
+    "exemplos": [
+      "Scripts/Campo Alegre - Fonte Resumo das Dívidas Notificadas.txt",
+      "Scripts/Criciúma - Cancela doc Algarino - teste joao.txt",
+      "Scripts/Criciúma - TesteCSB.txt"
+    ]
+  },
+  "certidaoITBI.itens": {
+    "usos": 21,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Fonte Certidão I.T.B.I..txt",
+      "Scripts/Bom Jesus - [PMBJ] Fonte Certidão de ITBI - Resumida.txt",
+      "Scripts/Campo Belo do Sul - [PMBJS] Fonte Certidão ITBI.txt"
+    ]
+  },
+  "contribuinte.socios": {
+    "usos": 20,
+    "raiz": "contribuinte",
+    "exemplos": [
+      "Formulas/Florianópolis - GERACAO_CREDITO_ECONOMICOS - 01 (ISSQN) FIXO SOCIEDADES PROPORCIONAL 2019 - 2019.txt",
+      "Formulas/Florianópolis - GERACAO_CREDITO_ECONOMICOS - 01 (ISSQN) FIXO SOCIEDADES PROPORCIONAL 2023 - 2026.txt",
+      "Formulas/Florianópolis - GERACAO_CREDITO_RECEITAS_DIVERSAS - 01 (ISSQN) FIXO SOCIEDADES PROPORCIONAL - 2023.txt"
+    ]
+  },
+  "guiaUnificada.composicao": {
+    "usos": 20,
+    "raiz": "guiaUnificada",
+    "exemplos": [
+      "Scripts/Atibaia - [Erick - Testes - PARCELAMENTO] - DAM Guia Unificada.txt",
+      "Scripts/Atibaia - [PARCELAMENTO] - DAM Guia Unificada.txt",
+      "Scripts/Atibaia - [PEA] Controle de Guias Emitidas.txt"
+    ]
+  },
+  "certidaoITBI.vendas.detalhes": {
+    "usos": 20,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Bom Jesus - [PMBJ] Fonte Certidão de ITBI - Resumida.txt",
+      "Scripts/Itaúna - [DEV] Certidão de ITBI - NOVO [Hallef].txt",
+      "Scripts/Itaúna - [PMALF] Fonte Certidão de ITBI RURAL.txt"
+    ]
+  },
+  "logradouros.entidade": {
+    "usos": 19,
+    "raiz": "logradouros",
+    "exemplos": [
+      "Scripts/Atibaia - Fonte [PMA] Relação de logradouros.txt",
+      "Scripts/Atibaia - Similaridade Logradouros.txt",
+      "Scripts/Atibaia - [MITRA] Contador.txt"
+    ]
+  },
+  "pagamentos.dividas": {
+    "usos": 19,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Andradas - [ANDRADAS] Fonte relatório arrecadação dívida no ano.txt",
+      "Scripts/Bituruna - resumoDebitosDividas.txt",
+      "Scripts/Criciúma - Ajusta Campo Adicional de Imóveis com débito_divida em aberto.txt"
+    ]
+  },
+  "contribuintes.socios": {
+    "usos": 19,
+    "raiz": "contribuintes",
+    "exemplos": [
+      "Scripts/Atibaia - Certidão Negativa de Débitos - Contribuinte - Detalhado.txt",
+      "Scripts/Atibaia - Certidão Negativa de Débitos - Contribuinte.txt",
+      "Scripts/Atibaia - TESTE Negativa de Débitos - Contribuinte.txt"
+    ]
+  },
+  "economicosInfoComplementares": {
+    "usos": 19,
+    "raiz": "economicosInfoComplementares",
+    "exemplos": [
+      "Scripts/Atibaia - Edital de Lançamento.txt",
+      "Scripts/Atibaia - Exporta Atividades - Economicos.txt",
+      "Scripts/Atibaia - [PMA] - RELATÓRIO DE INSCRIÇÕES ZERADAS.txt"
+    ]
+  },
+  "imoveis.transferencias": {
+    "usos": 19,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Atibaia - [PMA] Ficha Espelho do carnê de IPTU -  MODELO OFICIAL.txt",
+      "Scripts/Atibaia - [PMA] Ficha Espelho do carnê de IPTU -  testeLuz.txt",
+      "Scripts/Divinópolis - (DIV) - ITBI POR NATUREZA DA TRANSMISSÃO.txt"
+    ]
+  },
+  "atividadesEconomicas": {
+    "usos": 19,
+    "raiz": "atividadesEconomicas",
+    "exemplos": [
+      "Scripts/Balneário Rincão - Listagem de econômicos - Novo.txt",
+      "Scripts/Balneário Rincão - Relação de Econômicos.txt",
+      "Scripts/Bituruna - [UEL] Ajusta atividades.txt"
+    ]
+  },
+  "economicos.historico": {
+    "usos": 19,
+    "raiz": "economicos",
+    "exemplos": [
+      "Scripts/Criciúma - Busca histórico Campo Adicional (Will).txt",
+      "Scripts/Criciúma - DANIELSON - TESTE.txt",
+      "Scripts/Criciúma - VKE - Teste Economico.txt"
+    ]
+  },
+  "contribuinte.campoAdicional": {
+    "usos": 19,
+    "raiz": "contribuinte",
+    "exemplos": [
+      "Scripts/Atibaia - Débito Automático (Baixa do arquivo).txt",
+      "Scripts/Bom Jesus - Script Contribuinte Altera Data TCE.txt",
+      "Scripts/Campo Alegre - Script Contribuinte Altera Data TCE.txt"
+    ]
+  },
+  "manutencao.saldos": {
+    "usos": 17,
+    "raiz": "manutencao",
+    "exemplos": [
+      "Scripts/Atibaia - Compensacao.txt",
+      "Scripts/Balneário Rincão - Observação compensação.txt",
+      "Scripts/Bom Jesus - [Delta] [Bom Jesus] Relatório Comprovante de Restituição e Compensação.txt"
+    ]
+  },
+  "debito.receita": {
+    "usos": 17,
+    "raiz": "debito",
+    "exemplos": [
+      "Scripts/Andradas - Exporta Debitos do IPTU.txt",
+      "Scripts/Andradas - Exporta IPTU.txt",
+      "Scripts/Atibaia - [CUSTOMIZACAO] DAM Carnê IPTU.txt"
+    ]
+  },
+  "certidaoITBI.processos": {
+    "usos": 17,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Bom Jesus - [PMBJ] Fonte Certidão de ITBI - Resumida.txt",
+      "Scripts/Dona Emma - [Dona Emma] -  Fonte Certidão de ITBI.txt",
+      "Scripts/Itaúna - [DEV] Certidão de ITBI - NOVO [Hallef].txt"
+    ]
+  },
+  "notaAvulsa.servicos": {
+    "usos": 17,
+    "raiz": "notaAvulsa",
+    "exemplos": [
+      "Scripts/Bom Jesus - [PMBJ] Nota Avulsa.txt",
+      "Scripts/Campo Belo do Sul - [CBS] Fonte Nota Avulsa Via Única.txt",
+      "Scripts/Campo Belo do Sul - [CBS] Nota Avulsa - Com Retenção de Impostos -Via Unica.txt"
+    ]
+  },
+  "integracoesContabeisDadosIntegrados": {
+    "usos": 16,
+    "raiz": "integracoesContabeisDadosIntegrados",
+    "exemplos": [
+      "Scripts/Atibaia - Atual - SCRIPT Contabilidade - Débitos Arrecadados.txt",
+      "Scripts/Campo Alegre - [Ipuaçu] Fonte Integrações Contábeis cópia.txt",
+      "Scripts/Jaraguá do Sul - Atual - SCRIPT Contabilidade - Débitos Arrecadados.txt"
+    ]
+  },
+  "configGeracaoParcelas": {
+    "usos": 15,
+    "raiz": "configGeracaoParcelas",
+    "exemplos": [
+      "Scripts/Atibaia - Alteração Configuração de Parcelas.txt",
+      "Scripts/Atibaia - [PMA] Situação dos Débitos.txt",
+      "Scripts/Criciúma - DEV [PMC] Situação dos Débitos.txt"
+    ]
+  },
+  "alvara.atividades": {
+    "usos": 15,
+    "raiz": "alvara",
+    "exemplos": [
+      "Scripts/Bom Jesus - [PMBJ] Fonte Alvará.txt",
+      "Scripts/Campo Alegre - [Campo Alegre] - Alvará Sanitário.txt",
+      "Scripts/Florianópolis - Alvara - condicionado temporário.txt"
+    ]
+  },
+  "contribuintes.historico": {
+    "usos": 15,
+    "raiz": "contribuintes",
+    "exemplos": [
+      "Scripts/Criciúma - Cleiton Teste - [PMC] Optantes Simples - Com Imposto Lançado (e-Nota).txt",
+      "Scripts/Criciúma - DANIELSON - TESTE.txt",
+      "Scripts/Criciúma - [PMC] - Histórico de Alterações de Contribuinte.txt"
+    ]
+  },
+  "manutencoesCalculos.lancamentos.v2": {
+    "usos": 14,
+    "raiz": "manutencoesCalculos",
+    "exemplos": [
+      "Scripts/Criciúma - [PMC] Relatório de Parcelas Lançadas v.2 - copia.txt",
+      "Scripts/Joaçaba - Fonte - Relatório de Descontos_Renúncias_Cancelamentos.txt",
+      "Scripts/Lagoa Santa - Teste - Lançamentos - Eduardo - ITBI.txt"
+    ]
+  },
+  "solicitacaoTransferenciaImovel.pareceres": {
+    "usos": 14,
+    "raiz": "solicitacaoTransferenciaImovel",
+    "exemplos": [
+      "Scripts/Divinópolis - [BTHSC-257301] - Certidão de ITBI - INTERVIVOS.txt",
+      "Scripts/Divinópolis - [PMD] - Certidão de ITBI - INTERVIVOS - TESTE BTHSC-240995.txt",
+      "Scripts/Divinópolis - [PMD] - Certidão de ITBI - INTERVIVOS - homologação - Luiz.txt"
+    ]
+  },
+  "secao.camposAdicionais": {
+    "usos": 13,
+    "raiz": "secao",
+    "exemplos": [
+      "Scripts/Campo Belo do Sul - TesteP.txt",
+      "Scripts/Campo Belo do Sul - [Tributos] Fonte Espelho Cadastral Logradouro (Opções de BCL).txt",
+      "Scripts/Criciúma - Exporta imoveis BCIs V.04 TESTE.txt"
+    ]
+  },
+  "manutencao.pagamentos": {
+    "usos": 13,
+    "raiz": "manutencao",
+    "exemplos": [
+      "Scripts/Atibaia - Compensacao.txt",
+      "Scripts/Criciúma - Extrato de Restituição_Compensação de Valores.txt",
+      "Scripts/Criciúma - [PMN] Extrato de Restituição_Compensação de Valores.txt"
+    ]
+  },
+  "notificacoesDebitos": {
+    "usos": 13,
+    "raiz": "notificacoesDebitos",
+    "exemplos": [
+      "Scripts/Criciúma - Extrato de Econômicos.txt",
+      "Scripts/Criciúma - [PMC] Extrato Completo - TESTE.txt",
+      "Scripts/Criciúma - [PMC] Extrato Completo.txt"
+    ]
+  },
+  "creditotributario.receitas": {
+    "usos": 13,
+    "raiz": "creditotributario",
+    "exemplos": [
+      "Scripts/Atibaia - BTHSC-142406 - Atualiza Status Movimentações.txt",
+      "Scripts/Balneário Rincão - Inclusão Honorários - Divida.txt",
+      "Scripts/Criciúma - KLC - Listagem TLFE e TFVS - Vini.txt"
+    ]
+  },
+  "numerosBaixaObservacoes": {
+    "usos": 13,
+    "raiz": "numerosBaixaObservacoes",
+    "exemplos": [
+      "Scripts/Florianópolis - BAIXA (DESATIVADO).txt",
+      "Scripts/Florianópolis - Consulta DAM.txt",
+      "Scripts/Ilhota - Teste deyvison.txt"
+    ]
+  },
+  "manutencoesCalculos.creditosReceitas": {
+    "usos": 12,
+    "raiz": "manutencoesCalculos",
+    "exemplos": [
+      "Scripts/Atibaia - Fonte - Relatório de contribuintes com Benefício fiscal.txt",
+      "Scripts/Atibaia - Fonte de Isentos_Imunes - Homologação.txt",
+      "Scripts/Atibaia - Relatório de Certidão de Isenção.txt"
+    ]
+  },
+  "loteamentos": {
+    "usos": 12,
+    "raiz": "loteamentos",
+    "exemplos": [
+      "Scripts/Criciúma - [PMC] - Relação de Loteamentos.txt",
+      "Scripts/Ilhota - GeoMais - Loteamento.txt",
+      "Scripts/Ilhota - Preenche campo adicional coleta de lixo.txt"
+    ]
+  },
+  "convenios.creditos": {
+    "usos": 12,
+    "raiz": "convenios",
+    "exemplos": [
+      "Scripts/Bom Jesus - _Registra Guias Fly - WebService - SICOOB V3 - APAGAR.txt",
+      "Scripts/Bom Jesus - _Registra Guias Fly - WebService - SICOOB V3.txt",
+      "Scripts/Campos Novos - Registra Rapido 4.0.txt"
+    ]
+  },
+  "numeroBaixa": {
+    "usos": 11,
+    "raiz": "numeroBaixa",
+    "exemplos": [
+      "Scripts/Campos Novos - TESTE COMPONENTE PROC -ANDRÉ.txt",
+      "Scripts/Campos Novos - [PMCN] Cobrança Registrada - CEF  -Protocolo.txt",
+      "Scripts/Campos Novos - [PMCN] Cobrança Registrada - Caixa Federal.txt"
+    ]
+  },
+  "pagamentos.debitos": {
+    "usos": 11,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Andradas - [PMA] Certidão Negativa de Débitos - Imovel.txt",
+      "Scripts/Atibaia - [PMA-MC] Certidão Negativa de Débitos - Imovel.txt",
+      "Scripts/Atibaia - [PMA] Certidão Negativa de Débitos - Imovel.txt"
+    ]
+  },
+  "obra.responsaveisExecucao": {
+    "usos": 11,
+    "raiz": "obra",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Fonte Alvará de Obras.txt",
+      "Scripts/Balneário Rincão - [Script] Eder TEstes Simulados.txt",
+      "Scripts/Campo Belo do Sul - [PCBS] Relatório de Projetos.txt"
+    ]
+  },
+  "integracoesContabeisReceitas": {
+    "usos": 11,
+    "raiz": "integracoesContabeisReceitas",
+    "exemplos": [
+      "Scripts/Campo Alegre - [Ipuaçu] Fonte Integrações Contábeis cópia.txt",
+      "Scripts/Jaraguá do Sul - Integração de Lançamentos - TESTE.txt",
+      "Scripts/Jaraguá do Sul - Integração de Lançamentos.txt"
+    ]
+  },
+  "notificacoes.debitos": {
+    "usos": 11,
+    "raiz": "notificacoes",
+    "exemplos": [
+      "Scripts/Campo Belo do Sul - Fonte Extrato do Contribuinte com informações do ajuizamento e protesto com composição do parcelamento - copia.txt",
+      "Scripts/Campo Belo do Sul - Fonte Extrato do Contribuinte com informações do ajuizamento e protesto com composição do parcelamento.txt",
+      "Scripts/Divinópolis - [PMD] Fonte Script_Maiores devedores.txt"
+    ]
+  },
+  "simulacaoParcelamento": {
+    "usos": 11,
+    "raiz": "simulacaoParcelamento",
+    "exemplos": [
+      "Scripts/Itaúna - [DEV] Hallef - simulação de parcelamento.txt",
+      "Scripts/Lagoa Santa - (PMLS) Fonte simulação de parcelamento - Por quantidade de parcelas.txt",
+      "Scripts/Lagoa Santa - (PMLS) Fonte simulação de parcelamento.txt"
+    ]
+  },
+  "condominios": {
+    "usos": 11,
+    "raiz": "condominios",
+    "exemplos": [
+      "Scripts/Balneário Rincão - BTHSC-166701 - Atualiza CEP Condominios.txt",
+      "Scripts/Criciúma - [CASAN-SITE] Integração CASAN (Envio geral).txt",
+      "Scripts/Criciúma - [CASAN-SITE] Integração CASAN.txt"
+    ]
+  },
+  "bairros.entidade": {
+    "usos": 10,
+    "raiz": "bairros",
+    "exemplos": [
+      "Scripts/Atibaia - [MITRA] Contador.txt",
+      "Scripts/Atibaia - [MITRA] Contribuinte.txt",
+      "Scripts/Atibaia - [MITRA] Econômico.txt"
+    ]
+  },
+  "encerramentoMensal": {
+    "usos": 10,
+    "raiz": "encerramentoMensal",
+    "exemplos": [
+      "Scripts/Atibaia - Extração encerramento.txt",
+      "Scripts/Fazenda Rio Grande - Busca Encerramento.txt",
+      "Scripts/Joaçaba - CONSULTA LANCAMENTOS - ESFINGE.txt"
+    ]
+  },
+  "agrupamentoCampoAdicional": {
+    "usos": 9,
+    "raiz": "agrupamentoCampoAdicional",
+    "exemplos": [
+      "Scripts/Campos Novos - [Tributos] Script UPDATE - Info Economicos.txt",
+      "Scripts/Criciúma - Exporta imoveis BCIs V.04 TESTE.txt",
+      "Scripts/Criciúma - Exporta imoveis BCIs V.04.txt"
+    ]
+  },
+  "parcelamentos.composicoes.agrupadas": {
+    "usos": 9,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Atibaia - [Erick - Testes - PARCELAMENTO] - DAM Guia Unificada.txt",
+      "Scripts/Atibaia - [PARCELAMENTO] - DAM Guia Unificada.txt",
+      "Scripts/Campo Belo do Sul - Fonte Extrato do Contribuinte com informações do ajuizamento e protesto com composição do parcelamento - copia.txt"
+    ]
+  },
+  "dividas.sinteticas": {
+    "usos": 9,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Bituruna - [PMCM]script_resumo_dividas_sintetico.txt",
+      "Scripts/Campo Alegre - [PMCA] Fonte Resumo das Dívidas Tce.txt",
+      "Scripts/Criciúma - Atualiza dívidas tabela aux 27.txt"
+    ]
+  },
+  "certidaoITBI.imoveis": {
+    "usos": 9,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Dona Emma - [Dona Emma] -  Fonte Certidão de ITBI.txt",
+      "Scripts/Itaúna - [DEV] Certidão de ITBI - NOVO [Hallef].txt",
+      "Scripts/Itaúna - [PMALF] Fonte Certidão de ITBI RURAL.txt"
+    ]
+  },
+  "certidaoITBI.vendas": {
+    "usos": 9,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Itaúna - [DEV] Certidão de ITBI - NOVO [Hallef].txt",
+      "Scripts/Itaúna - [PMALF] Fonte Certidão de ITBI RURAL.txt",
+      "Scripts/Itaúna - [PMITAU] Fonte Certidão de ITBI.txt"
+    ]
+  },
+  "obra.movimentacoes": {
+    "usos": 9,
+    "raiz": "obra",
+    "exemplos": [
+      "Scripts/Balneário Rincão - REABRE OBRA.txt",
+      "Scripts/Balneário Rincão - [Altera] Movimentação de Obras.txt",
+      "Scripts/Bom Jesus - [PMBJ] Reabre Obra Concluída.txt"
+    ]
+  },
+  "movimentacoesMEI": {
+    "usos": 9,
+    "raiz": "movimentacoesMEI",
+    "exemplos": [
+      "Scripts/Andradas - [ANDRADAS] Exportar Contribuintes - Nota Nacional.txt",
+      "Scripts/Bom Jesus - [Delta][PM Bom Jesus] Exportar Contribuintes - Nota Nacional.txt",
+      "Scripts/Braço do Norte - [PMBN] Exportar Contribuintes - Nota Nacional 2026.txt"
+    ]
+  },
+  "acrescimos.dividas.historico": {
+    "usos": 8,
+    "raiz": "acrescimos",
+    "exemplos": [
+      "Scripts/Braço do Norte - [MURB] Movimentação da dívida ativa.txt",
+      "Scripts/Criciúma - [PMC] Movimentação da dívida ativa - teste.txt",
+      "Scripts/Criciúma - [PMSMS] Movimentação da dívida ativa.txt"
+    ]
+  },
+  "imoveis.camposAdicionais.titulos": {
+    "usos": 8,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Criciúma - [CASAN] Baixa Casan(384) V 3.0.txt",
+      "Scripts/Joaçaba - BTHSC-116388 - Consulta Campo Adicional do Imovel.txt",
+      "Scripts/Painel - [PMP] Fonte Listagem de Imóveis.txt"
+    ]
+  },
+  "parcelamentos.taxas": {
+    "usos": 7,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Atibaia - [Erick - Testes - PARCELAMENTO] - DAM Guia Unificada.txt",
+      "Scripts/Atibaia - [PARCELAMENTO] - DAM Guia Unificada.txt",
+      "Scripts/Atibaia - [PMA] DAM Acordo de Parcelamento.txt"
+    ]
+  },
+  "termoParcelamento.parcelas": {
+    "usos": 7,
+    "raiz": "termoParcelamento",
+    "exemplos": [
+      "Scripts/Atibaia - [PEA] - Termo de Parcelamento (Ajustado).txt",
+      "Scripts/Atibaia - [PMA] - Termo de Parcelamento 2.0.txt",
+      "Scripts/Balneário Rincão - em desenvolvimento - Resumo Mensal dos Parcelamentos.txt"
+    ]
+  },
+  "certidaoITBI.processosImovelRural": {
+    "usos": 7,
+    "raiz": "certidaoITBI",
+    "exemplos": [
+      "Scripts/Bom Jesus - [PMBJ] Fonte Certidão de ITBI - Resumida.txt",
+      "Scripts/Joaçaba - Fonte Certidão de ITBI (Joaçaba).txt",
+      "Scripts/São João Batista - Fonte Certidão de ITBI (SJB - Modelo 01).txt"
+    ]
+  },
+  "beneficiosFiscais": {
+    "usos": 7,
+    "raiz": "beneficiosFiscais",
+    "exemplos": [
+      "Scripts/Andradas - [Eder] - Manutencao Requerimento.txt",
+      "Scripts/Campos Novos - validaEsfinge2026.txt",
+      "Scripts/Criciúma - TESTES - DANIELSON.txt"
+    ]
+  },
+  "maioresDevedores": {
+    "usos": 7,
+    "raiz": "maioresDevedores",
+    "exemplos": [
+      "Scripts/Criciúma - VKE - Dívida Ativa - Maiores Devedores.txt",
+      "Scripts/Criciúma - [PMC] Fonte Maiores Contribuintes Devedores - copia teste.txt",
+      "Scripts/Criciúma - [PMC] Fonte Maiores Contribuintes Devedores.txt"
+    ]
+  },
+  "motivos": {
+    "usos": 7,
+    "raiz": "motivos",
+    "exemplos": [
+      "Scripts/Florianópolis - (PMLS) Extrato de Lançamentos Cancelados.txt",
+      "Scripts/Ilhota - [DEV] - Migra motivos de anulações de notas avulsas.txt",
+      "Scripts/Ilhota - [DEV] - Migrar notas avulsas DUPLICADAS.txt"
+    ]
+  },
+  "receitaDiversa": {
+    "usos": 6,
+    "raiz": "receitaDiversa",
+    "exemplos": [
+      "Scripts/Criciúma - Importação vistorias desktop  (Receitas Diversas).txt",
+      "Scripts/Criciúma - Importação vistorias via serviço desktop  (Receitas Diversas).txt",
+      "Scripts/Dona Emma - [Tributos] CBM - Funções Utilitárias.txt"
+    ]
+  },
+  "imovel.beneficioFiscal": {
+    "usos": 6,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Atibaia - Relatório de isenção - V2 - teste.txt",
+      "Scripts/Atibaia - Relatório de isenção - V2.txt",
+      "Scripts/Atibaia - [EVANIO_ATIBAIA] - Ficha de Lançamento Imobiliário EM DESENVOVIMENTO.txt"
+    ]
+  },
+  "obra.construtoras": {
+    "usos": 6,
+    "raiz": "obra",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Fonte Alvará de Obras.txt",
+      "Scripts/Balneário Rincão - habite-se_igor.txt",
+      "Scripts/Joaçaba - Fonte Habite-se (Joaçaba).txt"
+    ]
+  },
+  "manutencoesCalculos.creditosTributarios": {
+    "usos": 6,
+    "raiz": "manutencoesCalculos",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [FLCRI] Fonte Certidão de Isenção.txt",
+      "Scripts/Balneário Rincão - [PMBR] Fonte Certidão de Isenção OFICIAL.txt",
+      "Scripts/Balneário Rincão - zzzz - [PMBR] Fonte Certidão de Isenção OFICIAL.txt"
+    ]
+  },
+  "habitese": {
+    "usos": 6,
+    "raiz": "habitese",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] - Fonte Habite-se Emitidos.txt",
+      "Scripts/Campo Alegre - David Teste.txt",
+      "Scripts/Campos Novos - [PMCN] Habite-se Parcial.txt"
+    ]
+  },
+  "simam.lancamentoCredito": {
+    "usos": 6,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Bituruna - Valida quebra Sequencial Lançamento SIM-AM.txt",
+      "Scripts/Bituruna - Valida sequencial de Inscrição em Dívida Tributos X SIM-AM.txt",
+      "Scripts/Bituruna - Valida valor de lançamento Tributos X SIM-AM.txt"
+    ]
+  },
+  "configuracoesImobiliarias": {
+    "usos": 6,
+    "raiz": "configuracoesImobiliarias",
+    "exemplos": [
+      "Scripts/Florianópolis - CÓPIA GEO IMOVEIS ALTERADOS.txt",
+      "Scripts/Florianópolis - Integração GeoFloripa Teste Doug.txt",
+      "Scripts/Florianópolis - Integração GeoFloripa atualização de imóveis.txt"
+    ]
+  },
+  "naturezasJuridicas": {
+    "usos": 5,
+    "raiz": "naturezasJuridicas",
+    "exemplos": [
+      "Scripts/Atibaia - Consulta CNPJ(API Betha Sistemas).txt",
+      "Scripts/Atibaia - [MITRA] Contribuinte.txt",
+      "Scripts/Atibaia - [MITRA] Econômico.txt"
+    ]
+  },
+  "obra.habitese": {
+    "usos": 5,
+    "raiz": "obra",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Levantamento Obras detalhes em CSV.txt",
+      "Scripts/Campo Belo do Sul - [PCBS] Relatório de Projetos.txt",
+      "Scripts/Jaraguá do Sul - [PMJS] Monta XML Habite-se - SisObra 2.0.txt"
+    ]
+  },
+  "imoveis.proprietarios": {
+    "usos": 5,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Braço do Norte - [PMBN] Exporta Imóveis em XLS - V2.txt",
+      "Scripts/Criciúma - [PMC] Certidão Negativa.txt",
+      "Scripts/Itaúna - [CSV] Listagem de Imoveis - todos os campos adicionais.txt"
+    ]
+  },
+  "emissaoGuias.imoveisEndereco": {
+    "usos": 5,
+    "raiz": "emissaoGuias",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - Unificação de Bairros.txt",
+      "Scripts/Fazenda Rio Grande - Unificação de Logradouros (novo).txt",
+      "Scripts/Jaraguá do Sul - [PMJS] ARQUIVO GERADO CORREIOS.txt"
+    ]
+  },
+  "simam.lancamentoCreditoSintetico": {
+    "usos": 5,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Bituruna - Valida quebra Sequencial Lançamento SIM-AM.txt",
+      "Scripts/Bituruna - Valida sequencial de Inscrição em Dívida Tributos X SIM-AM.txt",
+      "Scripts/Bituruna - Valida valor de lançamento Tributos X SIM-AM.txt"
+    ]
+  },
+  "horariosFuncionamento": {
+    "usos": 4,
+    "raiz": "horariosFuncionamento",
+    "exemplos": [
+      "Scripts/Atibaia - [MITRA] Contribuinte.txt",
+      "Scripts/Atibaia - [MITRA] Econômico.txt",
+      "Scripts/Atibaia - [MITRA] Funções Utilitárias.txt"
+    ]
+  },
+  "calculosTributarios.camposAdicionais": {
+    "usos": 4,
+    "raiz": "calculosTributarios",
+    "exemplos": [
+      "Scripts/Divinópolis - Fonte Imagem de Calculo IPTU - Exercicio.txt",
+      "Scripts/Divinópolis - Fonte Memória de Cálculo de IPTU.txt",
+      "Scripts/Divinópolis - Simular Cálculo IPTU - Sem TxSA.txt"
+    ]
+  },
+  "pagamentos.detalhes.mensal": {
+    "usos": 4,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Atibaia - [TESTE] Fonte Resumo Arrecadação Mensal.txt",
+      "Scripts/Balneário Rincão - [julio] Fonte Resumo Arrecadação Mensal.txt",
+      "Scripts/Major Vieira - Relação de Arrecadações Mensais.txt"
+    ]
+  },
+  "obras.sisobra.novo": {
+    "usos": 4,
+    "raiz": "obras",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMNR] - Fonte Alvarás - Obras 2.txt",
+      "Scripts/Balneário Rincão - [Tributos] Fonte Documento Habite-se.txt",
+      "Scripts/Criciúma - [PMC] Alvará de Obras-teste.txt"
+    ]
+  },
+  "manutencaoDeSaldos": {
+    "usos": 4,
+    "raiz": "manutencaoDeSaldos",
+    "exemplos": [
+      "Scripts/Bom Jesus - (teste) Relatório de Restituições.txt",
+      "Scripts/Jaraguá do Sul - Contribuintes com saldos e compensações.txt",
+      "Scripts/Nova Veneza - Teste.txt"
+    ]
+  },
+  "condicoesParcelamentos": {
+    "usos": 4,
+    "raiz": "condicoesParcelamentos",
+    "exemplos": [
+      "Scripts/Campos Novos - validaEsfinge2026.txt",
+      "Scripts/Divinópolis - Copia Parcelamento.txt",
+      "Scripts/Florianópolis - [DEV] - Validações - E-Sfinge 2026 - Cadastrais.txt"
+    ]
+  },
+  "pagamentos.resumido": {
+    "usos": 4,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Campos Novos - [CamposNovos] Fonte Relatório de Conferência Contábil.txt",
+      "Scripts/Jaraguá do Sul - [DE-13883] Fonte Relatório de Conferência Contábil.txt",
+      "Scripts/Major Vieira - [PMMJ] Fonte Relatório de Conferência Contábil.txt"
+    ]
+  },
+  "pagamentos.parcelamentos": {
+    "usos": 4,
+    "raiz": "pagamentos",
+    "exemplos": [
+      "Scripts/Andradas - [Script] Consulta parcelamento[Eder].txt",
+      "Scripts/Divinópolis - Fonte Relatório de Lançamentos Gerados e Pagos.txt",
+      "Scripts/Jaraguá do Sul - Teste Cleiton - [P.M.J.S] Fonte certidão de impostos pagos.txt"
+    ]
+  },
+  "notificacoesDebitos.subLote": {
+    "usos": 4,
+    "raiz": "notificacoesDebitos",
+    "exemplos": [
+      "Scripts/Itaúna - [PMITAU] Fonte Notificação de Débitos.txt",
+      "Scripts/Lagoa Santa - (PMLS) FONTE AVISO DEBITO - ISS.txt",
+      "Scripts/Lagoa Santa - (PMLS) FONTE AVISO DEBITO - Mobiliário.txt"
+    ]
+  },
+  "servicos": {
+    "usos": 4,
+    "raiz": "servicos",
+    "exemplos": [
+      "Scripts/Bom Jesus - __TESTES EXECUÇÕES__.txt",
+      "Scripts/Campo Belo do Sul - Consulta LISTA.txt",
+      "Scripts/Ilhota - [DEV] - Migrar serviços de notas avulsas.txt"
+    ]
+  },
+  "parcelamentos.creditos": {
+    "usos": 3,
+    "raiz": "parcelamentos",
+    "exemplos": [
+      "Scripts/Atibaia - [PMA] Carnê de Contribuição de Melhoria.txt",
+      "Scripts/Atibaia - [PMA] DAM Acordo de Parcelamento.txt",
+      "Scripts/Divinópolis - Ajustes Parcelamentos [SILAS].txt"
+    ]
+  },
+  "economicos.prepostos": {
+    "usos": 3,
+    "raiz": "economicos",
+    "exemplos": [
+      "Scripts/Florianópolis - Fonte Listagem por Contador.txt",
+      "Scripts/Florianópolis - [PMF] - ECONOMICOS E PESSOAS RELACIONADAS.txt",
+      "Scripts/Lagoa Santa - Fonte Listagem por Contador AJUSTAR.txt"
+    ]
+  },
+  "certidaoBaixaAtividade": {
+    "usos": 3,
+    "raiz": "certidaoBaixaAtividade",
+    "exemplos": [
+      "Scripts/Jaraguá do Sul - Certidão de Baixa de Cadastro - teste.txt",
+      "Scripts/Jaraguá do Sul - Certidão de Baixa de Cadastro.txt",
+      "Scripts/Jaraguá do Sul - DEV Certidão de Baixa de Cadastro.txt"
+    ]
+  },
+  "emissaoAlvara": {
+    "usos": 3,
+    "raiz": "emissaoAlvara",
+    "exemplos": [
+      "Scripts/Balneário Rincão - [PMBR] Levantamento Obras detalhes em CSV.txt",
+      "Scripts/Nova Veneza - Fonte [NV]- Relatório de Obras.txt",
+      "Scripts/Urussanga - [PMU] Alvarás de Obras.txt"
+    ]
+  },
+  "movimentacoesSimples": {
+    "usos": 3,
+    "raiz": "movimentacoesSimples",
+    "exemplos": [
+      "Scripts/Lagoa Santa - Exportar Econômicos.txt",
+      "Scripts/Varginha - [PMV] Eventos do Simples Nacional.txt",
+      "Scripts/Varginha - [PMV] Períodos do Simples Nacional.txt"
+    ]
+  },
+  "cartorios": {
+    "usos": 3,
+    "raiz": "cartorios",
+    "exemplos": [
+      "Scripts/Criciúma - Teste Lucas.txt",
+      "Scripts/Florianópolis - Integração NFE - Criação e Alteração - Cartório.txt",
+      "Scripts/Florianópolis - Integração NFE - Exclusão - Cartório.txt"
+    ]
+  },
+  "TransparenciaTributosArrecadacoes": {
+    "usos": 3,
+    "raiz": "TransparenciaTributosArrecadacoes",
+    "exemplos": [
+      "Scripts/Criciúma - TESTES - DANIELSON.txt",
+      "Scripts/Major Vieira - [MJ] Integração com Transparência Cloud - v2.txt",
+      "Scripts/Major Vieira - [Tributos] Integração com Transparência Cloud - v2 - TESTE DEV.txt"
+    ]
+  },
+  "imovel.averbacao": {
+    "usos": 3,
+    "raiz": "imovel",
+    "exemplos": [
+      "Scripts/Divinópolis - Preencher Data Fim Cota Basica - BTHSC-253074.txt",
+      "Scripts/Ilhota - [PMI] Preencher campo adicional dos imóveis.txt",
+      "Scripts/Jaraguá do Sul - Desativa imóvel com ITBI pendente.txt"
+    ]
+  },
+  "integracoescontabeis.dadosintegrados": {
+    "usos": 3,
+    "raiz": "integracoescontabeis",
+    "exemplos": [
+      "Scripts/Lagoa Santa - [PMSMS] Descartar lotes de integração contábil (via Service Layer).txt",
+      "Scripts/São João Batista - [MAYCON] - TESTE.txt",
+      "Scripts/Treze de Maio - [PMTM] Descartar lotes de integração contábil (via Service Layer).txt"
+    ]
+  },
+  "configuracoes.acrescimos": {
+    "usos": 2,
+    "raiz": "configuracoes",
+    "exemplos": [
+      "Scripts/Campo Belo do Sul - Fonte Extrato do Contribuinte com informações do ajuizamento e protesto com composição do parcelamento - copia.txt",
+      "Scripts/Campo Belo do Sul - Fonte Extrato do Contribuinte com informações do ajuizamento e protesto com composição do parcelamento.txt"
+    ]
+  },
+  "transferenciaImoveis": {
+    "usos": 2,
+    "raiz": "transferenciaImoveis",
+    "exemplos": [
+      "Scripts/Criciúma - [PMC] Relação de Transferências de Imóveis.txt",
+      "Scripts/Dona Emma - [Dona Emma] -  Fonte Certidão de ITBI.txt"
+    ]
+  },
+  "imobiliarias": {
+    "usos": 2,
+    "raiz": "imobiliarias",
+    "exemplos": [
+      "Scripts/Criciúma - Teste - Gio2.txt",
+      "Scripts/Florianópolis - NÃO USAR MIGUEL TESTE [PMF] - Guia PIX - Caixa.txt"
+    ]
+  },
+  "solicitacaoTransferenciaImovel.compras": {
+    "usos": 2,
+    "raiz": "solicitacaoTransferenciaImovel",
+    "exemplos": [
+      "Scripts/Florianópolis - RELATORIO DE SOLICITAÇÕES DE IMÓVEIS.txt",
+      "Scripts/Florianópolis - [PMF] - ECONOMICOS E PESSOAS RELACIONADAS.txt"
+    ]
+  },
+  "solicitacaoTransferenciaImovel.vendas": {
+    "usos": 2,
+    "raiz": "solicitacaoTransferenciaImovel",
+    "exemplos": [
+      "Scripts/Florianópolis - RELATORIO DE SOLICITAÇÕES DE IMÓVEIS.txt",
+      "Scripts/Florianópolis - [PMF] - ECONOMICOS E PESSOAS RELACIONADAS.txt"
+    ]
+  },
+  "distritos": {
+    "usos": 2,
+    "raiz": "distritos",
+    "exemplos": [
+      "Scripts/Joaçaba - Fonte - Resumo Estatístico.txt",
+      "Scripts/Lagoa Santa - [PMLS] Altera endereço, e-mail e telefone do Contribuinte.txt"
+    ]
+  },
+  "competencias": {
+    "usos": 2,
+    "raiz": "competencias",
+    "exemplos": [
+      "Scripts/Bom Jesus - teste gabriel excluir.txt",
+      "Scripts/Monte Castelo - [eSfinge] Preencher a competência nos débitos que são por competência e estão null (via Service Layer).txt"
+    ]
+  },
+  "agrupamentos": {
+    "usos": 2,
+    "raiz": "agrupamentos",
+    "exemplos": [
+      "Scripts/Campos Novos - Agrupamentos.txt",
+      "Scripts/Urubici - #gerais.txt"
+    ]
+  },
+  "resumoValores": {
+    "usos": 2,
+    "raiz": "resumoValores",
+    "exemplos": [
+      "Scripts/Criciúma - Teste - Gio2.txt",
+      "Scripts/Florianópolis - EXPORTAR LANCAMENTOS.txt"
+    ]
+  },
+  "contribuinte.camposAdicionais.multiplos": {
+    "usos": 2,
+    "raiz": "contribuinte",
+    "exemplos": [
+      "Scripts/Divinópolis - Contribuintes Negativados - [Relatório e Inclusão].txt",
+      "Scripts/Joaçaba - ___ Script de Execuções.txt"
+    ]
+  },
+  "simam.arrecadacaoCreditoEstornoSintetico": {
+    "usos": 2,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - Valida Arrecadações SIM-AM por Competencia - Desenvolvimento.txt",
+      "Scripts/Fazenda Rio Grande - Valida Data de Estorno Atualização Crédito - Desenvolvimento.txt"
+    ]
+  },
+  "simam.arrecadacaoCreditoSintetico": {
+    "usos": 2,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - Valida Arrecadações SIM-AM por Competencia - Desenvolvimento.txt",
+      "Scripts/Fazenda Rio Grande - Valida Data de Estorno Atualização Crédito - Desenvolvimento.txt"
+    ]
+  },
+  "simam.estornoAtualizacaoDividaAtivaSintetico": {
+    "usos": 2,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - Valida Atualização Credito SIM-AM por Competencia - Desenvolvimento.txt",
+      "Scripts/Fazenda Rio Grande - Valida Atualização Divida Ativa SIM-AM por Competencia - Desenvolvimento.txt"
+    ]
+  },
+  "simam": {
+    "usos": 2,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - Valida Atualização Credito SIM-AM por Competencia - Desenvolvimento.txt",
+      "Scripts/Fazenda Rio Grande - Valida Atualização Divida Ativa SIM-AM por Competencia - Desenvolvimento.txt"
+    ]
+  },
+  "condominios.imoveis": {
+    "usos": 2,
+    "raiz": "condominios",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - [EXTENSÕES][SANEAMENTO] VERIFICA SIMILARIDADE DOS BAIRROS.txt",
+      "Scripts/Joaçaba - BTHSC-116388 - Recalculo Valor Venal.txt"
+    ]
+  },
+  "esfinge.processo": {
+    "usos": 2,
+    "raiz": "esfinge",
+    "exemplos": [
+      "Scripts/Florianópolis - Esfinge - Andrei.txt",
+      "Scripts/Jaraguá do Sul - Esfinge - Andrei.txt"
+    ]
+  },
+  "integracoescontabeis.historico": {
+    "usos": 2,
+    "raiz": "integracoescontabeis",
+    "exemplos": [
+      "Scripts/Lagoa Santa - [PMSMS] Descartar lotes de integração contábil (via Service Layer).txt",
+      "Scripts/Treze de Maio - [PMTM] Descartar lotes de integração contábil (via Service Layer).txt"
+    ]
+  },
+  "emissaoGuias.contribuintes": {
+    "usos": 1,
+    "raiz": "emissaoGuias",
+    "exemplos": [
+      "Scripts/Atibaia - Teste.txt"
+    ]
+  },
+  "emissaoCarnes": {
+    "usos": 1,
+    "raiz": "emissaoCarnes",
+    "exemplos": [
+      "Scripts/Bom Jesus - [PMBJ] Emissao de Guia.txt"
+    ]
+  },
+  "baixaAutomaticaPgtosNaoHomologadas": {
+    "usos": 1,
+    "raiz": "baixaAutomaticaPgtosNaoHomologadas",
+    "exemplos": [
+      "Scripts/Criciúma - [PMC] Fonte Relatório de Baixas de Pagamento.txt"
+    ]
+  },
+  "informacoesBaixa": {
+    "usos": 1,
+    "raiz": "informacoesBaixa",
+    "exemplos": [
+      "Scripts/Divinópolis - Div - Fonte Relatório de baixa manual.txt"
+    ]
+  },
+  "dividas.receitas.simplificadas": {
+    "usos": 1,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Itaúna - [DEV] Hallef - simulação de parcelamento.txt"
+    ]
+  },
+  "contribuicoesMelhorias": {
+    "usos": 1,
+    "raiz": "contribuicoesMelhorias",
+    "exemplos": [
+      "Scripts/Joaçaba - Fonte - Resumo Estatístico.txt"
+    ]
+  },
+  "economico": {
+    "usos": 1,
+    "raiz": "economico",
+    "exemplos": [
+      "Scripts/Joaçaba - Fonte Certidão de Inscrição - Joaçaba - ISS Fixo.txt"
+    ]
+  },
+  "sinteseLancamentos": {
+    "usos": 1,
+    "raiz": "sinteseLancamentos",
+    "exemplos": [
+      "Scripts/Joaçaba - Valores em aberto por crédito.txt"
+    ]
+  },
+  "notificacaoDebito.receitas": {
+    "usos": 1,
+    "raiz": "notificacaoDebito",
+    "exemplos": [
+      "Scripts/Lagoa Santa - --_Em Desenv_-- Fonte v2 BTHSC-161025.txt"
+    ]
+  },
+  "notasAvulsasServicos": {
+    "usos": 1,
+    "raiz": "notasAvulsasServicos",
+    "exemplos": [
+      "Scripts/Nova Veneza - Fonte Relatório Notas Fiscais Avulsas.txt"
+    ]
+  },
+  "debito.detalhes": {
+    "usos": 1,
+    "raiz": "debito",
+    "exemplos": [
+      "Scripts/Varginha - [PMV] Fonte Guia (Pix - Santander)  - ATUALIZADO.txt"
+    ]
+  },
+  "simam.inscricaoDividaAtivaSintetico": {
+    "usos": 1,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Bituruna - Valida sequencial de Inscrição em Dívida Tributos X SIM-AM.txt"
+    ]
+  },
+  "simam.arrecadacaoCredito": {
+    "usos": 1,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Bituruna - Valida valor de lançamento Tributos X SIM-AM.txt"
+    ]
+  },
+  "imoveis.movimentacoesInscricaoImobiliaria": {
+    "usos": 1,
+    "raiz": "imoveis",
+    "exemplos": [
+      "Scripts/Campo Belo do Sul - validacao_teste.txt"
+    ]
+  },
+  "dividas.debitosInscritoscompl": {
+    "usos": 1,
+    "raiz": "dividas",
+    "exemplos": [
+      "Scripts/Criciúma - André - SEM PARCELA.txt"
+    ]
+  },
+  "esfingeAssunto6EstornoDescontosConcedidosLancamentosPgtos": {
+    "usos": 1,
+    "raiz": "esfingeAssunto6EstornoDescontosConcedidosLancamentosPgtos",
+    "exemplos": [
+      "Scripts/Criciúma - Mateus - teste - 2.txt"
+    ]
+  },
+  "esfingeAssunto6DescontosConcedidosLancamentosPgtos": {
+    "usos": 1,
+    "raiz": "esfingeAssunto6DescontosConcedidosLancamentosPgtos",
+    "exemplos": [
+      "Scripts/Criciúma - Mateus - teste - 2.txt"
+    ]
+  },
+  "esfingeDividasNaoEnviadas": {
+    "usos": 1,
+    "raiz": "esfingeDividasNaoEnviadas",
+    "exemplos": [
+      "Scripts/Criciúma - Mateus - teste.txt"
+    ]
+  },
+  "IncentivoFiscalTransparencia": {
+    "usos": 1,
+    "raiz": "IncentivoFiscalTransparencia",
+    "exemplos": [
+      "Scripts/Criciúma - TESTES - DANIELSON.txt"
+    ]
+  },
+  "indexadores": {
+    "usos": 1,
+    "raiz": "indexadores",
+    "exemplos": [
+      "Scripts/Criciúma - TESTE_GIO.txt"
+    ]
+  },
+  "simam.deducaoCreditoSintetico": {
+    "usos": 1,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - Valida Deduções de Crédito por Competência - SIM-AM - Desenvolvimento.txt"
+    ]
+  },
+  "simam.estornoDeducaoCreditoSintetico": {
+    "usos": 1,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - Valida Deduções de Crédito por Competência - SIM-AM - Desenvolvimento.txt"
+    ]
+  },
+  "simam.inscricaoDividaAtiva": {
+    "usos": 1,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - [PMFRG] Integração Contábil (Arrecadação_Estorno).txt"
+    ]
+  },
+  "simam.estornoLancamentoCreditoSintetico": {
+    "usos": 1,
+    "raiz": "simam",
+    "exemplos": [
+      "Scripts/Fazenda Rio Grande - [PMFRG] SIM-AM - Busca EstornoLancamentoCredito.txt"
+    ]
+  },
+  "esfingeDadosBaseValidacaoRevisao": {
+    "usos": 1,
+    "raiz": "esfingeDadosBaseValidacaoRevisao",
+    "exemplos": [
+      "Scripts/Florianópolis - Danielson - testes.txt"
+    ]
+  },
+  "esfingeRangeValidacaoRevisao": {
+    "usos": 1,
+    "raiz": "esfingeRangeValidacaoRevisao",
+    "exemplos": [
+      "Scripts/Florianópolis - Danielson - testes.txt"
+    ]
+  },
+  "englobamentos": {
+    "usos": 1,
+    "raiz": "englobamentos",
+    "exemplos": [
+      "Scripts/Joaçaba - [Joaçaba] Exportar englobamentos.txt"
+    ]
+  },
+  "tabelaAuxiliar.registro": {
+    "usos": 1,
+    "raiz": "tabelaAuxiliar",
+    "exemplos": [
+      "Scripts/Lagoa Santa - Importa novos LETREIROS nos econômicos.txt"
+    ]
+  },
+  "maioresdevedores.debitos": {
+    "usos": 1,
+    "raiz": "maioresdevedores",
+    "exemplos": [
+      "Scripts/Lagoa Santa - TRIB-77944.txt"
+    ]
+  },
+  "protocolos": {
+    "usos": 1,
+    "raiz": "protocolos",
+    "exemplos": [
+      "Scripts/Major Vieira - TESTE - DANIELSON.txt"
+    ]
+  }
+}

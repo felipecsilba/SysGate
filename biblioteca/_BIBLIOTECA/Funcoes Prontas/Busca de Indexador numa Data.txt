@@ -1,0 +1,33 @@
+// Duas linguagens diferentes dentro do mesmo sistema Betha têm formas
+// diferentes de buscar o valor de um indexador (UFM/UPM/INPC/etc.) numa
+// data específica. Usar a errada dá erro de "propriedade inválida".
+
+// =========================================================
+// LINGUAGEM DE FÓRMULA (Calculo/Acrescimos/etc.) — usar Utilitarios.*
+// =========================================================
+// Existem DUAS funções nativas fazendo a mesma coisa na base (achado pelo
+// dicionário de funções): prefira a mais usada (1.117 ocorrências) pra
+// manter consistência com o resto do código já escrito.
+
+ufm = Utilitarios.buscaValorDoIndexadorPorSiglaNumaDataEspecifica("UFM", dataBase);  // PREFERIR — 1117 usos na base
+// ufm = Utilitarios.buscaValorIndexadorPorSiglaEData("UFM", dataBase);              // equivalente, só 331 usos — evitar em código novo
+
+// Para índice acumulado mês a mês (ex. INPC em Débitos Gerais), usar:
+// Utilitarios.buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo('INPC', dataInicio, dataFim)
+// que retorna uma lista de movimentações — ver "Calculo de Acrescimos" pra
+// como acumular (Variante B).
+
+// =========================================================
+// LINGUAGEM DE SCRIPT (Scripts/Scripts, Fontes Dinamicas, Criticas) —
+// não tem Utilitarios.*, usar a fonte de dados diretamente
+// =========================================================
+fonteIndexadores = Dados.tributos.v2.indexadores.movimentacoes   // ATENÇÃO: não é Dados.tributos.v2.indexadores (esse é só o cadastro do indexador, não as movimentações — dá erro "Invalid property <indexador.sigla>")
+
+def buscarValorIndexador(sigla, dataReferencia) {
+  def dado = fonteIndexadores.busca(
+    criterio: "indexador.sigla = '${sigla}' and dtMovimentacao <= '${dataReferencia}'",
+    ordem: "dtMovimentacao desc",
+    primeiro: true
+  )
+  return dado?.vlMovimentacao ?: 0
+}

@@ -1,0 +1,163 @@
+// ORIGEM: Rurópolis/PA - CTM (LC 001/2021), validado em tela em 30/09/2026.
+//   Caso conferido: dívida de R$ 1.000,00 vencida em 31/10/2025, data base 30/09/2026
+//     -> correção 21,19 | juros 112,33 (11%) | multa 204,24 (20%) | total 1.337,76
+//   Parcelamento em parcela única com 1º vencimento em 30/10/2026 -> juros 12% (122,54),
+//   PROREFIS 100% de juros e multa -> total 1.021,19.
+//
+// USO: modelo pra município cuja lei manda
+//   - correção pela variação MENSAL de um índice (IGPM, INPC, IPCA...) buscado pela sigla
+//   - juros de 1% ao mês OU FRAÇÃO
+//   - multa diária com teto
+// Trocar a sigla do índice, o % de juros e a regra de multa conforme a lei do município.
+//
+// ARMADILHAS QUE ESTE MODELO RESOLVE (achadas na fórmula antiga de Rurópolis):
+//   1. Correção zerada: o laço do índice começava com `correcaoMonetaria` sem valor inicial
+//      (0 * índices = 0 -> correção negativa -> comCorrecao(0)). Tem que começar em
+//      `receita.valor`, e ser reiniciado DENTRO do percorrer(receitas).
+//   2. Correção nunca rodava: bloco da fórmula padrão `se (!indexador.ehMoedaCorrente())`
+//      + `valorIndexadorNo... > 0` em volta. Não faz sentido quando o índice é buscado
+//      pela sigla -> dívida em moeda corrente ficava sem correção. Remover.
+//   3. "Mês ou fração": Datas.diferencaMeses conta só meses COMPLETOS
+//      (31/10/2025 -> 30/09/2026 = 10). A lei manda 11. Usar a contagem por calendário abaixo.
+//   4. Multa a partir do 1º dia: `diferencaDias > 1` deixava 1 dia de atraso sem multa.
+//      Usar `> 0`.
+//   5. Correção começa em `dataVencimento` (não na data ajustada pro dia útil): quando o
+//      vencimento cai no fim de semana do fim do mês, `dataVcto` pula de mês e perde um índice.
+
+//=================================================================
+// A) FORMULA_ACRESCIMO_DIVIDA_ATIVA
+//=================================================================
+percentualJuroEmDecimal = 0.01;
+percentualMultaEmDecimal = 0;
+
+se (Utilitarios.ehFeriado(dataVencimento) > 0) {
+  dataVcto = Utilitarios.proximoDiaUtil(dataVencimento);
+} senao {
+  dataVcto = dataVencimento;
+}
+
+// Correção - índice mensal acumulado
+percorrer(receitas) { receita ->
+  correcaoMonetaria = receita.valor;
+  valorIndice = 0;
+
+  listaIndices = Utilitarios.buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo('IGPM', dataVencimento, dataBase);
+
+  percorrer(listaIndices) { movimentacao ->
+    valorIndice = movimentacao.valor / 100;
+    correcaoMonetaria = correcaoMonetaria + (correcaoMonetaria * valorIndice);
+  }
+
+  valorCorrecao = correcaoMonetaria - receita.valor;
+
+  se (valorCorrecao < 0) {
+    receita.comCorrecao(0);
+  } senao {
+    receita.comCorrecao(Numeros.arredonda(valorCorrecao, 2));
+  }
+}
+
+// Juros - 1% ao mês ou fração (meses de calendário + 1 se sobrar fração)
+diferencaMeses = 0;
+se (dataBase > dataVcto) {
+  diferencaMeses = (Datas.ano(dataBase) - Datas.ano(dataVcto)) * 12 + Datas.mes(dataBase) - Datas.mes(dataVcto);
+  se (Datas.dia(dataBase) > Datas.dia(dataVcto)) {
+    diferencaMeses = diferencaMeses + 1;
+  }
+}
+
+percorrer(receitas) { receita ->
+  valorReceita = receita.valor + receita.correcao - receita.remissao - receita.anistiaTributo;
+  valorJuros = diferencaMeses * percentualJuroEmDecimal * valorReceita;
+  receita.comJuro(Numeros.arredonda(valorJuros, 2));
+}
+
+// Multa - 0,33% ao dia sobre o valor corrigido, teto 20%
+diferencaDias = Datas.diferencaDias(dataVcto, dataBase);
+
+se (diferencaDias > 0) {
+  percentualMultaEmDecimal = diferencaDias * 0.0033;
+}
+
+se (percentualMultaEmDecimal >= 0.20) {
+  percentualMultaEmDecimal = 0.20;
+}
+
+percorrer(receitas) { receita ->
+  valorReceita = receita.valor + receita.correcao - receita.remissao - receita.anistiaTributo;
+  valorMulta = valorReceita * percentualMultaEmDecimal;
+  receita.comMulta(Numeros.arredonda(valorMulta, 2));
+}
+
+
+//=================================================================
+// B) FORMULA_ACRESCIMO_PARCELAMENTO - parcela paga em atraso
+//    (mesmas regras, por parcela; parcela em dia fica sem acréscimo)
+//=================================================================
+percentualJuroEmDecimal = 0.01;
+
+percorrer(parcelas) { parcela ->
+
+  se (Utilitarios.ehFeriado(parcela.dataVencimento) > 0) {
+    dataVcto = Utilitarios.proximoDiaUtil(parcela.dataVencimento);
+  } senao {
+    dataVcto = parcela.dataVencimento;
+  }
+
+  se (dataVcto < dataBase) {
+
+    // valor devido da parcela (líquido de desconto, com juros de financiamento; taxas fora)
+    valorParcela = parcela.valor - parcela.valorDoDesconto + parcela.valorCorrecaoPrefixada + parcela.valorJuroFinanciamento;
+
+    valorCorrigido = valorParcela;
+    listaIndices = Utilitarios.buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo('IGPM', parcela.dataVencimento, dataBase);
+
+    percorrer(listaIndices) { movimentacao ->
+      valorCorrigido = valorCorrigido + (valorCorrigido * movimentacao.valor / 100);
+    }
+
+    valorCorrecao = Numeros.arredonda(valorCorrigido - valorParcela, 2);
+    se (valorCorrecao < 0) {
+      valorCorrecao = 0;
+    }
+    parcela.comCorrecao(valorCorrecao);
+
+    baseCalculo = valorParcela + valorCorrecao;
+
+    diferencaMeses = (Datas.ano(dataBase) - Datas.ano(dataVcto)) * 12 + Datas.mes(dataBase) - Datas.mes(dataVcto);
+    se (Datas.dia(dataBase) > Datas.dia(dataVcto)) {
+      diferencaMeses = diferencaMeses + 1;
+    }
+
+    parcela.comJuro(Numeros.arredonda(baseCalculo * diferencaMeses * percentualJuroEmDecimal, 2));
+
+    diferencaDias = Datas.diferencaDias(dataVcto, dataBase);
+    percentualMultaEmDecimal = diferencaDias * 0.0033;
+    se (percentualMultaEmDecimal >= 0.20) {
+      percentualMultaEmDecimal = 0.20;
+    }
+
+    parcela.comMulta(Numeros.arredonda(baseCalculo * percentualMultaEmDecimal, 2));
+  }
+}
+
+
+//=================================================================
+// C) ACRESCIMO (juro de financiamento do parcelamento)
+//    1% ao mês linear a partir da 2ª parcela: parcela n -> (n-1)%
+//    Script separado; usa `parcelamentoParcela` e `retornar` com o valor.
+//=================================================================
+taxa = 0.01;
+valorJuros = 0;
+
+valorAtualizado = parcelamentoParcela.valorDaParcela + parcelamentoParcela.valorDeCorrecao +
+                  parcelamentoParcela.valorDeJuros + parcelamentoParcela.valorDeMulta;
+
+valorDescontos  = parcelamentoParcela.valorDoDesconto + parcelamentoParcela.descontoDeCorrecao +
+                  parcelamentoParcela.descontoDeJuros + parcelamentoParcela.descontoDeMulta;
+
+se (parcelamentoParcela.numeroDaParcela > 1) {
+  valorJuros = (valorAtualizado - valorDescontos) * (parcelamentoParcela.numeroDaParcela - 1) * taxa;
+}
+
+retornar Numeros.arredonda(valorJuros, 2);

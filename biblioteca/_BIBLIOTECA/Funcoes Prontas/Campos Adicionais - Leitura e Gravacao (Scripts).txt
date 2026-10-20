@@ -1,0 +1,203 @@
+// ORIGEM: generalização do padrão já validado em produção no
+// "Atualiza Valor Venal" (Scripts/Scripts/Placas - Atualiza Valor Venal.txt).
+//
+// ATUALIZADO com base em catalogo_v2.json (extraído do schema bruto da API).
+// A versão anterior deste arquivo dizia que a leitura de campos adicionais de
+// CONTRIBUINTE "não foi encontrada no catálogo" — estava ERRADO: existe sim,
+// na fonte `contribuinte` (singular). O catálogo antigo escondia isso porque
+// descartava os parâmetros de path.
+//
+// TABELA DE COBERTURA (conferir sempre com: python fonte.py ver <fonte>)
+//
+//   Cadastro        | Leitura (busca)                              | Gravação (preenche)
+//   ----------------|----------------------------------------------|--------------------
+//   Imóvel          | imovel.camposAdicionais   (1 imóvel)         | imovel.campoAdicional
+//                   | /imoveis/{idImovel}/campos-adicionais        | (POST)
+//                   | ⚠ idImovel OBRIGATÓRIO, ano opcional         |
+//   Imóvel (lote)   | imoveis.camposAdicionais  (N imóveis)        |
+//                   | /imoveis/campos-adicionais                   |
+//                   | ⚠ SEM parâmetro — filtra por criterio        |
+//   Contribuinte    | contribuinte (singular!)                     | contribuintes (plural!)
+//                   | /contribuintes/{idContribuinte}/campos-adic. | (PUT)
+//                   | ⚠ idContribuinte OBRIGATÓRIO                 |
+//                   | — existe tb. /contribuintes/campos-adicionais|
+//                   |   sem parâmetro, com 13 filtros              |
+//   Econômico       | economicos.buscaCamposAdicionais             | NÃO EXISTE fonte
+//                   | /economicos/{idEconomico}/campos-adicionais  | de gravação
+//                   | ⚠ idEconomico OBRIGATÓRIO                    |
+//   Receita Diversa | receitas-diversas                            | NÃO EXISTE fonte
+//                   |                                              | de gravação
+//   Seção           | /secoes/{idSecao}/campos-adicionais          | (não verificado)
+//                   | ⚠ idSecao OBRIGATÓRIO                        |
+//
+// CONCLUSÃO PRÁTICA: um "Atualiza X" via Script (fora do motor de cálculo) só
+// dá pra fazer com IMÓVEL e CONTRIBUINTE — são os únicos com fonte de
+// gravação. Pra Econômico e Receita Diversa, gravar Campo Adicional só
+// funciona de dentro de uma Fórmula, via
+// CamposAdicionais.preencherCampoAdicional(...).
+//
+// ⚠ ATENÇÃO ao singular/plural: `contribuinte` LÊ, `contribuintes` GRAVA.
+//   Não é typo, são duas fontes diferentes no catálogo.
+
+// =========================================================
+// FONTES
+// =========================================================
+fonteCamposAdicionaisImovel = Dados.tributos.v2.imovel.camposAdicionais   // 1 imóvel (parametros)
+fonteCamposAdicionaisLote   = Dados.tributos.v2.imoveis.camposAdicionais  // N imóveis (criterio)
+fonteCampoAdicionalImovel   = Dados.tributos.v2.imovel.campoAdicional   // grava
+fonteCamposAdicionaisEcon   = Dados.tributos.v2.economicos
+fonteCamposAdicionaisRD     = Dados.tributos.v2["receitas-diversas"]
+fonteContribuinteLeitura    = Dados.tributos.v2.contribuinte            // lê   (singular)
+fonteContribuinteGravacao   = Dados.tributos.v2.contribuintes           // grava (plural)
+
+// =========================================================
+// LEITURA — imóvel
+// =========================================================
+def buscarCampoAdicionalImovel(idImovel, nomeCampo, ano, valorPadrao = 0) {
+  def dado = fonteCamposAdicionaisImovel.busca(
+    criterio: "campoAdicional.titulo = '${nomeCampo}'",
+    parametros: ["idImovel": idImovel, "ano": ano],
+    primeiro: true
+  )
+  return dado?.vlCampo ?: valorPadrao
+}
+
+// =========================================================
+// LEITURA — econômico
+// =========================================================
+def buscarCampoAdicionalEconomico(idEconomico, nomeCampo, dtBase, valorPadrao = 0) {
+  def dado = fonteCamposAdicionaisEcon.buscaCamposAdicionais(
+    criterio: "campoAdicional.titulo = '${nomeCampo}'",
+    parametros: ["idEconomico": idEconomico, "dtBase": dtBase],
+    primeiro: true
+  )
+  return dado?.vlCampo ?: valorPadrao
+}
+
+// =========================================================
+// LEITURA — receita diversa
+// =========================================================
+def buscarCampoAdicionalReceitaDiversa(idReceitaDiversa, nomeCampo, valorPadrao = 0) {
+  def dado = fonteCamposAdicionaisRD.busca(
+    criterio: "campoAdicional.titulo = '${nomeCampo}'",   // conferir nome exato do campo de filtro antes de usar
+    parametros: ["idReceitaDiversa": idReceitaDiversa],
+    primeiro: true
+  )
+  return dado?.vlCampo ?: valorPadrao
+}
+
+// =========================================================
+// LEITURA — contribuinte  (fonte `contribuinte`, no SINGULAR)
+// idContribuinte é PARÂMETRO OBRIGATÓRIO
+// =========================================================
+def buscarCampoAdicionalContribuinte(idContribuinte, nomeCampo, valorPadrao = 0) {
+  def dado = fonteContribuinteLeitura.busca(
+    criterio: "campoAdicional.titulo = '${nomeCampo}'",
+    parametros: ["idContribuinte": idContribuinte],
+    primeiro: true
+  )
+  return dado?.vlCampo ?: valorPadrao
+}
+
+// =========================================================
+// GRAVAÇÃO — imóvel (já validado em produção)
+// =========================================================
+def preencherCampoImovel(idImovel, ano, nomeCampo, valor) {
+  fonteCampoAdicionalImovel.preenche(conteudo: [
+    idImovel : idImovel,
+    ano      : ano,
+    nomeCampo: nomeCampo,
+    valor    : valor
+  ])
+}
+
+// =========================================================
+// GRAVAÇÃO — contribuinte (endpoint existe, formato de "conteudo" não
+// validado em produção ainda — confirmar campos exatos antes de usar)
+// =========================================================
+def preencherCampoContribuinte(idContribuinte, nomeCampo, valor) {
+  fonteContribuinteGravacao.preenche(conteudo: [
+    idContribuinte: idContribuinte,
+    nomeCampo     : nomeCampo,
+    valor         : valor
+  ])
+}
+
+
+// =========================================================
+// LEITURA EM LOTE — vários imóveis de uma vez
+//
+// ⚠ AS DUAS LEITURAS DE IMÓVEL SÃO FONTES DIFERENTES, e o nome engana:
+//     imovel.camposAdicionais  (singular) -> exige parametros:[idImovel:..]
+//     imoveis.camposAdicionais (plural)   -> aceita criterio, sem parâmetro
+//   Usar a singular sem o parâmetro dá:
+//     "Os parâmetros 'idImovel' não foram definidos para fonte de dados
+//      tributos.v2.imovel.camposAdicionais.busca"
+//   (erro real, 31/08/2026). Confirmado no corpus: 202 chamadas da singular
+//   com `parametros:` contra 105 da plural com `criterio:`.
+//
+// QUANDO USAR: script de exportação/rotina que percorre MUITOS imóveis.
+// A singular custa 1 chamada de rede por imóvel; a plural resolve 200 de
+// uma vez. Numa base inteira é a diferença entre rodar e estourar tempo.
+//
+// ⚠ O filtro dos imóveis TEM que ser repetido aqui. Buscar campo adicional
+//   "da base toda" e descartar depois não economiza nada — o custo está na
+//   consulta, não no laço.
+// =========================================================
+def carregarCamposEmLote(ids, titulos, anoMinimo, tamanhoLote = 200) {
+  def porImovel = [:]                  // idImovel -> [titulo: [ano:.., valor:..]]
+  ids.collate(tamanhoLote).each { lote ->
+    fonteCamposAdicionaisLote.busca(
+      criterio: "idImovel in (${lote.join(',')})" +
+                " and campoAdicional.titulo in ('${titulos.join("','")}')" +
+                " and ano >= ${anoMinimo}",
+      campos: "idImovel, ano, vlCampo, opcoes, campoAdicional(titulo)"
+    ).each { campo ->
+      def titulo = campo.campoAdicional.titulo
+      def valor  = (campo.opcoes != null && campo.opcoes.toString().trim() != "")
+                   ? campo.opcoes.toString().trim()
+                   : (campo.vlCampo != null ? campo.vlCampo.toString() : "")
+      if (porImovel[campo.idImovel] == null) {
+        porImovel[campo.idImovel] = [:]
+      }
+      def atual = porImovel[campo.idImovel][titulo]
+      // guarda o ano junto: é o que permite ficar com o mais recente sem
+      // depender da ordem em que a fonte devolveu
+      if (atual == null || (campo.ano ?: 0) >= atual.ano) {
+        porImovel[campo.idImovel][titulo] = [ano: campo.ano ?: 0, valor: valor]
+      }
+    }
+  }
+  return porImovel
+}
+
+// =========================================================
+// DE ONDE SAI O VALOR — depende do tipo do campo
+//
+//   LISTA_SELECAO ............... opcoes        (String)
+//   NUMERICO, AREA_TERRENO,
+//   AREA_CONSTRUIDA, VALOR_VENAL,
+//   VALOR_VENAL_TERRITORIAL,
+//   VALOR_VENAL_CONSTRUIDO ...... vlCampo       (BigDecimal)
+//   TEXTO ....................... texto
+//   AREA_TEXTO .................. areaTexto
+//   DATA / HORA / DATAHORA ...... dhCampo
+//
+// ⚠ Campo de LISTA_SELECAO vem com vlCampo = 0, não null. Testar `opcoes`
+//   ANTES de `vlCampo`, senão toda opção vira "0" na saída.
+// =========================================================
+
+// =========================================================
+// ANO: cada campo tem o seu — não existe "o ano da linha"
+//
+// Os campos do BCI (topografia, pedologia, área do lote...) são gravados na
+// manutenção do cadastro e ficam no ano corrente. Os valores venais e os
+// fatores de cálculo são gravados PELO CÁLCULO DO IPTU — enquanto o cálculo
+// do exercício não roda, o valor mais recente é o do ano anterior.
+//
+// Consequência prática (custou uma rodada de depuração em 31/08/2026):
+// filtrar `ano = 2026` numa exportação traz o BCI e deixa TODO valor venal
+// em branco. Numa base com IPTU 2026 ainda não calculado, o certo é pegar,
+// de cada campo, o ano mais recente em que ele tem valor — e registrar numa
+// coluna de que ano veio cada valor.
+// =========================================================

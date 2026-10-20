@@ -1,0 +1,575 @@
+nome;descricao;dominio;verbo;operacao;tipo_retorno;qtd_campos;qtd_filtros;filtros_principais;id
+CobrancaDividaAtiva;Cobrança Dívida Ativa;arrecadacao;GET;busca;MarcoDivida;39;34;valorAbatimentos, valorInscrito, valorEspecie, abreviatura, valorAbatimentosAcrescimos, valorDacaoPagamento, dataMarco, valorMulta, id, valorCorrecao, idDivida, statusDivida, valorAdjudicacao, valorCo;623b57ea25ca6a00f9a196cb
+Manutenção de pagamentos;manutenção de pagamentos;arrecadacao;GET;busca;ManutencaoPagamento;9;9;updatedIn, situacao, idPagamento, updatedBy, createdBy, createdIn, tipoInconsistencia, id, tipoPagamento;614cda0ae1700c00ef6e236f
+Manutenção de pagamentos;manutenção de pagamentos;arrecadacao;GET;busca;ManutencaoSaldo;27;16;idPagamento, dtValidade, valorSaldoTotal, tipoUtilizacaoSaldo, dataUtilizacao, situacaoSaldo, utilizado, observacoes, tipoSaldo, dtSaldo, idSaldo, idContribuinte, nroProcesso;614cda45e1700c00ef6e2370
+Números de baixa;Números de baixa;arrecadacao;PUT;altera;NumerosBaixa;3;0;;5c40d66ca0a7fd01059a5ad4
+Números de baixa;Números de baixa;arrecadacao;GET;busca;NumeroBaixa;296;17;dtValidade, usuarioEmissao, dtVencimento, nroConvenio, dhEmissao, dhIntegracao, cedente, utilizado, nroBanco, integrado, sistemaOrigem, dataVencimentoIntegrada, id;5c40d681790ad301018d77fe
+Números de baixa;Números de baixa;arrecadacao;GET;busca;SistemasBetha;65;0;;67eefba8db7fe83d759729cd
+Números de baixa;Números de baixa;arrecadacao;GET;busca;ObsNumerosBaixas;3;3;observacao, nroBaixa, id;625dc9045c05b100fb5da439
+Números de baixa;Números de baixa;arrecadacao;GET;busca;NumeroBaixaSimnplificada;15;11;utilizado, nroBanco, idGuiaEmitida, integrado, sistemaOrigem, nroConvenio, dataVencimentoIntegrada, idGuiaUnificada, id, idDebito, cedente;65c37b3df2ec372d66b3e3fe
+ParcelamentoOrdemAbatimentoReceitas;Valores parcelados das receitas em ordem de abatimento;arrecadacao;GET;busca;ParcelamentoOrdemAbatimentoReceitas;30;39;id;5b71b4061a73bc0101a42f12
+baixaAutomatica;BaixaAutomatica;arrecadacao;GET;busca;BaixaAutomatica;29;25;situacao, usuarioEstorno, dhInicio, baixaRetroativa, dataArquivo, tempoExecucao, identificacaoSimples, dhTermino, dataHoraEstorno, nroArquivo, dataRetroativa, protocoloExecucao, arquivo, notificationI;5dcabb6d1cd5ed0105b94da3
+baixaAutomatica;BaixaAutomatica;arrecadacao;GET;busca;BaixaAutomaticaPagamento;17;16;observacao, dataPagamento, valorPago, nroBaixa, dataCredito, parcela, nroLinha, dataVencto, inconsistencia, tipoLancamento, valorDiferenca, idReferente, idLancamento, idGuiaUnificada, id, tipoPagament;65468ac2cbb8a704290cc055
+baixasAutomaticas;BaixasAutomaticas;arrecadacao;GET;busca;BaixasAutomaticas;55;18;baixaAutomatica, situacao, dhTerminoHomologacao, dataPagamento, erro, usuarioEstorno, baixaRetroativa, dhInicioHomologacao, dataArquivo, dhInicioEstorno, tempoExecucao, dhTerminoEstorno, dataHoraEstor;5dcabb811cd5ed0105b94da4
+cobranca-compartilhada;Cobranca Compartilhada;arrecadacao;GET;busca;CobrancaCompartilhada;24;14;idPagamento, dataPagamento, nroBaixa, usuarioEnvio, dataEnvio, id, status;64ca5cfce94c140001fc360e
+cobranca-compartilhada;Cobranca Compartilhada;arrecadacao;GET;configuracao;ConfiguracaoInscricaoDividaAtiva;10;6;codigoCidadeRj, urlCobrancaCompartilhada, codigoRj, scriptEnvioArrecadacaoId, senhaRj, id;64ca5e1bd42879000101ecc2
+cobranca-compartilhada;Cobranca Compartilhada;arrecadacao;GET;pendentes;Pagamentos;24;11;idPagamento, dataPagamento, nroBaixa, status;64ca5db2e94c140001fc360f
+cobrancas-compartilhadas;Cobranças Compartilhadas;arrecadacao;POST;cria;CobrancaCompartilhada;10;0;;64ca59d4e94c140001fc360d
+convenios;Convênios;arrecadacao;POST;gerar;CodigoBarrasRepresentation;8;0;;5c45c707a0a7fd01059a5adb
+convenios;Convênios;arrecadacao;GET;busca;ConveniosCompleto;45;14;contaBancaria, dvContaBancaria, nroConvenio, utilizarParcelamento, cedente, descricao, descricaoCarteira, valorValidadeNroBaixa, carteira, tipoValidadeNroBaixa, disponivel, dvCedente, id, usaValidadeN;5c3f7bc0a0a7fd01059a5ad3
+convenios;Convênios;arrecadacao;GET;busca;creditosConvenios;13;4;id;5d4b36bb5226ae011638f455
+guiasUnificadas;Guias Unificadas;arrecadacao;GET;buscaUnica;GuiaUnificada;58;27;dtEmissaoString, dtValidade, dtVencimento, vlTotalMulta, nroBaixa, vlTotalCorrecao, siglaIndexador, vlDescontoGuiaUnificada, dtEmissao, protocoloEmissao, boletoRegistrado, representacaoNumerica, id, c;5b60a6ce64de6a01018d36f4
+guiasUnificadas;Guias Unificadas;arrecadacao;GET;buscaComposicao;guiaUnificadaComposicao;28;13;vlJuros, ano, vlMulta, vlCorrecaoPreFixada, vlTributo, tipoLancamento, vlCorrecao, vlTaxasParcelamento, id, vlTotalParcela;5b60a6c364de6a01018d36f3
+guiasUnificadas;Guias Unificadas;arrecadacao;GET;busca;GuiaUnificada;58;27;dtEmissaoString, dtValidade, dtVencimento, vlTotalMulta, nroBaixa, vlTotalCorrecao, siglaIndexador, vlDescontoGuiaUnificada, dtEmissao, protocoloEmissao, boletoRegistrado, representacaoNumerica, id, c;5b60a6af64de6a01018d36f2
+indexadores;Indexadores;arrecadacao;GET;busca;Indexador;4;4;tipo, sigla, nome, id;5d5404875226ae011638f458
+indexadores;Indexadores;arrecadacao;GET;busca;IndexadorValor;8;7;dtMovimentacao, vlMovimentacao, id;5d5404905226ae011638f459
+informacoesBaixa;informacoesBaixa;arrecadacao;GET;busca;InformacoesBaixaDados;13;12;dataEstorno, dataHomologacao, idPagamentos, processoEstorno, codigoOcorrencia1, codigoOcorrencia2, usuarioEstorno, usuarioHomologacao, valorTarifa, id, usuarioBaixa, dataBaixa;64676dcfa0ad7a000126aedc
+pagamento;Pagamentos;arrecadacao;GET;busca;Pagamentos;290;211;tipoGuia, idDebitoOriginal, receita, valorPagoLancado, geradaPeloLimiteArrecadacao, dataPagamentoString, descricaoCredito, dataPagamento, dataHoraCriacao, dtLancamento, sistemaOrigem, idCredito, nroBa;5b6ad4e964642301029d77ea
+pagamento;Pagamentos;arrecadacao;GET;busca;PagamentosDebitos;120;14;receita, dataPagamento, dataHoraEstorno, valorDiferenca, id, tipoPagamento, idContribuinte, complementar, idConvenio;66b4d6989425071d3f4103d6
+pagamento;Pagamentos;arrecadacao;GET;busca;PagamentosDividas;156;13;receita, dataPagamento, dataHoraEstorno, valorDiferenca, id, tipoPagamento, idContribuinte, idConvenio;66b4d6ce9425071d3f4103d7
+pagamento;Pagamentos;arrecadacao;GET;busca-lancamentos-receitas-datas;PagamentoDetalhadoPorLancamentoReceita;7;7;idPagamento, dataPagamento, idLancamentoReceita, idLancamento, id, dataHoraLancamento, idDebito;64c0088d09be5600015d5f5c
+pagamento;Pagamentos;arrecadacao;GET;busca;PagamentosParcelamentos;113;14;idCreditoTributario, receita, dataPagamento, anoItemPago, dataHoraEstorno, idEconomicoItemPago, valorDiferenca, idImovelItemPago, id, tipoPagamento, idContribuinte, idConvenio;66b4d7189425071d3f4103d8
+pagamento;Pagamentos;arrecadacao;GET;busca;PagamentosSimplificados;10;10;dhEstorno, vlDiferenca, nroBaixa, id, tipoPagamento, vlPago, idManutencao, dtCredito, tipoBaixa, dtPagamento;620433eb8416ed00f963d1af
+pagamentoDetalhado;Detalhamento dos pagamentos;arrecadacao;GET;busca;PagamentoDetalhado;493;127;idReceitaDiversaLanctos, tipoGuia, idTransfImoveis, dataVcto, tipoReceitaPagamento, id, idDebitoOriginal, receita, idObra, dataCreditoString, dataPagamentoString, descricaoCredito, dataHoraEstorno, id;5b6487b064642301029d77a1
+pagamentoDetalhado;Detalhamento dos pagamentos;arrecadacao;GET;busca;DividaAgrupado;5;91;dataEstorno, situacao, criadoPor, dataCredito, protestada, tipoPagamentoEmParcelamento, dataInscricao, id, idReceitaDiversaLancamento, mesasCobrancaAcrescimos, dataQuitacao, situacaoDivida, codigo, nu;6751c1bf747bb0001539df55
+pagamentoDetalhado;Detalhamento dos pagamentos;arrecadacao;GET;existePagamento;;0;0;;667dcfa9999dc33236b05e6e
+pagamentoDetalhado;Detalhamento dos pagamentos;arrecadacao;GET;busca;DebitoAgrupado;6;87;dataEstorno, dtVencimento, dataCredito, apenasUmaForma, dhLancamento, idDebitoOriginal, dataCreditoString, dataPagamentoString, descricaoCredito, anoMesVencimento, dataPagamento, dtLancamento, abrevia;5b966510befeab01032aae5a
+pagamentoDetalhado;Detalhamento dos pagamentos;arrecadacao;GET;busca;BasicPagamentoDetalhado;74;21;dataEstorno, dataPagamento, valorDescontoConcedidoLancado, dataCredito, valorPagoLancado, valorDevidoLancado, tipoBaixa, valorDescontoLancado, tipoReceitaPagamento, id, tipoPagamento;5b6487a464642301029d77a0
+receitas;Receitas;arrecadacao;GET;busca;Receita;72;9;naoContabilizavel, abreviatura, inscDividaAtiva, codigoTCE, classificacao, id, templateId, cobrancaCompartilhada, descricao;5b75afcb1a73bc0101a42f16
+receitas-diversas;Receitas diversas;arrecadacao;POST;calcular;ExecucaoCalculoTributarioSimplificadoSemFiltros;5;0;;606b075446966500ef7506a4
+receitas-diversas;Receitas diversas;arrecadacao;GET;busca;InformacaoComplementarReceitaDiversa;20;10;vlCampo, texto, opcoesSelecionadas, areaTexto, id, dhCampo, idReceitaDiversa;5b4c97e420993c010110ce76
+receitas-diversas;Receitas diversas;arrecadacao;POST;criar;ReceitaDiversa_Entrada;100;0;;606b07430e121400ef0e902b
+receitas-diversas;Receitas diversas;arrecadacao;GET;busca;ReceitaDiversaLancamentoReceita;20;3;valorLancado, id, idReceitaDiversaLancamento;5b4c97fb20993c010110ce77
+receitas-diversas;Receitas diversas;arrecadacao;GET;busca;ReceitaDiversaLancamento;10;10;intervaloVencimentos, quantidadeDiasMeses, observacao, totalLancado, dataVencimento, id, dataCriacao, quantidadeParcelas, situacaoLancamento, idReceitaDiversa;5b4c97eff9bd720102357a5b
+receitas-diversas;Receitas diversas;arrecadacao;GET;busca;ReceitaDiversa;55;19;dataReceitaDiversa, numeroProcesso, codigo, descricaoServico, comentarioServico, id, situacaoLancamento;5b58bdd720993c010110ce92
+certidoes-negativas;Certidão negativa;certidao;GET;busca;CertidaoNegativa;319;0;;5b4de3dc20993c010110ce7a
+ConfiguracaoTcems;Configuração extração tce/ms;config;GET;busca;ConfiguracaoExtracao;9;0;;6398d677825630000124c0e7
+configIntegracoesContabeis;Configurações de integrações contábeis;config;GET;busca;ConfigIntegracaoContabil;16;15;scriptEnvioCreditoInscritoId, scriptEnvioCreditoNaoInscritoId, scriptEnvioIsencoesId, scriptRecebimentoCancelamentosId, scriptEnvioImunidadesId, scriptRecebimentoIsencoesId, scriptRecebimentoCreditoIn;5cbf3ecca608b7013b0131a2
+contribuinte;Contribuintes;contribuinte;GET;busca;InformacaoComplementarContribuinte;20;12;vlCampo, texto, ano, opcoes, areaTexto, id, dhCampo;5d1f5f1fb684b9011eabba7e
+contribuinte;Contribuintes;contribuinte;GET;busca;InformacaoComplementarContribuinte;20;13;ano, areaTexto, dhCampo, vlCampo, texto, opcoes, id, idContribuinte;64dbb99cf98a760001a11902
+contribuinte;Contribuintes;contribuinte;GET;busca;ContribuinteEmail;6;6;principal, ordem, id, idContribuinte, email, descricao;5d9dc8125226ae011638f4a4
+contribuinte;Contribuintes;contribuinte;GET;busca;Endereco;71;22;apartamento, observacao, numero, bloco, cep, descricao, principal, complemento, id, idContribuinte;5b579449f9bd720102357a62
+contribuinte;Contribuintes;contribuinte;GET;busca;ContribuinteSocio;37;6;percSociedade, dataInclusao, id, idContribuinte, dataDesligamento;5e974faa37eca8010504e2c0
+contribuinte;Contribuintes;contribuinte;GET;busca;Telefone;8;8;principal, tipo, observacao, numero, ordem, id, idContribuinte, descricao;5b57945520993c010110ce91
+contribuinte;Contribuintes;contribuinte;GET;busca;ContribuintePadrao;107;34;telefone, tipoPessoa, situacao, dhOperacao, createdIn, nomeFantasia, idTemplate, possuiSocios, id, email, optanteSimplesNacional, codigo, inscricaoMunicipal, nome, nomeSemEspolio, site, createdBy, cpf;5b4df56120993c010110ce7b
+contribuinte;Contribuintes;contribuinte;GET;busca;Endereco;71;22;apartamento, observacao, numero, bloco, cep, descricao, principal, complemento, id, idContribuinte;6059211364483f00efaf92a2
+contribuinte;Contribuintes;contribuinte;GET;busca;ContribuinteMovimentacao;19;6;idAlteracaoCadastral, usuario, tipoMovimentacao, dhMovimentacao, id, idContribuinte;5e6bbca3145aa20107ec8941
+contribuinte;Contribuintes;contribuinte;GET;busca;Pagador;27;22;debito, mesLancamento, anoLancamento, valorPagoTotal, valorPagoOutubro, valorPagoAbril, valorPagoSetembro, valorPagoNovembro, valorPagoAgosto, valorPagoMaio, mesPagamento, valorPagoFevereiro, valorPag;5bbf36a27a5a5c010011f893
+contribuinte;Contribuintes;contribuinte;GET;buscaSocios;ContribuinteSocio;37;6;percSociedade, dataInclusao, id, idContribuinte, dataDesligamento;6504cf42b8547800015bb5da
+contribuinte;Contribuintes;contribuinte;POST;validarCpfCnpj;ValidaDocumento;1;0;;614c9520a0594e00ef938402
+contribuinte;Contribuintes;contribuinte;GET;busca;MaioresDevedores;20;11;optanteSimplesNacional, ano, valorDebitos, valorDividas, dataVencimento, valorParcelamentos, anoComposicao;5bbb42b17a5a5c010011f88f
+contribuinte;Contribuintes;contribuinte;GET;busca;MaioresDevedoresDebitos;17;10;optanteSimplesNacional, situacao, ano, valorDebitos, dataVencimento;5cb4db19d23e22013ab7fcbd
+contribuinte;Contribuintes;contribuinte;GET;busca;MaioresDevedoresDividas;17;9;optanteSimplesNacional, situacao, ano, valorDividas, dataVencimento, protestado;5cb4db28d23e22013ab7fcbe
+contribuinte;Contribuintes;contribuinte;GET;busca;ContribuinteMovMei;23;10;dtEfeito, orgao, optante, codigoRelacao, id, comentario, dtInicio;68126c232101dd13b57070b1
+contribuinte;Contribuintes;contribuinte;GET;busca;ContribuinteMovSimplesNacional;23;10;dtEfeito, orgao, optante, codigoRelacao, id, comentario, dtInicio;68126bce2101dd13b57070b0
+contribuintes;Contribuintes;contribuinte;PUT;preenche;ContribuinteCampoAdicionalParams;4;0;;63b42ea51e42810001932355
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaArrecadacaoCredito;ArrecadacaoCredito;31;13;cdControleLeiAto, nrAnoOperacao, createdIn, nrOperacao, competencia, idInscricaoDivida, idPessoa, database, nrMes, id, idLancamentoCredito, nrAno, status;620fe6af0ec2c600fc35f630
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaArrecadacaoCreditoEstorno;ArrecadacaoCreditoEstorno;28;11;idPessoa, database, nrMes, nrAnoOperacao, idArrecadacaoCredito, createdIn, id, nrAno, nrOperacao, competencia, status;620fe6c5da4fc500fb3a05ae
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaArrecadacaoCreditoEstornoSintetico;ArrecadacaoCreditoEstornoSintetico;22;11;idPessoa, database, nrMes, nrAnoOperacao, idArrecadacaoCredito, createdIn, id, nrAno, nrOperacao, competencia, status;6454abe3832ee50001501014
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaArrecadacaoCreditoSintetico;ArrecadacaoCreditoSintetico;29;13;cdControleLeiAto, nrAnoOperacao, createdIn, nrOperacao, competencia, idInscricaoDivida, idPessoa, database, nrMes, id, idLancamentoCredito, nrAno, status;6436a971a789850001e7f245
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaAtualizacaoDividaAtiva;AtualizacaoDividaAtiva;37;17;cdControleLeiAto, vlAtualizacao, nrAnoOperacao, nrAnoDivida, createdIn, idTipoAtualizacaoCredito, nrDivida, lancamentoCreditoNrMesBase, lancamentoCreditoDtLancamento, nrOperacao, competencia, dtAtuali;620fe6d8da4fc500fb3a05af
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaAtualizacaoDividaAtivaSintetico;AtualizacaoDividaAtivaSintetico;29;13;cdControleLeiAto, vlAtualizacao, nrAnoOperacao, createdIn, idTipoAtualizacaoCredito, nrOperacao, competencia, dtAtualizacao, idInscricaoDivida, idPessoa, database, id, status;627e84b111dfba00fb74ec61
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaAtualizacaoMonetaria;AtualizacaoMonetaria;31;13;cdControleLeiAto, vlAtualizacao, nrAnoOperacao, createdIn, idTipoAtualizacaoCredito, nrOperacao, competencia, dtAtualizacao, idPessoa, database, nrMesBase, id, status;620fe574da4fc500fb3a05a9
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaAtualizacaoMonetariaEstorno;AtualizacaoMonetariaEstorno;26;13;cdControleLeiAto, nrAnoOperacao, createdIn, nrOperacao, competencia, idPessoa, database, nrMesBase, vlEstorno, id, idAtualizacaoCredito, dtEstorno, status;620fe5990ec2c600fc35f62d
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaAtualizacaoMonetariaSintetico;AtualizacaoMonetariaSintetico;24;14;cdControleLeiAto, vlAtualizacao, nrAnoOperacao, createdIn, idTipoAtualizacaoCredito, nrOperacao, competencia, dtAtualizacao, idPessoa, database, nrMesBase, id, idLancamentoCredito, status;627e84f911dfba00fb74ec62
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaDeducaoAnalitica;DeducaoAnaliticaTributo;29;23;cdControleLeiAto, idTipoCredito, cdCadastro, nrAnoOperacao, dsMotivo, idTipoNaturezaCredito, createdIn, vlDeducao, idTipoControleDeducao, tpDocResponsavel, nrOperacao, competencia, idPessoa, database,;620fe523da4fc500fb3a05a7
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaDeducaoCredito;DeducaoCredito;32;15;cdControleLeiAto, nrAnoOperacao, dsMotivo, nrCredito, createdIn, vlDeducao, nrOperacao, competencia, idPessoa, database, dtDeducao, idTipoDeducaoCredito, id, nrAnoCredito, status;620fe580da4fc500fb3a05aa
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaDeducaoCreditoSintetico;DeducaoCreditoSintetico;25;14;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, vlDeducao, nrOperacao, competencia, idPessoa, database, dtDeducao, idTipoDeducaoCredito, id, idLancamentoCredito, status;62b3104d11dfba00fb74ec74
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaDeducaoDivida;DeducaoDivida;37;13;cdControleLeiAto, nrAnoDivida, dsMotivo, createdIn, nrDivida, vlDeducao, competencia, idPessoa, database, dtDeducao, idTipoDeducaoCredito, id, status;620fe6a70ec2c600fc35f62f
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaDeducaoDividaSintetico;DeducaoDividaSintetico;24;14;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, vlDeducao, nrOperacao, competencia, idInscricaoDivida, idPessoa, database, dtDeducao, idTipoDeducaoCredito, id, status;627d4901ca016e00f9270bbe
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoAtualizacaoDividaAtiva;EstornoAtualizacaoDividaAtiva;42;12;cdControleLeiAto, idPessoa, database, nrMesBase, nrAnoOperacao, createdIn, vlEstorno, id, nrOperacao, competencia, dtAtualizacao, status;620fe6e30ec2c600fc35f632
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoAtualizacaoDividaAtivaSintetico;EstornoAtualizacaoDividaAtivaSintetico;22;12;cdControleLeiAto, idPessoa, database, nrMesBase, nrAnoOperacao, createdIn, vlEstorno, id, nrOperacao, competencia, dtAtualizacao, status;64542e9ba0ad7a000126aed8
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoAtualizacaoMonetariaSintetico;AtualizacaoMonetariaEstornoSintetico;22;15;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, idTipoAtualizacaoCredito, nrOperacao, competencia, idPessoa, database, nrMesBase, vlEstorno, id, idAtualizacaoCredito, dtEstorno, status;64542cdda0ad7a000126aed6
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoDeducaoCredito;EstornoDeducaoCredito;26;13;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, nrOperacao, competencia, idPessoa, database, vlEstorno, id, idDeducaoCredito, dtEstorno, status;620fe5bf0ec2c600fc35f62e
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoDeducaoCreditoSintetico;EstornoDeducaoCreditoSintetico;24;13;cdControleLeiAto, nrAnoOperacao, createdIn, nrOperacao, competencia, idPessoa, database, nrMesBase, vlEstorno, id, idDeducaoCredito, dtEstorno, status;64542d7da0ad7a000126aed7
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoDeducaoDivida;EstornoDeducaoDivida;26;13;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, idDeducaoDivida, nrOperacao, competencia, idPessoa, database, vlEstorno, id, dtEstorno, status;620fe6ce0ec2c600fc35f631
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoDeducaoDividaSintetico;EstornoDeducaoDividaSintetico;23;13;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, idDeducaoDivida, nrOperacao, competencia, idPessoa, database, vlEstorno, id, dtEstorno, status;6454ac67a0ad7a000126aed9
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoInscricaoDividaAtiva;EstornoInscricaoDividaAtiva;34;12;cdControleLeiAto, idPessoa, database, nrAnoOperacao, dsMotivo, createdIn, vlEstorno, id, nrOperacao, competencia, dtEstorno, status;620fe689da4fc500fb3a05ac
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoInscricaoDividaAtivaSintetico;EstornoInscricaoDividaAtivaSintetico;23;13;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, nrOperacao, competencia, idInscricaoDivida, idPessoa, database, vlEstorno, id, dtEstorno, status;642d6267a789850001e7f243
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoLancamentoCredito;EstornoLancamentoCredito;33;12;cdControleLeiAto, idPessoa, database, dsMotivo, nrCredito, createdIn, vlEstorno, id, nrAnoCredito, competencia, dtEstorno, status;620fe549da4fc500fb3a05a8
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaEstornoLancamentoCreditoSintetico;EstornoLancamentoCreditoSintetico;31;13;cdControleLeiAto, nrAnoOperacao, dsMotivo, createdIn, nrOperacao, competencia, idPessoa, database, vlEstorno, id, idLancamentoCredito, dtEstorno, status;651b1f04f4b2ea08b28f4a58
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;PUT;gerar-sequencial;ArquivoGeraSequencial;3;0;;6419a3b7d259d50001d49de4
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaInscricaoDividaAtiva;InscricaoDividaAtiva;36;18;cdControleLeiAto, idTipoCredito, dtInscricao, nrAnoOperacao, idTipoNaturezaCredito, nrCredito, createdIn, nrOperacao, competencia, vlInscricao, nrAnoInscricao, idPessoa, database, id, nrAnoBase, nrAno;620fe5670ec2c600fc35f62c
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaInscricaoDividaAtivaPorDivida;InscricaoDividaAtiva;36;18;cdControleLeiAto, idTipoCredito, dtInscricao, nrAnoOperacao, idTipoNaturezaCredito, nrCredito, createdIn, nrOperacao, competencia, vlInscricao, nrAnoInscricao, idPessoa, database, id, nrAnoBase, nrAno;620fe6f4da4fc500fb3a05b0
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaInscricaoDividaAtivaSintetico;InscricaoDividaAtivaSintetico;35;17;cdControleLeiAto, idTipoCredito, dtInscricao, nrAnoOperacao, idTipoNaturezaCredito, createdIn, nrOperacao, competencia, vlInscricao, nrAnoInscricao, idPessoa, database, id, idLancamentoCredito, nrAnoB;627a764311dfba00fb74ec5e
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaLancamentoCredito;LancamentoCredito;27;17;cdControleLeiAto, idTipoCredito, nrAnoOperacao, idTipoNaturezaCredito, createdIn, vlLancamento, dtLancamento, nrOperacao, competencia, idPessoa, database, nrMesBase, idLancamento, id, nrAnoBase, idTip;620fe5070ec2c600fc35f62a
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaLancamentoCreditoPorDebito;LancamentoCredito;27;17;cdControleLeiAto, idTipoCredito, nrAnoOperacao, idTipoNaturezaCredito, createdIn, vlLancamento, dtLancamento, nrOperacao, competencia, idPessoa, database, nrMesBase, idLancamento, id, nrAnoBase, idTip;620fe44a0ec2c600fc35f629
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaLancamentoCreditoSintetico;LancamentoCreditoSintetico;23;16;cdControleLeiAto, idTipoCredito, nrAnoOperacao, idTipoNaturezaCredito, createdIn, vlLancamento, dtLancamento, nrOperacao, competencia, idPessoa, database, nrMesBase, id, nrAnoBase, idTipoOperacaoCredi;627a5339a5ab7700fab40d01
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;PUT;registrar;ArquivoSimAmLinha;2;0;;611ea18aad6cbb00eeaff101
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;PUT;registrar-lote;ArquivoSimAmLinha;2;0;;61280befdbc7f900f0ff5698
+SimAmArquivo;Informações do arquivos para envio ao SIM-AM;divida_ativa;GET;buscaSaldoAnalitico;SaldoAnaliticoContribuinte;30;26;idTipoCredito, cdCadastro, nrAnoOperacao, idTipoNaturezaCredito, createdIn, dtParcelamento, nrOperacao, competencia, database, nrMesBase, flExecucaoJudicial, dtSaldo, nrProcessoJudicial, flParcelado, ;611ea15a41d10700ef344539
+SimAmConfiguracao;Informações da configuração da entidade para envio ao SIM-AM;divida_ativa;GET;busca;ConfiguracaoEntidadeSimAm;1;0;;620fe696da4fc500fb3a05ad
+acrescimos;Cálculo de acrescimos;divida_ativa;PUT;calcular;AcrescimoDto;67;0;;5c6b1d4437e9fe013161d96a
+acrescimos;Cálculo de acrescimos;divida_ativa;GET;calcula;ApiAcrescimosDebitoRetornoDto;33;0;;5b69a14264642301029d77e9
+acrescimos;Cálculo de acrescimos;divida_ativa;GET;busca;AcrescimoHistorico;11;7;idDivida, createdBy, createdIn, dtBase, idParcela, id, idDebito;5f7c808f37eca8010504e340
+acrescimos;Cálculo de acrescimos;divida_ativa;POST;calculaDividasValor;ApiAcrescimosDividaRetornoDto;36;0;;679cdd8ad064da33754279f8
+acrescimos;Cálculo de acrescimos;divida_ativa;GET;calcula;ApiAcrescimosDividaRetornoDto;36;0;;5b5a3c3a20993c010110ce96
+acrescimos;Cálculo de acrescimos;divida_ativa;GET;busca;AcrescimoHistorico;11;7;idDivida, createdBy, createdIn, dtBase, idParcela, id, idDebito;5f7c80a137eca8010504e341
+acrescimos;Cálculo de acrescimos;divida_ativa;GET;busca;AcrescimoHistoricoDetalhado;13;7;idDivida, createdBy, createdIn, dtBase, idParcela, id, idDebito;61f9928179453400fa052825
+acrescimos;Cálculo de acrescimos;divida_ativa;PUT;calcularMultiplos;;0;0;;5c80024a43641301302b01c4
+acrescimos;Cálculo de acrescimos;divida_ativa;GET;calcula;ApiAcrescimosParcelamentoRetornoDto;16;0;;5b9a698cc43d2b0102f64961
+configAcrescimos;Configurações de de acréscimos;divida_ativa;GET;busca;ConfigAcrescimos;2;1;executarFormulaAcrescimos;5d3b3db75226ae011638f451
+dividas;Dívidas;divida_ativa;GET;busca;DividaReceita;31;17;idDivida, percAnistiaCorrecao, valorSaldo, percAnistiaJuro, valorMultaInscrito, valorTributoInscrito, percAnistiaSaldo, valorTributoAtual, valorRemissao, valorCorrecaoInscrito, id, percAnistiaMulta, d;5b5a3ca720993c010110ce97
+dividas;Dívidas;divida_ativa;GET;busca;Divida;108;117;dataEstorno, criadoPor, protestada, id, dataQuitacao, situacaoDivida, numeroInscricao, folha, idObra, idContribuicaoMelhoria, idContribMelhoriaImovel, tributoInscobra, dhOperacao, simplesNacional, dat;5b5a3bfcf9bd720102357a68
+dividas;Dívidas;divida_ativa;GET;busca;DividaAcrescimoDto;112;90;situacao, criadoPor, dataCredito, protestada, tipoPagamentoEmParcelamento, dataInscricao, id, idReceitaDiversaLancamento, mesasCobrancaAcrescimos, dataQuitacao, situacaoDivida, codigo, numeroInscricao;640a292ad259d50001d49ddd
+dividas;Dívidas;divida_ativa;GET;busca;DividaDebitoInscrito;4;4;idDivida, idGerenciadorDebito, id, idDebito;5e8b2333a5d26501060cb110
+dividas;Dívidas;divida_ativa;GET;busca;DebitosDividasInscritos;7;7;situacaoDivida, situacaoDebito, idDivida, dataInscricao, idLancamento, id, idDebito;61af68831711a200fc196440
+dividas;Dívidas;divida_ativa;GET;metadados;Dados;1;87;situacao, criadoPor, dataCredito, protestada, tipoPagamentoEmParcelamento, dataInscricao, id, idReceitaDiversaLancamento, mesasCobrancaAcrescimos, dataQuitacao, situacaoDivida, codigo, numeroInscricao;5b98f876cffbb80101306149
+dividas;Dívidas;divida_ativa;GET;busca;DividaMovimentacao;29;29;vlPrestacaoDiversa, observacao, acaoDocumento, dtInscricao, vlMulta, vlAnistiaCorrecao, situacaoAnterior, vlAnistiaJuro, vlAnistiaSaldo, id, vlPago, vlAnistiaMulta, vlJuros, idDivida, comentario, tipo;5f89967c37eca8010504e352
+dividas;Dívidas;divida_ativa;GET;busca;DividaMovimentacaoReceita;23;16;situacaoDivida, pessoa, receita, dataEfeito, creditoTributario, statusDivida, dataHoraMovimentacao, codigoPessoa, divida, dividaMovto, usuarioMovto, tipoMovimentacao, id, anoDivida, codigoDivida;69a578451d70d8206a4e8477
+dividas;Dívidas;divida_ativa;GET;busca;DividaReceitaCompleta;139;97;percAnistiaSaldo, id, percAnistiaCorrecao, percAnistiaMulta, valorSaldo, valorRemissao, valorJuroInscrito, valorCorrecaoInscrito, valorMultaInscrito, valorTributoInscrito, dataValidadeAnistia, ano, pe;5b7471a51a73bc0101a42f15
+dividas;Dívidas;divida_ativa;GET;busca;DividaReceitaSimplificada;133;90;id, valorJuroInscrito, valorCorrecaoInscrito, valorMultaInscrito, valorTributoInscrito, ano, valorSaldo;642346f8a789850001e7f23d
+dividas;Dívidas;divida_ativa;GET;saldoDividasAgrupadas;DividaAgrupadaSaldoProjection;21;11;anoMesVencimento, situacao, ano, dataVencimento, protestada;64e8bc87251f860001adafdd
+dividas;Dívidas;divida_ativa;GET;busca;DividaSintetica;11;9;situacao, dataPagamento, ano, creditoTributario, dataVencimento, id, idContribuinte;65e9ef97214a7e32173154fc
+dividas;Dívidas;divida_ativa;GET;soma;DividaTotais;12;0;;5b6480c21a73bc0101a42f0c
+notificacoes-dividas;Notificação de dividas;divida_ativa;GET;busca;NotificacaoDividaAtividade;11;1;idDivida;5b578d88f9bd720102357a5f
+notificacoes-dividas;Notificação de dividas;divida_ativa;GET;busca;NotificacaoDividaReceita;67;1;idDivida;5b578dd420993c010110ce8d
+notificacoes-dividas;Notificação de dividas;divida_ativa;GET;busca;NotificacaoDividaServico;5;1;idDivida;5b578def20993c010110ce8f
+notificacoes-dividas;Notificação de dividas;divida_ativa;GET;busca;NotificacaoDividaDados;187;39;cancelada, idNotaAvulsa, protestada, inscricaoIncraReferente, parcela, idReceitaDiversa, dtEmissao, valorTotalMoedaCorrente, valorMultaAtual, executada, valorSaldoMoedaCorrente, apartamentoReferente, ;60886670f8d95800ef848f6a
+notificacoes-dividas;Notificação de dividas;divida_ativa;GET;busca;NotificacaoDividaDados;187;39;cancelada, idNotaAvulsa, protestada, inscricaoIncraReferente, parcela, idReceitaDiversa, dtEmissao, valorTotalMoedaCorrente, valorMultaAtual, executada, valorSaldoMoedaCorrente, apartamentoReferente, ;5b578da020993c010110ce8a
+notificacoes-dividas;Notificação de dividas;divida_ativa;GET;busca;NotificacaoDividaDados;187;39;cancelada, idNotaAvulsa, protestada, inscricaoIncraReferente, parcela, idReceitaDiversa, dtEmissao, valorTotalMoedaCorrente, valorMultaAtual, executada, valorSaldoMoedaCorrente, apartamentoReferente, ;5f12247137eca8010504e301
+notificacoesDividas;Notificações das dívidas;divida_ativa;GET;busca;NotificacoesDividas;36;6;dtEmissao, idDivida, cancelada, createdBy, valorDivida, nroDocumento;61af45a61711a200fc19643f
+termos-parcelamento-dividas;Termos de Parcelamento por Dívidas;divida_ativa;GET;busca;TermoParcelamento;415;4;situacaoParcela, id, situacaoParcelamento, idParcelamento;612e87798cc6f100ed0e2a08
+Documentos;Documentos;geral;GET;busca;DocumentoPadrao;25;25;dtValidade, lote, idRelatorio, tipoReduzido, dtEmissao, protocoloEmissao, cancelado, informacoesComplementares, protocoloExecucao, natureza, id, objectId, dtCancelamento, idEconomico, tipoReferente, i;608fee8c50037300ef196032
+Documentos;Documentos;geral;GET;busca;DocumentoCanceladoPadrao;34;10;tipoManutencao, objectIdDocumento, dtCriacao, objectIdCancelamento, dtAlteracao, estornado, id, objectId;608feeb396034d00eff9b53f
+Habitese;Habitese;geral;GET;busca;habitese;19;12;restricao, dtEmissao, identificadorRelatorio, tipo, ano, processo, situacaoHabitese, idModelo, restricaoObservacao, nroDocumento, metragem;5d78dd375226ae011638f48d
+Habitese;Habitese;geral;GET;busca;habitese;19;12;restricao, dtEmissao, identificadorRelatorio, tipo, ano, processo, situacaoHabitese, idModelo, restricaoObservacao, nroDocumento, metragem;5d9cee657bc3250116a390bc
+Lista de serviço;Lista de serviço;geral;GET;busca;ListaServico;3;3;id, descricao, itemLista;5be067387a5a5c010011f898
+PlantasValores;Planta de valores;geral;GET;busca;PlantaValores;41;23;ano, inscricaoImobiliaria, vlMetroQuadrado, id;5d5404715226ae011638f457
+Secoes;Seções;geral;GET;busca;InformacaoComplementarSecao;20;13;ano, areaTexto, dhCampo, vlCampo, texto, opcoes, opcoesIds, id;5d5404597bc3250116a39081
+Secoes;Seções;geral;GET;busca;Secao;13;8;nroSecao, id;5d54044a7bc3250116a39080
+agrupamento-campo-adicional;AgrupamentoCampoAdicional;geral;GET;busca;AgrupamentoCampoAdicional;21;5;id;5e6a90a1a5d26501060cb0f0
+agrupamentos;Agrupamentos;geral;GET;busca;Agrupamento;5;5;tipoProjeto, cadastro, id, desativado, descricao;5ba40584c43d2b0102f64964
+atos;Atos;geral;GET;busca;Ato;20;13;cpfResponsavel, nroOficial, nroDiarioOficial, nroResolucao, dtPublicacao, dtVigorar, nmResponsavel, dtResolucao, ementa, dtCriacao, idTemplate, id, nroProcesso;648cb41e31dbf2000161f1d2
+camposAdicionais;Campos adicionais;geral;GET;busca;BasicCampoAdicional;12;10;tituloCampoPai, anoFinal, tipo, anoInicial, codTCE, idCamposAdicionais, titulo, tipoUnidade, tipoCadastro, id;5ba40579cffbb80101306152
+contribuicaoMelhoria;Contribuições de melhorias;geral;GET;busca;ContribuicaoMelhoria;71;33;situacao, anoEdital, quantidadeParcFinal, tipoIntervaloFinal, quantidadeImoveis, unidade, lancamentoGerado, dataProposta, larguraLogradouro, descricaoMelhoria, memorialDescritivo, valorParticipacao, p;5b6b45f21a73bc0101a42f10
+debitos;Debitos;geral;GET;busca;DebitoProtocolo;3;0;;67c74f6bfe79084a3a48634b
+debitos;Debitos;geral;GET;buscaDebitoReceitas;DebitoReceita;8;3;idReceita;61f9f70379453400fa052826
+debitos;Debitos;geral;GET;busca;Debito;66;89;situacao, dtVencimento, porDiferenca, idParcelamentoParcela, idContribuicao, apenasUmaForma, dhLancamento, dhCancelamento, idLancamento, id, idDebitoOriginal, idDivida, idConfigParcelamento, dtQuitaca;5b61baa41a73bc0101a42f0b
+debitos;Debitos;geral;GET;metadados;Dados;1;80;situacao, dtVencimento, idParcelamentoParcela, idContribuicao, apenasUmaForma, dhLancamento, dhCancelamento, idLancamento, id, idDebitoOriginal, idDivida, idConfigParcelamento, dtQuitacao, dtCredito, ;5b98f86ccffbb80101306148
+debitos;Debitos;geral;GET;buscaMovimentacoes;debitoMovimentacao;14;14;idPagamento, idCreditoTributario, anoGuia, idPessoa, dhEstorno, idGuia, codigoPessoa, idRequerimento, usuario, tipoMovimentacao, idLancamento, dhMovimentacao, id, idParcelamento;69a5786e4517bd27f5dce037
+debitos;Debitos;geral;GET;buscaMovimentacoesReceitas;debitoMovimentacaoReceita;28;15;idPagamento, idCreditoTributario, dtEfeito, idReceita, idGuiaMovto, situacaoGuia, idPessoa, idGuia, codigoPessoa, idRequerimento, usuarioMovto, tipoMovimentacao, dhMovimentacao, id, idParcelamento;69a578858c82781b69628a02
+debitos;Debitos;geral;GET;buscaReceitas;debitoReceitaCompleta;93;85;dtVencimento, apenasUmaForma, dhLancamento, id, idDebitoOriginal, idReceita, descricaoCredito, anoMesVencimento, dtLancamento, abreviaturaCredito, geradaPorCancelamentoParcelamento, idContribuinte;5b61ba9b1a73bc0101a42f0a
+debitos;Debitos;geral;GET;buscaDebitoReceitasManutencoes;DebitoReceitaManutencao;15;5;idManutencoesCalculos, idManutencaoRevogacao, idDebitoReceita, tipoSolicitacao, anoDebito;6a1dcdb2cb3f21793047c273
+debitos;Debitos;geral;GET;buscaSimulados;Debito;66;89;situacao, dtVencimento, porDiferenca, idParcelamentoParcela, idContribuicao, apenasUmaForma, dhLancamento, dhCancelamento, idLancamento, id, idDebitoOriginal, idDivida, idConfigParcelamento, dtQuitaca;5b71b6aa64642301029d77f0
+debitos;Debitos;geral;GET;buscaSimuladosReceitas;debitoReceitaCompleta;93;85;dtVencimento, apenasUmaForma, dhLancamento, id, idDebitoOriginal, idReceita, descricaoCredito, anoMesVencimento, dtLancamento, abreviaturaCredito, geradaPorCancelamentoParcelamento, idContribuinte;5b9679e4befeab01032aae5c
+encerramento-mensal;Encerramento mensal;geral;GET;buscaMovimentacoesDividas;EncerramentoMensalDividaReceita;27;27;valorInscrito, mesEncerramento, valorCorrecaoMes, idCreditoTributario, idReceita, dataFinalMes, anoEncerramento, idEncerramentoMensal, valorMulta, id, valorMultaMes, valorCorrecao, situacaoDivida, idD;699c4c0cedcdf3294e127db6
+encerramento-mensal;Encerramento mensal;geral;GET;buscaMovimentacoesLancamentos;EncerramentoMensalLancamentoReceita;25;25;mesEncerramento, valorCorrecaoMes, situacao, idCreditoTributario, ano, idReceita, valorSaldo, tipoReferente, valorLancado, valorJuros, codigoContribuinte, dataHoraMovimentacao, dataFinalMes, usuarioEn;699c4c235d60845a06d6d447
+encerramento-mensal;Encerramento mensal;geral;GET;buscaPorAno;EncerramentoMensal;11;10;usuarioEncerramento, ano, usuarioReabertura, dataHoraTerminoEncerramento, motivoReabertura, mes, dataHoraReabertura, id, dataHoraInicioEncerramento, status;660dc89ff7680b2497ddec84
+encerramento-mensal;Encerramento mensal;geral;GET;buscaPorCompetencia;EncerramentoMensal;11;10;usuarioEncerramento, ano, usuarioReabertura, dataHoraTerminoEncerramento, motivoReabertura, mes, dataHoraReabertura, id, dataHoraInicioEncerramento, status;660dc8c3f7680b2497ddec85
+enderecoCorrespondencia;Endereço de correspondência;geral;GET;busca;EnderecoCorrespondencia;117;16;setor, distrito, apartamento, numero, lote, localidade, bloco, bairro, quadra, cep, complemento, condominio, logradouro, classificacao, id, loteamento;5b90449d463d9301006a387d
+esfinge;Esfinge;geral;GET;busca;ValorRetorno;3;0;;68379ecf7ff0cb57b2d3c737
+esfinge;Esfinge;geral;GET;busca;ValorRetorno;3;0;;6837af9c7ff0cb57b2d3c738
+esfinge;Esfinge;geral;PUT;altera;;0;0;;63b581e81e42810001932356
+esfinge;Esfinge;geral;PUT;altera-lote;;0;0;;69f5032f9bb6cf00657e6429
+esfinge;Esfinge;geral;GET;busca;Esfinge;24;22;anoLancamento, estorno, numeroLote, isImportadoTce, dadosRetorno, sistema, chavePacote, codigoLancamentoNovo, anoLancamentoNovo, codigoTce, dadosEnvio, tipoDado, idDado, dataHoraEnvio, cancelado, codi;63b5824aa9217100012eb3db
+esfinge;Esfinge;geral;GET;busca;CobrancasFaltantes;3;1;idGrupo;6801044ab0c84b4eef928b8a
+esfinge;Esfinge;geral;GET;busca;EsfingeContribuinteFaltante;4;2;nomeArquivo, idGrupo;65b93e9993bf900d26b0713a
+esfinge;Esfinge;geral;GET;busca;EsfingeCodigoTce;5;2;nomeArquivo, idGrupo;65b171f5e01bed5e78c082e7
+esfinge;Esfinge;geral;GET;busca;DadoCadastralSaldoInical;5;5;numeroMatriculaContribuinte, idPessoa, id, inscricaoImobiliaria, idImovel;650b466ea0b56033311515a0
+esfinge;Esfinge;geral;GET;busca;EsfingeDataMovimentacao;8;7;dataEstorno, competenciaOperacao, competenciaEstorno, nomeArquivo, dadosEnvio, dataOperacao, idGrupo;65bbc5cf46f9d2561cfdf363
+esfinge;Esfinge;geral;GET;busca;EsfingeLancamentoFaltante;5;2;nomeArquivo, idGrupo;65b2bebde01bed5e78c082e8
+esfinge;Esfinge;geral;GET;busca;EsfingeImovelFaltante;4;2;nomeArquivo, idGrupo;65b93e75d79e6e6c63798fc9
+esfinge;Esfinge;geral;GET;busca;EsfingeDividasPorDataInscricao;4;3;dataInscricao, idMaximo, idMinimo;65c608df8d4e3a59d6dcc282
+esfinge;Esfinge;geral;GET;contagem;ContagemPorDescricao;3;9;numeroLote, chavePacote, nomeArquivo, codigoTce, nomeTce, tipoDado, idDado, status, idGrupo;6493004beca86700017f884d
+esfinge;Esfinge;geral;GET;busca;EsfingeCadastroContribuintes;13;3;numeroMatriculaContribuinte, id, tipoContribuinte;6911d4dd2e8c210a58c170a5
+esfinge;Esfinge;geral;PUT;cria;Esfinge;23;0;;63b5842ba9217100012eb3dc
+esfinge;Esfinge;geral;PUT;cria-lista;EsfingeListDTO;24;0;;65ce609d8d4e3a59d6dcc288
+esfinge;Esfinge;geral;DELETE;excluir;Esfinge;23;0;;63b585341e42810001932357
+esfinge;Esfinge;geral;DELETE;excluir-lote;Esfinge;23;0;;64887649060d3e0001a49119
+esfinge;Esfinge;geral;GET;busca;EsfingeArrecadacoesValidas;4;0;;69f2491354052c10c5bc374d
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto10ValoresBaixaPorInscricao;30;0;;689ba86ef372bd110a1e6c8b
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto3DebitosNaoInscritos;8;2;idLancamentos, codigoLancamento;699d9602985d05694017c8f9
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto4Debitos;31;0;;679bcffb72787a3ed6d7028d
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto4Dividas;33;0;;6792a53e480dc450682c1538
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto4IdsLancamentos;2;0;;67a3505db02f2855238dc772
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto4Lancamentos;25;0;;67a34f90b02f2855238dc771
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto5DividasParceladas;17;0;;6818d8f3f330cd68e8914b8a
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto5DividasReceitas;8;2;idDivida, codigoLancamento;699d96f5d9b03a51b6a4eda6
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto5InfoDividas;9;0;;681cfedc9e42b212eb92cd25
+esfinge;Esfinge;geral;GET;busca;CancelamentoLancamento;11;0;;67a9f2b8b05d95222dce2b48
+esfinge;Esfinge;geral;GET;busca;DadosManutencaoLancamento;15;0;;67acb00042406a77c92defdd
+esfinge;Esfinge;geral;GET;busca;DividasDescontosConcedidosRepresentation;16;0;;67a9f61cb05d95222dce2b4a
+esfinge;Esfinge;geral;GET;busca;LancamentosDescontosConcedidosRepresentation;16;0;;67a9f5743bab3529ad1a6e6a
+esfinge;Esfinge;geral;POST;busca;DescontosConcedidosRepresentation;17;0;;67e1b06e11373406587d2eaa
+esfinge;Esfinge;geral;POST;busca;EsfingeDividasMovimentacoesRepresentation;19;0;;67a9f4acb05d95222dce2b49
+esfinge;Esfinge;geral;GET;busca;DividasCompensadosRepresentation;12;0;;67a9f7fab05d95222dce2b4c
+esfinge;Esfinge;geral;GET;busca;DividasCompensadosRepresentation;12;0;;67a9f833b05d95222dce2b4d
+esfinge;Esfinge;geral;GET;busca;DividasDescontosConcedidosEstornosRepresentation;16;0;;67a9f893b05d95222dce2b4e
+esfinge;Esfinge;geral;GET;busca;LancamentosDescontosConcedidosEstornosRepresentation;17;0;;67a9f69bb05d95222dce2b4b
+esfinge;Esfinge;geral;POST;busca;LancamentosDescontosConcedidosEstornosRepresentation;17;0;;67e6bc5e326abd557ff32829
+esfinge;Esfinge;geral;POST;busca;InscricoesEsfingeRepresentation;17;0;;67b74885501bcc18b96812bd
+esfinge;Esfinge;geral;GET;busca;EsfingeIdsDividasMovimentacoesRepresentation;1;0;;67b8d7393887a858e8735ef0
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto6InscricaoDividas;14;0;;685c46598c22c76b4502482c
+esfinge;Esfinge;geral;POST;busca;InscricoesEsfingeRepresentation;17;0;;67a9f5133bab3529ad1a6e69
+esfinge;Esfinge;geral;GET;busca;LancamentosCompensadosRepresentation;12;0;;67a9f7ae3bab3529ad1a6e6b
+esfinge;Esfinge;geral;GET;busca;LancamentosCompensadosRepresentation;12;0;;67b47b090b8b835cec1108a0
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto7Arrecadacoes;32;8;dataPagamentoRetroativo, idDivida, idPagamento, dataPagamento, idReceita, dataCredito, idLancamento, idDebito;67a5162d407d650a2be46c43
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto7ArrecadacoesEstornos;25;8;dataEstorno, idDivida, idPagamento, dataPagamento, idReceita, dataCredito, idLancamento, idDebito;67bdda473b1dcd37b56cc851
+esfinge;Esfinge;geral;POST;busca;EsfingeAssunto8DividasParceladas;13;0;;685558942e5d993d761d620f
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto9BaixasCreditosTributariosDebitos;18;3;mesMovimentacao, tipoMovimentacao, anoMovimentacao;699d95ae985d05694017c8f8
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto9BaixasCreditosTributariosDividas;24;3;mesMovimentacao, tipoMovimentacao, anoMovimentacao;699d959abb16d54ab47e00e8
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto9DebitosRevisao;15;3;mesEncerramento, anoEncerramento, idLancamentos;699f5d195b3d784394a89527
+esfinge;Esfinge;geral;GET;busca;EsfingeAssunto9DividasReceitasRevisao;11;1;idDivida;699f1edb5d97923a9f0d9a7f
+esfinge;Esfinge;geral;GET;busca;EsfingeControleFinalizacaoPacote;11;8;unidadeGestora, dataHoraCancelamento, codigoRegistroInformacao, idRemessaOnline, ambiente, dataHoraFinalizacao, id, competencia;68d199749491250814d2bfa5
+esfinge;Esfinge;geral;GET;busca;EsfingeDadosBaseValidacaoRevisao;10;2;codigoLancamento, idDado;69ea7aa675f8ec03f2c51a42
+esfinge;Esfinge;geral;POST;busca;EsfingeDebitosNaoEnviados;6;0;;68acc5c2b8e9233701101a45
+esfinge;Esfinge;geral;POST;busca;EsfingeDividasNaoEnviadas;6;0;;68acc696b8e9233701101a46
+esfinge;Esfinge;geral;GET;busca;EsfingeDividasTransferidas;10;5;anoLancamento, codigoLancamento, id, dataBaixa, codigoSequencialOperacaoBaixa;699c58075739570866c32a9b
+esfinge;Esfinge;geral;POST;busca;EsfingeLancamentosNaoEnviados;6;0;;68acc445029a3f46ab165e65
+esfinge;Esfinge;geral;GET;busca;EsfingeLancamentosSemVinculoPrazoPrescricional;8;0;;6a06068a8a8ba609e61fdad3
+esfinge;Esfinge;geral;GET;busca;EsfingeRangeValidacaoRevisao;4;0;;69eba6d0ead21339f9402e22
+esfinge;Esfinge;geral;GET;busca;EsfingeSaldoReintegracaoCredito;16;3;idDivida, idCreditoTributario, dataEfeito;699d962dbb16d54ab47e00e9
+esfinge;Esfinge;geral;GET;busca;EsfingeRevisaoReintegracaoCredito;13;2;idDivida, idLancamento;699c591b5d60845a06d6d448
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoCon736;6;0;;687aa6649e192a387ebd92d8
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoRevisao;9;0;;69a1e901f3ee80526d8e04c0
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoSaldosBaixas;17;0;;69a874d57eb7122602806706
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoSaldosLancamentos;11;0;;69dd2414e396ab3a9db54ee9
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoCon735;4;0;;69e915575f8390264deb5d2b
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoCon786;6;0;;69e915655f8390264deb5d2c
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoConsSaldoNegativo;14;1;con;69dfd1c5a0198a60ea0ff29c
+esfinge;Esfinge;geral;GET;busca;EsfingeValidacaoDataRegistroForaCompetencia;11;0;;69e6309617219b2da805a221
+esfinge;Esfinge;geral;GET;busca;EsfingeVinculo;14;13;idGuias, anoArrecadacaoOrigem, codigoLancamentoOrigem, codigoReceita, anoLancamentoOrigem, idDividas, idLancamentos, competencia, codigoArrecadacaoOrigem, codigoLancamentoTce, tipoRegistro, id, anoLan;69bb2c2ef954fc69d1595817
+esfingeControleFinalizacaoPacote;Esfinge - Controle de competências finalizadas;geral;PUT;altera;;0;0;;68d19da474fa3c24735d480e
+esfingeControleFinalizacaoPacote;Esfinge - Controle de competências finalizadas;geral;POST;cria;EsfingeControleFinalizacaoPacote;12;0;;68d19b659491250814d2bfa6
+esfingeInvalido;Esfinge inválido;geral;GET;busca;EsfingeInvalido;34;7;anoLancamento, codigoArrecadacao, nomeArquivo, codigoLancamento, tipoDado, idDado, idGrupo;6a031ad6c1c10170d58af573
+estados;Estados;geral;GET;busca;Estado;11;4;uf, codigoIbge, nome, id;5b3e7ddcf9bd720102357a47
+eventosSimples;Eventos Simples;geral;POST;cria;EventosSimples;15;0;;5c000429dce83b01027bb932
+horariosFuncionamento;Horários de funcionamento;geral;GET;busca;HorarioFuncionamento;2;2;id, descricao;5d695ffd5226ae011638f476
+horariosFuncionamento;Horários de funcionamento;geral;GET;busca;HorarioFuncionamentoDias;9;7;horaIntrajornadaSaida, horaEntrada, horaSaida, horaIntrajornadaEntrada, id, dia;5d6960095226ae011638f477
+imoveis;Imóveis;geral;PUT;altera;ImovelEnglobadoParams;3;0;;696522fc2691a63d0e0089f8
+imoveis;Imóveis;geral;GET;busca;ImovelEnglobadoTodos;4;4;tipo, idImovelEnglobado, id, idImovelPrincipal;696509bbb5588a14fa205ec9
+imoveis;Imóveis;geral;GET;busca;Imovel;184;77;idLoteamento, situacao, lote, bloco, createdIn, idResponsavel, idBairro, complemento, englobado, inscricaoImobiliariaFormatada, id, codigo, tipoImovel, idProprietario, matricula, garagem, secao, idDis;5b4c97a520993c010110ce75
+imoveis;Imóveis;geral;GET;buscaComCamposAdicionais;;0;0;;5f1ecf2d2800df0105535817
+imoveis;Imóveis;geral;GET;buscaPorInscricao;BasicImovel;18;6;tipoImovel, situacao, codigo, inscricaoIncra, unidade, id;603395dfccc64500ef3ee96b
+imoveis;Imóveis;geral;GET;buscarCampos;InformacaoComplementarImovel;29;15;ano, areaTexto, dhCampo, vlCampo, texto, opcoes, opcoesIds, id, idImovel;5df0f99d4b28fa010538170f
+imoveis;Imóveis;geral;GET;buscaCampoAdicionalImoveis;InformacaoComplementarImovel;29;15;ano, areaTexto, dhCampo, vlCampo, texto, opcoes, opcoesIds, id, idImovel;64ac660b6e126300016f489d
+imoveis;Imóveis;geral;GET;buscaCorresponsaveis;ImovelCorresponsavel;20;5;cpfCnpj, id, idImovel;67be0ef8cee1f8618872da01
+imoveis;Imóveis;geral;GET;busca;HistoricoAlteracaoFlat;14;8;descricaoItemLista, descricaoCampoItemLista, descricaoCampo, dhAlteracao, usuario, nroProcesso, descricaoCompleta, idImovel;5e6bc0b8145aa20107ec8942
+imoveis;Imóveis;geral;GET;busca;InscricaoImobiliariaNoPeriodo;5;0;;65183476448f6273afecb5f3
+imoveis;Imóveis;geral;GET;metadados;Dados;1;27;idLoteamento, setor, situacao, numero, lote, bloco, quadra, loja, unidade, cep, idBairro, complemento, englobado, inscricaoImobiliariaFormatada, id, apartamento, codigo, idCondominio, idLogradouro, ti;5b69abf11a73bc0101a42f0e
+imoveis;Imóveis;geral;GET;busca;ImovelMovimentacaoPrincipal;9;8;dtVigencia, idAlteracaoCadastral, tipoMovimentacao, usuarioMovimentacao, dhMovimentacao, id, nroProcesso, idImovel;602c20ca6e156000ef73226d
+imoveis;Imóveis;geral;GET;busca;ImovelMovimentacaoInscricaoImobiliariaPrincipal;7;4;inscricaoAtual, inscricaoAnterior, dhMovimentacao, idImovel;650b350fa0b560333115159f
+imoveis;Imóveis;geral;GET;buscaProprietarios;ImovelProprietario;18;8;percentual, fimTitularidade, id, inicioTitularidade, idImovel;69cd1a4c8152de72d9502cd6
+imoveis;Imóveis;geral;GET;buscaTransferencias;ImovelTransferencia;56;4;perc_compra, vlItbi, dtTransferencia, idImovel;5ee8a7c22800df01055357db
+imoveis;Imóveis;geral;POST;cria;ImovelMovimentacaoAverbacao;4;0;;611ea826ad6cbb00eeaff102
+imoveis;Imóveis;geral;GET;buscaBeneficioFiscal;ImovelBeneficioFiscal;85;0;;5c519cc7a0a7fd01059a5ae5
+imoveis;Imóveis;geral;POST;preenche;ImovelCampoAdicionalParams;4;0;;5f6e2f852800df010553583b
+imoveis;Imóveis;geral;GET;buscaCamposAdicionais;InformacaoComplementarImovel;29;15;ano, areaTexto, dhCampo, vlCampo, texto, opcoes, opcoesIds, id, idImovel;5b4cd97d20993c010110ce78
+imoveis;Imóveis;geral;GET;buscaCorresponsaveisPorImovel;ImovelCorresponsavel;20;5;cpfCnpj, id, idImovel;674ded3e8401b174da55c389
+imoveis;Imóveis;geral;GET;buscaEnglobados;Imovel;184;77;idLoteamento, situacao, lote, bloco, createdIn, idResponsavel, idBairro, complemento, englobado, inscricaoImobiliariaFormatada, id, codigo, tipoImovel, idProprietario, matricula, garagem, secao, idDis;5bb78921dce83b01027bb920
+imoveis;Imóveis;geral;GET;buscaImovelOrigem;BasicImovel;18;6;tipoImovel, situacao, codigo, inscricaoIncra, unidade, id;5c519cb2a0a7fd01059a5ae4
+imoveis;Imóveis;geral;GET;buscaProprietarios;ImovelProprietario;18;8;percentual, fimTitularidade, id, inicioTitularidade, idImovel;5b9ac04dcffbb80101306150
+imoveis;Imóveis;geral;GET;buscaTestadas;ImovelTestada;25;7;principal, extensao, anoDesativacao, numero, id, tipoAproximacao, anoBase;5d88def85226ae011638f492
+inscobra;Inscobra;geral;POST;cria;Inscobra;35;0;;5c0ffdf27a5a5c010011f8c1
+integracaoContabil;Integrações contabeis;geral;GET;busca;IntegracaoContabilDetalhamento;100;35;situacao, valorCorrecaoPreFixada, receitaContabilizada, valorDescontoCorrecao, idGuia, valorDescontoMulta, valorTributo, valorDiferenca, tipoReceitaPagamento, valorMulta, valorDescontoJuros, id, valor;5936953f956b1100e1875373
+integracaoContabil;Integrações contabeis;geral;GET;busca;IntegracaoContabilDetalhamento;100;35;situacao, valorCorrecaoPreFixada, receitaContabilizada, valorDescontoCorrecao, idGuia, valorDescontoMulta, valorTributo, valorDiferenca, tipoReceitaPagamento, valorMulta, valorDescontoJuros, id, valor;591de144956b1100e012f804
+integracaoContabil;Integrações contabeis;geral;GET;busca;IntegracaoContabilReceita;93;27;situacao, valorCorrecaoPreFixada, receitaContabilizada, valorDescontoCorrecao, valorDescontoMulta, valorTributo, valorDiferenca, tipoReceitaPagamento, valorMulta, valorDescontoJuros, id, valorImunidad;591de027956b1100e012f802
+integracaoContabil;Integrações contabeis;geral;GET;busca;IntegracaoContabilDadoIntegrado;19;19;digitoAgencia, dataIntegracao, situacaoIntegracao, banco, valorLote, identIntegracaoEstornada, cnpj, exercicio, agencia, identificacaoIntegracao, tipoProcessamentoDivida, formasRecebimento, motivoAnul;6114356392583100f022e576
+integracoesContabeis;Integrações contabeis;geral;GET;busca;IntegracaoContabil;32;6;identificacaoIntegracao, situacao, tipoLancamentoIntegrados, tipoIntegracao, id, dataMovimentacao;591de0c0956b1100e012f803
+integracoesContabeis;Integrações contabeis;geral;GET;busca;AuthInfo;2;0;;5d10d599b684b9011eabba70
+integracoesContabeis;Integrações contabeis;geral;POST;cria;;0;0;;5d10d569b684b9011eabba6e
+integracoesContabeis;Integrações contabeis;geral;POST;cria;IntegracaoContabilHistorico;4;0;;5d10d580b684b9011eabba6f
+loteEnvioSisobra;LoteEnvioSisobra;geral;GET;busca;LoteEnvioSisobra;55;6;tipo, numeroDocumentoAlvara, id;609973242d304c00f036b865
+loteEnvioSisobra;LoteEnvioSisobra;geral;GET;busca;DynamicDto;5;0;;60a3fd954fcc3d00efaf5af4
+loteEnvioSisobra;LoteEnvioSisobra;geral;GET;busca;DocumentoSisobraRetorno;8;8;protocolo, tipo, loteId, numero, descricaoRetorno, codRetorno, id, dataEnvio;6099737f1e151100effef862
+manutencaoDeSaldos;manutenção saldos;geral;GET;busca;ManutencaoSaldo;27;16;idPagamento, dtValidade, valorSaldoTotal, tipoUtilizacaoSaldo, dataUtilizacao, situacaoSaldo, utilizado, observacoes, tipoSaldo, dtSaldo, idSaldo, idContribuinte, nroProcesso;65cb83f08d4e3a59d6dcc286
+manutencaoLote;Manutenção em lote de cadastros;geral;GET;buscar;ManutencaoLote;14;7;situacao, codigo, ano, dataReversao, dataManutencao, anoReversao, id;67194a72f692db644d3c012d
+manutencaoLoteImoveis;Manutenção em lote de imóveis;geral;GET;buscar;ManutencaoLoteImovel;70;2;id;67194a5be7b5f00a8e5ca5a6
+manutencaoLoteImoveis;Manutenção em lote de imóveis;geral;GET;buscarIgnorados;ImovelManutencao;72;3;id, idImovel, idManutencaoLoteImovel;67194a859d55e70fef95c855
+manutencaoLoteImoveis;Manutenção em lote de imóveis;geral;GET;buscarIgnoradosReversao;ImovelManutencao;72;3;id, idImovel, idManutencaoLoteImovel;67194a9ee7b5f00a8e5ca5a7
+manutencaoLoteImoveis;Manutenção em lote de imóveis;geral;GET;buscarValoresOriginais;ImovelManutencao;72;3;id, idImovel, idManutencaoLoteImovel;67194ac9f692db644d3c012e
+monitoramento;Monitoramento;geral;GET;buscaEstatisticas;Monitoramento;7;7;sessoesAtivasEmissaoGuias, pidsBloqueantes, nomeAplicacao, sessoesAtivas, duracao, id, quantidadeLocks;65731bb98440fb318027f5bc
+motivo;Motivos;geral;GET;busca;Motivo;26;5;tipoMotivo, padrao, id, erroFalha, descricao;5ccca07fe66125013b7809fc
+municipios;Municípios;geral;GET;busca;Municipio;16;5;codigoIBGE, idTemplate, codigoSIAFI, nome, id;5dfa5d701cd5ed0105b94dd0
+naturezaJuridica;NaturezaJuridica;geral;GET;busca;naturezasJuridicas;3;3;id, nivel, descricao;5e0a35a44b28fa0105381728
+notas-avulsas;Notas avulsas;geral;GET;busca;NotaAvulsa;263;20;codigo, issRetido, dataEmissao, tomadorEntidadeMunicipal, serie, id, numeroNota, situacaoNota;5b3f9f22f9bd720102357a4b
+notas-avulsas;Notas avulsas;geral;GET;busca;NotaAvulsaServico;12;0;;5c9129bc03593d012e161f0b
+notas-avulsas;Notas avulsas;geral;GET;busca;NotaAvulsa;263;20;codigo, issRetido, dataEmissao, tomadorEntidadeMunicipal, serie, id, numeroNota, situacaoNota;5b3f9f43f9bd720102357a4c
+notas-avulsas;Notas avulsas;geral;GET;busca;NotaAvulsaServico;12;0;;5c9129304936760130d11caf
+notificacoes-debitos;Notificação de debitos;geral;GET;busca;NotificacaoDebitoAtividade;11;1;idGuia;5b578d7620993c010110ce88
+notificacoes-debitos;Notificação de debitos;geral;GET;busca;NotificacaoDebitoReceita;68;10;valorJurosReceitaLancamento, idGuia, valorMultaReceitaLancamento, valorTributoReceitaLancamento, valorTotalReceitaParcela, valorJurosReceitaParcela, valorCorrecaoReceitaLancamento, valorMultaReceitaPa;5b578dc920993c010110ce8c
+notificacoes-debitos;Notificação de debitos;geral;GET;busca;NotificacaoDebitoServico;5;1;idGuia;5b578ddb20993c010110ce8e
+notificacoes-debitos;Notificação de debitos;geral;GET;busca;NotificacaoDebito;183;37;cancelada, valorTotalParcela, valorCorrecaoParcela, idNotaAvulsa, valorJurosParcela, valorCorrecaoLancamento, inscricaoIncraReferente, parcela, idReceitaDiversa, dtEmissao, valorJurosLancamento, idGui;608864cb5b288800efb0d433
+notificacoes-debitos;Notificação de debitos;geral;GET;busca;NotificacaoDebito;183;37;cancelada, valorTotalParcela, valorCorrecaoParcela, idNotaAvulsa, valorJurosParcela, valorCorrecaoLancamento, inscricaoIncraReferente, parcela, idReceitaDiversa, dtEmissao, valorJurosLancamento, idGui;5b578d9420993c010110ce89
+notificacoes-debitos;Notificação de debitos;geral;GET;busca;NotificacaoDebito;183;37;cancelada, valorTotalParcela, valorCorrecaoParcela, idNotaAvulsa, valorJurosParcela, valorCorrecaoLancamento, inscricaoIncraReferente, parcela, idReceitaDiversa, dtEmissao, valorJurosLancamento, idGui;5df0caf11cd5ed0105b94dbd
+obras;Obras;geral;GET;busca;InformacaoComplementarObra;20;13;ano, areaTexto, idObra, dhCampo, vlCampo, texto, id;5d78dcbe7bc3250116a39096
+obras;Obras;geral;GET;busca;ObraConstrutora;20;2;dtValidade, idObra;5d78dccc7bc3250116a39097
+obras;Obras;geral;GET;busca;ObraMovimentacao;14;14;observacao, statusRotulo, statusCor, idObra, statusEstornadoRotulo, statusEstornado, statusIcone, estornado, tipoMovimentacao, usuarioMovimentacao, dhMovimentacao, status;5d78dcea7bc3250116a39099
+obras;Obras;geral;GET;busca;ObraResponsavelExecucao;99;3;dtValidade, tipoResponsavel, idObra;60773a8e4e420000ef4a4fca
+obras;Obras;geral;GET;busca;ObraResponsavelTecnicoAtividade;18;0;;5d78dcf85226ae011638f48c
+obras;Obras;geral;GET;busca;ObraResponsavelTecnico;23;5;tipoDocumento, observacao, responsabilidade, nroDocumento, idObra;5d78dcd97bc3250116a39098
+obras;Obras;geral;GET;busca;Obra;253;25;situacao, observacao, anoDataEntrada, dataEntrada, id, codigo, medida, solicitanteProprietario, descricao, dataLiberacao, unidadeMedida, nroProcesso;5d78dca25226ae011638f48b
+obras;Obras;geral;GET;busca;Sisobra;14;10;area, tipoObra, tipoArea, tipoAreaComplementar, destinacao, categoria, areaDescoberta, id, idObra, areaCoberta;60773abaa71e6d00ef706dcf
+obras;Obras;geral;GET;busca;Obra;253;25;situacao, observacao, anoDataEntrada, dataEntrada, id, codigo, medida, solicitanteProprietario, descricao, dataLiberacao, unidadeMedida, nroProcesso;5edaa1dc2800df01055357d5
+pacoteEsfinge;Controle de Pacote do Esfinge;geral;GET;busca;PacoteEsfinge;6;0;;682dd2ec8c1348750c5bc479
+pacoteEsfinge;Controle de Pacote do Esfinge;geral;POST;cria;PacoteEsfinge;5;0;;682dc85e6dee6b022b732a19
+pacoteEsfinge;Controle de Pacote do Esfinge;geral;DELETE;limpa;PacoteEsfinge;5;0;;682dcb20127cef3f396ae94b
+paises;Países;geral;GET;busca;Pais;6;6;sigla3D, sigla2C, sigla3C, nome, id, codigoBacen;5b3e80c5f9bd720102357a49
+periodosSimples;Períodos Simples;geral;POST;cria;PeriodosSimples;8;0;;5c000459dce83b01027bb933
+pgdas;PGDAS;geral;POST;cria;Pgdas;34;0;;5c000419dce83b01027bb931
+pontosNotaveis;Pontos Notáveis;geral;GET;busca;PontoNotavel;11;2;id;66915bc62b18821a656f5350
+portalgestor;Dados para envio do portal do gestor;geral;GET;busca;DebitoSinteticosPortalGestor;12;8;nomeContribuinte, idPessoa, tipoPessoa, valorDebitos, ano, creditoTributario, id;64b98fa8617cd7000101a85e
+portalgestor;Dados para envio do portal do gestor;geral;GET;busca;DebitoSinteticosPortalGestorAgrupadosAnoCredito;9;4;valorDebitos, ano, creditoTributario;64f5de63a0f04e0001ba0de4
+portalgestor;Dados para envio do portal do gestor;geral;GET;busca;PortalGestorDividaWrapper;20;0;;6410d58cd259d50001d49de1
+remembramentos;Remembramentos de Imóveis;geral;GET;busca;Remembramento;39;10;idPessoa, situacao, numeroProcesso, dataAprovacao, idAgrupamentos, codigoARTRRT, id, idEngenheiroArquiteto, numeroProcessoCancelamento, dataCancelamento;692da20ec35ca97692bbc801
+remembramentos;Remembramentos de Imóveis;geral;GET;buscaImoveis;RemembramentoImovel;37;15;unidadeAnt, setor, quadraAnt, lote, quadra, unidade, loteAnt, principal, idAgrupamentos, matricula, id, idRemembramento, idImovel, setorAnt, matriculaAnt;692da21bab905941f432efc5
+resumoValores;Resumo valores lançados;geral;GET;busca;ResumoValoresGuiaReceita;23;5;idCreditoTributario, ano, dtVencimento, geradaPorDiferencaPagto, idContribuinte;5bd22509dce83b01027bb928
+tabelasAuxiliares;Tabelas auxiliares;geral;GET;busca;RegistroTabelaAuxiliar;13;24;campo10int, campo9int, campo6int, campo8int, campo7int, dataHoraCriacao, campo2int, campo3int, campo5int, campo4int, campo1int, campo10, campo7, campo6, campo9, idTabelaAuxiliar, campo8, codigoTabelaA;5c4a1c2a8d3f88010127cac3
+tabelasAuxiliares;Tabelas auxiliares;geral;PUT;atualiza;RegistroTabaux;13;11;campo7, campo6, campo9, campo8, campo1, id, campo3, campo2, campo10, campo5, campo4;5c5c1dc94345b101005d79db
+tabelasAuxiliares;Tabelas auxiliares;geral;GET;busca;RegistroTabelaAuxiliar;13;24;campo10int, campo9int, campo6int, campo8int, campo7int, dataHoraCriacao, campo2int, campo3int, campo5int, campo4int, campo1int, campo10, campo7, campo6, campo9, idTabelaAuxiliar, campo8, codigoTabelaA;5c4a1bf48d3f88010127cac1
+tabelasAuxiliares;Tabelas auxiliares;geral;POST;cria;RegistroTabaux;13;11;campo7, campo6, campo9, campo8, campo1, id, campo3, campo2, campo10, campo5, campo4;5c4a1c368d3f88010127cac4
+tabelasAuxiliares;Tabelas auxiliares;geral;DELETE;exclui;RegistroTabaux;13;11;campo7, campo6, campo9, campo8, campo1, id, campo3, campo2, campo10, campo5, campo4;5c5c1df74345b101005d79dc
+tabelasAuxiliares;Tabelas auxiliares;geral;GET;busca;TabelaAuxiliar;10;3;codigoTabelaAuxiliar, id, descricao;5c4a1c0d8d3f88010127cac2
+tabelasAuxiliares;Tabelas auxiliares;geral;POST;cria;TabelaAuxiliar;10;1;codigoTabelaAuxiliar;5cb4f0b5d23e22013ab7fcbf
+bairros;Bairros;iptu;GET;busca;Bairro;45;8;codigo, codigoIBGE, codigoSIAFI, nome, idTemplate, id, municipioId, zonaRural;5b3e7ce2f9bd720102357a46
+bairros;Bairros;iptu;GET;busca;Bairro;45;8;codigo, codigoIBGE, codigoSIAFI, nome, idTemplate, id, municipioId, zonaRural;5f771df02800df010553583c
+condominios;Condominios;iptu;GET;busca;CondominioAnexo;11;7;s3Key, nomeArquivo, tipoArquivo, id, descricao;6719440df692db644d3c012b
+condominios;Condominios;iptu;GET;busca;BasicCondominio;5;5;tipoCondominio, codigo, nome, idTemplate, id;5ea19f5037eca8010504e2c2
+condominios;Condominios;iptu;GET;busca;CondominioMovimentacao;9;9;movimentacaoAlterada, idCondominio, dataHoraAlteracao, dataHoraCriacao, usuario, tipoMovimentacao, id, nroProcesso, descricao;67194468f692db644d3c012c
+condominios;Condominios;iptu;GET;busca;Imovel;184;77;idLoteamento, situacao, lote, bloco, createdIn, idResponsavel, idBairro, complemento, englobado, inscricaoImobiliariaFormatada, id, codigo, tipoImovel, idProprietario, matricula, garagem, secao, idDis;671944859d55e70fef95c854
+condominios;Condominios;iptu;GET;busca;CondominioMovimentacao;9;9;movimentacaoAlterada, idCondominio, dataHoraAlteracao, dataHoraCriacao, usuario, tipoMovimentacao, id, nroProcesso, descricao;67194443e7b5f00a8e5ca5a4
+contribuicaoMelhoriaImovel;Contribuições de melhorias Imóveis;iptu;GET;busca;ContribuicaoMelhoriaImovel;88;11;valorPrevio, imovel, usaSaldoDevedor, intervalo, tipoIntervalo, dataAdesao, qtdParcelas, id;5bd75146dce83b01027bb929
+desmembramentos;Desmembramentos de Imóveis;iptu;GET;busca;Desmembramento;49;10;numeroProcessoAprovacao, situacao, dataAprovacao, dataDesmembramento, codigoARTRRT, id, idEngenheiroArquiteto, idImovel, numeroProcessoCancelamento, dataCancelamento;692da19bab734f025b3445ca
+desmembramentos;Desmembramentos de Imóveis;iptu;GET;buscaImoveis;DesmembramentoImovel;51;3;idDesmembramento, id, idImovel;692da1c8ab905941f432efc4
+distritos;Distritos;iptu;GET;busca;Distrito;14;7;codigo, nome, id;5b72cc2864642301029d77f1
+logradouros;Logradouros;iptu;GET;busca;LogradouroRepresentation;39;25;latitude, cep, lei, idTemplate, id, zonaFiscal, tipoLogradouroAbreviatura, longitude, extensao, codigo, denominacaoAnterior, epigrafe, nome, municipioId, descricaoOficial, tipoLogradouroDescricao;5b3e7ed8f9bd720102357a48
+logradouros;Logradouros;iptu;GET;busca;LogradouroRepresentation;39;25;latitude, cep, lei, idTemplate, id, zonaFiscal, tipoLogradouroAbreviatura, longitude, extensao, codigo, denominacaoAnterior, epigrafe, nome, municipioId, descricaoOficial, tipoLogradouroDescricao;5f7db12837eca8010504e343
+loteamentos;Loteamentos;iptu;GET;busca;Loteamento;27;14;codigo, nroDecretoAprovacao, dhRegistroImovel, nome, matriculaImobiliaria, idTemplate, id, nroProcessoAprovacao;5b51f7d820993c010110ce80
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;buscaRetificacoes;HistoricoSolicitacaoItbi;3;2;dhAlteracao, idSolicitacao;6a0787ba7de18b7aa47bef01
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;HistoricoCompleto;6;0;;6a07923c4dd7e13011300239
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;buscaPorSolicitacao;HistoricoCompleto;6;0;;69fe4f8578150f7565c9ac5f
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferenciaAnexo;10;11;s3Key, nomeArquivo, tipoArquivo, id, descricao;5fc653abd046b10104272de7
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferencia;132;33;motivo, situacao, protocolo, id, dataHoraSolicitacao, codigoTerceiro, codigo, tipoImovel, usuario;5fc6534dd046b10104272de4
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferenciaComentarioBase;9;10;texto, dataHoraComentario, usuario, id;5fc65387d046b10104272de6
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferenciaCompra;20;3;percentual, id, proprietarioPrincipal;5fc65373d046b10104272de5
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferenciaImovel;58;31;valorBenfeitoriaAjustado, valorVenalTerrenoAjustado, valorAreaConstruida, valorVenalConstruidoAjustado, valorBenfeitoria, valorVenalConstruido, valorAvista, inscricaoIncra, valorFinanciadoAjustado, va;5fc653560fafc10104b99ce4
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferenciaMovimentacao;13;14;tipo, estorno, situacaoAnterior, texto, tipoAguardandoResposta, usuario, id, dataHora;5fc653a30fafc10104b99ce7
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferenciaComentarioBase;9;10;texto, dataHoraComentario, usuario, id;5fc6539b0fafc10104b99ce6
+solicitacaoTransferenciaImovel;Solicitação de transferência de imóveis;iptu;GET;busca;SolicitacaoTransferenciaVenda;19;13;percentual, id;5fc653690fafc10104b99ce5
+transferenciaImovel;Transferência de imóveis;iptu;GET;busca;transferenciasImoveisItensProcesso;4;4;id, comentario, idImovel, nroProcesso;5d6960d35226ae011638f478
+transferenciaImovel;Transferência de imóveis;iptu;GET;busca;TransferenciaImovel;11;10;tipoCobranca, dataHoraTransferencia, situacao, codigo, anoCadastro, dataTransferencia, codigoPorAno, statusCertidaoITBI, id, dataCadastro;5b6b45c61a73bc0101a42f0f
+transferenciaImovel;Transferência de imóveis;iptu;GET;busca;transferenciasImoveisItensCompra;67;24;vlVendaAVista, percVendido, vlDeclarado, vlItbi, id, vlBenfeitorias, vlOutros, vlFinanciado;5d6960667bc3250116a39090
+transferenciaImovel;Transferência de imóveis;iptu;GET;busca;TransferenciaImovelItemCompleta;118;27;aliquotaBenfeitoria, vlVendaTerreno, inscricaoIncra, aliquotaOutros, definicaoPagador, vlVenalUnidade, id, vlAreaTotalConstruidaUnidade, vlBenfeitoriasUnidade, tipoVenda, vlAreaTotalTerrenoUnidade, al;5d6960467bc3250116a3908e
+transferenciaImovel;Transferência de imóveis;iptu;GET;busca;TransferenciaImovelItemVenda;105;16;vendedorProprietario, percentualVendedor, vlAreaConstruidaTransferida, qtdCompradores, vlAreaTerritorialTransferida, id;5d69605d7bc3250116a3908f
+Alvaras;Alvarás;iss;GET;busca;AlvarasAtividades;17;0;;5b43a4e3f9bd720102357a4e
+Alvaras;Alvarás;iss;GET;busca;Alvaras;251;8;dtEmissao, dtValidade, ano, situacaoAlvara, processo, informacoesComplementares, tipoAlvara, nroDocumento;5b43a2fb20993c010110ce65
+Alvaras;Alvarás;iss;GET;busca;AlvarasServicos;9;0;;5b43a4f420993c010110ce67
+Alvaras;Alvarás;iss;GET;busca;AlvarasObras;125;7;dtEmissao, dtValidade, ano, situacaoAlvara, informacoesComplementares, tipoAlvara, nroDocumento;5d9cee3f5226ae011638f4a2
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitidaSimplificada;90;16;represNumerica, dtValidade, dtVencimento, valorDevido, valorTotal, numeroBaixa, nossoNumero, id, codigoBarras;5e877d2d145aa20107ec8969
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitida;302;42;idBanco, dtValidade, dtVencimento, valorCorrecaoPrefixada, valorDesconto, nroConvenio, valorBeneficio, valorDescontoCorrecao, valorDescontoMulta, protocoloEmissao, boletoRegistrado, valorTotal, valorD;5b90447f463d9301006a387c
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitidaGroupedByContribuinte;16;4;;5e04f79d4b28fa0105381721
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitidaReferenteImovel;19;18;situacaoImovel, codigoContribuinte, campo10, campo7, campo6, nomeContribuinte, campo9, campo8, unidadeImovel, protocoloEmissao, idReferente, codigoReferente, campo1, campo3, campo2, idContribuinte, ca;5e861bbe145aa20107ec8967
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitidaByReferenteImovelEndereco;46;27;numero, bloco, cep, campo7, campo6, uf, campo9, campo8, protocoloEmissao, campo1, campo3, campo2, campo5, campo4, apartamento, situacaoImovel, bairro, municipio, codigoContribuinte, campo10, nomeContr;623caeae1a3faa00fce65299
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitidaGroupedByReferente;10;10;nomeContribuinte, ano, tipoLancamento, protocoloEmissao, idReferente, codigoReferente, tipoReferente, codigoContribuinte, id, idContribuinte;5e01285d1cd5ed0105b94dd4
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitida;302;42;idBanco, dtValidade, dtVencimento, valorCorrecaoPrefixada, valorDesconto, nroConvenio, valorBeneficio, valorDescontoCorrecao, valorDescontoMulta, protocoloEmissao, boletoRegistrado, valorTotal, valorD;5c40d62c790ad301018d77fd
+Emissão de guias;Emissão de guias;iss;GET;busca;GuiaEmitidaProtocolos;6;6;idGuiaEmitida, protocoloEmissao, createdBy, createdIn, id;6837999c56d25f5698a2c3f8
+Emissão de guias;Emissão de guias;iss;POST;reemitir;GuiaEmitidaRepresentation;14;0;;6699524b7b89804df34114fa
+Lista de Cnaes;Lista de Cnaes;iss;GET;busca;Cnae;9;9;impeditivoSimples, grauRiscoMei, visivel, ordem, id, secao, grauRisco, codigoCnae, descricao;5be0674e7a5a5c010011f899
+atividadesEconomicas;Atividades econômicas;iss;GET;busca;AtividadeEconomica;22;6;riscoMei, classificacao, id, codigoCnae, itemLista, risco;5c0023c4dce83b01027bb935
+certidaoDeBaixaDeAtividades;Certidões de baixa de atividades;iss;GET;busca;certidaoBaixaAtividade;69;0;;5ba018bcc43d2b0102f64962
+construtoras;Construtoras;iss;GET;busca;Construtora;6;6;codigo, nroCrea, dataRegistroCrea, nome, cnpj, id;65d771886870954b3e871eb8
+construtoras;Construtoras;iss;GET;busca;ConstrutoraEngenheiroArquiteto;5;5;codigo, idConstrutora, nome, cpfCnpj, id;65d771a7fd86fc5cbc1436ee
+contador;Contadores;iss;GET;busca;Contador;52;11;dataHoraAlteracao, nroCrc, dataHoraCriacao, dtValidadeCrc, id;5f3eed4037eca8010504e311
+economicos;Econômicos;iss;GET;busca;EconomicoCnae_IncluiMovimentacao;18;5;principal, idEconomico, id;5b4c9733f9bd720102357a59
+economicos;Econômicos;iss;GET;buscaCamposAdicionais;InformacaoComplementarEconomico;27;13;idEconomico, dtBase, areaTexto, dhCampo, vlCampo, texto, campoAdicionalFilho, opcoes, opcoesIds, id;5b44c11c20993c010110ce6a
+economicos;Econômicos;iss;GET;busca;EconomicosListaServicos;8;6;principal, situacao, idEconomico, id;5b4c974df9bd720102357a5a
+economicos;Econômicos;iss;GET;busca;EconomicoCnae_Completa;16;6;principal, situacao, idEconomico, id, descricaoPersonalizada;5b9a6a63cffbb8010130614f
+economicos;Econômicos;iss;GET;busca;EconomicoListagem;94;56;situacao, bloco, cnaePrincipal, complemento, nomeFantasia, nfseAutorizado, regimeCobrancaIss, id, optanteSimples, codigo, nome, cnaeSecundaria, porteEmpresa, classificacaoAtividade, dhOperacao, dhInic;5b4c9722f9bd720102357a58
+economicos;Econômicos;iss;GET;busca;HistoricoAlteracaoFlat;11;5;descricaoItemLista, descricaoCampoItemLista, descricaoCampo, dhAlteracao, usuario;6087fd115b288800efb0d432
+economicos;Econômicos;iss;GET;metadados;Dados;1;16;situacao, codigo, nome, cep, principal, idContador, nomeFantasia, dtSituacaoString, regimeCobrancaIss;5bdb03cc7a5a5c010011f897
+economicos;Econômicos;iss;GET;busca;EconomicoMovimentacaoPrincipal;8;8;situacao, idEconomico, idAlteracaoCadastral, tipoMovimentacao, usuarioMovimentacao, dhMovimentacao, id, nroProcesso;6087fcfcf8d95800ef848f69
+economicos;Econômicos;iss;GET;busca;EconomicosPrepostos;12;8;idEconomico, dhAlteracao, id, cargo;6369571c043ff20001d60bbd
+economicos;Econômicos;iss;GET;busca;EconomicosRegistrosTabelasAuxiliares;19;18;dataBase, campo10, campo7, campo6, campo9, idTabelaAuxiliar, campo8, iTabelaAuxiliar, campo1, id, campo3, campo2, campo5, campo4;624c7ea725ca6a00f9a196cf
+Cartorios;Cartórios;itbi;GET;busca;Cartorios;7;7;situacao, tipoPessoa, codigo, tipoCartorio, nome, cpfCnpj, id;5d695fe75226ae011638f475
+certidoes-itbi;;itbi;GET;busca;certidaoItbi;8;8;dtEmissao, tipoCobrancaTransferencia, codigoTransferencia, ano, anoTransferencia, idTransferencia, comentario, nroProcesso;5b490bd220993c010110ce70
+certidoes-itbi;;itbi;GET;buscaImoveis;certidaoItbiImovel;62;16;corresponsavel, vlItbi;5b490bd920993c010110ce71
+certidoes-itbi;;itbi;GET;buscaVendas;certidaoItbiVenda;57;4;vlAreaConstruidaTransferida, vlAreaTerritorialTransferida;5d4819827bc3250116a3907e
+certidoes-itbi;;itbi;GET;buscaItens;certidaoItbiItem;78;14;vlItbi;5d4819615226ae011638f454
+certidoes-itbi;;itbi;GET;buscaProcessos;certidaoItbiProcesso;5;3;;5e2ee8da4b28fa0105381741
+certidoes-itbi;;itbi;GET;buscaProcessosImovelRural;certidaoItbiProcesso;5;3;;5f9858bdf5aaa7010521ad63
+certidoes-itbi;;itbi;GET;buscaVendas;certidaoItbiVenda;57;4;vlAreaConstruidaTransferida, vlAreaTerritorialTransferida;5b490bea20993c010110ce72
+certidoes-itbi;;itbi;GET;buscaDetalhesVendas;certidaoItbiDetalhesVenda;61;8;;5b490be0f9bd720102357a56
+configImobiliarias;Configurações imobiliarias;itbi;GET;busca;ConfigImobiliarias;6;6;descricaoUnidade, usarCampoUnidade, inscricaoDuplicada, inscricaoIncraDuplicada, controleSecoes, id;5dc469f64b28fa01053816f9
+configuracaoSolicitacaoTransferencia;Configurações de solicitações de transferências;itbi;GET;busca;ConfiguracaoSolicitacaoTransferencia;22;0;;5fc6533ad046b10104272de3
+configuracaoSolicitacaoTransferencia;Configurações de transferências de imóveis;itbi;GET;busca;ConfiguracaoTransferenciaImoveis;20;0;;6132785e8cc6f100ed0e2a0a
+imobiliarias;Imobiliárias;itbi;GET;busca;Imobiliaria;5;5;codigo, numeroCreci, nome, cnpj, id;65bb9707d3c7b2439c623c7a
+solicitacaoTransferencia;Solicitação de transferências;itbi;POST;indefere;;0;0;;68cc675e7cc8114d87a35f9e
+CalculoTributarioController;;lancamento;GET;busca;CalculoTributario;10;11;ano, tipoCalculo, idCredito, homologadoPor, existeLancamento, criadoEm, dhInicio, simulado, dtLancamento, id, dhTermino;5de11d2d1cd5ed0105b94db0
+CalculoTributarioController;;lancamento;GET;busca;CalculoInformacaoComplementar;12;11;vlCampo, texto, idCampoAdicional, cadastroImpactado, ano, idReferente, idCalculoTributario, dtBase, id, idAgrupamento, dhCampo;6722a629ae91883fa2854855
+ErroCalculoController;;lancamento;GET;busca;ErroCalculo;249;23;id, statusErro;6062547546966500ef75069d
+competencias;Competências;lancamento;GET;busca;Competencia;5;6;dataVencimento, dataInicial, id, anoMes, dataFinal, descricao;5beec318dce83b01027bb92d
+creditosTributarios;Créditos tributários;lancamento;GET;busca;CreditosTributarios;7;7;abreviatura, tipoCadastro, id, templateId, iReceita, desativado, descricao;5b61bf7064642301029d779f
+creditosTributarios;Créditos tributários;lancamento;GET;busca;VinculoCreditoReceita;16;9;id, iReceita;5b87faefbefeab01032aae50
+creditosTributarios;Créditos tributários;lancamento;GET;busca;VinculoCreditoReceita;16;9;id, iReceita;5b87028abefeab01032aae4f
+lancamentos;Lançamentos;lancamento;GET;busca;Lancamento;52;22;idLancamentoPrincipal, situacao, idCreditoTributario, contribuinteId, ano, ehIsento, idCalculoTributario, simulado, economicoId, tipoCalculo, dhLancamento, porCompetencia, imovelId, dhCancelamento, eh;5e39d67c1cd5ed0105b94e0b
+lancamentos;Lançamentos;lancamento;GET;busca;LancamentoReceita;18;5;tipoBeneficioFiscal, valorLancado, id;5e39d6d51cd5ed0105b94e0c
+lancamentosAbertos;Lançamentos abertos;lancamento;GET;busca;LancamentoAberto;55;0;;5ccca82ce66125013b7809fd
+manutencoesCalculos;Manutenções Calculos;lancamento;GET;busca;ManutencoesCalculos;44;32;tipoVigencia, idManutencoesCalculos, situacao, observacao, anoRequerimento, numeroProcesso, dataIniVigencia, abrangencia, percReceita, percPrevisto, dataDeferimento, justificativa, dataRequerimento, p;5bb5ff807a5a5c010011f88d
+manutencoesCalculos;Manutenções Calculos;lancamento;GET;busca;ManutCalcCreditoRec;36;19;percCorrecao, percJuros, valorBeneficioJuros, valorBeneficioCorrecao, deferida, valorLancado, valorBeneficioLancado, valorJuros, anosVigencia, valorNovo, percLancado, percMulta, valorMulta, valorBenef;5bb5ffd57a5a5c010011f88e
+manutencoesCalculos;Manutenções Calculos;lancamento;GET;busca;ManutCalcCredito;7;2;id;5bb5ffa7dce83b01027bb91e
+manutencoesCalculos;Manutenções Calculos;lancamento;GET;busca;ManutencoesCalculosReferente;12;8;idManutencaoCalculo, anoLancamento, idReferente, idLancamento;5bb5fff3dce83b01027bb91f
+manutencoesCalculos;Manutenções Calculos;lancamento;GET;busca;ManutencoesCalculosIndividualReferente;12;8;idManutencaoCalculo, anoLancamento, idReferente, idLancamento;6849c6036f205f357093903c
+sinteseLancamentos;Sintese de lançamentos;lancamento;GET;busca;SinteseLancamentosGuiaReceita;10;3;idCreditoTributario, ano, dtVencimento;5baa470ecffbb80101306159
+tabelasCalculos;Tabelas de cálculo;lancamento;GET;busca;Conjunto;5;0;;5f6b48db37eca8010504e33a
+configGeracaoParcelas;Configuração de geração de parcelas do lançamento;parcelamento;GET;busca;ConfiguracaoGeracaoParcelas;67;14;tipoConfiguracao, quantidadeDiasMeses, codigo, acaoVencimentoFeriado, titulo, quantidadeParcelas, tipoDescricao, intervaloVencimento, descricao, dataVencimento, id;5bbb8de47a5a5c010011f891
+configParcelamentos;Condições de parcelamento;parcelamento;GET;busca;ConfiguracaoParcelamento;38;11;editarDataParcela, vencimentoLancamento, dtValidadeFinal, dtVencimentoInicial, intervaloVctoParcelas, id, dtValidadeInicial, diaDoMesVencimento, prazoVctoSegundaParcela, dtVencimentoFinal, descricao;5bbb7f337a5a5c010011f890
+parcelamentos;Parcelamentos;parcelamento;GET;busca;Parcelamentos;102;40;situacao, dhOperacao, dtVencimento, qtdParcela, idNotaAvulsa, dtVencimentoParcelaMaisAntiga, dtParcelamento, idReceitaDiversa, anoParcelamento, id, dhParcelamento, dtCancelamento, anoLancamento, idEco;5babe500c43d2b0102f6499b
+parcelamentos;Parcelamentos;parcelamento;GET;buscaComposicoesAgrupadas;ParcelamentoComposicaoAgrupada;7;1;;5b9a6982c43d2b0102f64960
+parcelamentos;Parcelamentos;parcelamento;GET;buscaComposicoes;ParcelamentoComposicao;318;43;idDividaParcelada, id, idDebitoParcelado;5ba94a53c43d2b0102f64998
+parcelamentos;Parcelamentos;parcelamento;GET;buscaCreditos;ParcelamentoCredito;3;3;idParcelamentos, idCreditoTributario, id;636a6cea043ff20001d60bbe
+parcelamentos;Parcelamentos;parcelamento;GET;buscaParcelas;ParcelamentoParcela;100;50;situacao, dtVencimento, id, dhProrrogacao, siglaBancoPagamento, usuarioProrrogacao, numeroProcesso, nroParcela, dataPagamento, parcelaGeradaPorDiferencaPagamento;5b9a6978cffbb8010130614e
+parcelamentos;Parcelamentos;parcelamento;GET;metadadosParcelas;Dados;1;43;situacao, dtVencimento, nroParcela, dataPagamento;5b98f87ecffbb8010130614a
+parcelamentos;Parcelamentos;parcelamento;GET;buscaParcelasTaxas;ParcelamentoParcelaTaxa;11;6;;64f219ace26e21000168aab9
+parcelamentos;Parcelamentos;parcelamento;GET;buscaTaxas;ParcelamentoTaxas;6;4;;5ba94c8fcffbb80101306158
+simulacaoParcelamento;Simulação de parcelamentos;parcelamento;GET;busca;SimulacaoParcelamento;36;6;idsDividas, idsParcelamentos, idDebitos, id, idContribuinte, idConfiguracaoParcelamento;642ada85a789850001e7f242
+termos-parcelamento;Termos de parcelamento;parcelamento;GET;busca;TermoParcelamento;415;4;situacaoParcela, id, situacaoParcelamento, idParcelamento;5b55ea3a20993c010110ce81
+termos-parcelamento;Termos de parcelamento;parcelamento;GET;buscaComposicao;ParcelamentoComposicao;318;43;idDividaParcelada, id, idDebitoParcelado;5b55ea5720993c010110ce83
+termos-parcelamento;Termos de parcelamento;parcelamento;GET;buscaComposicaoAgrupada;ParcelamentoComposicaoAgrupada;7;1;;5b55ea6220993c010110ce84
+termos-parcelamento;Termos de parcelamento;parcelamento;GET;buscaParcelas;ParcelamentoParcela;100;50;situacao, dtVencimento, id, dhProrrogacao, siglaBancoPagamento, usuarioProrrogacao, numeroProcesso, nroParcela, dataPagamento, parcelaGeradaPorDiferencaPagamento;5b55ea4820993c010110ce82
+IncentivoFiscalTransparencia;Incentivos Fiscais para envio ao Transparência Cloud;transparencia;GET;busca;IncentivoFiscalTransparencia;21;21;valorPercentualBeneficio, idManutencoesCalculos, numeroProcesso, nomeBeneficiario, ano, idEconomico, idReceita, codigoBeneficiario, descricaoNaturezaReceita, idBeneficiosFiscal, idDatabase, valorRenun;6005b207bb435100ef59d47a
+IncentivoFiscalTransparencia;Incentivos Fiscais para envio ao Transparência Cloud;transparencia;GET;busca;IncentivoFiscalTransparencia;21;21;valorPercentualBeneficio, idManutencoesCalculos, numeroProcesso, nomeBeneficiario, ano, idEconomico, idReceita, codigoBeneficiario, descricaoNaturezaReceita, idBeneficiosFiscal, idDatabase, valorRenun;6a1dcbd527cef03e4844ea75
+TransparenciaTributosArrecadacoes;Arrecadações para envio ao Transparência Cloud;transparencia;GET;busca;TransparenciaTributosArrecadacoes;42;19;valorInscrito, tipoPessoa, valorParcelado, ano, valorDividaNaoInscrita, valorPagoDividaExercicio, valorNaoInscrito, idPessoas, valorArrecadado, valorPagoParcelamentoExercicio, database, valorPagoDebit;6005b214bb435100ef59d47b
+beneficioFiscal;Beneficios Fiscais;transparencia;GET;busca;BeneficiosFiscais;28;5;tipo, dataInicio, id, dataFinal, descricao;62f2c43ec4217d00fbf86d4e
+esfingeProcesso;Esfinge - Processo de geração dos dados;tribunal;GET;busca;EsfingeProcesso;29;0;;69e928bb7eaa7a4e57cdf15f
+esfingeProcesso;Esfinge - Processo de geração dos dados;tribunal;POST;cria;EsfingeProcesso;29;0;;69e928c5ead21339f9402e21
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;ArrecadacaoCredito;17;17;cdControleLeiAto, anoArrecadacao, dtArrecadacao, nrCredito, nrDivida, tipoOrigem, tipoArrecadacao, idPessoa, anoCredito, nrArrecadacao, statusRegistro, nrMes, dtCompetencia, vlArrecadacao, id, nrAno, ;6a0c94b9eab4fd7bd9fc59b2
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;ArrecadacaoCreditoDetalhado;20;20;idGuias, cdControleLeiAto, anoArrecadacao, dtArrecadacao, idPagamentos, nrCredito, idDividas, nrDivida, tipoOrigem, tipoArrecadacao, idPessoa, anoCredito, nrArrecadacao, statusRegistro, nrMes, dtCompe;6a0c94cc86c2c439074a715c
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;AtualizacaoMonetaria;12;12;cdControleLeiAto, idPessoa, vlAtualizacao, anoCredito, statusRegistro, dtCompetencia, nrAtualizacao, nrCredito, tipoAtualizacao, id, anoAtualizacao, dtAtualizacao;6a021fc568ef4079f5bd9218
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;AtualizacaoMonetariaDetalhado;15;15;idGuias, cdControleLeiAto, vlAtualizacao, nrAtualizacao, nrCredito, idLancamentos, anoAtualizacao, dtAtualizacao, idPessoa, anoCredito, statusRegistro, codigoTceReceita, dtCompetencia, tipoAtualizacao;6a021fdb00b627372983cb45
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;AtualizacaoDivida;12;12;cdControleLeiAto, idPessoa, vlAtualizacao, statusRegistro, dtCompetencia, nrAtualizacao, nrDivida, tipoAtualizacao, id, anoDivida, anoAtualizacao, dtAtualizacao;6a031ba1c1c10170d58af577
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;AtualizacaoDividaDetalhado;13;13;cdControleLeiAto, vlAtualizacao, nrAtualizacao, idDividas, nrDivida, anoAtualizacao, dtAtualizacao, idPessoa, statusRegistro, dtCompetencia, tipoAtualizacao, id, anoDivida;6a031b90c1c10170d58af576
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;DeducaoCredito;13;13;cdControleLeiAto, tipoDeducao, nrCredito, vlDeducao, anoDeducao, idPessoa, anoCredito, statusRegistro, dtDeducao, dtCompetencia, motivoDeducao, id, nrDeducao;6a031fa069f0703d032aa496
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;DeducaoCredito;13;13;cdControleLeiAto, tipoDeducao, nrCredito, vlDeducao, anoDeducao, idPessoa, anoCredito, statusRegistro, dtDeducao, dtCompetencia, motivoDeducao, id, nrDeducao;6a031f6469f0703d032aa493
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;DeducaoDivida;13;13;cdControleLeiAto, tipoDeducao, nrDivida, vlDeducao, anoDeducao, idPessoa, statusRegistro, dtDeducao, dtCompetencia, motivoDeducao, id, anoDivida, nrDeducao;6a27027fbff43179bf13f63c
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;DeducaoDividaDetalhado;14;14;cdControleLeiAto, tipoDeducao, idDividas, nrDivida, vlDeducao, anoDeducao, idPessoa, statusRegistro, dtDeducao, dtCompetencia, motivoDeducao, id, anoDivida, nrDeducao;6a270297436d254afc8c5a51
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoArrecadacaoCredito;14;14;cdControleLeiAto, anoArrecadacao, anoEstorno, nrEstorno, idPessoa, nrArrecadacao, statusRegistro, nrMes, dtCompetencia, vlEstorno, motivoEstorno, id, nrAno, dtEstorno;6a0eebfe5d29724d576b80a1
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoArrecadacaoCreditoDetalhado;17;17;idGuias, cdControleLeiAto, anoArrecadacao, idPagamentos, idDividas, anoEstorno, nrEstorno, idPessoa, nrArrecadacao, statusRegistro, nrMes, dtCompetencia, vlEstorno, motivoEstorno, id, nrAno, dtEstorno;6a0eec095d29724d576b80a2
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoAtualizacaoMonetaria;13;13;cdControleLeiAto, nrAtualizacao, anoEstorno, nrEstorno, anoAtualizacao, idPessoa, statusRegistro, dtCompetencia, vlEstorno, motivoEstorno, tipoAtualizacao, id, dtEstorno;6a031bc869f0703d032aa48e
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoAtualizacaoMonetariaDetalhado;16;16;idGuias, cdControleLeiAto, nrAtualizacao, idLancamentos, anoEstorno, nrEstorno, anoAtualizacao, idPessoa, statusRegistro, codigoTceReceita, dtCompetencia, vlEstorno, motivoEstorno, tipoAtualizacao, id;6a031bb769f0703d032aa48d
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoAtualizacaoDivida;12;12;cdControleLeiAto, idPessoa, statusRegistro, dtCompetencia, nrAtualizacao, vlEstorno, anoEstorno, nrEstorno, motivoEstorno, id, anoAtualizacao, dtEstorno;6a031b76c1c10170d58af575
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoAtualizacaoDividaDetalhado;13;13;cdControleLeiAto, nrAtualizacao, idDividas, anoEstorno, nrEstorno, anoAtualizacao, idPessoa, statusRegistro, dtCompetencia, vlEstorno, motivoEstorno, id, dtEstorno;6a031b5fc1c10170d58af574
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoDeducaoCredito;13;13;cdControleLeiAto, tipoDeducao, anoEstorno, nrEstorno, anoDeducao, idPessoa, statusRegistro, dtCompetencia, vlEstorno, motivoEstorno, id, nrDeducao, dtEstorno;6a031f8d69f0703d032aa495
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoDeducaoCreditoDetalhado;16;16;idGuias, cdControleLeiAto, idPagamentos, tipoDeducao, idLancamentos, anoEstorno, nrEstorno, anoDeducao, idPessoa, statusRegistro, dtCompetencia, vlEstorno, motivoEstorno, id, nrDeducao, dtEstorno;6a031f7969f0703d032aa494
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoInscricaoDivida;12;12;cdControleLeiAto, idPessoa, statusRegistro, dtCompetencia, vlEstorno, anoEstorno, nrDivida, nrEstorno, motivoEstorno, id, anoDivida, dtEstorno;6a0321c9c4df86309a4d1a81
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoInscricaoDividaDetalhado;13;13;cdControleLeiAto, idDividas, anoEstorno, nrDivida, nrEstorno, idPessoa, statusRegistro, dtCompetencia, vlEstorno, motivoEstorno, id, anoDivida, dtEstorno;6a0321abc4df86309a4d1a80
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoLancamentoCredito;12;12;cdControleLeiAto, idPessoa, anoCredito, statusRegistro, dtCompetencia, nrCredito, vlEstorno, anoEstorno, nrEstorno, motivoEstorno, id, dtEstorno;6a031847c1c10170d58af571
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;EstornoLancamentoCreditoDetalhado;16;16;idGuias, cdControleLeiAto, nrCredito, idLancamentos, anoEstorno, nrEstorno, idPessoa, anoCredito, statusRegistro, codigoTceReceita, dtCompetencia, vlEstorno, motivoEstorno, id, idContribuinte, dtEstor;6a03186204493d4cd08b6c3c
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;InscricaoDivida;16;16;cdControleLeiAto, tipoNaturezaCredito, dtInscricao, nrCredito, tipoOperacaoCredito, nrDivida, vlInscricao, idPessoa, anoCredito, statusRegistro, dtCompetencia, mesBase, tipoCredito, id, anoDivida, ano;6a0321dbc4df86309a4d1a82
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;InscricaoDividaDetalhado;17;17;cdControleLeiAto, tipoNaturezaCredito, dtInscricao, nrCredito, idDividas, tipoOperacaoCredito, nrDivida, vlInscricao, idPessoa, anoCredito, statusRegistro, dtCompetencia, mesBase, tipoCredito, id, ano;6a03219ac4df86309a4d1a7f
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;LancamentoCredito;14;14;cdControleLeiAto, tipoNaturezaCredito, nrCredito, vlLancamento, dtLancamento, tipoOperacao, idPessoa, anoCredito, statusRegistro, nrMesBase, dtCompetencia, tipoCredito, id, nrAnoBase;69ec03c661de0d4e950c3e78
+tribunal-parana;Tribunal de Contas do Parana;tribunal;GET;busca;LancamentoCreditoDetalhado;19;19;idGuias, cdControleLeiAto, tipoNaturezaCredito, nrCredito, idLancamentos, vlLancamento, unica, dtLancamento, tipoOperacao, idPessoa, anoCredito, statusRegistro, nrMesBase, codigoTceReceita, dtCompeten;69ec0494ead21339f9402e24
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;ArrecadacaoCredito;17;0;;6a0b1def0deed67d86367d63
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;ArrecadacaoCredito;17;0;;6a0b1e000deed67d86367d65
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;ArrecadacaoCredito;17;0;;6a0b1e230deed67d86367d69
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;ArrecadacaoCredito;17;0;;6a0c93e186c2c439074a715b
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;ArrecadacaoCreditoDetalhado;20;0;;6a0b1e500deed67d86367d6b
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;ArrecadacaoCreditoDetalhado;20;0;;6a0b1e610deed67d86367d6d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;ArrecadacaoCreditoDetalhado;20;0;;6a0b1e7a0deed67d86367d70
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;ArrecadacaoCreditoDetalhado;20;0;;6a0c93f4d3bb2d6a480ce65b
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;AtualizacaoMonetaria;12;0;;69fcfdc78649a227a369b426
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;AtualizacaoMonetaria;12;0;;69fcfddcbaeca8263ace1b9f
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;AtualizacaoMonetaria;12;0;;69fcfdf08649a227a369b427
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;AtualizacaoMonetaria;12;0;;6a02157b00b627372983cb44
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;AtualizacaoMonetariaDetalhado;15;0;;69fcfdd2baeca8263ace1b9e
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;AtualizacaoMonetariaDetalhado;15;0;;69fcfde9f742a910ab99fe97
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;AtualizacaoMonetariaDetalhado;15;0;;69fcfdf98649a227a369b428
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;AtualizacaoMonetariaDetalhado;15;0;;6a0215a368ef4079f5bd9217
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;AtualizacaoDivida;12;0;;6a0b14670deed67d86367d5d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;AtualizacaoDivida;12;0;;6a0b147796dccc500a8e221b
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;AtualizacaoDivida;12;0;;6a0b147f96dccc500a8e221c
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;AtualizacaoDivida;12;0;;6a031c0169f0703d032aa491
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;AtualizacaoDividaDetalhado;13;0;;6a0b14b796dccc500a8e221d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;AtualizacaoDividaDetalhado;13;0;;6a0b14ad7f82b0625be02472
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;AtualizacaoDividaDetalhado;13;0;;6a0b14bf96dccc500a8e221e
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;AtualizacaoDividaDetalhado;13;0;;6a031c1469f0703d032aa492
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;DeducaoCredito;13;0;;69fcffa0f742a910ab99fe99
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;DeducaoCredito;13;0;;69fcffb1baeca8263ace1ba1
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;DeducaoCredito;13;0;;69fcffbfbaeca8263ace1ba3
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;DeducaoCredito;13;0;;6a031fb769f0703d032aa497
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;DeducaoCreditoDetalhado;16;0;;69fcffa8f742a910ab99fe9a
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;DeducaoCreditoDetalhado;16;0;;69fcffb7baeca8263ace1ba2
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;DeducaoCreditoDetalhado;16;0;;69fcffc6baeca8263ace1ba4
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;DeducaoCreditoDetalhado;16;0;;6a031fcc69f0703d032aa498
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;DeducaoDivida;13;0;;6a0b1c9596dccc500a8e2220
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;DeducaoDivida;12;0;;6a0b1ca396dccc500a8e2222
+tribunalParana;Tribunal de Contas do Paraná;tribunal;GET;busca;;0;0;;6a284b99c78654036b509517
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;DeducaoDivida;13;0;;6a0b1cb496dccc500a8e2224
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;DeducaoDivida;13;0;;6a2702da436d254afc8c5a52
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;DeducaoDividaDetalhado;14;0;;6a0b1cfb96dccc500a8e2226
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;DeducaoDividaDetalhado;13;0;;6a0b1d047f82b0625be02475
+tribunalParana;Tribunal de Contas do Paraná;tribunal;GET;busca;;0;0;;6a284c04f6b1b062d00bbecc
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;DeducaoDividaDetalhado;13;0;;6a0b1d0b96dccc500a8e2227
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;DeducaoDividaDetalhado;14;0;;6a2702e8b703fb33a071ebd7
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoArrecadacaoCredito;14;0;;6a0b1de80deed67d86367d62
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoArrecadacaoCredito;14;0;;6a0b1df80deed67d86367d64
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoArrecadacaoCredito;14;0;;6a0b1e1a0deed67d86367d68
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoArrecadacaoCredito;14;0;;6a0c93c2d3bb2d6a480ce65a
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoArrecadacaoCreditoDetalhado;17;0;;6a0b1e480deed67d86367d6a
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoArrecadacaoCreditoDetalhado;17;0;;6a0b1e570deed67d86367d6c
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoArrecadacaoCreditoDetalhado;17;0;;6a0b1e730deed67d86367d6f
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoArrecadacaoCreditoDetalhado;17;0;;6a0c93d286c2c439074a715a
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoAtualizacaoMonetaria;13;0;;69fcfeadbaeca8263ace1ba0
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoAtualizacaoMonetaria;13;0;;69fcfec6f742a910ab99fe98
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoAtualizacaoMonetaria;13;0;;69fcfee78649a227a369b42d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoAtualizacaoMonetaria;13;0;;6a031bdc69f0703d032aa48f
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoAtualizacaoMonetariaDetalhado;16;0;;69fcfeb68649a227a369b429
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoAtualizacaoMonetariaDetalhado;16;0;;69fcfede8649a227a369b42c
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoAtualizacaoMonetariaDetalhado;16;0;;69fcfeed8649a227a369b42e
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoAtualizacaoMonetariaDetalhado;16;0;;6a031bee69f0703d032aa490
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoAtualizacaoDivida;12;0;;6a0b15537f82b0625be02473
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoAtualizacaoDivida;12;0;;6a0b156f0deed67d86367d5e
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoAtualizacaoDivida;12;0;;6a031eb9c1c10170d58af57a
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoAtualizacaoDivida;12;0;;6a031c29c1c10170d58af578
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoAtualizacaoDividaDetalhado;13;0;;6a0b155f7f82b0625be02474
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoAtualizacaoDividaDetalhado;13;0;;6a0b15770deed67d86367d5f
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoAtualizacaoDividaDetalhado;13;0;;6a031ecbc1c10170d58af57b
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoAtualizacaoDividaDetalhado;13;0;;6a031c3dc1c10170d58af579
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoDeducaoCredito;13;0;;69fd0099f742a910ab99fe9b
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoDeducaoCredito;13;0;;69fd00aaf742a910ab99fe9d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoDeducaoCredito;13;0;;69fd00b9f742a910ab99fe9f
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoDeducaoCredito;13;0;;6a031fe1c1c10170d58af57c
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoDeducaoCreditoDetalhado;16;0;;69fd00a2f742a910ab99fe9c
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoDeducaoCreditoDetalhado;16;0;;69fd00b1f742a910ab99fe9e
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoDeducaoCreditoDetalhado;16;0;;69fd00bff742a910ab99fea0
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoDeducaoCreditoDetalhado;16;0;;6a031ff7c1c10170d58af57d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoDeducaoDivida;12;0;;6a0b1c9c96dccc500a8e2221
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoDeducaoDivida;12;0;;6a0b1cab96dccc500a8e2223
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoDeducaoDivida;12;0;;6a0b1cc296dccc500a8e2225
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoDeducaoDividaDetalhado;13;0;;6a0b1d2296dccc500a8e2228
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoDeducaoDividaDetalhado;13;0;;6a0b1d2a96dccc500a8e2229
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoDeducaoDividaDetalhado;13;0;;6a0b1d317f82b0625be02476
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoInscricaoDivida;12;0;;69fd01ae8649a227a369b42f
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoInscricaoDivida;12;0;;69fd01be8649a227a369b431
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoInscricaoDivida;12;0;;69fd01cb8649a227a369b433
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoInscricaoDivida;12;0;;6a032214c4df86309a4d1a85
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoInscricaoDividaDetalhado;13;0;;69fd01b78649a227a369b430
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoInscricaoDividaDetalhado;13;0;;69fd01c58649a227a369b432
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoInscricaoDividaDetalhado;13;0;;69fd01d28649a227a369b434
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoInscricaoDividaDetalhado;13;0;;6a032228c4df86309a4d1a86
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoLancamentoCredito;12;0;;69fcfbc58649a227a369b422
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoLancamentoCredito;12;0;;69fcfbdc8649a227a369b424
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoLancamentoCredito;12;0;;69fcfbedbaeca8263ace1b9d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoLancamentoCredito;12;0;;6a0318a2c1c10170d58af572
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;EstornoLancamentoCreditoDetalhado;16;0;;69fcfbd18649a227a369b423
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;EstornoLancamentoCreditoDetalhado;16;0;;69fcfbe4f742a910ab99fe95
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;EstornoLancamentoCreditoDetalhado;16;0;;69fcfc278649a227a369b425
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;EstornoLancamentoCreditoDetalhado;16;0;;6a0318bd04493d4cd08b6c3d
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;InscricaoDivida;16;0;;69fd012dbaeca8263ace1ba5
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;InscricaoDivida;16;0;;69fd013bbaeca8263ace1ba7
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;InscricaoDivida;16;0;;69fd0154baeca8263ace1baa
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;InscricaoDivida;16;0;;6a0321efc4df86309a4d1a83
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;InscricaoDividaDetalhado;17;0;;69fd0134baeca8263ace1ba6
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;InscricaoDividaDetalhado;17;0;;69fd0143baeca8263ace1ba8
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;InscricaoDividaDetalhado;17;0;;69fd015abaeca8263ace1bab
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;InscricaoDividaDetalhado;17;0;;6a032200c4df86309a4d1a84
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;LancamentoCredito;14;0;;69ebfc90ead21339f9402e23
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;LancamentoCredito;14;0;;69ebfab061de0d4e950c3e76
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria-lote;LancamentoCredito;14;0;;6a06fda7971c7027f341b194
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;LancamentoCredito;14;0;;69ebfcb461de0d4e950c3e77
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;LancamentoCredito;14;0;;69fdd6653c7f265dd71ce4e0
+tribunalParana;Tribunal de Contas do Paraná;tribunal;PUT;altera;LancamentoCreditoDetalhado;19;0;;69ec0531ead21339f9402e25
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria;LancamentoCreditoDetalhado;19;0;;69ec04fc61de0d4e950c3e79
+tribunalParana;Tribunal de Contas do Paraná;tribunal;POST;cria-lote;LancamentoCreditoDetalhado;19;0;;6a06fdb408ec2877c594f60a
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluir;LancamentoCreditoDetalhado;19;0;;69ec05132cd7967abbfeb997
+tribunalParana;Tribunal de Contas do Paraná;tribunal;DELETE;excluirAnoMes;LancamentoCreditoDetalhado;19;0;;69fdd6723c7f265dd71ce4e1

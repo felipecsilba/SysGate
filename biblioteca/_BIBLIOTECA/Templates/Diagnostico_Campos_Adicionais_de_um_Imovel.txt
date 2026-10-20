@@ -1,0 +1,31 @@
+// ---------------------------------------------------------------------------
+// DIAGNÓSTICO — lista TODOS os campos adicionais de um imóvel, todos os anos.
+// Serve para descobrir o título exato e o ano em que o campo está preenchido.
+// Não altera nada, só imprime no log.
+// ---------------------------------------------------------------------------
+
+CODIGO_IMOVEL = 7209
+
+Dados.tributos.v2.imoveis.busca(criterio: "codigo = ${CODIGO_IMOVEL}", campos: "id, codigo").each { imovel ->
+
+  imprimir "=== Imóvel ${imovel.codigo} (id ${imovel.id}) ==="
+
+  achou = false
+
+  Dados.tributos.v2.imoveis.camposAdicionais.busca(
+    criterio: "idImovel = ${imovel.id}",
+    ordenacao: "ano desc"
+  ).each { campo ->
+
+    achou = true
+    imprimir "ano=${campo.ano} | titulo=[${campo.campoAdicional.titulo}]" +
+             " | tipo=${campo.campoAdicional.tipo}" +
+             " | vlCampo=${campo.vlCampo}" +
+             " | opcoes=${campo.opcoes}" +
+             " | texto=${campo.texto}"
+  }
+
+  if (!achou) {
+    imprimir "Nenhum campo adicional encontrado para este imóvel."
+  }
+}

@@ -1,14 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
+import { fileURLToPath } from 'node:url'
 
-// Biblioteca de extensões: lê a pasta "Scripts Formulas e Relatorios" (somente leitura).
+// Biblioteca de extensões: lê a pasta biblioteca/ na raiz do repositório (somente leitura).
 // A pasta é a fonte da verdade — nada vai para o banco. Estrutura esperada:
 //   Scripts/<categoria>/<Município - …>.txt
 //   Formulas/<área>/<Município - [id -] TIPO - Descrição - Ano>.txt
 //   Relatorios/<Município - Nome>/ (jrxml + fonte_dinamica.txt + parametros.txt + relatorio_info.txt)
 
-export const PASTA_PADRAO = path.join(os.homedir(), 'Desktop', 'Scripts Formulas e Relatorios')
+export const PASTA_PADRAO = fileURLToPath(new URL('../../biblioteca', import.meta.url))
 
 const TIPOS = [
   { tipo: 'script', pasta: 'Scripts' },

@@ -1,0 +1,118 @@
+// =========================================================
+// DESCONTO_PARCELAMENTO — REFIS com faixa por PRAZO de pagamento
+// (parcela única) + faixa por QUANTIDADE de parcelas, com corte
+// por data de vencimento da dívida
+// =========================================================
+// Linguagem: FÓRMULA (tipo de script DESCONTO_PARCELAMENTO, lançamento TODOS).
+//
+// Origem: Rurópolis/PA — PROREFIS 2026, Lei 524/2026. Validado no sistema
+// em 30/09/2026 (tela "Adicionando parcelamento de crédito"), conferido
+// centavo a centavo nas 5 faixas + nos 2 casos que devem dar desconto zero.
+// Rascunho original: _RASCUNHOS-TESTES\Rurópolis - DESCONTO_PARCELAMENTO_TODOS
+// - PROREFIS 2026 - Lei 524_2026.txt
+//
+// Padrões da base que ele combina:
+//   dtVctoPrimeiraParcela formatado como texto -> Otacílio Costa (REFIS 3.244/2025)
+//   divida.dataVencimentoDivida como corte     -> Florianópolis (DESCONTO TRANSAÇÃO)
+//   faixa por qtdParcelas                      -> padrão dominante (98 de 117 arquivos)
+
+// ---------------------------------------------------------
+// QUANDO USAR ESTE PADRÃO
+// ---------------------------------------------------------
+// Lei de REFIS no formato típico:
+//   "débitos vencidos até DD/MM/AAAA ..."                     -> corte na dívida
+//   "parcela única, redução de X% se recolhido até DD/MM"     -> faixa por prazo
+//   "em até N parcelas, redução de Y%"                        -> faixa por qtd
+//   "o parcelamento não poderá ultrapassar o exercício"       -> trava da última parcela
+
+// ---------------------------------------------------------
+// ⚠️ ARMADILHAS JÁ CONFIRMADAS NA TELA
+// ---------------------------------------------------------
+// 1. `guiaReceita.vencimento` NÃO EXISTE -> "A propriedade vencimento não
+//    existe". Não há data de vencimento acessível pra lançamento NÃO inscrito
+//    nesta fórmula. (O único uso na base, Varginha Lei 6889, é tipo DIVIDAS e
+//    o ramo nunca executa — não copiar de lá.) Por isso o corte por
+//    vencimento só vale pra dívida inscrita; não inscrito fica sem desconto.
+//    Em lei que diz "para fins de parcelamento o débito será inscrito em
+//    dívida ativa", isso já é o comportamento certo.
+// 2. A faixa de prazo usa o vencimento da 1ª parcela (dtVctoPrimeiraParcela),
+//    não Datas.hoje(): a lei fala em "recolhido até", e o operador escolhe o
+//    vencimento na tela. Se cair em fim de semana, o sistema empurra pro dia
+//    útil seguinte e a faixa é decidida pela data já ajustada.
+// 3. Juros mudam entre simulações com vencimentos diferentes (o sistema
+//    projeta até o 1º vencimento) — isso é esperado, não é erro do desconto.
+// 4. O retorno é o valor do DESCONTO. Correção = 0 significa "cobrada
+//    integral", não "zerada".
+
+// ---------------------------------------------------------
+// MODELO — ajustar datas e percentuais conforme a lei
+// ---------------------------------------------------------
+// Exemplo (Rurópolis, Lei 524/2026), redução só de MULTA e JUROS:
+//   parcela única até 31/10/2026 -> 100%
+//   parcela única até 30/11/2026 ->  70%
+//   parcela única até 31/12/2026 ->  40%
+//   2 a 3 parcelas, última em 2026 -> 20%
+//   só dívidas vencidas até 31/12/2025
+
+desc_valor = 0;
+desc_corr  = 0;
+desc_multa = 0;
+desc_juro  = 0;
+percentual = 0;
+
+// Corte da lei: só dívida inscrita, vencida até a data limite
+se (ehLancamentoInscrito == true && divida.dataVencimentoDivida <= Datas.data(2025, 12, 31)) {
+
+  // comparado como texto yyyy-MM-dd pra hora não interferir
+  vencimentoIni = Datas.formatar(dtVctoPrimeiraParcela, "yyyy-MM-dd");
+
+  se (qtdParcelas == 1) {
+    // Parcela única - faixa pelo prazo de pagamento (do maior desconto pro menor)
+    se (vencimentoIni <= "2026-10-31") {
+      percentual = 1.00
+    } senao {
+      se (vencimentoIni <= "2026-11-30") {
+        percentual = 0.70
+      } senao {
+        se (vencimentoIni <= "2026-12-31") {
+          percentual = 0.40
+        }
+      }
+    }
+  } senao {
+    // Parcelado - só até N parcelas mensais, última dentro do exercício
+    se (qtdParcelas <= 3) {
+      mesUltimaParcela = Datas.mes(dtVctoPrimeiraParcela) + qtdParcelas - 1
+      se (Datas.ano(dtVctoPrimeiraParcela) == 2026 && mesUltimaParcela <= 12) {
+        percentual = 0.20
+      }
+    }
+  }
+}
+
+desc_multa = Numeros.arredonda(vlTotalMulta * percentual, 2);
+desc_juro  = Numeros.arredonda(vlTotalJuros * percentual, 2);
+
+retornar TRIBUTO: desc_valor, CORRECAO: desc_corr, MULTA: desc_multa, JUROS: desc_juro;
+
+// ---------------------------------------------------------
+// VARIAÇÕES COMUNS
+// ---------------------------------------------------------
+// - Lei que também reduz correção: desc_corr = Numeros.arredonda(vlTotalCorrecao * percentual, 2)
+// - Lei com faixas maiores de parcelas (até 6, 12, 24...): encadear
+//   `se (qtdParcelas <= N)` do menor pro maior, como em Joaçaba REFIS 2026.
+// - Trava da última parcela com intervalo mensal: mês do 1º vencimento +
+//   qtdParcelas - 1 <= 12. Se o intervalo não for mensal, essa conta não vale.
+// - Parcela mínima (ex.: 20 URM PF / 50 URM PJ) NÃO vai na fórmula — é o
+//   valor mínimo de parcela na configuração do parcelamento.
+
+// ---------------------------------------------------------
+// ROTEIRO DE TESTE (o que foi conferido em Rurópolis)
+// ---------------------------------------------------------
+// Na tela de parcelamento, trocando 1º vencimento e nº de parcelas:
+//   1 parcela em cada faixa de prazo  -> (juros + multa) × % da faixa
+//   N parcelas dentro do exercício    -> % do parcelado
+//   N parcelas passando do exercício  -> desconto 0
+//   dívida vencida depois do corte    -> desconto 0
+// Conferir: desconto = arredonda(juros × %) + arredonda(multa × %), e a
+// correção aparece integral no total.

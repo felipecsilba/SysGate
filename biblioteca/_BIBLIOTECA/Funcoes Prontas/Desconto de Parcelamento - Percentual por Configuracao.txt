@@ -1,0 +1,115 @@
+// =========================================================
+// DESCONTO_PARCELAMENTO — percentual definido pela CONFIGURAÇÃO
+// de parcelamento (e não pela quantidade de parcelas)
+// =========================================================
+// Linguagem: FÓRMULA (tipo de script DESCONTO_PARCELAMENTO).
+//
+// Origem: padrão extraído de código real da base — Bituruna, Bom Jesus,
+// Joaçaba e Atibaia. Confirmado em 11 dos 117 arquivos
+// DESCONTO_PARCELAMENTO (29 municípios) via
+// `configuracaoParcelamento.descricao`, mais 1 via
+// `configuracaoParcelamento.codigo` (Atibaia).
+// Montado e validado em produção em 24/08/2026 para o caso de 3
+// configurações de parcela única com 15% / 20% / 30%.
+
+// ---------------------------------------------------------
+// QUANDO USAR ESTE PADRÃO
+// ---------------------------------------------------------
+// O padrão dominante da base é decidir o desconto por faixa de
+// `qtdParcelas` (98 dos 117 arquivos). Ele NÃO serve quando várias
+// configurações de parcelamento têm a MESMA quantidade de parcelas
+// (o caso clássico: 3 configurações de parcela única, cada uma com um
+// percentual próprio de lei/campanha). Nesse cenário `qtdParcelas` é
+// igual nas três e não distingue nada — o que distingue é a
+// configuração escolhida na hora de montar o parcelamento.
+//
+// Duas formas de identificar a configuração:
+//   configuracaoParcelamento.descricao  -> 11 arquivos. Legível, mas
+//       comparação literal: acento, caixa, barra e espaço têm que bater
+//       caractere a caractere com o cadastro. Se alguém renomear a
+//       configuração no cadastro, a fórmula para de dar desconto em
+//       silêncio (percentual fica 0, não dá erro).
+//   configuracaoParcelamento.codigo     -> 1 arquivo (Atibaia, `== 76627`).
+//       Imune a renomear, mas o número não diz nada pra quem lê e muda
+//       de ambiente pra ambiente (teste x produção).
+// Na dúvida, descrição — é o que a base faz. Vale deixar as descrições
+// em constantes no topo, como abaixo, pra ajuste num lugar só.
+
+// ---------------------------------------------------------
+// MODELO — desconto SÓ no valor original, acréscimos integrais
+// ---------------------------------------------------------
+// Chave da regra "desconto só no principal": devolver 0 em CORRECAO,
+// MULTA e JUROS. O retorno é o valor do DESCONTO de cada parcela, não o
+// valor a cobrar — 0 significa "não abate nada", ou seja, acréscimo
+// integral. (Erro fácil: achar que 0 zera o acréscimo. É o contrário.)
+
+DESCRICAO_15 = 'DESCRICAO DA CONFIGURACAO 15%';
+DESCRICAO_20 = 'DESCRICAO DA CONFIGURACAO 20%';
+DESCRICAO_30 = 'DESCRICAO DA CONFIGURACAO 30%';
+
+desc_tributo  = 0.00;
+desc_correcao = 0.00;
+desc_multa    = 0.00;
+desc_juro     = 0.00;
+
+percentual = 0.00;
+
+se (qtdParcelas == 1) {
+  se (configuracaoParcelamento.descricao == DESCRICAO_15) {
+    percentual = 0.15;
+  } senao {
+    se (configuracaoParcelamento.descricao == DESCRICAO_20) {
+      percentual = 0.20;
+    } senao {
+      se (configuracaoParcelamento.descricao == DESCRICAO_30) {
+        percentual = 0.30;
+      }
+    }
+  }
+}
+
+desc_tributo = Numeros.arredonda(vlTotalLancado * percentual, 2);
+
+retornar TRIBUTO: desc_tributo, CORRECAO: desc_correcao, MULTA: desc_multa, JUROS: desc_juro;
+
+// ---------------------------------------------------------
+// VARIANTE — mesma faixa atende a mais de uma descrição
+// ---------------------------------------------------------
+// Bituruna e Joaçaba usam `in [...]` quando várias configurações têm o
+// mesmo percentual:
+//
+//   se (configuracaoParcelamento.descricao in ['REFIS (LEI Nº 2254/2022) Tributários',
+//                                              '10% - REFIS (LEI Nº 2254/2022) Tributários']) {
+
+// ---------------------------------------------------------
+// QUAL É A BASE DO "VALOR ORIGINAL"
+// ---------------------------------------------------------
+// vlTotalLancado  -> 22 arquivos. Principal lançado, sem acréscimos.
+//                    É a base pra dívida inscrita (DESCONTO_PARCELAMENTO_DIVIDAS).
+// vlTotalDevido   ->  5 arquivos (ex.: Atibaia 10% à vista). Total devido —
+//                    dependendo do lançamento já embute acréscimo, então
+//                    NÃO é "valor original" em todo caso. Cuidado ao copiar.
+// guiaReceita.valorReceita -> 19 arquivos. Valor da receita do lançamento
+//                    de exercício (não inscrito).
+//
+// Se a mesma configuração for usada em dívida inscrita E em lançamento de
+// exercício, o padrão da base (Florianópolis/FLORAM, Joaçaba) é separar:
+//
+//   se (ehLancamentoInscrito == false) {   // 46 arquivos usam essa chave
+//     desc_tributo = guiaReceita.valorReceita * percentual;
+//   } senao {
+//     desc_tributo = vlTotalLancado * percentual;
+//   }
+//
+// Num tipo DIVIDAS puro isso não é necessário — só vlTotalLancado.
+
+// ---------------------------------------------------------
+// OUTROS DETALHES CONFIRMADOS NO CORPUS
+// ---------------------------------------------------------
+// - `Numeros.arredonda(x, 2)` aparece em 38 dos 117 — vale sempre, evita
+//   desconto com fração de centavo espalhada pelas parcelas.
+// - O `retornar` aceita omitir chaves (3 arquivos fazem `retornar MULTA: ...,
+//   JUROS: ...`), mas listar as quatro deixa explícito o que fica integral.
+// - Inicializar TODAS as variáveis de desconto em 0 antes dos `se` é
+//   universal na base: se nenhuma condição bater, a fórmula tem que
+//   devolver 0, nunca variável não inicializada.

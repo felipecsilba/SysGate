@@ -1,0 +1,313 @@
+// ---------------------------------------------------------------------------
+// Título : Altera Imóveis em Lote via Service Layer - BASE (template validado)
+//
+// Altera em lote um campo do imóvel via Service Layer (PATCH /imoveis).
+// Na versão validada, o campo alterado é o DISTRITO (idDistrito).
+//
+// Entrada : CSV com o id do imóvel numa coluna (por padrão a 2ª — é a saída do
+//           script "Exporta Imoveis - Distrito e Secao").
+//           Parâmetro do script: identificador `arquivo`, tipo Arquivo.
+// Envio   : lotes de até 50 JSONs por requisição (limite do SL), com consulta
+//           do idLote até PROCESSADO / PROCESSADO_COM_ERRO.
+//
+// Validado em produção em 18/09/2026 (alteração de distrito em lote).
+//
+// Para alterar OUTRO campo (ou outro cadastro), mexer em dois pontos:
+//   1. SERVICO -> o recurso do SL ("imoveis", "economicos"...)
+//   2. o bloco MONTAGEM DOS PAYLOADS -> trocar "idDistrito" pelo campo alvo
+// Ver `README - Altera Imoveis em Lote (Service Layer).md`.
+// ---------------------------------------------------------------------------
+
+// ============================ CONFIGURAÇÃO =================================
+
+// Chave de integração da entidade (o "token" gerado no sistema).
+// Enviada via .chaveIntegracao(), NÃO como header Authorization/Bearer.
+TOKEN = "cole-o-token-aqui"
+
+// Distrito que será gravado em TODOS os imóveis do CSV. Informe aqui.
+ID_DISTRITO = 1
+
+// Coluna do CSV que contém o id do imóvel (0 = primeira, 1 = segunda...).
+COLUNA_ID = 1
+
+// O CSV tem linha de cabeçalho?
+TEM_CABECALHO = true
+
+DELIMITADOR = ';'
+ENCODING    = 'iso-8859-1'
+
+// Tamanho do lote enviado ao SL. O SL aceita no máximo 50.
+TAMANHO_LOTE = 50
+
+// true  -> apenas monta e imprime os lotes, NÃO envia nada (simulação)
+// false -> envia de verdade
+SIMULACAO = true
+
+// Limita a quantidade de imóveis processados (0 = sem limite).
+// Útil para um teste inicial com poucos registros.
+LIMITE = 0
+
+// true -> imprime o corpo JSON exato de cada requisição enviada.
+DEBUG = true
+
+URL_BASE = "https://tributos.betha.cloud/service-layer-tributos/api"
+SERVICO  = "imoveis"
+
+// ===========================================================================
+
+if (!TOKEN || TOKEN == "cole-o-token-aqui") {
+  suspender 'Informe a chave de integração da entidade na constante TOKEN, no topo do script.'
+}
+
+if (!parametros.arquivo?.valor) {
+  suspender 'Informe o arquivo CSV no parâmetro "arquivo".'
+}
+
+if (TAMANHO_LOTE > 50) {
+  suspender "O Service Layer aceita no máximo 50 registros por lote. Ajuste TAMANHO_LOTE."
+}
+
+// --------------------------- LEITURA DO CSV --------------------------------
+
+arquivo = Arquivo.ler(parametros.arquivo.valor, 'csv', [delimitador: DELIMITADOR, encoding: ENCODING])
+
+ids             = []
+linhasLidas     = 0
+linhasVazias    = 0
+linhasInvalidas = []
+
+if (TEM_CABECALHO && arquivo.contemProximaLinha()) {
+  imprimir "Cabeçalho ignorado: " + arquivo.lerLinha()
+}
+
+while (arquivo.contemProximaLinha()) {
+  linhaBruta = arquivo.lerLinha()
+  linhasLidas = linhasLidas + 1
+
+  if (linhaBruta == null || linhaBruta.trim() == "") {
+    linhasVazias = linhasVazias + 1
+    continue
+  }
+
+  colunas = linhaBruta.split(DELIMITADOR)
+
+  if (colunas.size() <= COLUNA_ID) {
+    linhasInvalidas << "Linha ${linhasLidas}: não possui a coluna ${COLUNA_ID + 1} -> ${linhaBruta}"
+    continue
+  }
+
+  valor = colunas[COLUNA_ID].toString().trim().replace('"', '')
+
+  if (valor == "") {
+    linhasInvalidas << "Linha ${linhasLidas}: id vazio -> ${linhaBruta}"
+    continue
+  }
+
+  if (!valor.isLong()) {
+    linhasInvalidas << "Linha ${linhasLidas}: id não numérico ('${valor}') -> ${linhaBruta}"
+    continue
+  }
+
+  ids << valor.toLong()
+}
+
+ids = ids.unique()
+
+if (LIMITE > 0 && ids.size() > LIMITE) {
+  imprimir "LIMITE ativo: processando apenas os primeiros ${LIMITE} de ${ids.size()} imóveis."
+  ids = ids.take(LIMITE)
+}
+
+imprimir "==================================================="
+imprimir "Linhas lidas .........: ${linhasLidas}"
+imprimir "Linhas vazias ........: ${linhasVazias}"
+imprimir "Linhas inválidas .....: ${linhasInvalidas.size()}"
+imprimir "Ids únicos a alterar .: ${ids.size()}"
+imprimir "Distrito destino .....: ${ID_DISTRITO}"
+imprimir "==================================================="
+
+linhasInvalidas.each { imprimir "  [IGNORADA] " + it }
+
+if (!ids) {
+  suspender "Nenhum id de imóvel válido encontrado no arquivo."
+}
+
+// ------------------------- MONTAGEM DOS PAYLOADS ---------------------------
+
+payloads = []
+
+ids.each { idImovel ->
+  payloads << [
+    "idIntegracao": "IMOVEL_${idImovel}",
+    "imoveis": [
+      "idGerado": [
+        "id": idImovel
+      ],
+      "idDistrito": ID_DISTRITO
+    ]
+  ]
+}
+
+lotes = payloads.collate(TAMANHO_LOTE)
+
+imprimir "Total de lotes a enviar: ${lotes.size()} (até ${TAMANHO_LOTE} por lote)"
+
+// ------------------------------- ENVIO -------------------------------------
+
+enviarLote = { conteudo ->
+  if (DEBUG) {
+    imprimir "  [DEBUG] Corpo enviado: ${JSON.escrever(conteudo)}"
+  }
+
+  // Autenticação por chaveIntegracao, sem header Authorization e sem
+  // Content-Type explícito. É o padrão que funciona no SL da Betha.
+  servico = Http.servico("${URL_BASE}/${SERVICO}")
+    .chaveIntegracao(TOKEN)
+    .aceitarTipoMidia("application/json")
+
+  resposta = servico.PATCH(conteudo)
+
+  retorno = [
+    codigo  : resposta.codigo(),
+    sucesso : resposta.sucesso(),
+    conteudo: null,
+    idLote  : null
+  ]
+
+  // A resposta de erro do SL nem sempre é JSON válido (pode vir uma stack
+  // trace em texto). Ler sem proteção derruba o script inteiro.
+  try {
+    retorno.conteudo = resposta.conteudo()
+  } catch (Exception e) {
+    retorno.conteudo = "(não foi possível ler o corpo da resposta: ${e.message})"
+  }
+
+  try {
+    if (resposta.ehJson()) {
+      retorno.idLote = resposta.json()?.idLote
+    }
+  } catch (Exception e) {
+    imprimir "  [AVISO] Resposta não é JSON válido: ${e.message}"
+  }
+
+  servico.close()
+  return retorno
+}
+
+consultarLote = { idLote ->
+  statusLote = 'NAO_PROCESSADO'
+  tentativas = 0
+  resultado  = [status: null, sucessos: 0, erros: []]
+
+  // Para de consultar em PROCESSADO, PROCESSADO_COM_ERRO ou após 30 tentativas.
+  while (statusLote != 'PROCESSADO' && statusLote != 'PROCESSADO_COM_ERRO' && tentativas < 30) {
+    esperar 2.segundo
+    tentativas = tentativas + 1
+
+    respostaGet = Http.servico("${URL_BASE}/${SERVICO}/${idLote}")
+      .chaveIntegracao(TOKEN)
+      .aceitarTipoMidia("application/json")
+      .GET()
+
+    resp = null
+    try {
+      if (respostaGet.ehJson()) {
+        resp = respostaGet.json()
+      }
+    } catch (Exception e) {
+      resultado.erros << "Falha ao ler JSON da consulta do lote ${idLote}: ${e.message}"
+      break
+    }
+
+    if (resp == null) {
+      resultado.erros << "Resposta não-JSON ao consultar lote ${idLote} (HTTP ${respostaGet.codigo()})"
+      break
+    }
+
+    statusLote = resp.statusLote
+
+    if (statusLote == 'PROCESSADO' || statusLote == 'PROCESSADO_COM_ERRO') {
+      resp.retorno.each { j ->
+        if (j?.status == 'ERRO') {
+          resultado.erros << "${j.idIntegracao}: ${j.mensagem}"
+        } else {
+          resultado.sucessos = resultado.sucessos + 1
+        }
+      }
+    }
+  }
+
+  resultado.status = statusLote
+
+  if (tentativas >= 30 && statusLote != 'PROCESSADO' && statusLote != 'PROCESSADO_COM_ERRO') {
+    resultado.erros << "Lote ${idLote} não finalizou após ${tentativas} consultas (último status: ${statusLote})."
+  }
+
+  return resultado
+}
+
+totalSucesso = 0
+totalErro    = 0
+errosGerais  = []
+numeroLote   = 0
+
+lotes.each { lote ->
+  numeroLote = numeroLote + 1
+  imprimir "---------------------------------------------------"
+  imprimir "Lote ${numeroLote}/${lotes.size()} - ${lote.size()} imóveis"
+
+  if (SIMULACAO) {
+    imprimir "[SIMULACAO] Payload que seria enviado: ${lote}"
+    return
+  }
+
+  envio = enviarLote(lote)
+
+  if (envio.codigo == 401 || envio.codigo == 403) {
+    imprimir "  Resposta do servidor: ${envio.conteudo}"
+    suspender "Chave de integração inválida ou sem permissão (HTTP ${envio.codigo}). Revise a constante TOKEN."
+  }
+
+  if (!envio.sucesso || !envio.idLote) {
+    totalErro = totalErro + lote.size()
+    errosGerais << "Lote ${numeroLote}: HTTP ${envio.codigo} - ${envio.conteudo}"
+    imprimir "  ERRO no envio: HTTP ${envio.codigo}"
+    imprimir "  Resposta do servidor: ${envio.conteudo}"
+    return
+  }
+
+  imprimir "  Enviado. idLote = ${envio.idLote}"
+
+  consulta = consultarLote(envio.idLote)
+
+  totalSucesso = totalSucesso + consulta.sucessos
+  totalErro    = totalErro + consulta.erros.size()
+
+  imprimir "  Status: ${consulta.status} | sucessos: ${consulta.sucessos} | erros: ${consulta.erros.size()}"
+
+  consulta.erros.each { erro ->
+    errosGerais << "Lote ${numeroLote} - ${erro}"
+    imprimir "    [ERRO] ${erro}"
+  }
+}
+
+// ------------------------------ RESUMO -------------------------------------
+
+imprimir "==================================================="
+if (SIMULACAO) {
+  imprimir "MODO SIMULAÇÃO - nenhum dado foi alterado."
+  imprimir "Imóveis que seriam alterados: ${ids.size()} em ${lotes.size()} lote(s)."
+  imprimir "Para executar de verdade, altere SIMULACAO para false."
+} else {
+  imprimir "Imóveis no arquivo ....: ${ids.size()}"
+  imprimir "Alterados com sucesso .: ${totalSucesso}"
+  imprimir "Com erro ..............: ${totalErro}"
+  imprimir "Lotes processados .....: ${numeroLote}/${lotes.size()}"
+
+  if (errosGerais) {
+    imprimir ""
+    imprimir "--- Erros ---"
+    errosGerais.each { imprimir "  " + it }
+  }
+}
+imprimir "==================================================="

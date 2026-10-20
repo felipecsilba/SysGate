@@ -52,8 +52,14 @@ krakion/
 │   ├── conhecimento.md        # Módulo Conhecimento: base colaborativa de FAQs, erros, passo a passo
 │   ├── desktop.md             # Krakion Desktop / Krakion App (Electron): banco embutido, backend local, conta local, portas, armadilhas, uma seção por módulo e "Estado e próximos passos" (ler ao retomar)
 │   ├── checagem.md            # Módulo Checagem: frente Por API (spec + regras) e Por Fonte (upload do .jsonl da fonte BFC → laudo por regra e por campo, nada armazenado)
-│   ├── analisador-json.md
-│   └── scripts-bfc/           # BFC-Scripts versionados — exporta-debitos-por-credito.groovy gera o .jsonl que a Checagem Por Fonte lê
+│   └── analisador-json.md
+├── biblioteca/                # BASE BFC (ex-"Desktop/Scripts Formulas e Relatorios", trazida em 2026-10-19) — ler biblioteca/LEIAME-KRAKION.md e biblioteca/CONTEXTO.md antes de criar fórmula/script
+│   ├── CONTEXTO.md            # Vocabulário, decisões, lições aprendidas — handoff da base (git)
+│   ├── _BIBLIOTECA/           # Formula vs Script, Dicionário de Funções, Funções Prontas, Templates (git) — Exporta_Debitos_Completo_por_Credito_BASE gera o .jsonl da Checagem Por Fonte
+│   ├── _CONHECIMENTO/         # Conhecimento por área p/ os agentes (ITBI, Registro Bancário, _COMUM) + protocolo de ingestão (git)
+│   ├── FontesDeDados/         # fonte.py (consulta), _validar.py, catalogo_v2.json + mapa_bfc_rest.json (lidos pelo Gerador do Desktop) (git; raw/ e swagger/*.json fora)
+│   └── Formulas/ Scripts/ Relatorios/ Municipios/ _RASCUNHOS-TESTES/   # CORPUS de clientes — FORA do git (.gitignore), lido pela Biblioteca do Desktop
+├── .claude/agents/            # Especialistas de domínio (itbi-transferencias.md) — caminhos relativos a biblioteca/
 ├── skills/                    # Referências de domínio e processo
 │   ├── backend.md
 │   ├── frontend.md
