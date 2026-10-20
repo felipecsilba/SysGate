@@ -218,6 +218,15 @@ Plano: `docs/plans/2026-10-20-desktop-backup-drive.md`. Módulos em `electron/ba
 - `main.js`: checa 15 s depois de abrir e a cada hora; IPC `backup:status`/`backup:executar` + eventos `backup:progresso`/`backup:fim`; log `[backup]` no `krakion.log`.
 - **Sem segredos (decisão do Felipe, 2026-10-20):** tokens e senhas se pegam de novo, então não vão para o backup. `exportarBanco` omite toda coluna com `senha|token|secret|segredo|password` no nome (hoje: `MunicipioSistema.token`, `senhaHash` e `recuperacaoToken[Hash]` de `Usuario`/`Solicitante`) e mascara cabeçalhos de autorização em `Requisicao.headers`. O JSON (`krakion-banco-v2`) lista o que foi omitido em `omitidos`. Conferido no banco real: 4 tokens + 1 hash, nenhum no backup. Uma vez só (`bancoSemSegredos` no `backup.json`), o primeiro backup depois da mudança apagou do Drive os backups de banco antigos, que tinham segredos. Ao restaurar no futuro: criar a senha local de novo e renovar os tokens (Central de Tokens / agente do Betha Admin). Restaurar pelo App fica para depois.
 
+## Mapa de dependências (ícone próprio, 2026-10-20)
+
+Plano: `docs/plans/2026-10-20-desktop-mapa-dependencias.md`. Nasceu do caso dos imóveis migrados errado (`biblioteca/_CONHECIMENTO/Imoveis/casos/`).
+- **Tela** (`pages/Mapa/`): seletor de entidade (as com mais dependentes primeiro: Pessoa 73, Imóvel 35, Dívida 34…), filtros Cadastro, Financeiro e Documentos e "só confirmados". Colunas: entidade → dependentes diretos agrupados → clicar num nó com ▸ abre os dependentes dele (nada abre sozinho, porque no nível 2 a inferência explode). Painel: status, "liga por", localização no menu, link da ajuda (das tags do Swagger), o que fazer, notas da prática, endpoints, body do DELETE, chamada da fonte BFC.
+- **Motor** (`electron/mapaDependencias.js`, 9 testes, um deles com os dados reais): aresta = campo `id<Recurso>` no POST de outro recurso (singular, plural, composto); rótulo com acento do `summary`; categoria por nome; fonte BFC casando as letras do recurso com o path da fonte (sem `{params}`), indicando filtro em lote ou parâmetro. Parâmetro que não é o id do pai vira `semLigacao`.
+- **Curado** (`biblioteca/FontesDeDados/dependencias_confirmadas.json`): vence a inferência e acrescenta arestas que ela não vê (histórico via `entityId`, inscrição imobiliária). Botão Recarregar relê os arquivos. **Ao confirmar algo novo na prática, registre ali.**
+- Swagger `FontesDeDados/swagger/tributos-openapi.json` passou a ser versionado.
+- Próximos passos: gerar o levantamento a partir do mapa e a exclusão em cascata (lotes na ordem, consultando o idLote).
+
 ## Componentes compartilhados
 
 `Pagina` (moldura), `Modal`, `Confirmar` (ação destrutiva, aceita async), `Busca`, `CaixaBusca` (substitui o `<select>`), `Abas` (pílulas com contador), `BotaoIcone`, `MetodoBadge` (cor por método HTTP), `JsonColorido`, `Codigo` (em `pages/Biblioteca/Visualizador.jsx` — código com régua e realce, também usado pelo Gerador), `LimiteErro` (erro num módulo mostra a mensagem em vez de tela em branco; o `Layout` reseta ao trocar de rota), `Icone`. Helpers: `lib/texto.js` (`normalizar`, `contem` — busca sem acento), `lib/endpoints.js` (`agruparPorModulo`, `avisoUrlBase`), `lib/codigo.js` (`highlightCode` com palavras extras — `BFC_SCRIPT` —, `highlightXml`; ambos escapam antes de pintar), `lib/json.js` (`colorirJson`).
@@ -262,7 +271,7 @@ Plano: `docs/plans/2026-10-20-desktop-backup-drive.md`. Módulos em `electron/ba
 - Ferramentas: Analisador JSON (Analisar + Comparar), Checagem (Por Fonte + Por API e marcação de campos), Conhecimento, Notas, Histórico.
 - Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação).
 - Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados. Conexões (Google Drive) tem botão próprio no rodapé do Rail (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
-- Testes: desktop **219**, backend **77** — todos passando (`npm test` em cada pasta).
+- Testes: desktop **233**, backend **77** — todos passando (`npm test` em cada pasta).
 
 **Git:** tudo no branch **`krakion-app`** (nunca no `master` — a VPS faz `git pull` dele). A tag `app-v0.1.0` marca a versão até a API; o que veio depois está commitado no `krakion-app` local — conferir com `git log origin/krakion-app..HEAD` o que ainda falta enviar ao GitHub.
 

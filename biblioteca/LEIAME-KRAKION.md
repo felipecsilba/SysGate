@@ -15,7 +15,9 @@ caminhos que eles citam são relativos a `biblioteca/`.
 | `_BIBLIOTECA/` | sim | Templates, funções prontas, dicionários: trabalho autoral |
 | `_CONHECIMENTO/` | sim | O que os agentes leem |
 | `FontesDeDados/` (scripts, `.md`, `catalogo_v2.json`, `mapa_bfc_rest.json`, `nomes_bfc.json`) | sim | `fonte.py` e o Gerador do Desktop precisam deles |
-| `FontesDeDados/raw/`, `swagger/*.json`, `_obsoleto/`, `fontes_catalog_completo.json` | não | Brutos grandes e regeneráveis (pipeline no `CONTEXTO.md`) |
+| `FontesDeDados/swagger/tributos-openapi.json` (5,6 MB, público) | sim | O Mapa de dependências do App lê dele |
+| `FontesDeDados/dependencias_confirmadas.json` | sim | Camada curada do Mapa de dependências: o que a prática confirmou |
+| `FontesDeDados/raw/`, `_obsoleto/`, `fontes_catalog_completo.json` | não | Brutos grandes e regeneráveis (pipeline no `CONTEXTO.md`) |
 | `Formulas/`, `Scripts/`, `Relatorios/`, `Municipios/`, `_RASCUNHOS-TESTES/`, PDFs e `.jrxml` soltos na raiz | não | ~450 MB de material de prefeitura. O repositório vai para o GitHub e a VPS faz `git pull` em cada deploy |
 
 **O corpus fora do git não tem proteção contra exclusão.** Ele precisa de

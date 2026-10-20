@@ -9,6 +9,7 @@ test('menu tem os módulos combinados, com ids únicos', () => {
     'municipios',
     'biblioteca',
     'gerador',
+    'mapa',
     'sistemas', 'tokens', 'betha-admin', 'importar',
     'conexoes',
   ])
@@ -20,6 +21,7 @@ test('grupoDaRota acha o grupo do módulo, inclusive em sub-rotas', () => {
   assert.equal(grupoDaRota('/notas/42').id, 'ferramentas')
   assert.equal(grupoDaRota('/biblioteca').id, 'biblioteca')
   assert.equal(grupoDaRota('/conexoes/google-drive').id, 'conexoes')
+  assert.equal(grupoDaRota('/mapa').id, 'mapa')
 })
 
 test('Conexões fica no rodapé do Rail (acima do tema), como tela inteira', () => {

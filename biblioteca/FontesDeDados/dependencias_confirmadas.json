@@ -1,0 +1,65 @@
+{
+  "_leia": "Camada CURADA do Mapa de dependências do Krakion App. O que está aqui foi confirmado na prática e sempre vence a inferência (Swagger + catálogo de fontes). Campos por recurso da API: rotulo, categoria (cadastro|financeiro|documentos|outros), status (confirmado|inferido), confirmadoEm, acao (excluir|saiJunto|reprocessar|naoExcluir), saiCom (recurso), fonte {bfc, filtro|parametro, campoId}, pais [{recurso, campo}] (arestas que a inferência não vê), notas [texto]. Ao confirmar algo novo: registre aqui com a data e a origem nas notas. Caso de origem: biblioteca/_CONHECIMENTO/Imoveis/casos/Excluir imovel por API (migrado errado).md",
+  "recursos": {
+    "imoveis": {
+      "notas": [
+        "O DELETE só responde 'Não é possível excluir este item, o mesmo está em uso em outro registro', sem dizer qual vínculo trava. Rode o levantamento antes (_BIBLIOTECA/Templates/Levantamento_Vinculos_Imoveis_BASE.txt).",
+        "Ordem confirmada em 2026-10-20 (imóvel migrado errado, sem financeiro): proprietários → movimentações → reprocessar inscrição imobiliária → imóvel. Esperar cada lote sair de NAO_PROCESSADO."
+      ]
+    },
+    "imoveisResponsaveis": {
+      "rotulo": "Proprietários (responsáveis)",
+      "status": "confirmado",
+      "confirmadoEm": "2026-10-20",
+      "acao": "excluir",
+      "fonte": { "bfc": "imoveis.proprietarios", "filtro": "idImovel", "campoId": "id" },
+      "notas": [
+        "\"Responsáveis\" na API são os proprietários da fonte (mesmos campos: pessoa, imóvel, percentual, titularidade).",
+        "O id que a fonte devolve é o idGerado do DELETE.",
+        "Busca em lote: imoveis.proprietarios (plural, criterio). O singular imovel.proprietarios exige parametros: [idImovel]."
+      ]
+    },
+    "imoveisCorresponsaveis": {
+      "fonte": { "bfc": "imoveis.corresponsaveis", "filtro": "idImovel", "campoId": "id" },
+      "notas": ["Busca em lote: imoveis.corresponsaveis (plural, criterio). O singular exige parametros: [idImovel]. A exclusão ainda não foi testada."]
+    },
+    "imoveisMovimentacoes": {
+      "rotulo": "Movimentações do imóvel",
+      "status": "confirmado",
+      "confirmadoEm": "2026-10-20",
+      "acao": "excluir",
+      "fonte": { "bfc": "imoveis.movimentacoes", "filtro": "idImovel", "campoId": "id" },
+      "notas": [
+        "Excluir as movimentações apaga também o histórico do imóvel (a tela Histórico vem delas).",
+        "O id que a fonte devolve é o idGerado do DELETE."
+      ]
+    },
+    "historicoAlteracaoImovel": {
+      "rotulo": "Histórico de alterações",
+      "pais": [{ "recurso": "imoveis", "campo": "entityId" }],
+      "status": "confirmado",
+      "confirmadoEm": "2026-10-20",
+      "acao": "saiJunto",
+      "saiCom": "imoveisMovimentacoes",
+      "fonte": { "bfc": "imoveis.historico", "filtro": "idImovel" },
+      "notas": [
+        "Não precisa excluir à parte: some junto com as movimentações.",
+        "O id da fonte imoveis.historico é de cada linha de alteração, não da entidade. DELETE com esses ids responde 'Entidade HistoricoAlteracaoImovel com o ID … não encontrada'.",
+        "A fonte filtra por idImovel mas não devolve o idImovel (só idReferente)."
+      ]
+    },
+    "imoveisMovimentacoesInscricoesImobiliarias": {
+      "rotulo": "Movimentações de inscrição imobiliária",
+      "pais": [{ "recurso": "imoveis", "campo": "idImovel" }],
+      "status": "confirmado",
+      "confirmadoEm": "2026-10-20",
+      "acao": "reprocessar",
+      "fonte": { "bfc": "imoveis.movimentacoesInscricaoImobiliaria", "filtro": "idImovel", "campoId": "id" },
+      "notas": [
+        "Registro DERIVADO: não tem DELETE. É recalculado a partir do histórico e das movimentações.",
+        "Depois de excluir as movimentações: PUT /api/imoveisMovimentacoesInscricoesImobiliarias com [{\"idImovel\": …}] (até 50). A linha some. A resposta é 200 vazia, sem idLote: confirme rodando o levantamento de novo.",
+        "⚠ NUNCA com body vazio: isso reprocessa TODOS os imóveis da entidade."
+      ]
+    }
+  }
+}

@@ -17,6 +17,7 @@ import Checagem from './pages/Checagem'
 import Biblioteca from './pages/Biblioteca'
 import Municipios from './pages/Municipios'
 import Gerador from './pages/Gerador'
+import Mapa from './pages/Mapa'
 import { MODULOS } from './modulos'
 import { useAuthStore } from './stores/authStore'
 
@@ -31,6 +32,7 @@ const PAGINAS = {
   biblioteca: Biblioteca,
   municipios: Municipios,
   gerador: Gerador,
+  mapa: Mapa,
   sistemas: Sistemas,
   tokens: CentralTokens,
   'betha-admin': BethaAdmin,

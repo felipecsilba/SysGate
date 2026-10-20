@@ -72,6 +72,12 @@ contextBridge.exposeInMainWorld('krakion', {
       return () => ipcRenderer.removeListener('backup:fim', ouvinte)
     },
   },
+  // Mapa de dependências (Swagger + catálogo de fontes + dependencias_confirmadas.json da biblioteca — só leitura)
+  mapa: {
+    entidades: () => ipcRenderer.invoke('mapa:entidades'),
+    dependentes: recurso => ipcRenderer.invoke('mapa:dependentes', recurso),
+    recarregar: () => ipcRenderer.invoke('mapa:recarregar'),
+  },
   // Gerador de Extensões: catálogo de fontes BFC da pasta da biblioteca (somente leitura)
   gerador: {
     fontes: () => ipcRenderer.invoke('gerador:fontes'),

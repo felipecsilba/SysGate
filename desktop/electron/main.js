@@ -16,6 +16,7 @@ import * as catalogoFontes from './catalogoFontes.js'
 import * as municipiosDocs from './municipiosDocs.js'
 import { criarConexaoDrive } from './conexoes/googleDrive/index.js'
 import { criarBackup } from './backup/index.js'
+import { carregarMapa } from './mapaDependencias.js'
 import { exportarBanco } from './backup/exportarBanco.js'
 import pg from 'pg'
 
@@ -271,6 +272,18 @@ function agendarBackup() {
 }
 ipcMain.handle('backup:status', comErro(() => backup.status()))
 ipcMain.handle('backup:executar', comErro(() => rodarBackup('manual')))
+
+// Mapa de dependências: Swagger + catálogo de fontes + curado, lidos da pasta da biblioteca (cache até recarregar)
+let mapaCache = null
+let mapaPasta = null
+const mapa = () => {
+  const pasta = pastaBiblioteca()
+  if (!mapaCache || mapaPasta !== pasta) { mapaCache = carregarMapa(pasta); mapaPasta = pasta }
+  return mapaCache
+}
+ipcMain.handle('mapa:entidades', comErro(() => mapa().entidades()))
+ipcMain.handle('mapa:dependentes', comErro((_e, recurso) => ({ info: mapa().info(recurso), dependentes: mapa().dependentes(recurso) })))
+ipcMain.handle('mapa:recarregar', comErro(() => { mapaCache = null; return mapa().entidades().length }))
 
 let filaBetha = Promise.resolve() // uma renovação por vez — nada de várias janelas no Betha ao mesmo tempo
 ipcMain.handle('betha:renovar', (e, pedido) => {

@@ -25,6 +25,5 @@ biblioteca/*.pdf
 biblioteca/*.jrxml
 biblioteca/FontesDeDados/raw/
 biblioteca/FontesDeDados/_obsoleto/
-biblioteca/FontesDeDados/swagger/*.json
 biblioteca/FontesDeDados/fontes_catalog_completo.json
 __pycache__/

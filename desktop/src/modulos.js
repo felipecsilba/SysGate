@@ -52,6 +52,16 @@ export const GRUPOS = [
       { id: 'gerador', rotulo: 'Gerador de Extensões', icone: 'extensoes', descricao: 'Gera scripts e fórmulas a partir de modelos e do catálogo de fontes.' },
     ],
   },
+  // Consulta antes de migrar ou excluir: quem depende de quem na API, endpoints e fontes de cada dependente
+  {
+    id: 'mapa',
+    titulo: 'Mapa de dependências',
+    icone: 'mapa',
+    direto: true,
+    itens: [
+      { id: 'mapa', rotulo: 'Mapa de dependências', icone: 'mapa', descricao: 'Quem depende de quem na API Betha, como excluir e como encontrar cada dependente.' },
+    ],
+  },
   {
     id: 'configuracoes',
     titulo: 'Configurações',
