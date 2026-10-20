@@ -31,7 +31,7 @@ pede isso de todo programa que acessa o Drive. São uns 10 minutos, sem custo.
 
 ## 4. Colar no Krakion App e conectar
 
-1. Krakion App → **Configurações → Conexões** → cartão **Google Drive**.
+1. Krakion App → botão de **plugue** no canto inferior esquerdo (acima do tema) → **Google Drive** → **Conectar**.
 2. Cole o ID e a chave secreta → **Salvar**. A chave fica cifrada pelo Windows nesta máquina.
 3. **Conectar ao Google Drive** → o navegador abre no login do Google → escolha a conta → **Continuar**.
    - Se aparecer "O Google não verificou este app": **Avançado → Acessar Krakion App**. O app é o seu.

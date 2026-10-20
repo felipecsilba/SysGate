@@ -51,6 +51,7 @@ export default function App() {
               const Pagina = PAGINAS[m.id]
               return <Route key={m.id} path={m.rota} element={Pagina ? <Pagina /> : <EmConstrucao modulo={m} />} />
             })}
+            <Route path="/conexoes/:conector" element={<Conexoes />} />
             <Route path="/sandbox" element={<Navigate to="/api" replace />} />
             <Route path="/extensoes" element={<Navigate to="/biblioteca" replace />} />
             <Route path="*" element={<Navigate to={MODULOS[0].rota} replace />} />

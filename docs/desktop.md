@@ -196,9 +196,9 @@ Nasceu como "Extensões" e foi renomeada a pedido do Felipe — consultar ≠ cr
 - A Checagem Por Fonte tem o atalho "Gerar o script de exportação desta fonte" → `/gerador?fonte=<cadastro>` (abre em `<cadastro>.busca`).
 - **Ainda não rodado no Studio** — o primeiro uso deve ser com LIMITE pequeno.
 
-## Conexões → Google Drive (Configurações → Conexões, 2026-10-19)
+## Conexões → Google Drive (botão de plugue no rodapé do Rail, 2026-10-19)
 
-Primeiro conector (opção B do brainstorming: OAuth próprio + API REST, sem dependência nova). Plano: `docs/plans/2026-10-19-desktop-conexao-google-drive.md`. Configuração do Google Cloud (passo a passo do Felipe): `docs/conexoes-google-drive.md`.
+Tela: botão de plugue no rodapé do Rail, acima do tema (grupo `conexoes` com `rodape: true` no `modulos.js`). `/conexoes` = lista no estilo das telas de conectores (busca + uma linha por serviço; catálogo em `src/lib/conexoes.js`, com Claude API e Gmail como "Em breve"). Clicar abre `/conexoes/<id>`: no Google Drive, um passo a passo em 3 etapas (criar app no Google Cloud → colar credenciais → conectar) enquanto não está conectado, e depois os dados da conexão com Testar/Desconectar. Primeiro conector (opção B do brainstorming: OAuth próprio + API REST, sem dependência nova). Plano: `docs/plans/2026-10-19-desktop-conexao-google-drive.md`. Configuração do Google Cloud (passo a passo do Felipe): `docs/conexoes-google-drive.md`.
 - `electron/conexoes/googleDrive/oauth.js`: PKCE, URL de autorização, servidor de retorno em `127.0.0.1:<porta livre>` (confere `state`, tempo limite de 5 min, cancelável), troca de código, renovação, revogação.
 - `cliente.js`: `sobre`, `garantirPasta`, `enviar` (upload resumable em partes de 8 MB, lê o arquivo do disco em partes; serve o backup grande), `baixarTexto`, `excluir`. Num 401 renova o acesso e repete uma vez.
 - `index.js` (`criarConexaoDrive`): `<userData>/google-drive.json` com client ID, segredo **cifrado**, refresh token **cifrado**, conta, pasta, datas; o acesso curto fica só na memória. Cifra injetada (`safeStorage` no `main.js`) para os testes rodarem no Node. `invalid_grant` → marca desconectado e pede para conectar de novo. Trocar o client ID derruba a conexão.
@@ -251,8 +251,8 @@ Primeiro conector (opção B do brainstorming: OAuth próprio + API REST, sem de
 **No app (todos os módulos do menu têm página — nenhum "Em construção"):**
 - Ferramentas: Analisador JSON (Analisar + Comparar), Checagem (Por Fonte + Por API e marcação de campos), Conhecimento, Notas, Histórico.
 - Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação).
-- Configurações: Sistemas, Central de Tokens, Betha Admin, Conexões (Google Drive), Importar dados (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
-- Testes: desktop **194**, backend **77** — todos passando (`npm test` em cada pasta).
+- Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados. Conexões (Google Drive) tem botão próprio no rodapé do Rail (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
+- Testes: desktop **198**, backend **77** — todos passando (`npm test` em cada pasta).
 
 **Git:** tudo no branch **`krakion-app`** (nunca no `master` — a VPS faz `git pull` dele). A tag `app-v0.1.0` marca a versão até a API; o que veio depois está commitado no `krakion-app` local — conferir com `git log origin/krakion-app..HEAD` o que ainda falta enviar ao GitHub.
 

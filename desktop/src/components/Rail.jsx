@@ -26,6 +26,14 @@ function BotaoRail({ ativo, titulo, onClick, children }) {
   )
 }
 
+function BotaoGrupo({ grupo, ativo, navegar }) {
+  return (
+    <BotaoRail titulo={grupo.titulo} ativo={ativo} onClick={() => navegar(MODULOS.find(m => m.grupo === grupo.id).rota)}>
+      <Icone nome={grupo.icone} />
+    </BotaoRail>
+  )
+}
+
 export default function Rail() {
   const { pathname } = useLocation()
   const navegar = useNavigate()
@@ -48,18 +56,15 @@ export default function Rail() {
         <img src="./nova-logo.webp" alt="Krakion" className="h-8 w-8 object-contain" draggable={false} />
       </div>
 
-      {GRUPOS.map(g => (
-        <BotaoRail
-          key={g.id}
-          titulo={g.titulo}
-          ativo={g.id === grupoAtivo.id}
-          onClick={() => navegar(MODULOS.find(m => m.grupo === g.id).rota)}
-        >
-          <Icone nome={g.icone} />
-        </BotaoRail>
+      {GRUPOS.filter(g => !g.rodape).map(g => (
+        <BotaoGrupo key={g.id} grupo={g} ativo={g.id === grupoAtivo.id} navegar={navegar} />
       ))}
 
       <div className="flex-1" />
+
+      {GRUPOS.filter(g => g.rodape).map(g => (
+        <BotaoGrupo key={g.id} grupo={g} ativo={g.id === grupoAtivo.id} navegar={navegar} />
+      ))}
 
       <BotaoRail titulo={`${ROTULO_PREFERENCIA[preferencia]} — clique para trocar`} onClick={alternar}>
         <Icone nome={preferencia} />

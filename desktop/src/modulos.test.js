@@ -9,7 +9,8 @@ test('menu tem os módulos combinados, com ids únicos', () => {
     'municipios',
     'biblioteca',
     'gerador',
-    'sistemas', 'tokens', 'betha-admin', 'conexoes', 'importar',
+    'sistemas', 'tokens', 'betha-admin', 'importar',
+    'conexoes',
   ])
   assert.equal(new Set(MODULOS.map(m => m.rota)).size, MODULOS.length)
 })
@@ -18,6 +19,14 @@ test('grupoDaRota acha o grupo do módulo, inclusive em sub-rotas', () => {
   assert.equal(grupoDaRota('/tokens').id, 'configuracoes')
   assert.equal(grupoDaRota('/notas/42').id, 'ferramentas')
   assert.equal(grupoDaRota('/biblioteca').id, 'biblioteca')
+  assert.equal(grupoDaRota('/conexoes/google-drive').id, 'conexoes')
+})
+
+test('Conexões fica no rodapé do Rail (acima do tema), como tela inteira', () => {
+  const g = GRUPOS.find(x => x.id === 'conexoes')
+  assert.equal(g.rodape, true)
+  assert.equal(g.direto, true)
+  assert.deepEqual(GRUPOS.filter(x => x.rodape).map(x => x.id), ['conexoes'])
 })
 
 test('grupoDaRota cai no primeiro grupo para rota desconhecida', () => {
