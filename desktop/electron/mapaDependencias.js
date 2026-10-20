@@ -159,6 +159,8 @@ export function criarMapa({ swagger, catalogo = [], mapaBfc = {}, curado = {} })
       acao: c.acao || (metodos.includes('DELETE') ? 'excluir' : null),
       saiCom: c.saiCom || null,
       notas: c.notas || [],
+      // Só scripts validados na prática (curado) — nada gerado sem teste
+      scripts: c.scripts || [],
       metodos,
       temDelete: metodos.includes('DELETE'),
       corpoDelete: info.corpoDelete || null,

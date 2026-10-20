@@ -127,6 +127,11 @@ export default function Mapa() {
                 <div className="text-sm font-semibold">{colunas[0].info.rotulo}</div>
                 <div className="font-mono text-[11px] text-suave">{colunas[0].info.recurso}</div>
                 <div className="mt-2 text-xs text-suave">{colunas[0].dependentes.length} dependentes diretos</div>
+                {colunas[0].info.scripts?.length > 0 && (
+                  <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                    <Icone nome="check" className="h-3 w-3" /> {colunas[0].info.scripts.length} script{colunas[0].info.scripts.length > 1 ? 's' : ''} validado{colunas[0].info.scripts.length > 1 ? 's' : ''}
+                  </div>
+                )}
               </button>
               <p className="mt-3 text-[11px] leading-relaxed text-suave">Exclusão: da coluna mais à direita para o cadastro.</p>
             </div>

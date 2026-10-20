@@ -283,6 +283,11 @@ const mapa = () => {
 }
 ipcMain.handle('mapa:entidades', comErro(() => mapa().entidades()))
 ipcMain.handle('mapa:dependentes', comErro((_e, recurso) => ({ info: mapa().info(recurso), dependentes: mapa().dependentes(recurso) })))
+// Texto de um script validado (caminho relativo à biblioteca; nunca sai dela)
+ipcMain.handle('mapa:script', comErro((_e, relativo) => {
+  if (!/\.(txt|groovy|md)$/i.test(String(relativo))) throw new Error('Só scripts (.txt, .groovy) ou README (.md).')
+  return fs.readFileSync(biblioteca.resolverDentro(pastaBiblioteca(), relativo), 'utf8')
+}))
 ipcMain.handle('mapa:recarregar', comErro(() => { mapaCache = null; return mapa().entidades().length }))
 
 let filaBetha = Promise.resolve() // uma renovação por vez — nada de várias janelas no Betha ao mesmo tempo

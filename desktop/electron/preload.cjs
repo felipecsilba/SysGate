@@ -77,6 +77,7 @@ contextBridge.exposeInMainWorld('krakion', {
     entidades: () => ipcRenderer.invoke('mapa:entidades'),
     dependentes: recurso => ipcRenderer.invoke('mapa:dependentes', recurso),
     recarregar: () => ipcRenderer.invoke('mapa:recarregar'),
+    script: caminho => ipcRenderer.invoke('mapa:script', caminho),
   },
   // Gerador de Extensões: catálogo de fontes BFC da pasta da biblioteca (somente leitura)
   gerador: {

@@ -226,6 +226,7 @@ Plano: `docs/plans/2026-10-20-desktop-mapa-dependencias.md`. Nasceu do caso dos 
 - **Motor** (`electron/mapaDependencias.js`, 9 testes, um deles com os dados reais): aresta = campo `id<Recurso>` no POST de outro recurso (singular, plural, composto); rótulo com acento do `summary`; categoria por nome; fonte BFC casando as letras do recurso com o path da fonte (sem `{params}`), indicando filtro em lote ou parâmetro. Parâmetro que não é o id do pai vira `semLigacao`.
 - **Curado** (`biblioteca/FontesDeDados/dependencias_confirmadas.json`): vence a inferência e acrescenta arestas que ela não vê (histórico via `entityId`, inscrição imobiliária). Botão Recarregar relê os arquivos. **Ao confirmar algo novo na prática, registre ali.**
 - Swagger `FontesDeDados/swagger/tributos-openapi.json` passou a ser versionado.
+- **Scripts validados** (decisão do Felipe: na tela, só script que rodou de verdade, nada gerado sem teste): o cadastro lista os `scripts` do curado (nome, arquivo, readme, validadoEm, validadoOnde, descrição), com Ver, Copiar e Como usar. O texto é lido da biblioteca pelo IPC `mapa:script` (`resolverDentro`, só `.txt`, `.groovy` ou `.md`). Imóvel: levantamento + varredura, validados em 2026-10-20.
 - Próximos passos: gerar o levantamento a partir do mapa e a exclusão em cascata (lotes na ordem, consultando o idLote).
 
 ## Componentes compartilhados

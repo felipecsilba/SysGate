@@ -49,6 +49,9 @@ const mapaBfc = { por_operacao: {
 
 const curado = {
   recursos: {
+    imoveis: {
+      scripts: [{ nome: 'Levantamento de vínculos', arquivo: '_BIBLIOTECA/Templates/Levantamento.txt', validadoEm: '2026-10-20', descricao: 'Ids dos filhos.' }],
+    },
     imoveisResponsaveis: {
       status: 'confirmado', confirmadoEm: '2026-10-20', acao: 'excluir', rotulo: 'Proprietários (responsáveis)',
       fonte: { bfc: 'imoveis.proprietarios', filtro: 'idImovel' }, notas: ['"Responsáveis" na API = proprietários na fonte.'],
@@ -148,6 +151,12 @@ test('criarMapa: entidades para o seletor, com contagem de dependentes, as que t
   assert.equal(ents.find(e => e.recurso === 'bairros').qtdDependentes, 1)
   assert.equal(mapa.dependentes('naoExiste').length, 0)
   assert.equal(mapa.info('imoveis').rotulo, 'Imóvel')
+})
+
+test('criarMapa: scripts validados do curado aparecem no cadastro; sem curado, lista vazia', () => {
+  const mapa = criarMapa({ swagger, catalogo, mapaBfc, curado })
+  assert.deepEqual(mapa.info('imoveis').scripts.map(s => s.nome), ['Levantamento de vínculos'])
+  assert.deepEqual(mapa.info('bairros').scripts, [])
 })
 
 // Com o Swagger e o catálogo reais da biblioteca (se estiverem nesta máquina): os vínculos confirmados no caso dos imóveis aparecem
