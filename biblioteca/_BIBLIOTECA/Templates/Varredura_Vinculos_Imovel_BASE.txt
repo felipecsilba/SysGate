@@ -3,7 +3,7 @@
 //
 // Quando o DELETE /api/imoveis responde "Não é possível excluir este item, o mesmo está em uso em
 // outro registro" e o levantamento não achou mais nada, este script pergunta a TODAS as fontes do
-// catálogo que filtram por imóvel (32 fontes) se têm algum registro deste imóvel.
+// catálogo que filtram por imóvel (29 fontes) se têm algum registro deste imóvel.
 // Fonte com erro (nome diferente no editor, filtro não aceito) é só anotada — a varredura continua.
 //
 // NÃO ALTERA NADA — só lê e imprime no console.
@@ -45,7 +45,6 @@ verificar("dividas.comAcrescimo [idImovel] — /dividas/com-acrescimos", { fonte
 verificar("errosCalculosTributarios [imovel.id] — /erros-calculos-tributarios", { fonte.errosCalculosTributarios.busca(criterio: "imovel.id = " + ID_IMOVEL) })
 verificar("imoveis [idImovelPrincipal] — /imoveis", { fonte.imoveis.busca(criterio: "idImovelPrincipal = " + ID_IMOVEL) })
 verificar("imoveis.camposAdicionais [idImovel] — /imoveis/campos-adicionais", { fonte.imoveis.camposAdicionais.busca(criterio: "idImovel = " + ID_IMOVEL) })
-verificar("imoveis.camposAdicionais.titulos [idImovel] — /imoveis/campos-adicionais/titulos", { fonte.imoveis.camposAdicionais.titulos.busca(criterio: "idImovel = " + ID_IMOVEL) })
 verificar("imoveis.corresponsaveis [idImovel] — /imoveis/corresponsaveis", { fonte.imoveis.corresponsaveis.busca(criterio: "idImovel = " + ID_IMOVEL) })
 verificar("imoveis.historico [idImovel] — /imoveis/historico", { fonte.imoveis.historico.busca(criterio: "idImovel = " + ID_IMOVEL) })
 verificar("imoveis.movimentacoes [idImovel] — /imoveis/movimentacoes", { fonte.imoveis.movimentacoes.busca(criterio: "idImovel = " + ID_IMOVEL) })
@@ -53,8 +52,6 @@ verificar("imoveis.movimentacoesInscricaoImobiliaria [idImovel] — /imoveis/mov
 verificar("imoveis.proprietarios [idImovel] — /imoveis/proprietarios", { fonte.imoveis.proprietarios.busca(criterio: "idImovel = " + ID_IMOVEL) })
 verificar("imoveis.transferencias [idImovel] — /imoveis/transferencias", { fonte.imoveis.transferencias.busca(criterio: "idImovel = " + ID_IMOVEL) })
 verificar("lancamentos [imovel.id] — /lancamentos", { fonte.lancamentos.busca(criterio: "imovel.id = " + ID_IMOVEL) })
-verificar("notificacoesDebitos [idImovel] — /notificacoes-debitos", { fonte.notificacoesDebitos.busca(criterio: "idImovel = " + ID_IMOVEL) })
-verificar("notificacoesDividas [idImovel] — /notificacoes-dividas", { fonte.notificacoesDividas.busca(criterio: "idImovel = " + ID_IMOVEL) })
 verificar("obras [imovel.id] — /obras", { fonte.obras.busca(criterio: "imovel.id = " + ID_IMOVEL) })
 verificar("parcelamentos [idImovel] — /parcelamentos", { fonte.parcelamentos.busca(criterio: "idImovel = " + ID_IMOVEL) })
 verificar("receitasDiversas [imovel.id] — /receitas-diversas", { fonte.receitasDiversas.busca(criterio: "imovel.id = " + ID_IMOVEL) })
@@ -77,6 +74,11 @@ imprimir "Com erro (" + erros.size() + ") — confira o nome no editor:"
 erros.each { imprimir "  ! " + it }
 imprimir "------------------------------------------------------------"
 
+// Retiradas no 1º uso (20/10/2026) — exigem parâmetro que o catálogo não marca como obrigatório:
+//   imoveis.camposAdicionais.titulos  -> exige 'titulo'
+//   notificacoesDebitos               -> exige 'idsDebitos'  (só serve com os ids dos débitos)
+//   notificacoesDividas               -> exige 'idsDividas'  (só serve com os ids das dívidas)
+//
 // Fontes que filtram por imóvel mas ainda sem nome confirmado no editor (14) — fora da varredura:
 //   /debitos/metadados (metadados)
 //   /desmembramentos (busca)

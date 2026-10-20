@@ -1,7 +1,7 @@
 # Levantamento de Vínculos de Imóveis — como usar o template
 
-Arquivo: `Levantamento_Vinculos_Imoveis_BASE.txt`. **Ainda não rodado em produção** (criado em 2026-10-20 para o
-caso dos ~3.000 imóveis migrados errado).
+Arquivo: `Levantamento_Vinculos_Imoveis_BASE.txt`. Rodado no Studio em 2026-10-20 (Placas, 1 imóvel), no caso dos
+~3.000 imóveis migrados errado.
 
 Serve para **excluir imóveis por API** sem tentativa e erro. A API não deixa excluir um imóvel que ainda tem filhos
 (testadas, proprietários...). Ela também não lista nada: só consulta por id. Então a descoberta de quem está
@@ -45,9 +45,13 @@ Imóvel com **qualquer** trava financeira sai como `"livre": false` e não deve 
 - `imovel.proprietarios.busca(criterio: ...)` falha com *"Os parâmetros 'idImovel' não foram definidos"*: a busca em
   lote é `imoveis.proprietarios` (plural). Mesmo padrão de `imoveis.camposAdicionais` × `imovel.camposAdicionais`.
 
-## Em aberto (o ensaio com 1 imóvel responde)
+- A movimentação de inscrição imobiliária é **derivada** (não tem DELETE): some ao reprocessar o imóvel
+  (`PUT /api/imoveisMovimentacoesInscricoesImobiliarias` com `{"idImovel": …}`) depois de apagar as movimentações.
+  **Nunca com body vazio**: isso reprocessa todos os imóveis da entidade.
+- O histórico sai junto com as movimentações. Não tente `DELETE /api/historicoAlteracaoImovel` com os ids da fonte
+  (*"não encontrada"*).
 
-- O `id` da testada/proprietário que a fonte devolve é o mesmo `idGerado` que o `DELETE /api/imoveisTestadas` /
-  `/api/imoveisResponsaveis` espera?
-- "Responsáveis" na API = "proprietários" na fonte?
-- Ordem: filhos primeiro (testadas, proprietários/responsáveis, corresponsáveis, englobados), imóvel por último.
+## Receita completa (validada em 1 imóvel, 2026-10-20)
+
+Ver `_CONHECIMENTO/Imoveis/casos/Excluir imovel por API (migrado errado).md`:
+proprietários → movimentações → reprocessar inscrição → imóvel. Esperar cada lote processar.

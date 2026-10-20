@@ -3,7 +3,8 @@
 //
 // Para cada imóvel da lista, descobre:
 //   - os FILHOS que travam a exclusão e se excluem por API (com os ids):
-//       proprietários, corresponsáveis, testadas, englobados (imóveis cujo principal é este)
+//       proprietários, corresponsáveis, testadas, englobados (imóveis cujo principal é este),
+//       histórico de alterações, movimentações (e as de inscrição imobiliária, filhas delas)
 //       e a quantidade de benefícios fiscais
 //   - a TRAVA FINANCEIRA (só contagem): débitos, dívidas, parcelamentos, lançamentos e
 //     receitas diversas. Imóvel com qualquer um desses NÃO entra no plano de exclusão.
@@ -49,7 +50,8 @@ ids.each { id ->
     idImovel  : id,
     existe    : false,
     codigo    : null,
-    filhos    : [proprietarios: [], corresponsaveis: [], testadas: [], englobados: [], beneficiosFiscais: 0],
+    filhos    : [proprietarios: [], corresponsaveis: [], testadas: [], englobados: [],
+                 historico: [], movimentacoes: [], movimentacoesInscricao: [], beneficiosFiscais: 0],
     financeiro: [debitos: 0, dividas: 0, parcelamentos: 0, lancamentos: 0, receitasDiversas: 0],
   ]
 }
@@ -87,6 +89,17 @@ blocos.each { bloco ->
     if (v) v.filhos.englobados << e.id
   }
 
+  // movimentações — a migração cria junto com o imóvel; travam a exclusão (achado em 20/10/2026)
+  fonte.imoveis.movimentacoes.busca(criterio: "idImovel in (" + lista + ")").each { m ->
+    v = vinculos[chave(m.idImovel)]
+    if (v) v.filhos.movimentacoes << m.id
+  }
+  // filha da movimentação (idImovelMovimentacao); a API não tem DELETE próprio para ela
+  fonte.imoveis.movimentacoesInscricaoImobiliaria.busca(criterio: "idImovel in (" + lista + ")").each { mi ->
+    v = vinculos[chave(mi.idImovel)]
+    if (v) v.filhos.movimentacoesInscricao << [id: mi.id, idMovimentacao: mi.idImovelMovimentacao]
+  }
+
   // trava financeira em lote
   fonte.debitos.busca(criterio: "idImovel in (" + lista + ")").each { contar(it.idImovel, 'debitos') }
   fonte.dividas.busca(criterio: "idImovel in (" + lista + ")").each { contar(it.idImovel, 'dividas') }
@@ -101,10 +114,12 @@ ids.each { id ->
   v = vinculos[chave(id)]
   if (v.existe) {
     fonte.imovel.testadas.busca(parametros: ["idImovel": id]).each { t -> v.filhos.testadas << t.id }
+    // histórico: a fonte filtra por idImovel mas não devolve o idImovel — por isso uma consulta por imóvel
+    fonte.imoveis.historico.busca(criterio: "idImovel = " + id).each { h -> v.filhos.historico << h.id }
     fonte.imovel.beneficioFiscal.busca(parametros: ["idImovel": id]).each { b -> v.filhos.beneficiosFiscais = v.filhos.beneficiosFiscais + 1 }
   }
   feitos = feitos + 1
-  if (feitos % 200 == 0) imprimir "Testadas/benefícios: " + feitos + " de " + ids.size()
+  if (feitos % 200 == 0) imprimir "Testadas/histórico/benefícios: " + feitos + " de " + ids.size()
 }
 
 // --- arquivo + resumo ---
@@ -113,7 +128,7 @@ arquivoJson = Arquivo.novo(NOME_ARQUIVO_JSON, 'txt', [encoding: 'utf-8'])
 livres = 0
 comFinanceiro = []
 inexistentes = []
-totais = [proprietarios: 0, corresponsaveis: 0, testadas: 0, englobados: 0, beneficiosFiscais: 0]
+totais = [proprietarios: 0, corresponsaveis: 0, testadas: 0, englobados: 0, historico: 0, movimentacoes: 0, movimentacoesInscricao: 0, beneficiosFiscais: 0]
 
 vinculos.values().each { v ->
   fin = v.financeiro.values().sum()
@@ -125,6 +140,9 @@ vinculos.values().each { v ->
   totais.corresponsaveis   = totais.corresponsaveis + v.filhos.corresponsaveis.size()
   totais.testadas          = totais.testadas + v.filhos.testadas.size()
   totais.englobados        = totais.englobados + v.filhos.englobados.size()
+  totais.historico         = totais.historico + v.filhos.historico.size()
+  totais.movimentacoes     = totais.movimentacoes + v.filhos.movimentacoes.size()
+  totais.movimentacoesInscricao = totais.movimentacoesInscricao + v.filhos.movimentacoesInscricao.size()
   totais.beneficiosFiscais = totais.beneficiosFiscais + v.filhos.beneficiosFiscais
   // JSON em maiúsculas — "Json" não existe no BFC
   arquivoJson.escrever(JSON.escrever(v).replace("\r", " ").replace("\n", " "))
@@ -137,6 +155,7 @@ imprimir "COM trava financeira (NÃO excluir — revisar): " + comFinanceiro.siz
 imprimir "Não encontrados (id errado ou já excluído): " + inexistentes.size() + (inexistentes ? " → " + inexistentes.take(50).join(',') : "")
 imprimir "Filhos a excluir antes: proprietários " + totais.proprietarios + " · corresponsáveis " + totais.corresponsaveis +
          " · testadas " + totais.testadas + " · englobados " + totais.englobados + " · benefícios fiscais " + totais.beneficiosFiscais
+imprimir "  histórico " + totais.historico + " · movimentações " + totais.movimentacoes + " · mov. de inscrição imobiliária " + totais.movimentacoesInscricao
 imprimir "------------------------------------------------------------"
 
 zip = Arquivo.novo(NOME_ARQUIVO_ZIP, 'zip', [encoding: 'utf-8'])
