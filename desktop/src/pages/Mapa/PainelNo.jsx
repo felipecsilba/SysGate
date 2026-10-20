@@ -37,7 +37,7 @@ export default function PainelNo({ no, rotuloDe, paiRotulo }) {
 
       {no.scripts?.length > 0 && (
         <Secao titulo={`Scripts validados · ${no.scripts.length}`}>
-          <div className="space-y-2">{no.scripts.map(s => <ScriptValidado key={s.arquivo} script={s} />)}</div>
+          <div className="space-y-2">{[...no.scripts].sort((a, b) => Number(!!b.principal) - Number(!!a.principal)).map(s => <ScriptValidado key={s.arquivo} script={s} />)}</div>
         </Secao>
       )}
 
@@ -60,7 +60,7 @@ export default function PainelNo({ no, rotuloDe, paiRotulo }) {
       {notas.length > 0 && (
         <Secao titulo="O que a prática ensinou">
           <ul className="space-y-1.5">
-            {notas.map((n, i) => <li key={i} className="flex gap-2 text-[13px] leading-snug"><span className="text-suave">•</span><span>{n}</span></li>)}
+            {notas.map((n, i) => <li key={i} className="flex gap-2 text-[13px] leading-snug"><span className="text-suave">•</span><span className="min-w-0 [overflow-wrap:anywhere]">{n}</span></li>)}
           </ul>
         </Secao>
       )}
@@ -113,7 +113,7 @@ function Alerta({ tipo, titulo, children }) {
   return (
     <div className={`flex gap-2.5 rounded-xl border-2 px-3.5 py-3 ${cor}`}>
       <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
-      <div className="text-[13px] leading-snug">
+      <div className="min-w-0 text-[13px] leading-snug [overflow-wrap:anywhere]">
         <div className="font-semibold">{titulo}</div>
         <div>{children}</div>
       </div>
@@ -155,8 +155,11 @@ function ScriptValidado({ script }) {
         <div className="flex items-start gap-2">
           <Icone nome="check" className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-semibold">{script.nome}</div>
-            <div className="text-[11px] text-suave">Validado em {dataBr(script.validadoEm)}{script.validadoOnde ? ` · ${script.validadoOnde}` : ''}</div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[13px] font-semibold">{script.nome}</span>
+              {script.principal && <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white">Use este</span>}
+            </div>
+            <div className="text-[11px] text-suave">Validado no Studio em {dataBr(script.validadoEm)}</div>
           </div>
         </div>
         {script.descricao && <p className="mt-2 text-[12px] leading-snug text-suave">{script.descricao}</p>}
