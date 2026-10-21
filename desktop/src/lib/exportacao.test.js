@@ -35,7 +35,7 @@ test('operadoresPara: "contém" só em texto que não é enum', () => {
 
 const debitos = { bfc: 'debitos', operacao: 'busca', descricao: 'Débitos', confirmado: true, ordenacao: ['id', 'ano'] }
 
-test('montarScript: fonte, critério escapado, JSON maiúsculo, zip com JSONL + CSV e ordenação por id', () => {
+test('montarScript: fonte, critério escapado, JSON maiúsculo, JSONL + CSV sem zip próprio e ordenação por id', () => {
   const s = montarScript({ fonte: debitos, criterio: "situacao = 'ABERTO' and obs like '%\"x\" $y%'", limite: 50, nomeBase: 'débitos crédito 1' })
   assert.match(s, /Dados\.tributos\.v2\.debitos\.busca\(criterio: CRITERIO, ordenacao: "id asc"\)/)
   assert.ok(s.includes(`CRITERIO = "situacao = 'ABERTO' and obs like '%\\"x\\" \\$y%'"`))
@@ -43,7 +43,8 @@ test('montarScript: fonte, critério escapado, JSON maiúsculo, zip com JSONL + 
   assert.match(s, /JSON\.escrever\(registro\)/)
   assert.doesNotMatch(s, /\bJson\./) // "Json" não existe no BFC; arquivoJson é só o nome da variável
   assert.match(s, /NOME_ARQUIVO_JSON = "debitos_credito_1\.jsonl"/)
-  assert.match(s, /zip\.adicionar\(arquivoCsv\)/)
+  assert.match(s, /Resultado\.arquivo\(arquivoJson\)\nResultado\.arquivo\(arquivoCsv\)/)
+  assert.doesNotMatch(s, /'zip'|NOME_ARQUIVO_ZIP|Resultado\.nome/) // o Studio já zipa: zip próprio virava zip dentro de zip
   assert.doesNotMatch(s, /ATENÇÃO/)
   assert.doesNotMatch(s, /\?:/) // Elvis nunca testado no Studio
 })
@@ -55,6 +56,7 @@ test('montarScript: parâmetro obrigatório vai em parametros:, sem CSV não tem
   assert.match(s, /\.busca\(parametros: \["idImovel": idImovel\], criterio: CRITERIO\)/)
   assert.match(s, /\.busca\(parametros: \["idImovel": idImovel\]\)/)
   assert.doesNotMatch(s, /arquivoCsv|1ª passada/)
+  assert.match(s, /Resultado\.arquivo\(arquivoJson\)/)
   assert.match(s, /ATENÇÃO: "imoveis" é o nome da rota REST/)
   assert.match(montarScript({ fonte: { ...testadas, bfc: 'certidoes-negativas' } }), /Dados\.tributos\.v2\["certidoes-negativas"\]\.busca\(/)
 })

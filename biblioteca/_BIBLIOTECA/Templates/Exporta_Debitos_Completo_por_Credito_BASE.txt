@@ -16,7 +16,7 @@
 // A 2ª passada lê os débitos de novo e escreve as linhas. São duas leituras
 // da API para não guardar todos os débitos em memória.
 //
-// Saída: 1 zip com 2 arquivos, ambos em UTF-8
+// Saída: 2 arquivos em UTF-8 (o Studio entrega os dois no zip dele)
 //   - CSV   -> uma coluna por campo (achatado), como descrito acima.
 //   - JSONL -> uma linha por débito, cada linha é o JSON completo do débito
 //              exatamente como a API devolveu (sem achatar).
@@ -30,7 +30,6 @@ ID_CREDITO_TRIBUTARIO = 0
 
 NOME_ARQUIVO      = "debitos_credito_${ID_CREDITO_TRIBUTARIO}.csv"
 NOME_ARQUIVO_JSON = "debitos_credito_${ID_CREDITO_TRIBUTARIO}.jsonl"
-NOME_ARQUIVO_ZIP  = "debitos_credito_${ID_CREDITO_TRIBUTARIO}.zip"
 
 // Colunas garantidas no cabeçalho (entram mesmo se a API não devolver).
 // Acrescente aqui qualquer campo que precise aparecer sempre.
@@ -151,10 +150,6 @@ imprimir "Linhas escritas: " + escritos + " (CSV e JSONL)"
 
 // Resultado.arquivos([...]) não existe nesta versão do BFC-Script
 // ("A função arquivos(CsvFileWriter, TxtFileWriter) não existe").
-// Os dois arquivos vão juntos num zip.
-zip = Arquivo.novo(NOME_ARQUIVO_ZIP, 'zip', [encoding: 'utf-8'])
-zip.adicionar(arquivo)
-zip.adicionar(arquivoJson)
-
-Resultado.nome(NOME_ARQUIVO_ZIP)
-Resultado.arquivo(zip)
+// Um Resultado.arquivo por arquivo: o Studio já entrega tudo num zip — zipar aqui dava zip dentro de zip.
+Resultado.arquivo(arquivo)
+Resultado.arquivo(arquivoJson)

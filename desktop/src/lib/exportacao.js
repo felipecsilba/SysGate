@@ -1,6 +1,6 @@
 // Gerador de Extensões — script de exportação de uma fonte do BFC-Script.
 // O modelo segue o script que já rodou em produção (biblioteca/_BIBLIOTECA/Templates/Exporta_Debitos_Completo_por_Credito_BASE.txt):
-// zip com JSONL (registro como a fonte devolveu — é o que a Checagem lê) e, opcional, CSV achatado para consulta.
+// JSONL (registro como a fonte devolveu — é o que a Checagem lê) e, opcional, CSV achatado para consulta.
 
 // "vazio ou zero": bases convertidas usam 0 no lugar de nulo em ids — procurar só por null perde metade
 export const OPERADORES = [
@@ -71,7 +71,7 @@ export function montarScript({ fonte, criterio = '', parametros = [], limite = 0
     L.push('//   pode ser diferente — confira na lista de fontes do editor antes de rodar.')
   }
   L.push('//')
-  L.push(`// Saída: ${csv ? 'zip com 2 arquivos UTF-8' : 'zip com 1 arquivo UTF-8'}`)
+  L.push(`// Saída: ${csv ? '2 arquivos UTF-8' : '1 arquivo UTF-8'} (o Studio entrega no zip dele)`)
   L.push('//   - JSONL -> uma linha por registro, exatamente como a fonte devolveu (é o que a Checagem lê)')
   if (csv) L.push('//   - CSV   -> uma coluna por campo achatado, só para consulta (enum vira campo + campo.descricao)')
   L.push('// Gerado pelo Gerador de Extensões do Krakion App.')
@@ -90,7 +90,6 @@ export function montarScript({ fonte, criterio = '', parametros = [], limite = 0
   L.push('')
   L.push(`NOME_ARQUIVO_JSON = "${base}.jsonl"`)
   if (csv) L.push(`NOME_ARQUIVO_CSV  = "${base}.csv"`)
-  L.push(`NOME_ARQUIVO_ZIP  = "${base}.zip"`)
   L.push('')
   L.push('// ===========================================================================')
   L.push('')
@@ -183,13 +182,10 @@ export function montarScript({ fonte, criterio = '', parametros = [], limite = 0
   L.push('')
   L.push('imprimir "Registros escritos: " + escritos')
   L.push('')
-  L.push('// Resultado.arquivos([...]) não existe nesta versão do BFC-Script: os arquivos vão juntos num zip')
-  L.push('zip = Arquivo.novo(NOME_ARQUIVO_ZIP, \'zip\', [encoding: \'utf-8\'])')
-  L.push('zip.adicionar(arquivoJson)')
-  if (csv) L.push('zip.adicionar(arquivoCsv)')
-  L.push('')
-  L.push('Resultado.nome(NOME_ARQUIVO_ZIP)')
-  L.push('Resultado.arquivo(zip)')
+  // O Studio já entrega o resultado num zip: zipar no script dava zip dentro de zip (2026-10-21)
+  L.push('// Um Resultado.arquivo por arquivo — o Studio já entrega tudo num zip')
+  L.push('Resultado.arquivo(arquivoJson)')
+  if (csv) L.push('Resultado.arquivo(arquivoCsv)')
   L.push('')
   return L.join('\n')
 }

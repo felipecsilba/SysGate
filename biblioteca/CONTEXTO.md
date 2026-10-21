@@ -221,6 +221,11 @@ avisa em vez de chutar.
    ano anterior. Filtrar `ano = <exercício>` numa exportação traz o BCI e
    deixa os venais em branco. Certo: por campo, o ano mais recente que tiver
    valor, com uma coluna dizendo de que ano veio.
+12. **Não zipar no script.** O Studio já entrega o resultado num zip; montar
+   `Arquivo.novo(..., 'zip')` no script dava zip dentro de zip (corrigido em
+   21/10/2026 nos templates e no Gerador). Vários arquivos = um
+   `Resultado.arquivo(...)` por arquivo, como os scripts de Cobrança Registrada
+   da Caixa já fazem em produção. (`Resultado.arquivos([...])` não existe.)
 
 ---
 

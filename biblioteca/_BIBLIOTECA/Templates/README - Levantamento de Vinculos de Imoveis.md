@@ -11,7 +11,7 @@ vinculado é feita aqui, em BFC-Script, e o Krakion App monta os lotes de exclus
 
 1. Cole os **ids** dos imóveis em `IDS_IMOVEIS` (o id, não o código).
 2. **Ensaio:** rode com 1 imóvel, depois uns 10. Confira o resumo no console.
-3. Rode com a lista inteira e baixe o `vinculos_imoveis.zip`.
+3. Rode com a lista inteira e baixe o resultado (o zip do Studio traz o `vinculos_imoveis.jsonl`).
 
 ## O que ele confere
 
