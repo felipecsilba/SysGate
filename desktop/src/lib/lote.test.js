@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { expandirSchema } from './corpo.js'
 import {
   colunasSemCabecalho, autoMapear, construirBodyLinha, dividirEmLotes,
-  interpretarEnvio, interpretarStatusLote, linhaDoIdIntegracao, csvResultados,
+  interpretarEnvio, interpretarStatusLote, linhaDoIdIntegracao, csvResultados, esperaApos429,
 } from './lote.js'
 
 const campos = expandirSchema([
@@ -87,4 +87,8 @@ test('csvResultados: uma linha por lote, com ids e erros', () => {
   assert.equal(linhas[0], 'lote;itens;status;mensagem;id_lote;ids_gerados;erros')
   assert.equal(linhas[1], '1;2;ok;2 gravados;L1;9,10;')
   assert.equal(linhas[2], '2;1;parcial;"x; ""y""";L2;;R-L3: CPF')
+})
+
+test('esperaApos429: 30 s, 1 min, 2 min e depois fica em 5 min', () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 9].map(esperaApos429), [30000, 60000, 120000, 300000, 300000, 300000])
 })

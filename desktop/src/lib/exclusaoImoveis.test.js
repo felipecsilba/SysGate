@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { lerLevantamento, analisar, montarPlano, idDoIdIntegracao, aplicarRetorno, ETAPAS } from './exclusaoImoveis.js'
+import { lerLevantamento, analisar, montarPlano, idDoIdIntegracao, aplicarRetorno, ETAPAS, semOsExcluidos, parearLotes, faltamNoLote } from './exclusaoImoveis.js'
 
 const vazio = { proprietarios: [], corresponsaveis: [], testadas: [], englobados: [], historico: [], movimentacoes: [], movimentacoesInscricao: [], beneficiosFiscais: 0 }
 const fin0 = { debitos: 0, dividas: 0, parcelamentos: 0, lancamentos: 0, receitasDiversas: 0 }
@@ -78,4 +78,41 @@ test('idDoIdIntegracao e aplicarRetorno: status de cada id a partir do retorno d
   const status = aplicarRetorno({}, { status: 'parcial', erros: [{ idIntegracao: 'EXCL-IMOVEL-2', mensagem: 'em uso' }] }, [1, 2, 3])
   assert.deepEqual(status, { 1: { ok: true }, 2: { ok: false, mensagem: 'em uso' }, 3: { ok: true } })
   assert.deepEqual(aplicarRetorno({ 9: { ok: true } }, { status: 'erro', mensagem: 'HTTP 401' }, [4]), { 9: { ok: true }, 4: { ok: false, mensagem: 'HTTP 401' } })
+})
+
+test('montarPlano: o PUT pode ter lote menor que os DELETE (a fila de reprocessamento da Betha é lenta)', () => {
+  const imoveis = Array.from({ length: 45 }, (_, k) => imovel(1000 + k, 11 + k, { movimentacoesInscricao: [{ id: k, idMovimentacao: 0 }] }))
+  const plano = montarPlano(imoveis, 50, 20)
+  assert.deepEqual(plano.find(e => e.chave === 'inscricao').lotes.map(l => l.body.length), [20, 20, 5])
+  assert.deepEqual(plano.find(e => e.chave === 'imoveis').lotes.map(l => l.body.length), [45])
+})
+
+test('semOsExcluidos: tira os que o DELETE excluiu e os "não encontrado"; fica quem deu "em uso" ou não foi enviado', () => {
+  const imoveis = [imovel(1, 11), imovel(2, 12), imovel(3, 13), imovel(4, 14)]
+  const porId = {
+    1: { ok: true },
+    2: { ok: false, mensagem: 'Não foi encontrado nenhum registro do tipo Imovel com o id 2' },
+    3: { ok: false, mensagem: 'Não é possível excluir este item, o mesmo está em uso em outro registro' },
+  }
+  const r = semOsExcluidos(imoveis, porId)
+  assert.deepEqual(r.restantes.map(i => i.idImovel), [3, 4])
+  assert.equal(r.removidos, 2)
+})
+
+test('parearLotes: cada lote do PUT com o body do DELETE dos MESMOS imóveis (quem não tem inscrição fica fora)', () => {
+  const imoveis = [
+    imovel(1, 11, { movimentacoesInscricao: [{ id: 9, idMovimentacao: 0 }] }),
+    imovel(2, 12),
+    imovel(3, 13, { movimentacoesInscricao: [{ id: 8, idMovimentacao: 0 }] }),
+    imovel(4, 14, { movimentacoesInscricao: [{ id: 7, idMovimentacao: 0 }] }),
+  ]
+  const pares = parearLotes(montarPlano(imoveis, 50, 2))
+  assert.deepEqual(pares.map(p => p.ids), [[1, 3], [4]])
+  assert.deepEqual(pares[0].corpoPut, [{ idImovel: 1 }, { idImovel: 3 }])
+  assert.deepEqual(pares[1].corpoDelete, [{ idIntegracao: 'EXCL-IMOVEL-4', imoveis: { idGerado: { id: 4 } } }])
+})
+
+test('faltamNoLote: sai quem foi excluído ou já não existe; fica "em uso" e quem não foi tentado', () => {
+  const porId = { 1: { ok: true }, 2: { ok: false, mensagem: 'Não foi encontrado nenhum registro do tipo Imovel' }, 3: { ok: false, mensagem: 'em uso em outro registro' } }
+  assert.deepEqual(faltamNoLote([1, 2, 3, 4], porId), [3, 4])
 })

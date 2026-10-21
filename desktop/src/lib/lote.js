@@ -82,6 +82,13 @@ export function interpretarStatusLote(dados) {
   return { status: 'parcial', mensagem: `${itens.length - erros.length} de ${itens.length} gravado(s) — ${erros.length} com erro`, ids, erros }
 }
 
+// HTTP 429: a Betha bloqueia por alguns minutos depois de ~120 chamadas em poucos minutos e não manda Retry-After.
+// Espera e repete a MESMA chamada — marcar erro e seguir só queima os lotes seguintes.
+const ESPERAS_429_MS = [30000, 60000, 120000, 300000]
+export function esperaApos429(tentativa) {
+  return ESPERAS_429_MS[Math.min(tentativa, ESPERAS_429_MS.length - 1)]
+}
+
 export function linhaDoIdIntegracao(idIntegracao, runId) {
   const m = String(idIntegracao || '').match(new RegExp(`^${runId}-L(\\d+)$`))
   return m ? Number(m[1]) : null

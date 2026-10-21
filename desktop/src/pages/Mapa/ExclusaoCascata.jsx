@@ -6,12 +6,16 @@ import Icone from '../../components/Icone'
 import MetodoBadge from '../../components/MetodoBadge'
 import Pagina from '../../components/Pagina'
 import { municipiosApi, proxyApi, sistemasApi } from '../../lib/api'
-import { interpretarEnvio, interpretarStatusLote } from '../../lib/lote'
-import { analisar, aplicarRetorno, lerLevantamento, montarPlano } from '../../lib/exclusaoImoveis'
+import { esperaApos429, interpretarEnvio, interpretarStatusLote } from '../../lib/lote'
+import { analisar, aplicarRetorno, faltamNoLote, lerLevantamento, montarPlano, parearLotes, semOsExcluidos } from '../../lib/exclusaoImoveis'
 
 const espera = ms => new Promise(r => setTimeout(r, ms))
-const INTERVALO_CONSULTA_MS = 4000
+const INTERVALO_CONSULTA_MS = 8000 // cada consulta conta no limite da Betha (429 depois de ~120 chamadas em poucos minutos)
 const LIMITE_CONSULTA_MS = 3 * 60 * 1000
+// Lote a lote: depois do PUT, tenta o DELETE a cada 15 s; sem liberar em 3 min manda o PUT de novo; 3 PUTs sem liberar = desiste do lote
+const ESPERA_DELETE_MS = 15000
+const REENVIAR_PUT_MS = 3 * 60 * 1000
+const MAX_PUTS_POR_LOTE = 3
 const num = n => Number(n).toLocaleString('pt-BR')
 
 // Exclusão em cascata de imóveis: cola o JSONL do Levantamento → análise → plano na ordem da receita validada → envio por etapa.
@@ -20,11 +24,18 @@ export default function ExclusaoCascata() {
   const [texto, setTexto] = useState('')
   const [leitura, setLeitura] = useState(null) // { imoveis, descartadas }
   const analise = useMemo(() => (leitura ? analisar(leitura.imoveis) : null), [leitura])
-  const plano = useMemo(() => (analise ? montarPlano(analise.noPlano) : []), [analise])
+  const [rodada, setRodada] = useState({ n: 1, excluidos: 0 }) // rodadas sem rodar o Levantamento de novo
 
   function analisarTexto(t) {
     const r = lerLevantamento(t)
     setLeitura(r.imoveis.length ? r : { ...r, vazio: true })
+    setRodada({ n: 1, excluidos: 0 })
+  }
+  // Nova rodada: só os que o DELETE ainda não excluiu (o resto do levantamento continua valendo)
+  function tirarExcluidos(porId) {
+    const { restantes, removidos } = semOsExcluidos(leitura.imoveis, porId)
+    setLeitura(l => ({ ...l, imoveis: restantes }))
+    setRodada(r => ({ n: r.n + 1, excluidos: r.excluidos + removidos }))
   }
   async function escolherArquivo(e) {
     const arq = e.target.files?.[0]
@@ -54,8 +65,13 @@ export default function ExclusaoCascata() {
             </div>
           </section>
 
+          {analise && !leitura.vazio && rodada.n > 1 && (
+            <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-300">
+              Rodada {rodada.n} · {num(rodada.excluidos)} imóvel(is) já excluído(s) e tirado(s) do plano nesta sessão. A análise abaixo é só dos que faltam.
+            </p>
+          )}
           {analise && !leitura.vazio && <Analise analise={analise} />}
-          {analise && !leitura.vazio && <Envio plano={plano} />}
+          {analise && !leitura.vazio && <Envio imoveis={analise.noPlano} onTirarExcluidos={tirarExcluidos} />}
         </div>
       </div>
     </Pagina>
@@ -126,7 +142,12 @@ function ListaFora({ titulo, itens }) {
 }
 
 // Fase 2: município/sistema, plano por etapa e envio (o Felipe clica em cada etapa)
-function Envio({ plano }) {
+function Envio({ imoveis, onTirarExcluidos }) {
+  // PUT de inscrição em lotes menores e espaçados: a fila de reprocessamento da Betha é lenta e
+  // 43 PUTs de 50 seguidos fizeram o DELETE passar só nos primeiros lotes
+  const [lotePut, setLotePut] = useState(50)
+  const [intervaloPut, setIntervaloPut] = useState(1) // segundos entre um lote de PUT e o próximo (padrão pedido pelo Felipe: 1 lote por segundo)
+  const plano = useMemo(() => montarPlano(imoveis, undefined, lotePut), [imoveis, lotePut])
   const [municipios, setMunicipios] = useState([])
   const [sistemas, setSistemas] = useState([])
   const [municipioId, setMunicipioId] = useState(null)
@@ -141,7 +162,7 @@ function Envio({ plano }) {
     sistemasApi.listar().then(l => { setSistemas(l); const t = l.find(s => /tribut/i.test(s.nome)); if (t) setSistemaId(t.id) }).catch(() => {})
   }, [])
   useEffect(() => { if (municipioId) municipiosApi.tokens(municipioId).then(setTokens).catch(() => setTokens([])) }, [municipioId])
-  useEffect(() => { setExecucao({}) }, [plano])
+  useEffect(() => { setExecucao({}) }, [imoveis])
 
   const vinculo = tokens.find(t => t.sistemaId === sistemaId)
   const municipio = municipios.find(m => m.id === municipioId)
@@ -151,11 +172,29 @@ function Envio({ plano }) {
   const etapaConcluida = etapa => !etapa.lotes.length || execucao[etapa.chave]?.fim
   const liberada = i => plano.slice(0, i).every(etapaConcluida)
 
+  // Toda chamada passa aqui: no 429 a Betha está bloqueando — espera e repete a MESMA chamada (nunca pula para o próximo lote).
+  // Devolve a resposta e quanto tempo ficou parado, para a consulta não gastar o próprio limite esperando.
+  async function chamar(etapa, lote, params) {
+    let parado = 0
+    for (let tentativa = 0; ; tentativa++) {
+      const res = await proxyApi.executar(params)
+      if (res.statusCode !== 429 || parar.current) return { res, parado }
+      const ms = esperaApos429(tentativa)
+      const volta = new Date(Date.now() + ms).toLocaleTimeString('pt-BR')
+      atualizar(etapa.chave, x => ({ ...x, lotes: { ...x.lotes, [lote.indice]: { ...x.lotes[lote.indice], status: 'pausa', mensagem: `Limite de chamadas da Betha (429) — tenta de novo às ${volta}` } } }))
+      const fim = Date.now() + ms
+      while (Date.now() < fim && !parar.current) await espera(1000)
+      parado += ms
+    }
+  }
+
   async function consultar(etapa, lote, idLote) {
-    const ate = Date.now() + LIMITE_CONSULTA_MS
+    let ate = Date.now() + LIMITE_CONSULTA_MS
     while (true) {
       try {
-        const st = await proxyApi.executar({ municipioId, sistemaId, path: `${etapa.path}/${encodeURIComponent(idLote)}`, metodo: 'GET', tipo: 'individual' })
+        const { res: st, parado } = await chamar(etapa, lote, { municipioId, sistemaId, path: `${etapa.path}/${encodeURIComponent(idLote)}`, metodo: 'GET', tipo: 'individual' })
+        ate += parado
+        if (st.statusCode === 429) throw new Error('429') // parou no meio da espera
         const r = interpretarStatusLote(st.data)
         if (r.status !== 'fila') {
           atualizar(etapa.chave, x => ({ ...x, lotes: { ...x.lotes, [lote.indice]: { status: r.status, mensagem: r.mensagem, idLote } }, porId: aplicarRetorno(x.porId, r, lote.ids) }))
@@ -172,13 +211,22 @@ function Envio({ plano }) {
 
   async function enviarEtapa(etapa, lotes = etapa.lotes) {
     parar.current = false
-    atualizar(etapa.chave, x => ({ ...x, ativo: true, fim: false }))
+    atualizar(etapa.chave, x => ({ ...x, ativo: true, fim: false, pulada: false }))
+    let enviados = 0
     for (const lote of lotes) {
       if (parar.current) break
       if (!lote.body.length) continue // nunca envia lote vazio (PUT vazio reprocessa a entidade toda)
+      if (etapa.metodo === 'PUT' && enviados > 0 && intervaloPut > 0) {
+        const fim = Date.now() + intervaloPut * 1000
+        const hora = new Date(fim).toLocaleTimeString('pt-BR')
+        atualizar(etapa.chave, x => ({ ...x, lotes: { ...x.lotes, [lote.indice]: { status: 'pausa', mensagem: `Aguardando o intervalo — sai às ${hora}` } } }))
+        while (Date.now() < fim && !parar.current) await espera(1000)
+        if (parar.current) { atualizar(etapa.chave, x => { const { [lote.indice]: _, ...resto } = x.lotes; return { ...x, lotes: resto } }); break }
+      }
+      enviados++
       atualizar(etapa.chave, x => ({ ...x, lotes: { ...x.lotes, [lote.indice]: { status: 'enviando', mensagem: 'Enviando…' } } }))
       try {
-        const res = await proxyApi.executar({ municipioId, sistemaId, path: etapa.path, metodo: etapa.metodo, body: lote.body, tipo: 'lote' })
+        const { res } = await chamar(etapa, lote, { municipioId, sistemaId, path: etapa.path, metodo: etapa.metodo, body: lote.body, tipo: 'lote' })
         if (etapa.metodo === 'PUT') {
           const ok = res.statusCode >= 200 && res.statusCode < 300
           const r = ok ? { status: 'enviado', mensagem: 'Na fila de reprocessamento (sem idLote)' } : { status: 'erro', mensagem: `HTTP ${res.statusCode}` }
@@ -200,6 +248,78 @@ function Envio({ plano }) {
     atualizar(etapa.chave, x => ({ ...x, ativo: false, fim: !parar.current }))
   }
 
+  // GET do idLote até sair da fila; null se não saiu no limite (ou parou)
+  async function resultadoDoLote(etapa, lote, idLote) {
+    let ate = Date.now() + LIMITE_CONSULTA_MS
+    while (!parar.current && Date.now() < ate) {
+      await espera(INTERVALO_CONSULTA_MS)
+      try {
+        const { res, parado } = await chamar(etapa, lote, { municipioId, sistemaId, path: `${etapa.path}/${encodeURIComponent(idLote)}`, metodo: 'GET', tipo: 'individual' })
+        ate += parado
+        if (res.statusCode === 429) continue
+        const r = interpretarStatusLote(res.data)
+        if (r.status !== 'fila') return r
+      } catch { /* rede instável: tenta de novo até o limite */ }
+    }
+    return null
+  }
+
+  // Modo lote a lote (etapas 3 + 4 juntas): a Betha processa um PUT de inscrição por vez e descarta os que chegam no meio.
+  // Para cada lote: PUT → DELETE dos mesmos imóveis a cada 15 s até passar → próximo lote.
+  async function loteALote() {
+    const insc = plano.find(e => e.chave === 'inscricao')
+    // DELETE com a chave da etapa 3: avisos de 429 e espera aparecem no lote do PUT, que é o que a tela acompanha
+    const imv = { ...plano.find(e => e.chave === 'imoveis'), chave: 'inscricao' }
+    let porId = { ...(execucao.imoveis?.porId || {}) }
+    parar.current = false
+    atualizar('inscricao', x => ({ ...x, ativo: true, fim: false, pulada: false, loteALote: true }))
+    const marcar = (indice, status, mensagem) => atualizar('inscricao', x => ({ ...x, lotes: { ...x.lotes, [indice]: { status, mensagem } } }))
+    const hora = ms => new Date(Date.now() + ms).toLocaleTimeString('pt-BR')
+
+    for (const par of parearLotes(plano)) {
+      if (parar.current) break
+      let faltam = faltamNoLote(par.ids, porId)
+      if (!faltam.length) { marcar(par.indice, 'ok', 'Já excluídos'); continue }
+      const lote = { indice: par.indice }
+      const inicio = Date.now()
+      let puts = 0
+      let ultimoPut = 0
+      let tentativas = 0
+      while (faltam.length && !parar.current) {
+        if (!puts || Date.now() - ultimoPut >= REENVIAR_PUT_MS) {
+          if (puts >= MAX_PUTS_POR_LOTE) break
+          const corpo = faltam.map(id => ({ idImovel: id }))
+          if (!corpo.length) break // nunca PUT vazio (reprocessaria a entidade toda)
+          marcar(par.indice, 'enviando', `PUT ${puts + 1}ª vez…`)
+          const { res } = await chamar(insc, lote, { municipioId, sistemaId, path: insc.path, metodo: 'PUT', body: corpo, tipo: 'lote' })
+          if (res.statusCode < 200 || res.statusCode >= 300) { marcar(par.indice, 'erro', `PUT respondeu HTTP ${res.statusCode}`); break }
+          puts++
+          ultimoPut = Date.now()
+        }
+        tentativas++
+        marcar(par.indice, 'pausa', `PUT ${puts}x · tenta excluir às ${hora(ESPERA_DELETE_MS)} (tentativa ${tentativas})`)
+        const ate = Date.now() + ESPERA_DELETE_MS
+        while (Date.now() < ate && !parar.current) await espera(1000)
+        if (parar.current) break
+
+        const corpoDel = par.corpoDelete.filter(b => faltam.includes(b.imoveis.idGerado.id))
+        const { res } = await chamar(imv, lote, { municipioId, sistemaId, path: imv.path, metodo: 'DELETE', body: corpoDel, tipo: 'lote' })
+        let r = interpretarEnvio(res)
+        if (r.status === 'fila') r = await resultadoDoLote(imv, lote, r.idLote)
+        if (!r) continue // DELETE ainda na fila: tenta de novo na próxima volta
+        porId = aplicarRetorno(porId, r, faltam)
+        const resultado = r
+        const tentados = faltam
+        atualizar('imoveis', x => ({ ...x, porId: aplicarRetorno(x.porId, resultado, tentados) }))
+        faltam = faltamNoLote(par.ids, porId)
+      }
+      const s = Math.round((Date.now() - inicio) / 1000)
+      if (!faltam.length) marcar(par.indice, 'ok', `Excluídos em ${s}s · ${puts} PUT(s), ${tentativas} tentativa(s) de DELETE`)
+      else if (!parar.current) marcar(par.indice, 'parcial', `${faltam.length} não liberaram após ${puts} PUT(s) em ${s}s — ficam para a próxima rodada`)
+    }
+    atualizar('inscricao', x => ({ ...x, ativo: false, fim: !parar.current }))
+  }
+
   // Reenvia só os ids com erro, em lotes novos do mesmo formato
   function reenviarErros(etapa) {
     const ex = execucao[etapa.chave]
@@ -214,7 +334,11 @@ function Envio({ plano }) {
   async function consultarPendentes(etapa) {
     const ex = execucao[etapa.chave]
     const pend = etapa.lotes.filter(l => ex?.lotes[l.indice]?.status === 'fila' && ex.lotes[l.indice].idLote)
-    await Promise.allSettled(pend.map(l => consultar(etapa, l, ex.lotes[l.indice].idLote)))
+    parar.current = false
+    for (const l of pend) { // um de cada vez: em paralelo estoura o limite da Betha
+      if (parar.current) break
+      await consultar(etapa, l, ex.lotes[l.indice].idLote)
+    }
   }
 
   return (
@@ -225,13 +349,39 @@ function Envio({ plano }) {
         <div className="w-56"><span className="rotulo">Sistema</span><CaixaBusca opcoes={sistemas.map(s => ({ valor: s.id, rotulo: s.nome }))} valor={sistemaId} onEscolher={setSistemaId} placeholder="Sistema" /></div>
         {municipioId && sistemaId && !vinculo && <p className="text-xs text-perigo">Este município não tem token para este sistema (Central de Tokens).</p>}
         {pronto && <p className="text-xs text-suave">Envio pelo token de <span className="font-medium text-texto">{municipio?.nome}</span>. Cada etapa só libera quando a anterior terminar.</p>}
+        <div className="flex w-full flex-wrap items-end gap-3 border-t border-borda pt-3">
+          <label className="w-40"><span className="rotulo">PUT: itens por lote</span>
+            <input type="number" min={1} max={50} className="campo" value={lotePut} disabled={!!execucao.inscricao}
+              onChange={e => setLotePut(Math.min(50, Math.max(1, Number(e.target.value) || 1)))} /></label>
+          <label className="w-44"><span className="rotulo">PUT: intervalo (segundos)</span>
+            <input type="number" min={0} max={600} className="campo" value={intervaloPut} disabled={!!execucao.inscricao && execucao.inscricao.ativo}
+              onChange={e => setIntervaloPut(Math.min(600, Math.max(0, Number(e.target.value) || 0)))} /></label>
+          <p className="min-w-0 flex-1 text-xs text-suave">
+            {(() => { const n = plano.find(e => e.chave === 'inscricao')?.lotes.length || 0; const s = Math.max(0, n - 1) * intervaloPut; return n ? `${num(n)} lote(s) de PUT · uns ${Math.ceil(s / 60)} min de envio. ` : '' })()}
+            A fila de reprocessamento da Betha é lenta: PUTs muito seguidos deixam a maioria para trás e o DELETE dá "em uso".
+          </p>
+          {(() => {
+            const i = plano.findIndex(e => e.chave === 'inscricao')
+            const insc = plano[i]
+            if (!insc?.lotes.length) return null
+            const ativo = execucao.inscricao?.ativo
+            return (
+              <button type="button" className="botao-primario !px-3 !py-1.5 text-xs" disabled={!pronto || !liberada(i) || ativo}
+                onClick={loteALote} title="Para cada lote: PUT → tenta o DELETE dos mesmos imóveis a cada 15 s até passar → próximo lote">
+                {ativo && execucao.inscricao?.loteALote ? 'Rodando lote a lote…' : `PUT + DELETE lote a lote (${num(insc.lotes.length)} lotes)`}
+              </button>
+            )
+          })()}
+        </div>
       </div>
 
       <ol className="space-y-3">
         {plano.map((etapa, i) => (
           <Etapa key={etapa.chave} numero={i + 1} etapa={etapa} ex={execucao[etapa.chave]} liberada={liberada(i)} pronto={pronto}
             onEnviar={() => setConfirmar(etapa)} onParar={() => { parar.current = true }}
-            onReenviar={() => reenviarErros(etapa)} onConsultar={() => consultarPendentes(etapa)} />
+            onReenviar={() => reenviarErros(etapa)} onConsultar={() => consultarPendentes(etapa)}
+            onPular={() => atualizar(etapa.chave, x => ({ ...x, fim: true, pulada: true }))}
+            onTirarExcluidos={etapa.chave === 'imoveis' ? () => onTirarExcluidos(execucao.imoveis?.porId || {}) : null} />
         ))}
       </ol>
 
@@ -249,10 +399,11 @@ function Envio({ plano }) {
 
 const COR_STATUS = {
   ok: 'bg-emerald-500', enviado: 'bg-emerald-500', parcial: 'bg-amber-500', erro: 'bg-red-500',
-  fila: 'bg-sky-500 animate-pulse', enviando: 'bg-acento animate-pulse',
+  fila: 'bg-sky-500 animate-pulse', enviando: 'bg-acento animate-pulse', pausa: 'bg-amber-400 animate-pulse',
 }
 
-function Etapa({ numero, etapa, ex, liberada, pronto, onEnviar, onParar, onReenviar, onConsultar }) {
+// Pular libera a próxima etapa sem enviar nada. Seguro: se a etapa era necessária, o DELETE seguinte só responde "em uso".
+function Etapa({ numero, etapa, ex, liberada, pronto, onEnviar, onParar, onReenviar, onConsultar, onPular, onTirarExcluidos }) {
   const [verLotes, setVerLotes] = useState(false)
   const vazia = !etapa.lotes.length
   const status = Object.values(ex?.porId || {})
@@ -261,12 +412,14 @@ function Etapa({ numero, etapa, ex, liberada, pronto, onEnviar, onParar, onReenv
   const pendentes = etapa.lotes.filter(l => ex?.lotes[l.indice]?.status === 'fila').length
   const feito = vazia || ex?.fim
   const comErro = erros.length > 0 || pendentes > 0 // terminou, mas não 100%: âmbar, nunca o ✓ verde
+  const pulada = ex?.pulada && !ex?.ativo
+  const enviou = ex && Object.keys(ex.lotes || {}).length > 0
 
   return (
-    <li className={`rounded-xl border ${feito && !vazia ? (comErro ? 'border-amber-500/50' : 'border-emerald-500/40') : liberada && !vazia ? 'border-acento/40' : 'border-borda'} ${vazia ? 'opacity-60' : ''}`}>
+    <li className={`rounded-xl border ${pulada ? 'border-borda border-dashed' : feito && !vazia ? (comErro ? 'border-amber-500/50' : 'border-emerald-500/40') : liberada && !vazia ? 'border-acento/40' : 'border-borda'} ${vazia || pulada ? 'opacity-60' : ''}`}>
       <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${feito && !vazia ? (comErro ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white') : 'border border-borda text-suave'}`}>
-          {feito && !vazia ? (comErro ? '!' : <Icone nome="check" className="h-3.5 w-3.5" />) : numero}
+        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${pulada ? 'border border-borda text-suave' : feito && !vazia ? (comErro ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white') : 'border border-borda text-suave'}`}>
+          {pulada ? '–' : feito && !vazia ? (comErro ? '!' : <Icone nome="check" className="h-3.5 w-3.5" />) : numero}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -277,6 +430,7 @@ function Etapa({ numero, etapa, ex, liberada, pronto, onEnviar, onParar, onReenv
           <div className="text-xs text-suave">
             {vazia ? 'Nada a fazer — etapa pulada.' : `${num(etapa.itens.length)} item(ns) em ${etapa.lotes.length} lote(s) de até 50`}
             {etapa.nota && !vazia ? ` · ${etapa.nota}` : ''}
+            {pulada ? ' · Pulada — nada enviado nesta rodada.' : ''}
           </div>
         </div>
         {!vazia && (
@@ -284,13 +438,16 @@ function Etapa({ numero, etapa, ex, liberada, pronto, onEnviar, onParar, onReenv
             <button type="button" className="botao-secundario !px-2.5 !py-1 text-xs" onClick={() => setVerLotes(v => !v)}>{verLotes ? 'Ocultar lotes' : 'Ver lotes'}</button>
             {ex?.ativo
               ? <button type="button" className="botao-secundario !px-2.5 !py-1 text-xs" onClick={onParar}>Parar</button>
-              : <button type="button" className="botao-primario !px-2.5 !py-1 text-xs" disabled={!pronto || !liberada || ex?.fim} onClick={onEnviar}
-                  title={!liberada ? 'Termine a etapa anterior' : !pronto ? 'Escolha município e sistema com token' : ''}>{ex?.fim ? 'Enviada' : 'Enviar etapa'}</button>}
+              : <>
+                  {liberada && !ex?.fim && <button type="button" className="botao-secundario !px-2.5 !py-1 text-xs" onClick={onPular} title="Libera a próxima etapa sem enviar esta">Pular</button>}
+                  <button type="button" className="botao-primario !px-2.5 !py-1 text-xs" disabled={!pronto || !liberada || (ex?.fim && !pulada)} onClick={onEnviar}
+                    title={!liberada ? 'Termine ou pule a etapa anterior' : !pronto ? 'Escolha município e sistema com token' : ''}>{ex?.fim && !pulada ? 'Enviada' : 'Enviar etapa'}</button>
+                </>}
           </div>
         )}
       </div>
 
-      {ex && !vazia && (
+      {enviou && !vazia && (
         <div className="space-y-2 border-t border-borda px-4 py-3">
           <div className="flex flex-wrap gap-1">
             {etapa.lotes.map(l => {
@@ -315,6 +472,12 @@ function Etapa({ numero, etapa, ex, liberada, pronto, onEnviar, onParar, onReenv
           <div className="flex flex-wrap gap-1.5">
             {pendentes > 0 && !ex.ativo && <button type="button" className="botao-secundario !px-2.5 !py-1 text-xs" onClick={onConsultar}>Consultar pendentes ({pendentes})</button>}
             {erros.length > 0 && !ex.ativo && <button type="button" className="botao-secundario !px-2.5 !py-1 text-xs" onClick={onReenviar}>Reenviar os {erros.length} com erro</button>}
+            {onTirarExcluidos && okN > 0 && !ex.ativo && (
+              <button type="button" className="botao-primario !px-2.5 !py-1 text-xs" onClick={onTirarExcluidos}
+                title="Tira do plano os imóveis já excluídos e recomeça as etapas só com os que faltam — sem rodar o Levantamento de novo">
+                Tirar os {num(okN)} já excluídos e nova rodada
+              </button>
+            )}
           </div>
         </div>
       )}

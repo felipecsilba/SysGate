@@ -84,12 +84,14 @@ function corpo(etapa, id) {
 }
 
 // Etapas com os lotes prontos. Lote vazio nunca é gerado (PUT de inscrições vazio reprocessa a entidade toda).
-export function montarPlano(imoveis, tamanho = TAMANHO_LOTE) {
+// tamanhoPut: lote do PUT de inscrições, separado — 43 PUTs de 50 seguidos deixaram a fila da Betha para trás.
+export function montarPlano(imoveis, tamanho = TAMANHO_LOTE, tamanhoPut = tamanho) {
   return ETAPAS.map(etapa => {
     const itens = [...new Set(imoveis.flatMap(im => etapa.ids(im)).map(Number).filter(Boolean))]
+    const porLote = Math.max(1, etapa.metodo === 'PUT' ? tamanhoPut : tamanho)
     const lotes = []
-    for (let i = 0; i < itens.length; i += tamanho) {
-      const ids = itens.slice(i, i + tamanho)
+    for (let i = 0; i < itens.length; i += porLote) {
+      const ids = itens.slice(i, i + porLote)
       if (ids.length) lotes.push({ indice: lotes.length + 1, ids, body: ids.map(id => corpo(etapa, id)) })
     }
     const { ids: _ids, ...resto } = etapa
@@ -112,4 +114,27 @@ export function aplicarRetorno(estado, retorno, ids) {
   const erros = new Map((retorno.erros || []).map(e => [idDoIdIntegracao(e.idIntegracao), e.mensagem]))
   for (const id of ids) novo[id] = erros.has(id) ? { ok: false, mensagem: erros.get(id) } : { ok: true }
   return novo
+}
+
+// Entre uma rodada e outra: tira do plano quem o DELETE de imóveis já excluiu ("não encontrado" = já não existe).
+// Quem deu "em uso" ou ainda não foi enviado fica — a próxima rodada manda o PUT só para eles, sem rodar o Levantamento.
+const JA_EXCLUIDO = /n[ãa]o foi encontrado nenhum registro/i
+const fora = (porId, id) => { const s = porId[id]; return !!s && (s.ok || JA_EXCLUIDO.test(s.mensagem || '')) }
+
+export function faltamNoLote(ids, porId = {}) {
+  return ids.filter(id => !fora(porId, id))
+}
+
+// Modo lote a lote: a Betha processa um PUT de inscrição por vez e descarta os que chegam no meio (visto em 2026-10-21:
+// 4 rajadas, 1 lote valeu em cada). Então: PUT de um lote → DELETE dos mesmos imóveis até passar → próximo lote.
+export function parearLotes(plano) {
+  const insc = plano.find(e => e.chave === 'inscricao')
+  const imv = plano.find(e => e.chave === 'imoveis')
+  const delPorId = new Map(imv.lotes.flatMap(l => l.ids.map((id, k) => [id, l.body[k]])))
+  return insc.lotes.map(l => ({ indice: l.indice, ids: l.ids, corpoPut: l.body, corpoDelete: l.ids.map(id => delPorId.get(id)).filter(Boolean) }))
+}
+
+export function semOsExcluidos(imoveis, porId = {}) {
+  const restantes = imoveis.filter(im => !fora(porId, im.idImovel))
+  return { restantes, removidos: imoveis.length - restantes.length }
 }
