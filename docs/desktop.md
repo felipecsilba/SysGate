@@ -191,7 +191,7 @@ Nasceu como "Extensões" e foi renomeada a pedido do Felipe — consultar ≠ cr
 ## Gerador de Extensões (ícone próprio, 2026-10-18)
 
 Ícone próprio no Rail (grupo `gerador`, rota `/gerador`, ícone do quebra-cabeça). Nome escolhido pelo Felipe; separa **criar** de **consultar** (Biblioteca). Navegação: Script de exportação (pronto) · Templates e Funções prontas (em breve — vêm de `_BIBLIOTECA/Templates` e `_BIBLIOTECA/Funcoes Prontas`).
-- **Script de exportação** (`pages/Gerador/ScriptExportacao.jsx` + `lib/exportacao.js`, 6 testes): fonte → parâmetros obrigatórios → filtros (operadores por tipo; enum com os valores aceitos; "vazio ou zero" para ids; "um destes") → limite / nome / CSV opcional → script colorido com Copiar e Salvar .groovy. O modelo segue o script que já rodou (`biblioteca/_BIBLIOTECA/Templates/Exporta_Debitos_Completo_por_Credito_BASE.txt`): zip com **JSONL** (o que a Checagem lê) + CSV achatado em 2ª passada; `JSON.escrever` maiúsculo; `ordenacao: "id asc"` só se a fonte ordena por id; só sintaxe já usada em produção (sem Elvis `?:`); critério escapado para string Groovy (`\`, `"`, `$`).
+- **Script de exportação** (`pages/Gerador/ScriptExportacao.jsx` + `lib/exportacao.js`, 6 testes): fonte → parâmetros obrigatórios → filtros (operadores por tipo; enum com os valores aceitos; "vazio ou zero" para ids; "um destes") → limite / nome / CSV opcional → script colorido com Copiar e Salvar .groovy. O modelo segue o script que já rodou (`biblioteca/_BIBLIOTECA/Templates/Exporta_Debitos_Completo_por_Credito_BASE.txt`): **JSONL** (o que a Checagem lê) + CSV achatado em 2ª passada, um `Resultado.arquivo` por arquivo (o Studio já zipa — nada de zip no script); `JSON.escrever` maiúsculo; `ordenacao: "id asc"` só se a fonte ordena por id; só sintaxe já usada em produção (sem Elvis `?:`); critério escapado para string Groovy (`\`, `"`, `$`).
 - **Catálogo lido da pasta da Biblioteca**, não do banco: `electron/catalogoFontes.js` (3 testes) lê `FontesDeDados/catalogo_v2.json` + `mapa_bfc_rest.json` (418 operações de leitura em ~80 ms). Motivo: o banco (`FonteDados`) não guarda parâmetros obrigatórios nem ordenação, e o **nome no editor da Betha difere do nome REST** — o mapa dá o nome BFC (220 confirmados por uso em produção); sem confirmação, o script e a tela avisam para conferir no editor (mesma regra do `fonte.py`). Parâmetro obrigatório (`{placeholder}` do path, 207 operações) vai em `parametros:`, nunca em `criterio:`.
 - A Checagem Por Fonte tem o atalho "Gerar o script de exportação desta fonte" → `/gerador?fonte=<cadastro>` (abre em `<cadastro>.busca`).
 - **Ainda não rodado no Studio** — o primeiro uso deve ser com LIMITE pequeno.
@@ -278,9 +278,17 @@ Plano: `docs/plans/2026-10-20-desktop-mapa-dependencias.md`. Nasceu do caso dos 
 
 ### ▶ Retomar aqui (trabalho em andamento)
 
+**Atualização 2026-10-21 — exclusão de Placas CONCLUÍDA, exceto 1:** 2.373 imóveis excluídos. O 34664997 (código 2402)
+não sai pela API (ciclo movimentação de criação ↔ linha de inscrição — ver o caso em `biblioteca/_CONHECIMENTO/Imoveis/casos/`);
+ficou desativado, com chamado na Betha. A tela ganhou: espera no HTTP 429, botão Pular, lote/intervalo do PUT, "Tirar os
+já excluídos e nova rodada" e o modo "PUT + DELETE lote a lote". **Esse modo reenvia o PUT a cada 3 min, o que pelo modelo
+final (fila lenta, um pedido por vez, PUT repetido engorda a fila) é contraproducente:** trocar por "só DELETE a cada
+5 min" ou remover. Os templates BFC não zipam mais (o Studio já zipa) — ainda não rodaram no Studio assim.
+O que está abaixo é o estado de 2026-10-20, mantido como histórico.
+
 **Exclusão dos imóveis migrados errado de Placas, códigos 11 a 2402 (~2.392 imóveis).** O Felipe deixou o
 **Levantamento de vínculos rodando no Studio** em 2026-10-20 (leva horas). Ao voltar:
-1. Ele baixa o `vinculos_imoveis.zip` e cola o `.jsonl` em **Mapa de dependências → Imóvel → cartão "Levantamento de
+1. Ele baixa o resultado do Studio e cola o `.jsonl` em **Mapa de dependências → Imóvel → cartão "Levantamento de
    vínculos" → "Analisar resultado →"** (`/mapa/exclusao`).
 2. Conferir a análise. Pelo padrão visto nos 91 já levantados (códigos 10 e 11–100), espera-se que **todos estejam
    livres e só com 1 movimentação de inscrição imobiliária** (`idMovimentacao: 0`), sem proprietário, movimentação,
@@ -299,7 +307,10 @@ Já excluído de verdade: imóvel **34631456** (código 10), pela receita comple
 **Validado na prática (2026-10-20):** a receita (proprietários → movimentações → PUT de inscrição → imóvel), o
 Levantamento e a Varredura no Studio, o `Lista_Ids_Imoveis_por_Codigo_BASE` (faixa de códigos → ids; corrigido o
 `imprimir (a) + b` após o 1º uso, a versão corrigida ainda não rodou).
-**Ainda não validado:** a tela de envio da exclusão em cascata contra a Betha; excluir corresponsáveis, testadas,
+**Tela de envio validada (2026-10-20):** 17 imóveis "só inscrição" excluídos pela tela. O DELETE logo após o PUT dá
+"em uso" (o reprocessamento ainda está na fila); alguns minutos depois, "Reenviar com erro" passa. O DELETE é a
+confirmação do PUT.
+**Ainda não validado:** excluir corresponsáveis, testadas,
 englobados ou benefícios (imóvel com eles fica fora do plano); qualquer exclusão com vínculo financeiro.
 
 **Git:** 7 commits locais no `krakion-app` ainda **não enviados** ao GitHub (de `927bd25` a `5a7811b`). Push só
@@ -326,6 +337,11 @@ que foi para o master e a VPS a pedido (exigência do Google para o OAuth).
 - Agente de tokens: login real (pulado pelo Felipe por custo — ver seção própria).
 - **Mapa de dependências:** confirmar outros cadastros (Pessoa, Econômico…) conforme os casos reais aparecerem. Script de levantamento na tela só depois de validado no Studio.
 - **Exclusão em cascata:** guardar o progresso do envio (hoje fica só na tela) e generalizar para outros cadastros quando houver receita validada.
+  Pedidos do Felipe (2026-10-20, para depois): indicador visível de "consultando de novo…" enquanto o lote está na fila
+  (hoje parece parado); PUT de inscrição sem o "ok" verde (só "pedidos aceitos", confirmação vem do DELETE); clicar
+  numa dependência da análise para ver quais imóveis/ids a têm; no DELETE, "Não foi encontrado nenhum registro" contar
+  como "já excluído" (cinza), não erro — numa reexecução o vermelho fica só com o que travou de verdade.
+  Sandbox/AbaLote: mesmo tratamento de HTTP 429 que a exclusão em cascata ganhou (esperar e repetir o lote).
 - **Backup:** restaurar pelo App (junto com o instalador).
 - **Processos de BFC** (`skills/bfc/`): criação e debug de fórmulas/scripts, a partir de casos reais (combinado no início de 2026-10-19).
 - Ideias anotadas: conector Claude API (perguntar à legislação e cruzar com a biblioteca); NotebookLM com a legislação no Drive (sem API pessoal: o Krakion só poria os PDFs na pasta).

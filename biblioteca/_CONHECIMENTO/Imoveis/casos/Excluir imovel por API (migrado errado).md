@@ -46,9 +46,39 @@ imóvel**. Para achar os ids por faixa de código: `_BIBLIOTECA/Templates/Lista_
 No Krakion App, a tela **Mapa de dependências → Imóvel → Levantamento de vínculos → "Analisar resultado"** lê o JSONL,
 separa o que fica fora do plano e envia as etapas em lotes de 50, consultando cada idLote.
 
+**Primeiro envio pela tela (2026-10-20):** 17 imóveis do perfil "só inscrição", PUT em 1 lote de 17 → DELETE logo em
+seguida deu **"em uso" nos 17** (o reprocessamento ainda estava na fila). Esperando alguns minutos e usando "Reenviar
+com erro", o DELETE passou nos 17. **O DELETE é o termômetro do PUT:** o PUT não tem GET nem idLote, e um DELETE
+recusado não apaga nada, então reenviar até passar é seguro. O PUT em lote (vários `{idImovel}` no array) funciona.
+
+**Lote grande (2026-10-20, 2.374 imóveis):** o DELETE começou 1 min depois dos 43 PUTs. Os 17 primeiros lotes
+voltaram 100% "em uso" (fila do PUT ainda não processada; com 2 mil itens, esperar **bem mais** que no teste de 17), e a
+partir de ~120 chamadas a Betha respondeu **HTTP 429** (limite de chamadas, bloqueio de 2 a 4 min). A tela agora espera
+e repete no 429.
+
+**PUT de inscrição em volume (2026-10-20, rodadas sobre os 2.374):** 29–43 PUTs de 50 enviados em ~1 min, todos 200.
+No DELETE seguinte passaram só **1 a 3 lotes inteiros por rodada, em posições diferentes a cada vez** (lotes 2/4/6;
+depois 1–2; depois o 10º). Com todos os imóveis tendo a linha, o lote do DELETE = o lote do PUT: o PUT de 50 ou vale
+inteiro ou não vale nada. **Hipótese (não confirmada):** cada PUT é um processamento e, enquanto um roda, os que chegam
+são descartados apesar do 200. Teste combinado: PUTs com 120 s de intervalo, parar no 3º, DELETE depois de 5 min.
+
 ## Em aberto
 
-- Receita completa validada em **1** imóvel; o perfil "só inscrição" foi levantado em 91 e excluído em 0 até agora. Lista inteira: códigos 11 a 2402.
+- **Resultado do lote grande (2026-10-21):** todos os 2.373 imóveis "só inscrição" excluídos, depois de várias rodadas.
+  Modelo mais provável: a fila do PUT processa um pedido por vez, devagar e sem descartar; pedido pendente deixa o imóvel
+  "em uso"; PUT repetido só engorda a fila. Melhor prática: **um PUT só**, depois só DELETE de tempos em tempos.
+- Imóvel 34664997 (código 2402): a movimentação 1786514208 ("Criação do cadastro") dá "em uso" no DELETE mesmo depois
+  da outra movimentação sair e de PUT de inscrição só dele. A linha de inscrição 11526502 aponta para ela — suspeita de
+  ciclo (o PUT recria a linha a partir da movimentação que existe).
+  Tentado em 2026-10-21: `DELETE /api/imoveisMovimentacoesHistorico` com o id do histórico do levantamento (1610611727)
+  → **SUCESSO** (rota nova; a `historicoAlteracaoImovel` dava "não encontrado"). Mas, mesmo sem histórico, o PUT de
+  inscrição continua gerando a linha 11526502 → movimentação e imóvel seguem "em uso". **Ciclo sem saída pela API**
+  (a rota de inscrição não tem DELETE; a tela do Betha não exclui imóvel, só desativa). Ficou desativado; chamado na
+  Betha pedindo a remoção. Não confirmado: `imoveisMovDetalhes` (anexo da movimentação) — nenhuma fonte BFC o lê.
+- **Regra para a receita:** imóvel cuja linha de inscrição aponta para a movimentação de **criação** (`idMovimentacao`
+  ≠ 0) não sai pela API. Separar esses no levantamento e mandar para chamado, sem gastar rodadas.
+
+- Receita completa validada em **1** imóvel; o perfil "só inscrição" excluído pela tela em **17**. Lista inteira: códigos 11 a 2402.
 - Imóveis com movimento financeiro: fora desta receita (débitos, dívidas e lançamentos não foram testados).
 - Não cobertos pelo levantamento (nenhum apareceu neste caso): econômicos, transferências, imagens, informações
   complementares, origem do imóvel.
