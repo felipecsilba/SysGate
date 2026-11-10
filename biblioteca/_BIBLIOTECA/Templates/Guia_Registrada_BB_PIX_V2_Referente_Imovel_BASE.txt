@@ -653,6 +653,7 @@ registraLinha.each { it ->
   linhaDigitavelRet = ""
   codigoBarrasRet = ""
   agenciaRet = ""
+  retornoQrcode = null // ALTERADO (03/11/2026): zerado por guia, para o gerar-pix não ler o motivo da guia anterior
 
 
   tipoDesconto = ''
@@ -916,6 +917,41 @@ registraLinha.each { it ->
           suspender 'A CONSULTA NÃO PODE SER FEITA.'
         }
       }
+    }
+  }
+
+  // ALTERADO (03/11/2026) - GERAR PIX quando o BB registra o boleto mas devolve o QR vazio
+  // ("Erro ao gerar QRCODE Pix: Abend AJ05" em pix.textoRetorno). Fica fora do bloco da segunda via
+  // para cobrir também a 1ª emissão (POST 201 com qrCode vazio).
+  // Caso: _CONHECIMENTO/Registro-Bancario/casos/Guia BB PIX sai sem QR code para alguns contribuintes.md
+  // Atenção: aqui é "if" e não "se" - dentro do "se" o "it" fica nulo.
+  guiaAtual = it
+  if (!QRCodeURL && guiaAtual.boletoPix == "SIM" && linhaDigitavel) {
+    motivoBB = retornoQrcode?.'pix.textoRetorno' ?: 'não informado'
+    imprimir "QR vazio na baixa " + guiaAtual.nroBaixa + ". Motivo do BB: [" + motivoBB + "]. Tentando gerar-pix..."
+
+    respGerar = Http.servico(guiaAtual.urlBoleto + "/boletos/" + guiaAtual.boletoNumero + "/gerar-pix")
+      .parametro('gw-dev-app-key', guiaAtual.gwAppKey)
+      .cabecalho('Authorization', 'Bearer ' + accessToken)
+      .cabecalho("Content-Type", "application/json")
+      .POST('{"numeroConvenio":' + guiaAtual.nroConvenio + '}', Http.JSON)
+
+    statusGerar = respGerar.codigo()
+    retGerar = respGerar.json()
+    imprimir "DIAG GERAR-PIX -> baixa=" + guiaAtual.nroBaixa + " status=" + statusGerar + " retorno=" + retGerar
+
+    if (statusGerar >= 200 && statusGerar <= 299) {
+      // o BB às vezes devolve as chaves com ponto ("qrCode.url") e às vezes aninhadas (qrCode.url)
+      QRCodeURL   = retGerar?.'qrCode.url'  ?: retGerar?.qrCode?.url  ?: ''
+      QRCodeTXID  = retGerar?.'qrCode.txId' ?: retGerar?.qrCode?.txId ?: QRCodeTXID ?: ''
+      QRCodeTXEMV = retGerar?.'qrCode.emv'  ?: retGerar?.qrCode?.emv  ?: ''
+    }
+
+    if (!QRCodeURL) {
+      // continua sem QR: avisa o usuário, mas não trava a emissão (o boleto pelo código de barras vale)
+      Notificacao.nova("Guia " + guiaAtual.nroBaixa + " (" + guiaAtual.nomeContribuinte + ") saiu SEM QR code Pix: o Banco do Brasil não gerou o Pix. Motivo informado pelo banco: " + motivoBB)
+      .para(usuario.id)
+      .enviar()
     }
   }
 

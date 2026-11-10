@@ -3,6 +3,10 @@
 Template validado em Rurópolis:
 - 14/10/2026: a guia do parcelamento 28 (imóvel 1409) saiu com referente, inscrição e tabela de receitas.
 - 16/10/2026: a guia 10139, do parcelamento 41 (econômico 1123), saiu com o endereço.
+- 03/11/2026: guia sem QR code Pix (baixa 10266) passou a sair com QR depois da chamada `gerar-pix`.
+  A correção foi validada no script do município e incorporada a este template em 09/11/2026
+  (bloco `// ALTERADO (03/11/2026) - GERAR PIX`). Caso completo:
+  `_CONHECIMENTO/Registro-Bancario/casos/Guia BB PIX sai sem QR code para alguns contribuintes.md`.
 
 Arquivos:
 - `Guia_Registrada_BB_PIX_V2_Referente_Imovel_BASE.txt`: fonte dinâmica. Ela registra o boleto na API Cobranças v2 do Banco do Brasil e alimenta a guia.

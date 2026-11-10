@@ -10,7 +10,9 @@
     { "id": "area:receitas-diversas", "nome": "Receitas Diversas", "palavras": ["diversa"], "pastas": [] },
     { "id": "area:acrescimos", "nome": "Acréscimos, Descontos e Indexadores", "palavras": ["acrescimo", "desconto", "juros", "multa", "correc", "indexador", "refis", "beneficio", "isenc", "remiss", "anisti"], "pastas": [] }
   ],
-  "arestas": [],
+  "arestas": [
+    { "de": "conhecimento:registro-bancario/casos/guia-bb-pix-sai-sem-qr-code-para-alguns-contribuintes", "tipo": "documenta", "para": "template:Guia_Registrada_BB_PIX_V2_Referente_Imovel", "nota": "Correção gerar-pix do caso (Rurópolis, 03/11/2026) incorporada ao template em 09/11/2026" }
+  ],
   "remover": [],
   "notas": {}
 }

@@ -1,4 +1,4 @@
-{"versao":1,"hash":"ac9d7a5a74b2aebb",
+{"versao":1,"hash":"25ab65da8d8d2f46",
 "nos":[
 {"id":"area:acrescimos","tipo":"area","rotulo":"Acréscimos, Descontos e Indexadores"},
 {"id":"area:debitos","tipo":"area","rotulo":"Débitos, Créditos e Guias"},
@@ -774,6 +774,7 @@
 {"de":"conhecimento:itbi-transferencias/relatorios/certidao-e-guia-de-itbi-o-padrao","tipo":"pertence","para":"area:itbi","origem":"inferida"},
 {"de":"conhecimento:readme","tipo":"documenta","para":"tipo-formula:ITBI","origem":"inferida"},
 {"de":"conhecimento:registro-bancario/00-indice","tipo":"pertence","para":"area:registro-bancario","origem":"inferida"},
+{"de":"conhecimento:registro-bancario/casos/guia-bb-pix-sai-sem-qr-code-para-alguns-contribuintes","tipo":"documenta","para":"template:Guia_Registrada_BB_PIX_V2_Referente_Imovel","origem":"curada","nota":"Correção gerar-pix do caso (Rurópolis, 03/11/2026) incorporada ao template em 09/11/2026"},
 {"de":"conhecimento:registro-bancario/casos/guia-bb-pix-sai-sem-qr-code-para-alguns-contribuintes","tipo":"pertence","para":"area:registro-bancario","origem":"inferida"},
 {"de":"conhecimento:registro-bancario/casos/guias-do-livro-eletronico-fly-nao-registram-no-bb","tipo":"pertence","para":"area:registro-bancario","origem":"inferida"},
 {"de":"endpoint:advogados","tipo":"depende","para":"endpoint:pessoas","origem":"inferida","via":"idPessoa"},
