@@ -1,3 +1,8 @@
+---
+name: swagger-parser
+description: "Use ao mexer na importação de Swagger/OpenAPI (endpoints.js): resolução de $ref, allOf/oneOf, bodies em array, detecção de HTML do Swagger UI."
+---
+
 # Swagger/OpenAPI Parser
 
 ## Localização

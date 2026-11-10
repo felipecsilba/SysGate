@@ -165,3 +165,10 @@ SMTP_PASS=           # Senha de app ou senha SMTP
 SMTP_FROM=           # Ex: "Krakion <noreply@krakion.com>"
 APP_URL=http://localhost:3000  # URL base para o link de reset
 ```
+
+## Regras e armadilhas
+
+> Trazido do CLAUDE.md da raiz em 2026-11-09 (Fase 1 da economia de contexto — ver docs/plans/2026-11-09-fase1-economia-contexto.md).
+
+- **funcao vs role**: `role` (`admin`/`operador`) controla permissões de acesso; `funcao` (`Suporte`, `Analista de Implantação`, `Gerente`, `Administrador`) é apenas label de exibição, sem efeito em permissões.
+- **toggleAdmin em Usuarios.jsx**: botão "Tornar Admin"/"Revogar Admin" alterna `role` entre `admin` e `operador`. Visível apenas para admin, e não aparece na própria linha do usuário logado.

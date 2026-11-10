@@ -131,3 +131,14 @@ Modal com fundo dinâmico (`backgroundColor: cor`). Abas de tipo no topo (Texto 
 ## Fluxo de deploy
 
 Inclui mudança de schema — ao fazer deploy, `npx prisma db push` cria as tabelas `Nota` e `NotaCompartilhamento` no banco de produção.
+
+## Regras e armadilhas
+
+> Trazido do CLAUDE.md da raiz em 2026-11-09 (Fase 1 da economia de contexto — ver docs/plans/2026-11-09-fase1-economia-contexto.md).
+
+- **Notas — isolamento e compartilhamento**: `Nota.usuarioId` obrigatório; queries filtram `usuarioId = req.usuario.id OR compartilhamentos.some({ usuarioId })`. Dono pode compartilhar com usuários específicos via `NotaCompartilhamento` (unique por nota+usuário). Notas alheias sem compartilhamento retornam 404.
+- **Notas — itens e etiquetas como JSON String**: `Nota.itens` e `Nota.etiquetas` armazenados como `JSON.stringify(array)` no SQLite (mesmo padrão de `bodySchema`). Helper `parseNota(n)` no backend faz `JSON.parse` antes de retornar.
+- **Notas — drag & drop**: HTML5 Drag and Drop API nativa (sem dependência). Campo `ordem Int` armazena posição. Ao soltar, `index.jsx` reordena o array localmente e persiste via `PATCH /notas/ordem` com debounce de 800ms. Ordenação padrão: `fixada desc, ordem asc, atualizadoEm desc`.
+- **Notas — fixar**: `Nota.fixada Boolean`. Notas fixadas aparecem em seção "Fixadas" acima das demais (ícone pin + label). Toggle via `PATCH /:id/fixar` (só dono).
+- **Notas — tipos**: `texto` (textarea livre), `checklist` (itens com `feito: boolean`), `lista` (bullets), `codigo` (monospace). Ao mudar tipo no modal, conteúdo ↔ itens são convertidos automaticamente (linhas ↔ array de objetos).
+- **Notas — paleta de cores**: 10 cores post-it em hex (amarelo `#FFFDE7` padrão, lilás, verde, azul, salmão, laranja, índigo, rosa, teal, branco). Card usa `style={{ backgroundColor: nota.cor }}` e borda `rgba(0,0,0,0.12)`. Modal tem fundo dinâmico com a cor selecionada.

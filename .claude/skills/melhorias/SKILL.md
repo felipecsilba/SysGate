@@ -19,9 +19,9 @@ Ao receber um arquivo de melhorias para trabalhar:
 
 Ler obrigatoriamente:
 - `CLAUDE.md` — arquitetura, padrões, stack, rotas da API, modelos do banco, convenções
-- `skills/banco-de-dados.md` — se alguma melhoria envolve mudança de schema
-- `skills/backend.md` — se alguma melhoria envolve nova rota ou lógica de servidor
-- `skills/frontend.md` — se alguma melhoria envolve componente, página ou estado React
+- `.claude/skills/banco-de-dados/SKILL.md` — se alguma melhoria envolve mudança de schema
+- `.claude/skills/backend/SKILL.md` — se alguma melhoria envolve nova rota ou lógica de servidor
+- `.claude/skills/frontend/SKILL.md` — se alguma melhoria envolve componente, página ou estado React
 
 ### 1.2 — Ler os docs do módulo afetado
 
@@ -98,7 +98,7 @@ Implementar uma melhoria por vez. Nunca misturar mudanças de melhorias diferent
 
 ### Deploy após implementação
 
-Quando o usuário pedir para aplicar ao servidor, seguir o fluxo em `skills/deploy.md`:
+Quando o usuário pedir para aplicar ao servidor, seguir o fluxo em `.claude/skills/deploy/SKILL.md`:
 
 ```bash
 git push origin master
@@ -179,5 +179,5 @@ FASE 4: Registrar em docs/<modulo>.md + CLAUDE.md + limpar backlog
 | Melhoria muda schema Prisma | Lembrar que deploy precisa de `prisma db push` (sem `--skip-generate`) |
 | Nova rota nomeada em Express | Verificar se deve vir ANTES de `/:id` |
 | Componente usa lista para calcular algo (ex: ticketNum) | Garantir que a lista completa é passada como argumento |
-| Melhoria toca em autenticação ou permissões | Ler `skills/seguranca.md` antes |
-| Melhoria usa proxy ou API Betha | Ler `skills/betha-api.md` antes |
+| Melhoria toca em autenticação ou permissões | Ler `.claude/skills/seguranca/SKILL.md` antes |
+| Melhoria usa proxy ou API Betha | Ler `.claude/skills/betha-api/SKILL.md` antes |

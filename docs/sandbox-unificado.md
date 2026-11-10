@@ -256,3 +256,62 @@ Após confirmar que o app funciona:
 5. **Aba "Envio em Lote":** upload CSV, auto-mapping funciona, preview renderiza, batch executa, exportar CSV
 6. **Troca de aba limpa estado local** (CSV e resposta resetam — comportamento esperado)
 7. Sem erros de console (props undefined, hooks fora de ordem)
+
+## Padrões de UI compartilhados entre as abas
+
+> Trazido do CLAUDE.md da raiz em 2026-11-09 (Fase 1 da economia de contexto — ver docs/plans/2026-11-09-fase1-economia-contexto.md).
+
+A página `/sandbox` tem um **painel esquerdo compartilhado** (cards 1–4: município, sistema, endpoint, método/path) e alterna entre duas abas no painel direito: **Requisição única** (`AbaRequisicao.jsx`) e **Envio em Lote** (`AbaEnvioLote.jsx`). O estado da seleção (município, sistema, módulo, recurso, endpoint, camposSelecionados) vive em `index.jsx` e é passado como props para ambas as abas. Ao trocar de aba, o estado local da aba anterior é descartado (comportamento intencional — CSV e resposta resetam).
+
+### Arquitetura de estado — Sandbox/index.jsx (pai) vs abas (filhos)
+
+| Estado | Dono | Como passa |
+|--------|------|------------|
+| `municipioSel, sistemaSel, moduloSel, recursoSel, endpointSel` | `index.jsx` | props read-only |
+| `metodo, pathCustom` | `index.jsx` | props read-only (editáveis no painel esquerdo) |
+| `camposSelecionados` | `index.jsx` | prop + setter (filhos chamam `setCamposSelecionados` só para eventos de usuário) |
+| `schema, schemaExpanded` | `index.jsx` (useMemo) | props read-only |
+| `valoresCampos, bodyRaw, modoBody, resposta, historico` | `AbaRequisicao` | local |
+| `csvData, csvArquivo, mapeamentoCampo, progresso` | `AbaEnvioLote` | local |
+
+`camposSelecionados` é inicializado pelo pai no `useEffect([endpointSel])`. Os filhos NÃO devem reinicializá-lo ao mudar de endpoint — apenas o pai faz isso. Filhos podem chamar `setCamposSelecionados` para toggles de checkbox (AbaRequisicao) e auto-mapping CSV (AbaEnvioLote).
+
+### Seleção de Módulo e Recurso — SearchSelect
+- Componente `SearchSelect.jsx` substitui o `<select>` estático
+- Exibe campo de texto; ao focar mostra **lista completa**
+- Ao digitar filtra por substring, **insensível a acentos** (normaliza NFD)
+  - Ex: digitar "eco" encontra "econômicos", "Econômicos", etc.
+- Item selecionado fica destacado (fundo `sysgate-100`)
+- Opção "— Limpar seleção —" aparece no topo quando há valor selecionado
+- Prop `disabled` bloqueia interação (ex: Recurso fica desabilitado sem Módulo escolhido)
+
+### Agrupamento de Recursos — nomeRecurso()
+- Função `nomeRecurso(ep, moduleBase)` extrai nome legível do endpoint
+  - Prefere o trecho após " - " no nome (ex: "Econômicos - Informação Complementar" → "Informação Complementar")
+  - Fallback: último segmento do path em camelCase, sem o prefixo do módulo
+- `recursos` (useMemo): deduplica endpoints do mesmo path, prefere path sem `{params}` (coleção > item)
+- Clicar em um método button após selecionar recurso atualiza `endpointSel` para o endpoint com aquele método + path
+
+### Botões de Método HTTP
+- Renderizados como `<button>` com cores semânticas: GET=azul, POST=verde, PUT=amarelo, PATCH=laranja, DELETE=vermelho
+- Estado ativo: fundo sólido com texto branco (`METODO_ACTIVE`)
+- Estado inativo: borda cinza fina, hover sutil
+- Ao clicar: atualiza `metodo` e busca `endpointSel` pelo par path+método
+
+### Seletor de campos do Body — schemaExpanded
+- `schema`: campos do `bodySchema` sem o sentinel `_exemplo`
+- `schemaExpanded` (useMemo): expande campos `tipo === 'object'` usando as chaves do `_exemplo.json`
+  - Cada sub-campo vira entrada com `campo: "parent.subKey"`, `_displayCampo: "subKey"`, `_parent: "parent"`
+  - Sub-campos de tipo `object` aninhado (2+ níveis) não são expandidos automaticamente — ficam como `object` simples
+  - Campos sem exemplo ou cujo valor de exemplo não seja objeto ficam como entrada única
+  - **`idGerado` especial**: quando o exemplo da spec é `{id: N}`, o sub-campo recebe `tipo: 'number'` e `_wrapAsIdObject: true`. O input exibe apenas o número `N`, mas ao enviar é reembalado como `{ id: N }` conforme esperado pela API
+- Layout 2 colunas:
+  - **Esquerda**: lista com checkboxes; campos filhos ficam indentados (`ml-3`) sob cabeçalho de seção `UPPERCASE` do parent
+  - **Direita** (Sandbox): campos marcados + inputs de valor + preview JSON verde em tempo real
+  - **Direita** (EnvioLote): campos marcados + `<select>` da coluna CSV correspondente + preview das primeiras 2 linhas
+- Auto-switch para "JSON raw": apenas quando há campos `array<...>` (não mais para `object`)
+- Reconstrução do body ao enviar: campos `number`/`integer` → `Number(val)`; campos `_wrapAsIdObject` → `{ id: Number(val) }`; campos `_parent` → `body[_parent][_displayCampo]`
+
+### Auto-mapeamento CSV (aba Envio em Lote)
+- Ao fazer upload do CSV, compara `_displayCampo` (nome curto do sub-campo) com o nome da coluna CSV (case-insensitive)
+- Se houver match: pré-seleciona o checkbox e pré-preenche o dropdown

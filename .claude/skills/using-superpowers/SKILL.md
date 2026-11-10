@@ -80,13 +80,13 @@ Estes pensamentos significam STOP:
 
 **Flexíveis** (brainstorming, writing-plans): Adapte os princípios ao contexto.
 
-## Skills Disponíveis (skills/superpowers/)
+## Skills Disponíveis (.claude/skills/)
 
-| Skill | Arquivo |
+| Para quê | Skill |
 |-------|---------|
-| Como usar todos os skills | `using-superpowers.md` |
-| Design antes de implementar | `brainstorming.md` |
-| Criar plano de implementação | `writing-plans.md` |
-| Desenvolvimento orientado a testes | `test-driven-development.md` |
-| Debugging sistemático | `systematic-debugging.md` |
-| Verificar antes de concluir | `verification-before-completion.md` |
+| Como usar todos os skills | `using-superpowers` |
+| Design antes de implementar | `brainstorming` |
+| Criar plano de implementação | `writing-plans` |
+| Desenvolvimento orientado a testes | `test-driven-development` |
+| Debugging sistemático | `systematic-debugging` |
+| Verificar antes de concluir | `verification-before-completion` |

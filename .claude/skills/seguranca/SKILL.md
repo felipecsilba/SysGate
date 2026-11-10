@@ -1,3 +1,8 @@
+---
+name: seguranca
+description: "Use ao alterar autenticação, rotas, permissões, isolamento por usuário, rate limit, hCaptcha, lockout ou o portal externo do Krakion."
+---
+
 # Segurança — padrões e decisões
 
 ---
@@ -59,7 +64,7 @@ prisma.usuario.findFirst({ where: { role: 'admin', ativo: true } })
 - **Registro** (`/auth/registrar`): 5/15min por IP (`registroRateLimit`) — Fase 0
 - **Recuperação** (`/auth/esqueci-senha`, `/auth/redefinir-senha`): 5/15min por IP
 - Resposta 429 com mensagem em português
-- **Depende do IP real**: o Nginx de produção repassa `X-Forwarded-For` (ver `skills/deploy.md`) e o Express usa `trust proxy 1`. Sem o header, todos os clientes atrás do proxy compartilham o mesmo bucket de IP.
+- **Depende do IP real**: o Nginx de produção repassa `X-Forwarded-For` (ver `.claude/skills/deploy/SKILL.md`) e o Express usa `trust proxy 1`. Sem o header, todos os clientes atrás do proxy compartilham o mesmo bucket de IP.
 
 ---
 
@@ -158,7 +163,7 @@ Trilho de autenticação paralelo implementado (`routes/portalAuth.js` + `routes
 - **Resposta enxuta**: listagem/detalhe do portal não expõem prioridade, classificação, vertical, responsável nem origem.
 - **Helpers compartilhados**: `hashToken`/`captchaValido`/`criarTransporter` extraídos para `backend/src/lib/authUtils.js` (usados por `auth.js` e `portalAuth.js`).
 - **Erros 500 do portal não vazam `err.message`** — respostas genéricas + `console.error` no servidor.
-- **Banco migrado para PostgreSQL (2026-06-11, mesmo dia)**: decisão #1 do plano executada antes de o portal ganhar frontend público. PrismaClient único (`lib/prisma.js`) resolveu também a pendência #13. A `DATABASE_URL` agora contém senha — o log de inicialização a mascara (`index.js`). Ver `skills/banco-de-dados.md`.
+- **Banco migrado para PostgreSQL (2026-06-11, mesmo dia)**: decisão #1 do plano executada antes de o portal ganhar frontend público. PrismaClient único (`lib/prisma.js`) resolveu também a pendência #13. A `DATABASE_URL` agora contém senha — o log de inicialização a mascara (`index.js`). Ver `.claude/skills/banco-de-dados/SKILL.md`.
 
 ---
 

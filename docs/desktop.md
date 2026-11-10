@@ -130,6 +130,7 @@ Requisições prontas para reusar: botões no **cabeçalho do Body, ao lado das 
 `pages/Sandbox/AbaLote.jsx` — usa a mesma coluna da esquerda (município, sistema, endpoint, path). CSV (Papa Parse; "Sem cabeçalho" → colunas A, B, C…; prévia das 4 primeiras linhas) → **mapeamento** por campo: coluna do CSV (com valor de exemplo), valor fixo ou não enviar — pré-mapeado por nome sem acento/caixa → itens por lote (padrão 50, até 300; as descrições dos endpoints não trazem o limite de forma utilizável) e lotes simultâneos (até 5) → prévia do 1º item → **confirmação** (itens + URL — os dados vão direto para a API) → progresso (rola até ele) com **Parar**, **Consultar pendentes**, **Copiar IDs** e **Exportar CSV** (`;`, UTF-8 com BOM).
 
 - Regras puras e testadas em `lib/lote.js` (ver memória `betha-api-lote-assincrono`): POST devolve só `idLote` → consulta `GET {path}/{idLote}` a cada 5 s por até 60 s; `PROCESSADO` = gravado, `PROCESSADO_COM_ERRO` = parcial (erros por item), **`NAO_PROCESSADO` = ainda na fila, nunca erro**; 200 **sem** `idLote` = lote recusado (`message`). Sem mapa para `idIntegracao`, cada item recebe `RUNID-L<linha>` — o erro da Betha aponta de volta a **linha da planilha**. Endpoint sem schema: a linha inteira vira o objeto.
+- **Consultar o lote depois (2026-10-29)**: a consulta automática dura 60 s e o estado da tela some ao sair dela. Cada lote mostra o `idLote` e tem **Consultar** enquanto está na fila. No **Histórico**, o detalhe de um POST/PUT/PATCH aceito com `idLote` ganha o cartão **Consultar lote** (`consultaDoLote` em `lib/lote.js`: path = URL gravada − `urlBase` do sistema), com status, IDs gerados e erros por `idIntegracao`. O proxy guarda as 200 últimas requisições por município com **cota separada para `tipo: 'lote'`**, para os GETs de consulta não apagarem o POST que guarda o idLote.
 - Teste: Betha falsa local com lote assíncrono (1ª consulta NAO_PROCESSADO, depois PROCESSADO / COM_ERRO, e envelope recusado) — 7 linhas em 3 lotes: gravado / parcial (linha 5) / recusado.
 
 ## Agente de renovação de tokens (Betha Admin)
@@ -168,6 +169,46 @@ Duas frentes, como no web (abas **Por Fonte** / **Por API** no cabeçalho). `pag
 - Conferido com o arquivo de referência (`ArquivosTemporarios/debitos_credito_285568.jsonl`): 16.451 débitos verificados em ~1,1 s, regra "Receita vinculada…" acusa os 1.635 esperados; concentração (INSCRITA 890, 2025 1.512, LIDFE 100%).
 - **Frente Por API (2026-10-18)**: `PorApi.jsx` + `CamposApi.jsx` + `lib/checagem.js` (6 testes). Cadastro numa caixa única com busca sem acento ("Dívida · Inscrição em dívida · 2 marcados"), sub-abas **Verificar payload** (editor do Analisador + laudo: Contra a spec / Regras expansíveis — erros abertos / Falta fora do JSON) e **Campos** (chave Obrigatório + "O que quebra sem ele" editável; marcação igual à spec e sem observação é apagada). As marcações feitas no app ficam nesta máquina; reimportar a Checagem atualiza as que também existem na VPS (a VPS vence). Conferido: payload de dívida com campo errado → 15 achados (obrigatórios, tipo incorreto, campo inexistente), 2 regras e 3 notas.
 
+## Checagem → frente Migração (2026-10-31)
+
+Checagem de migração **por cadastro do tributos**, sobre o `.jsonl` exportado no Studio. As verificações nascem dos erros
+reais do salvar pela tela na Migração Espelho, porque a tela roda validações que a API de migração pula.
+- **Tela** (`pages/Checagem/Migracao.jsx`, terceira aba da Checagem): Cadastro → "1. Exportar" (script pronto) →
+  "2. Verificar" (carrega o arquivo; laudo com uma linha por verificação à esquerda e o detalhe à direita: por que
+  importa, como corrigir, os casos com id/nome/detalhe e **Exportar CSV**). O CSV sai **no formato do backup do Estímulo**
+  (colunas do cadastro da Migração Espelho + `verificacao`/`detalhe`): depois de corrigir, é só carregá-lo no Estímulo.
+  O arquivo é lido na tela e não é gravado.
+- **Lógica** (`src/lib/checagemMigracao.js`, 7 testes): `lerRegistrosMigracao` aceita o JSONL do script, o console do
+  Studio e o **backup completo da Migração Espelho** (`{ salvoEm, registro }`, último por id). `checarMigracao` →
+  `[{ verificacao, casos }]`. `cpfCnpjValido` (dígitos de CPF/CNPJ, sequência repetida é inválida, vazio não avalia).
+- **Contribuintes (primeira checagem):** mais de um endereço principal (marca quando são idênticos), logradouro de outro
+  município (`município do endereço ≠ município do logradouro`), CPF/CNPJ inválido.
+  **Gabarito:** o backup de Ruropolis de 2026-10-30 (10.955 contribuintes) dá 35 / 19 / 1, encontra os 54 erros do estímulo
+  (54 de 54) e não acusa ninguém que salvou sem erro.
+- **Script** (`montarScriptExportacao`): logradouros (id → município, que a fonte de endereços não traz) +
+  `Dados.tributos.v2.contribuintes.enderecos.busca` (em lote, no plural) + contribuintes → um JSON por linha
+  (`JSON.escrever`, arquivo `txt`). Sem `.valor` em enum: o `principal` vai inteiro e o App desembrulha. Ainda não rodou no Studio.
+- **Script validado (2026-10-31):** o Felipe rodou no Studio de Ruropolis → `contribuintes_migracao.jsonl` com 10.955
+  contribuintes e os mesmos 54 com erro.
+- **Severidade:** `erro` = trava o salvar pela tela (estímulo); `alerta` = problema de dado que não trava. Os alertas foram
+  testados contra o gabarito (nenhum caso deles falhou no estímulo): sem endereço (4.645), CPF/CNPJ vazio (24), CPF/CNPJ
+  repetido (2, verificação com `preparar(registros)` porque compara a base toda) e endereço repetido não principal (2).
+- **Correção sugerida** (`correcao` em cada verificação; tela `CorrecaoMigracao.jsx`, que reaproveita `useEnvioLote` e
+  `SeletorToken` da Migração Espelho):
+  - `api`: só o que precisa mudar, pela Service Layer do tributos. Principal repetido e endereço repetido →
+    `DELETE /api/pessoasEnderecos` dos idênticos a mais (fica o principal de menor id; principais diferentes entre si
+    vão para "sem correção automática"). Logradouro de outro município → **um `PATCH /api/logradouros` por logradouro**
+    (`idGerado`, `idMunicipio`, `nome`), só quando todos os endereços que o usam estão no mesmo município. Em Ruropolis, um
+    PATCH no SÃO JOÃO BATISTA resolve os 19. `montarLotesCorrecao` (prefixos `CHKEND`/`CHKLOG`).
+  - `prefeitura`: CPF/CNPJ inválido, vazio e repetido, e sem endereço → `csvPrefeitura` (código, nome, documento, problema,
+    detalhe, como corrigir) para repassar ao responsável.
+  - A correção pela Service Layer **não espelha**: depois, reestimular com o "Exportar CSV" da verificação na Migração Espelho.
+  - **Ainda não testado na Betha:** que o `idGerado` de `pessoasEnderecos` é o id do endereço da fonte, e que o PATCH
+    de logradouro sem `idTipoLogradouro` (obrigatório na spec) é aceito, como foi o PATCH parcial de crédito. O "Testar
+    com 1" confirma.
+- Próximas checagens: um item por cadastro (créditos/receitas, logradouros, bairros…), cada erro novo do estímulo vira
+  uma verificação.
+
 ## Municípios (ícone próprio, 2026-10-19)
 
 Legislação e documentos de cada município atendido. Ícone próprio no Rail (grupo `municipios`, rota `/municipios`), antes da Biblioteca. Decisões do Felipe: **arquivos na pasta**, não no banco — `<pasta da Biblioteca>/Municipios/<município>/Legislacao/<Tipo>/` — para os agentes do Claude Code no VS Code lerem os mesmos documentos; **tipos fixos**: Código Tributário, Leis, Decretos, Portarias, Anotações, Outros.
@@ -181,7 +222,7 @@ Legislação e documentos de cada município atendido. Ícone próprio no Rail (
 
 ## Biblioteca (ícone próprio, 2026-10-18)
 
-Nasceu como "Extensões" e foi renomeada a pedido do Felipe — consultar ≠ criar (criar fica no Gerador de Extensões). Saiu de Ferramentas e tem **ícone próprio no Rail** (grupo `biblioteca`, `direto: true`, rota `/biblioteca`; `/extensoes` redireciona), "como se fossem bibliotecas". Decisões dele: **lê a pasta local** `biblioteca/` na raiz do repositório — até 2026-10-19 era `Desktop\Scripts Formulas e Relatorios`; ver `biblioteca/LEIAME-KRAKION.md` (configurável — "trocar" no rodapé da coluna; guardada em `preferencias.json` → `bibliotecaPasta`) e é **somente leitura** (ver, buscar, copiar, mostrar na pasta). Nada vai para o banco.
+Nasceu como "Extensões" e foi renomeada a pedido do Felipe — consultar ≠ criar (criar fica no Gerador de Extensões). Saiu de Ferramentas e tem **ícone próprio no Rail** (grupo `biblioteca`, `direto: true`, rota `/biblioteca`; `/extensoes` redireciona), "como se fossem bibliotecas". Decisões dele: **lê a pasta local** `biblioteca/` na raiz do repositório — até 2026-10-19 era `Desktop\Scripts Formulas e Relatorios`; ver `biblioteca/CLAUDE.md` (configurável — "trocar" no rodapé da coluna; guardada em `preferencias.json` → `bibliotecaPasta`) e é **somente leitura** (ver, buscar, copiar, mostrar na pasta). Nada vai para o banco.
 - `electron/biblioteca.js` (7 testes): `indexar` (só nomes — 9.730 itens em ~30 ms: 5.393 scripts, 2.035 fórmulas, 2.302 relatórios, 34 municípios), `lerItem` (script/fórmula = arquivo + metadados do cabeçalho `// Chave : Valor`; relatório = os arquivos da pasta na ordem fonte dinâmica → jrxml → parâmetros → info), `buscarConteudo` (sem acento, devolve a 1ª linha que bate; ~3 s em 7 mil arquivos), `resolverDentro` (nada fora da pasta). `interpretarNome` lê o padrão "Município - [id -] TIPO - Descrição - Ano" das fórmulas e "Município - ÁREA - {'identificador'_ 'EVENTO'…} - Nome" das críticas.
 - IPC `biblioteca:*` no `main.js` + `window.krakion.biblioteca` no preload (só ids relativos chegam ao main).
 - Tela `pages/Biblioteca/` (index + Visualizador) + `lib/biblioteca.js` (12 testes): esquerda = navegação única (pedido do Felipe: fórmulas **abaixo dos scripts, separadas pelo tipo de fórmula**) — município no topo; seção SCRIPTS com as categorias; seção RELATÓRIOS (pedido: abaixo dos scripts e acima das fórmulas); seção FÓRMULAS com os 20 tipos (`Tipo Fórmula` do Betha, vindo do nome do arquivo como `codigo`) com nome legível (`rotuloTipoFormula`) e agrupados por assunto (Acréscimo, Geração de crédito, ITBI, Parcelamento). Sem abas no cabeçalho; meio = lista (busca por palavras no nome/município/tipo; "buscar no código" ou Enter procura dentro dos arquivos do filtro atual e mostra a linha); direita = código com realce (BFC-Script: `highlightCode(texto, BFC_SCRIPT)`; jrxml: `highlightXml`), régua de linhas, abre na linha encontrada, Copiar e Mostrar na pasta.
@@ -236,6 +277,162 @@ Plano: `docs/plans/2026-10-20-desktop-mapa-dependencias.md`. Nasceu do caso dos 
   - `src/lib/exclusaoImoveis.js` (5 testes) reaproveita `lerJsonl` (Checagem) e `interpretarEnvio`/`interpretarStatusLote` (lote da API). Validado num teste ponta a ponta com backend falso (120 imóveis + casos especiais).
 - Próximo passo: gerar o levantamento a partir do mapa para outros cadastros, só depois de validar cada um.
 
+## Migração Espelho (ícone próprio, 2026-10-29)
+
+O cadastro único sincroniza um registro com os outros sistemas (procuradoria, por exemplo) **quando ele é salvo**. Uma base
+migrada inteira para o tributos nunca foi salva depois de o cadastro único estar configurado, então nada foi espelhado. Em vez
+de migrar de novo pela Service Layer, a ferramenta provoca um "salvar" em cada registro. Ordem dos cadastros: créditos
+tributários → contribuintes → logradouros (depois bairros, moradores, receitas).
+- **Tela** (`pages/MigracaoEspelho/`): menu de cadastros à esquerda (só Créditos tributários pronto), fluxograma no meio
+  (Backup → Estímulo → Sincronização → Desfazer → Conferência) e o detalhe da etapa à direita.
+- **Backup:** script BFC gerado de `CADASTROS[].campos` (`src/lib/espelho.js`, 4 testes). Gera CSV `;` em UTF-8, com uma
+  coluna por campo na ordem da fonte e enum pelo `.valor`. Os campos dos créditos foram conferidos no Studio em 2026-10-29.
+  **O script ainda não rodou no Studio** (a tela avisa isso).
+- **Estímulo** (`Estimulo.jsx`, decisão do Felipe em 2026-10-29): carregar o CSV do backup → cada crédito vai num
+  `PATCH /api/creditosTributarios` **só com `idGerado` e a descrição atual + "."**. A spec lista `tipoCadastro`,
+  `abreviatura` e `idIndexadores` como obrigatórios; se a Betha recusar o PATCH enxuto, a mensagem aparece na linha.
+  - Pré-validação (`prevalidarEstimulo`): descrição que já termina com "." **só avisa**, não impede. A linha fica âmbar
+    e a descrição vai ficar com "..". Fica fora do envio quem não tem id (vazio ou 0), não tem descrição ou tem id repetido.
+  - Lista com ID | Descrição atual | Vai ficar e, depois do envio, a Situação de cada crédito (Sucesso, erro com a mensagem da Betha, ou na fila).
+  - Envio: município + sistema com token; "Testar com 1" (só o primeiro) ou todos, em lotes de 50, com confirmação.
+    Usa `interpretarEnvio`/`interpretarStatusLote` e a espera no 429 do lote da API. O idLote é consultado a cada 8 s
+    por até 3 min; depois disso, "Consultar pendentes". Também há "Reenviar os com erro" e "Parar".
+  - `idIntegracao` = `ESPCRED<id>`: o PATCH só aceita letras e números (hífen é recusado).
+  - **Validado em 2026-10-29:** 33 créditos, 1 lote, todos "Sucesso". O lote ficou alguns minutos em `NAO_PROCESSADO`
+    e saiu com "Consultar pendentes". **O PATCH parcial funciona:** a Betha aceita só `idGerado` + `descricao`, apesar
+    de a spec marcar outros campos como obrigatórios.
+  - **O PATCH pela Service Layer NÃO dispara o cadastro único** (2026-10-29: nada chegou na procuradoria). Só salvar pela
+    tela dispara. A tela usa outra API, `tributos.betha.cloud/tributos/v1/api/cadastros/creditos-tributarios`, com o
+    token da sessão (ver `tools/betha-capture`). O gatilho está nela ou numa chamada que a tela faz depois de salvar.
+  - **Captura de 2026-10-29 (`tools/betha-capture/capturas/investigacao`, fora do git):**
+    - **A chave entre os sistemas é o template.** `template.id` no tributos (tela) = `templateId` na fonte BFC =
+      `idTemplate` na procuradoria (`api.procuradoria.betha.cloud/procuradoria/api/creditosTributarios/{id}`). Os ids
+      são diferentes nos dois lados (313937 ↔ 211206). As receitas também se ligam pelo template. A listagem da
+      procuradoria não traz `idTemplate`, só o detalhe.
+    - O salvar da tela é `PUT tributos/v1/api/cadastros/creditos-tributarios/{id}` com o objeto inteiro e `version`.
+      Salvo sem mudança, o `version` continuou 48, ou seja, nada foi gravado. Provavelmente por isso salvar sem mudar
+      não dispara: o truque do caractere força uma gravação de verdade.
+    - A procuradoria tinha 25 créditos e o tributos 33. Lá havia duplicados (IRRF ×3, Alvará de Obras ×2) e dois com "."
+      que no tributos não têm mais (211206 "AUTO DE INFRAÇÃO.", 211305 "Imposto de Renda Retido na Fonte."). Isso
+      indica que estímulos anteriores criaram registros novos em vez de atualizar, e que a remoção do "." não propagou.
+  - **Limpeza da procuradoria (Ruropolis, 2026-10-29):** `DELETE /api/creditosTributarios` (Service Layer da procuradoria,
+    lote `6ae3fa6905e3ac4fbb81a74c`) com os 25 créditos. **20 excluídos.** 5 recusados por "em uso em outro registro":
+    202045 Alvará de Obras, 193225 IPTU, 211025 ISS NFe, 209685 e 211305 IRRF. Esses ficam na procuradoria.
+    Próximo passo: estimular pela tela do tributos e ver se o cadastro único recria os 20.
+  - **Estímulo pela tela VALIDADO (Habite-se 307397, 2026-10-29):** com "." o crédito **foi criado** na procuradoria
+    (211325) cerca de 4 s depois do PUT. Sem o ".", a descrição **voltou lá também**. O ciclo é: `GET
+    tributos/v1/api/cadastros/creditos-tributarios/{id}` → `PUT` no mesmo path com **o objeto do GET** e só a
+    `descricao` trocada (a tela só descarta `indexador.version`) → GET → PUT com a descrição original. Cada PUT
+    incrementou o `version` em 4 (78→82→86). O template vai no corpo porque a tela manda o objeto inteiro. A Service
+    Layer não tem campo de template, e o motivo de ela não disparar é que o evento do cadastro único sai da API da
+    tela. Para automatizar: chamar a API da tela com o token de sessão (`Authorization: Bearer <uuid>` + `User-Access`).
+  - **Não estimular** crédito que já tem correspondente antigo na procuradoria, sem o template (vira duplicado):
+    278737 IPTU ↔ 193225, 282157 Alvará de Obras ↔ 202045, 278817 ISS NFe ↔ 211025, 278777 IRRF ↔ 209685/211305.
+  - **Pela API de migração não há como (2026-10-29):** o PUT e o PATCH com todos os campos não mudaram nada na
+    procuradoria. Nas duas Service Layers, só `estados`/`paises` (tributos) e `paises`/`documentosDivida` (procuradoria)
+    têm `idTemplate`. **A API da tela recusa o token de migração:** `GET tributos/v1/api/cadastros/creditos-tributarios/{id}`
+    → 401 "Sem permissão", mesmo com o `User-Access` da captura. **Conclusão: o estímulo precisa do token de sessão de
+    um usuário logado.**
+- **Estímulo pela API da tela — VALIDADO (Ruropolis, 2026-10-29):**
+  - **Sessão** (`electron/sessaoTributos/`): "Entrar no tributos" abre uma janela do App (partição `sessao-tributos`, só
+    em memória) em `tributos.betha.cloud`. O Felipe entra e escolhe a entidade. O main lê `Authorization` + `User-Access`
+    das chamadas da própria tela (`webRequest.onBeforeSendHeaders`). **O token nunca vai à interface:** ela pede
+    `window.krakion.tributos.chamar(metodo, path, corpo)` e o main só deixa passar o que está em `regras.js`
+    (hoje, GET/PUT de `/api/cadastros/creditos-tributarios/{id}`). Um 401 apaga a sessão e avisa a tela. `regras.test.js`: 3 testes.
+  - **Ciclo** (`estimularPelaTela` em `src/lib/espelho.js`, testado com uma Betha falsa): GET → confere que a descrição bate
+    com o backup (se não bater, não mexe) → PUT com "." (`corpoParaPut`: objeto do GET, descrição trocada, sem
+    `indexador.version`) → espera (padrão 5 s) → GET → PUT com a original. Se o registro já estiver com "." de uma rodada
+    interrompida, faz só a volta. Se a volta falhar, o registro fica `marcado` e "Reenviar os com erro" faz só a volta.
+  - **Tela** (`EnvioTela.jsx`): barra da sessão, espera e paralelos (1–5), checkbox por crédito (para tirar os que têm
+    correspondente antigo na procuradoria), Testar com 1 / Estimular N / Parar / Continuar / Reenviar com erro. Sessão
+    expirada no meio pausa a fila: o item volta para "na fila" e nada vira erro.
+  - **Desfazer pela API da tela** (`desfazerPelaTela`, mesmo `EnvioTela` com `desfazer`; 2026-10-29): GET e, se a descrição
+    termina com ".", PUT sem o ponto. A volta **espelha** na procuradoria. Crédito já sem ponto não é gravado ("Já estava
+    sem '.'"); descrição diferente do backup não é tocada. O envio antigo pela Service Layer (PATCH, que não espelhava) e
+    `montarLotesEstimulo` saíram.
+  - **Primeiro uso real (Ruropolis, 2026-10-29):** 7 créditos voltaram 422 `"Já existe uma receita com a descrição informada."`
+    (285137, 278737, 285157, 278758, 278798, 278797, 278778). Na tela acontece o mesmo: salvar o crédito re-salva as
+    receitas dele, e a Betha recusa receita com descrição repetida. **Antes de estimular, tratar as receitas repetidas.**
+    Script `_BIBLIOTECA/Templates/Receitas_Descricao_Repetida_BASE.txt` (ainda não validado). A mensagem de 422 vem em
+    `detail.message`, e a tela agora mostra esse texto. Os erros da API da tela vão para o `krakion.log` (`[tributos]`).
+- **Bairros e logradouros no fluxo (2026-10-30):** cada cadastro tem `tela: { path, campo }` (onde fica na API da tela e
+  qual campo recebe o "."): créditos `descricao`, bairros e logradouros `nome`, em `/api/cadastros/enderecos/bairros|logradouros/{id}`.
+  O caminho de endereços foi liberado em `regras.js`. O backup sai de `Dados.tributos.v2.bairros|logradouros` com `idTemplate`
+  e o município. **O Estímulo filtra por município** quando o arquivo traz mais de um (o tributos pode ter a base nacional),
+  com `municipiosDoBackup`. O arquivo carregado agora é guardado por cadastro. Ordem do menu: Créditos → Bairros → Logradouros.
+  O PUT de bairro/logradouro pela tela segue o padrão do crédito, inferido da captura do GET; o primeiro "Testar com 1" confirma.
+- **Contribuintes (2026-10-30):** a captura do contribuinte 109271640 mostrou que **salvar sem mudar já dispara o cadastro
+  único**: ele apareceu na procuradoria (54600425) com o mesmo template (`1b661af7…`), sem "." e com o `version` igual (6).
+  A procuradoria tinha só **7 pessoas**, então não há base antiga para duplicar. O PUT da tela é o GET + `anoCorrente` (ano
+  atual) + `enderecoPrincipal: null`, e endereços, telefones e e-mails vão como vieram. **Modo `salvar`** (`tela.modo`):
+  `salvarPelaTela` faz GET → backup completo → um PUT (`corpoParaSalvar`), sem volta; o Desfazer mostra "não se aplica".
+  Caminho liberado em `regras.js`: `/api/cadastros/referentes/contribuintes/{id}`. O backup do Studio leva só campos simples
+  (sem enum). O registro inteiro vai para o backup automático.
+- **Erros do estímulo (2026-10-30):** o salvar pela tela roda as validações da Betha que a API de migração pula, então
+  cada erro é um bug de migração (ex.: receitas duplicadas). A tela mostra "Erros por motivo" (`resumoErros`) e
+  **"Exportar erros (N)"** (`csvErros`): **o mesmo arquivo do script** (mesmas colunas, mesma ordem, linhas originais) só
+  com quem falhou, mais `etapa` e `erro` no fim. Volta a ser carregado no próprio Estímulo para tentar só eles; ao
+  reexportar, `etapa`/`erro` não se repetem. Os motivos recorrentes devem virar regra da Checagem ou atalho de Ajustes rápidos.
+- **Arquivo do cadastro errado é bloqueado** (`cadastroDoArquivo`): pelo nome do arquivo (o do script ou o `_erros_`) ou
+  pelas colunas, escolhendo o cadastro mais específico. Motivo: o CSV de logradouros tem `id` e `nome` e passaria na tela de
+  bairros, que salvaria o bairro com o mesmo id. A tela diz "Este arquivo é de X — abra X no menu".
+- **Backup completo automático (2026-10-30, pedido do Felipe: "o ideal é sempre ter o backup completo"):** no Estímulo e no
+  Desfazer, o objeto que a tela devolve no GET (o registro inteiro, como a Betha guarda) é gravado **antes do 1º PUT** em
+  `%APPDATA%\Krakion Desktopackups\migracao-espelho\<cadastro>-<AAAA-MM-DD>.jsonl`, uma linha `{ salvoEm, registro }` por registro
+  (`electron/espelho/backup.js`, 2 testes, IPC `espelho:guardar`). Se o backup falhar, o registro não é tocado ("Backup não
+  gravado — não mexi"). Há o botão "Abrir backups". O CSV do Studio continua servindo de lista de ids e do texto original.
+  Motivo: no contribuinte, endereços, telefones e sócios ficam em fontes separadas no Studio, mas vêm juntos no GET da tela.
+- **Novas tentativas** (`comNovasTentativas`): 429/500/502/503/504 da tela repetem a mesma chamada até 3 vezes (2 s, 5 s, 15 s).
+  Nos logradouros de Ruropolis, 7 de cerca de 870 deram 500 sem mensagem.
+- **Ajustes rápidos** (seção da lateral da Migração Espelho; atalhos de correção de migração que travam o estímulo).
+  `src/lib/ajustesMigracao.js` (6 testes) + `pages/MigracaoEspelho/AjusteRapido.jsx`, com as abas "1. Exportar" (script
+  pronto, `ScriptPronto` de `comum.jsx`) e "2. Ler resultado" (CSV do script ou a saída do console do Studio colada, via `lerRegistros`).
+  - **Receitas duplicadas:** `duplicadas()` agrupa descrição e abreviatura repetidas, sem diferenciar caixa e espaços. **Por
+    padrão sem olhar a classificação:** em Ruropolis, 5 dos 7 pares que deram 422 eram TAXA × IMPOSTO. A opção "só na mesma
+    classificação" fica disponível. Em cada par, uma receita tem `templateId` (cadastro único) e a outra **não tem** (faixa 877xxx,
+    criada pela migração). A tela marca "sem template · fora do cadastro único".
+  - **Aba "3. Corrigir"** (`CorrecaoReceitas.jsx`; `alvosCorrecao`/`lotesPatchReceitas`): em cada grupo de descrição
+    repetida, a receita **sem template** ganha "." no fim da descrição por `PATCH /api/receitas`, com o token de migração
+    (obrigatórios: idGerado, descricao, abreviatura, classificacao, inscDividaAtiva). A receita com template não é tocada.
+    Grupo em que todas têm template, ou nenhuma tem, vai para "revisar à mão". Se a nova descrição já existir, a receita
+    vem desmarcada. **Excluir ficou de fora por decisão do Felipe.** Em Ruropolis são as 7 receitas 877xxx dos créditos com 422.
+  - **Validado (Ruropolis, 2026-10-29):** as 7 receitas foram atualizadas pela Correção. Em seguida, o estímulo dos créditos pela
+    tela deu sucesso em todos. Ciclo completo: ajuste das receitas → estímulo → crédito espelhado na procuradoria.
+  - **Limpar logradouros (procuradoria)** (`exclusao` no ajuste; aba "2. Excluir" em `ExclusaoAjuste.jsx`): a procuradoria de
+    Ruropolis tinha 30.604 logradouros. Quase todos são a **base nacional da Betha ("Padrões do sistema", outras cidades,
+    excluir desabilitado na tela)** e ficam. Os do município (`idMunicipio` 4320) eram **3.733**, contra 874 no tributos:
+    todos "Rua" com o CEP genérico 68165000, com nomes como `*****`, "1" e "10A AVENIDA …", ou seja, base de outra migração.
+    O script de exportação usa `Dados.procuradoria.v2.logradouros.buscar()`. **Na procuradoria o método é `.buscar`**, e
+    `criterio: "idMunicipio = 4320"` volta "Erro interno do servidor", por isso o filtro é feito dentro do script
+    (`montarScriptBackup` aceita `metodo` e `filtro`). A exclusão (`lotesExcluir`): `DELETE /api/logradouros` pela Service
+    Layer da procuradoria, em lotes de 50. A tela separa "em uso" de outros erros e, por segurança, descarta registro fora
+    do filtro do município (`separarPorFiltro`). A v1 da fonte traz a mesma base com menos campos.
+  - **Limpar bairros (procuradoria)** (2026-10-30): `Dados.procuradoria.v2.bairros.buscar()`. O município vem num objeto
+    (`municipio { id, nome }`), então o campo pode ter `caminho` (`municipio?.id`), usado no script, na leitura do console
+    e no filtro. `DELETE /api/bairros` com `{ bairros: { idGerado } }`. Base de digitação de outra migração: dezenas de
+    variações do mesmo bairro (AEROPOROT, AERORPOTO, CENGTRO, CETRO…), com os de outras cidades na mesma faixa de ids.
+  - **Resultado da limpeza em Ruropolis (2026-10-30):** logradouros 30.604 → 24.952. Excluídos cerca de 5.650 "definidos por
+    usuários". Sobraram 11 em uso (7 de Rurópolis: CASTELO BRANCO, FLORESTA, GOV MARIO COVAS, MILTON ALVES COSTA,
+    OLAVO BILAC, RUA 03, SANTOS DUMONT). **"Padrões do sistema" (base nacional) a API não exclui**, igual à tela, e eles
+    ficam. Bairros: sobraram 11 em uso (6 de Rurópolis: AEROPORTO, BELA VISTA, CENTRO, DIVINOPOLIS, PLANALTO, VILA NOVA).
+    Os em uso saem num segundo passe, depois do estímulo dos contribuintes.
+  - **Rajada** (`src/lib/rajada.js`, 4 testes; usada pelo `useEnvioLote`): manda todos os lotes, 4 em paralelo, e depois
+    consulta os idLotes em rodadas (250 ms entre consultas, 5 s entre rodadas, até 30 min). Antes era lote → espera sair
+    da fila → próximo. "Consultar pendentes" reconsulta sem reenviar.
+  - **Limite da Betha medido (procuradoria, 2026-10-30):** cerca de **140 chamadas** e depois 429 por uns 3,5 min (142 lotes
+    em 176 s → bloqueio de 214 s). O Felipe notou primeiro: "a cada 6.000–7.000 registros" (140 lotes × 50). No 429,
+    todas as chamadas em paralelo param juntas (`pausaAte`) e tentam de novo **a cada 15 s**. A escada 30 s/1/2/5 min
+    (`esperaApos429`) deixava até 2 min parados depois da liberação. O resumo da tela mostra "tenta de novo às HH:MM".
+  - **Outras cidades** (opção na aba Excluir, desligada por padrão; `ID_MUNICIPIO = ""` no script exporta todas): o Felipe
+    quer limpar também os padrões do sistema, porque o usuário recadastra pelo CEP. Na tela a exclusão deles vem
+    desabilitada. Testar com 1 antes.
+  - O envio pela Service Layer foi extraído para `envioLote.jsx` (`useMunicipioToken`, `SeletorToken`, `useEnvioLote`:
+    espera no 429, consulta do idLote, pendentes). O Desfazer e a Correção usam o mesmo código. `aplicarRetornoLote`
+    casa o erro pelo `idIntegracao` do corpo do lote, sem depender de prefixo.
+- **Desfazer** (mesmo `Estimulo.jsx`, `modo="desfazer"`): usa o mesmo CSV e manda PATCH com a descrição do backup.
+  Colunas: Está agora (backup + ".") | Vai voltar para. É seguro justamente porque o PATCH não sincroniza: a procuradoria
+  não é tocada. Aviso: sobrescreve qualquer edição feita pela tela depois do backup.
+
 ## Componentes compartilhados
 
 `Pagina` (moldura), `Modal`, `Confirmar` (ação destrutiva, aceita async), `Busca`, `CaixaBusca` (substitui o `<select>`), `Abas` (pílulas com contador), `BotaoIcone`, `MetodoBadge` (cor por método HTTP), `JsonColorido`, `Codigo` (em `pages/Biblioteca/Visualizador.jsx` — código com régua e realce, também usado pelo Gerador), `LimiteErro` (erro num módulo mostra a mensagem em vez de tela em branco; o `Layout` reseta ao trocar de rota), `Icone`. Helpers: `lib/texto.js` (`normalizar`, `contem` — busca sem acento), `lib/endpoints.js` (`agruparPorModulo`, `avisoUrlBase`), `lib/codigo.js` (`highlightCode` com palavras extras — `BFC_SCRIPT` —, `highlightXml`; ambos escapam antes de pintar), `lib/json.js` (`colorirJson`).
@@ -277,6 +474,42 @@ Plano: `docs/plans/2026-10-20-desktop-mapa-dependencias.md`. Nasceu do caso dos 
 ## Estado e próximos passos (2026-10-20)
 
 ### ▶ Retomar aqui (trabalho em andamento)
+
+**Atualização 2026-10-30 — Migração Espelho (Ruropolis). Detalhes na seção "Migração Espelho" acima.**
+
+**Onde paramos:** estímulo dos **contribuintes** rodando pela tela. Vários voltaram com **"Somente um endereço pode ser
+definido como principal."** O Felipe já esperava ("eu sabia que apareceria"). **Amanhã:** corrigir esses contribuintes e
+transformar o erro em **regra/script da Checagem** (ver a memória `estimulo-revela-erros-migracao`).
+
+Para começar amanhã:
+1. O CSV de erros (botão **Exportar erros** no Estímulo de Contribuintes, `contribuintes_tributos_erros_<data>.csv`) tem os
+   contribuintes que falharam, no formato do script, com `etapa` e `erro`. Recarregá-lo no Estímulo tenta só eles.
+2. O registro completo de cada contribuinte (como a tela devolveu, antes do salvar) está no backup automático:
+   `%APPDATA%\Krakion Desktop\backups\migracao-espelho\contribuintes-2026-10-30.jsonl` (botão "Abrir backups"). Dá para
+   contar ali quantos endereços estão marcados como principal em cada um e confirmar a causa antes de corrigir.
+3. Hipótese a confirmar: é dado da migração (mais de um endereço com principal = SIM). O App manda o mesmo objeto do GET
+   + `anoCorrente` + `enderecoPrincipal: null`, igual à tela, e o contribuinte de teste (1 endereço) salvou sem erro.
+4. Corrigir (Service Layer ou script) → reestimular só os do CSV de erros → criar a regra da Checagem para esse caso.
+
+**O que ficou pronto em 2026-10-29/30:**
+- Módulo **Migração Espelho** (ícone próprio): Cadastros (Créditos tributários, Bairros, Logradouros, Contribuintes) com
+  Backup → Estímulo → Sincronização → Desfazer → Conferência, e **Ajustes rápidos** (Receitas duplicadas, Limpar
+  logradouros da procuradoria, Limpar bairros da procuradoria).
+- Descobertas: só a **API da tela** dispara o cadastro único (a Service Layer grava, mas não espelha, e a tela recusa o
+  token de migração com 401). A chave entre os sistemas é o **template**. Crédito, bairro e logradouro precisam de mudança
+  real ("." e volta); **contribuinte espelha só de salvar**. O limite da Service Layer é de cerca de 140 chamadas por
+  janela, com 429 por uns 3,5 min.
+- Ruropolis: créditos ✅ (7 receitas duplicadas corrigidas antes); procuradoria limpa (logradouros 30.604 → 24.952,
+  ficaram os padrões do sistema e 11 em uso; bairros, ficaram 11 em uso); bairros e logradouros estimulados ✅ (7 HTTP 500
+  em logradouros: rodar o **Desfazer de logradouros** com o mesmo CSV para garantir que nenhum ficou com "."); contribuintes
+  em andamento.
+- O App: sessão do tributos numa janela própria (o token não vai à interface), backup completo automático antes de cada
+  PUT, novas tentativas no 500/429, envio em rajada com pausa de 15 s no 429, exportação dos erros no formato do script,
+  bloqueio de arquivo de outro cadastro.
+- **Segundo passe de limpeza** na procuradoria (os 11 logradouros e 11 bairros em uso) depois dos contribuintes.
+- Nada foi commitado: tudo está no working tree do `krakion-app`, junto com alterações anteriores do Felipe.
+
+O que está abaixo é o estado de 2026-10-21, mantido como histórico.
 
 **Atualização 2026-10-21 — exclusão de Placas CONCLUÍDA, exceto 1:** 2.373 imóveis excluídos. O 34664997 (código 2402)
 não sai pela API (ciclo movimentação de criação ↔ linha de inscrição — ver o caso em `biblioteca/_CONHECIMENTO/Imoveis/casos/`);
@@ -323,7 +556,7 @@ que foi para o master e a VPS a pedido (exigência do Google para o OAuth).
 - Ícones próprios no Rail: **API** (requisição única, lote assíncrono, Modelos), **Municípios** (legislação e documentos), **Biblioteca** (scripts, relatórios e fórmulas da pasta local, com versões por ano), **Gerador de Extensões** (script de exportação), **Mapa de dependências** (cadastro → dependentes, endpoints, fonte BFC, notas da prática, scripts validados e exclusão em cascata de imóveis).
 - Rodapé do Rail: **Conexões** (plugue): Google Drive conectado (conta do Felipe) + **backup automático** (banco sem segredos + biblioteca por pasta, a cada 24 h).
 - Configurações: Sistemas, Central de Tokens, Betha Admin, Importar dados (sistemas, endpoints, municípios, tokens, notas, conhecimento, checagem).
-- A base BFC mora em `biblioteca/` (ex-`Desktop/Scripts Formulas e Relatorios`). Ver `biblioteca/LEIAME-KRAKION.md`.
+- A base BFC mora em `biblioteca/` (ex-`Desktop/Scripts Formulas e Relatorios`). Ver `biblioteca/CLAUDE.md`.
 - Testes: desktop **240**, backend **77**, todos passando (`npm test` em cada pasta).
 
 **Pendências conhecidas:**

@@ -203,3 +203,17 @@ model SwaggerSpec {
   endpoints   Endpoint[]
 }
 ```
+
+## Regras e armadilhas
+
+> Trazido do CLAUDE.md da raiz em 2026-11-09 (Fase 1 da economia de contexto — ver docs/plans/2026-11-09-fase1-economia-contexto.md).
+
+- **bodySchema** é armazenado como `String` (JSON serializado) no SQLite, parseado/stringificado manualmente
+- **Sentinel `_exemplo`** no bodySchema: o primeiro elemento `{ _exemplo: true, json: {...} }` contém o exemplo completo do request body da spec. Frontend filtra com `.filter(c => !c._exemplo)`
+- **Reimportar Swagger (2026-10-17)**: `importar-swagger`/`fetch-swagger` aceitam `substituir: true` (apaga os endpoints do sistema antes, numa transação — `gravarSpec`); sem ele só acrescenta e **duplica**. `importar-swagger` aceita corpo de até 32 MB (specs Betha > 1 MB davam 413).
+- **Swagger parser** resolve `$ref`, `allOf`, `anyOf/oneOf` com limite de 5 níveis de profundidade
+- **Array bodies**: quando o requestBody é `type: array`, os campos são extraídos do `items`
+- **HTML auto-detection**: `/fetch-swagger` detecta se a URL retornou HTML do Swagger UI e tenta extrair o URL do JSON automaticamente
+- **Sistema urlBase**: NÃO deve terminar com `/api` ou `/api/` — os paths dos endpoints importados do Swagger já incluem `/api/...`. URL final = `urlBase + endpoint.path`. Ex correto: `https://tributos.betha.cloud/service-layer-tributos`. Ex errado: `...service-layer-tributos/api` → URL ficaria `...api/api/imoveis` (duplo `/api`) → 404 no Betha.
+- **Swagger exclusivo em Sistemas**: `SwaggerImport` só é usado em `Sistemas.jsx` — aba Specs ou botão na aba Informações; `Sandbox (pages/Sandbox/)` não tem esse botão; botões de importação visíveis **apenas para admin**
+- **Painel detalhe Sistemas**: 3 abas — Informações (stats + editar + importar swagger), Specs (listar/remover specs), Endpoints (listar/editar endpoints do sistema); ações de escrita visíveis **apenas para admin** (`isAdmin = useAuthStore(state => state.usuario)?.role === 'admin'`)

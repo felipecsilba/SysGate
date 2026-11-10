@@ -1,3 +1,8 @@
+---
+name: banco-de-dados
+description: "Use ao mexer no schema.prisma, em queries Prisma, em $queryRaw ou no PostgreSQL do Krakion (modelos, relações, migração, db push)."
+---
+
 # Banco de Dados — Prisma + PostgreSQL
 
 ## Configuração

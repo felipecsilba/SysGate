@@ -206,3 +206,45 @@ Se o valor for um objeto com `.id`, extrai `.id`. Retorna `null` se nenhum for e
 - **PapaParse** — parsing e exportação de CSV
 - **proxyApi** — mesmo proxy do ClienteAPI
 - **SearchSelect** — combobox com busca para Módulo e Recurso
+
+## Padrões específicos da aba Envio em Lote
+
+> Trazido do CLAUDE.md da raiz em 2026-11-09 (Fase 1 da economia de contexto — ver docs/plans/2026-11-09-fase1-economia-contexto.md).
+
+### CSV sem cabeçalho
+- Toggle "Sem cabeçalho" na seção CSV (card 5 dentro de `AbaEnvioLote.jsx`)
+- Estados: `csvArquivo` (guarda o `File` para re-parse) + `csvSemCabecalho` (boolean)
+- `useEffect` com deps `[csvArquivo, csvSemCabecalho]` re-parseia o arquivo ao mudar o toggle
+- Com `csvSemCabecalho: false` → PapaParse com `header: true`, colunas = `meta.fields`
+- Com `csvSemCabecalho: true` → PapaParse com `header: false`, colunas geradas automaticamente como letras `A`, `B`, `C`, ... (até 26; depois `Col1`, `Col2`, ...)
+- Dropdown de mapeamento exibe: `A — valor` (sem cabeçalho) ou `NomeColuna — valor` (com cabeçalho)
+- Tabela de preview: cabeçalho = letras das colunas, linhas = dados do CSV (não transposto)
+
+### Envio em lote (array body)
+- **Não envia uma requisição por linha** — agrupa linhas em batches e envia um array JSON por batch
+- `tamanhoBatch` (state, padrão 50): configurável via slider 1–200 no card de configuração (card 6 dentro de `AbaEnvioLote.jsx`)
+- `construirBodyLinha(linha)`: função extraída que monta o body de uma linha CSV → objeto JS
+- `iniciarEnvio`: divide `linhas` em grupos de `tamanhoBatch`, dispara **todos os lotes simultaneamente** via `Promise.allSettled` — cada promise atualiza `progresso` via `.finally()` conforme vai resolvendo; sem delay entre lotes (modelo paralelo evita bloqueio do rate limiter de janela fixa da Betha)
+- Botão exibe: `▶ Iniciar envio (N lotes · M itens)`
+- Barra de progresso exibe: `Lote X/Y`
+- Log exibe por entrada: `Lote X/Y · N itens`, status badge, mensagem de resposta, IDs gerados
+
+### IDs gerados por lote
+- Backend (`proxy.js`): extrai `idGerado` de respostas array (join de todos os IDs por vírgula) e de objetos (campo `id`/`idGerado`/`idEconomico`)
+- Frontend: extrai `idsGerados[]` da resposta de cada batch — suporta array de objetos e resposta única
+- **Badges por ID**: cada ID gerado exibe um badge com split-button:
+  - Lado esquerdo: copia o ID para clipboard
+  - Lado direito `▼ GET`: dispara consulta GET para `pathCustom/{id}` via proxy
+- **Painel de resultado**: expande abaixo do badge com JSON destacado (syntax highlight) + statusCode
+- `consultasResultado` (state): `{ [chave]: { consultando, aberto, statusCode, data } }` onde `chave = "${loteIdx}-${idIdx}"`
+- Após conclusão: contador `X IDs gerados` na barra de progresso + botão "Copiar N IDs" (copia todos separados por vírgula)
+- Painel "IDs gerados" ao final: lista todos os IDs de todos os batches agrupados
+
+### Syntax highlight JSON (EnvioLote)
+- Função `highlightJson(obj)`: `JSON.stringify(obj, null, 2)` + regex colorizer via `dangerouslySetInnerHTML`
+- Cores: chaves = azul, strings = verde, números = amarelo, booleanos = roxo, `null`/comentários = cinza itálico
+- Preview de bodies: fundo `bg-gray-950`, max-h 320px com scroll, mostrando até 5 exemplos com contador `mostrando X/Y`
+
+### Exportar CSV com IDs
+- Botão "Exportar CSV" gera arquivo com colunas: `lote`, `itens`, `status`, `mensagem`, `ids_gerados` (vírgula-separados), `total_ids`
+- Disponível após conclusão do envio

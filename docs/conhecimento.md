@@ -172,3 +172,15 @@ Modal de criação/edição. Props: `artigo` (null = novo), `catalogo`, `onSaved
 ## Deploy
 
 Inclui mudança de schema — ao fazer deploy, `npx prisma db push` cria a tabela `Conhecimento` no banco de produção.
+
+## Regras e armadilhas
+
+> Trazido do CLAUDE.md da raiz em 2026-11-09 (Fase 1 da economia de contexto — ver docs/plans/2026-11-09-fase1-economia-contexto.md).
+
+- **Conhecimento — dados globais (sem isolamento)**: `Conhecimento` não possui `usuarioId`; todos os usuários autenticados veem todos os artigos. Diferente de `Notas` (isolado). `autorId` é só para permissão de edição.
+- **Conhecimento — permissões**: criar = qualquer autenticado; editar = autor (`autorId`) ou admin; deletar = somente admin. Backend verifica `req.usuario.role === 'admin' || existente.autorId === req.usuario.id` no PUT.
+- **Conhecimento — editor de blocos**: `conteudo` e `passos[].texto` armazenam JSON de blocos: `[{tipo: 'texto'|'subtitulo'|'codigo'|'nota', valor: string}]`. O modal usa `BlocoEditorList` (lista editável de blocos com ↑ ↓ ✕ no hover). Bloco `codigo` no **view** usa syntax highlight estilo VS Code Dark+ via `highlightCode()` em `index.jsx` (fundo `#1e1e1e`, keywords azul `#569cd6`, strings salmão `#ce9178`, números `#b5cea8`, comentários `#6a9955`, funções amarelo `#dcdcaa`, texto padrão `#d4d4d4`); no **editor** (textarea) exibe fundo `#1e1e1e` + texto `#d4d4d4` neutro (textarea não suporta spans). Cada passo do tipo `passo-a-passo` também suporta blocos ricos internamente.
+- **Conhecimento — retrocompatibilidade de blocos**: `parseConteudo(str)` em `constants.js` tenta `JSON.parse` — se for array de blocos válido usa diretamente; senão envolve o texto plano em `[{tipo:'texto', valor: str}]`. Garante que artigos criados antes dos blocos continuem funcionando.
+- **Conhecimento — tipos e campos**: `conteudo` (JSON de blocos) usado por FAQ/Erro/Dica/Outro; `passos` (JSON array `[{texto: string}]` onde `texto` é JSON de blocos) usado por passo-a-passo. Ao salvar, o campo não usado é sempre zerado. `TIPO_CONFIG`, `TIPO_OPTS` e `parseConteudo` exportados de `constants.js` (extraídos para evitar dependência circular entre `index.jsx` e `ModalConhecimento.jsx`).
+- **Conhecimento — sistema como texto (igual a Chamados)**: `Conhecimento.sistema String?` é texto livre populado do `CatalogoVertical.sistemas`. Diferente de `sistemaId FK` — não há relação com o modelo `Sistema` (sandbox). No modal, ao selecionar vertical o dropdown de sistema filtra automaticamente pelos sistemas daquela vertical no catálogo Betha.
+- **Conhecimento — serialização JSON**: `passos` e `etiquetas` armazenados como `JSON.stringify` no SQLite. Helper `parseConhecimento(c)` no backend faz `JSON.parse` antes de retornar (mesmo padrão de `parseNota`).

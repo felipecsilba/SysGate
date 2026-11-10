@@ -141,3 +141,10 @@ model Requisicao {
 ```
 
 > `sistemaId` é armazenado diretamente na `Requisicao` (além de via `endpoint.sistemaId`) para garantir que o sistema seja rastreável mesmo quando o endpoint não estiver vinculado ou for removido.
+
+## Regras e armadilhas
+
+> Trazido do CLAUDE.md da raiz em 2026-11-09 (Fase 1 da economia de contexto — ver docs/plans/2026-11-09-fase1-economia-contexto.md).
+
+- **Histórico sem token (2026-10-17)**: `Requisicao.headers` é gravado com `Authorization` mascarado (`lib/mascararHeaders.js`) e `GET /api/requisicoes` mascara também registros antigos.
+- **idGerado no proxy**: `proxy.js` extrai `idGerado` de resposta array (mapeia `item.id ?? item.idGerado ?? item.idEconomico ?? item.idLote`, filtra nulos, une com vírgula) e de objeto simples (`.id`, `.idGerado`, `.idEconomico`). Salvo no histórico de requisições.

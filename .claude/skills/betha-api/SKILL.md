@@ -1,3 +1,8 @@
+---
+name: betha-api
+description: "Use ao trabalhar com a API REST da Betha: proxy, tokens por município, URL base, envio em lote, idLote e IDs gerados, quirks do Swagger Betha."
+---
+
 # Betha API — Quirks e Padrões
 
 ---
@@ -219,7 +224,7 @@ node C:\Users\Felipe\Desktop\proxy.js
 ssh -R 8888:127.0.0.1:8888 root@187.77.230.138 -N
 ```
 
-Documentação completa: `skills/deploy.md`
+Documentação completa: `.claude/skills/deploy/SKILL.md`
 
 ---
 

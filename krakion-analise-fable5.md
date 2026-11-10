@@ -81,7 +81,7 @@
 
 | Ponto | Impacto |
 |---|---|
-| **SQLite** | ✅ **Resolvido (2026-06-11):** migrado para PostgreSQL (16 na VPS, 18 no dev local) com dados preservados e contagens verificadas. Ver `skills/banco-de-dados.md`. |
+| **SQLite** | ✅ **Resolvido (2026-06-11):** migrado para PostgreSQL (16 na VPS, 18 no dev local) com dados preservados e contagens verificadas. Ver `.claude/skills/banco-de-dados/SKILL.md`. |
 | **Anexos base64 dentro do banco** | Já infla o `dev.db`; com uploads externos fica insustentável. Mover para filesystem/objeto com referência no banco. |
 | **Número do chamado calculado no frontend** | O número muda se um chamado for deletado. Para uso interno é tolerável; como protocolo exibido a um cliente externo, é inaceitável — precisa ser persistido no banco na criação. |
 | **`ChamadoComentario.autorId` obrigatório → `Usuario`** | O schema não comporta comentário de autor externo. Precisa de ajuste para o portal. |
@@ -112,13 +112,13 @@ Helmet, bcrypt cost 10, lockout de login, rate limit no login, isolamento multi-
 
 > **Bônus:** error handler global passou a respeitar `err.status` (413 propaga) e não vaza mais `err.message`/`detail` (item 10 das Médias).
 >
-> Documentação registrada em: `docs/chamados.md`, `docs/usuarios.md`, `skills/seguranca.md`, `skills/deploy.md`, `CLAUDE.md`.
+> Documentação registrada em: `docs/chamados.md`, `docs/usuarios.md`, `.claude/skills/seguranca/SKILL.md`, `.claude/skills/deploy/SKILL.md`, `CLAUDE.md`.
 
 ---
 
 ### Fase 1 — Modelo de dados — ✅ CONCLUÍDA (deploy em produção 2026-06-11, commit `04962de`)
 
-> **Decisões tomadas:** `criadoPorId` permanece obrigatório — usuário-sistema **"portal"** (inativo, sem login) criado no seed e nos bancos local/produção (prod: id 5). Escopo incluiu ajustes mínimos: `solicitantes.js` trata email duplicado com **409** (P2002) e usa select público (não vaza `senhaHash`/tokens; expõe `contaAtiva`); `chamados.js` inclui `autorSolicitante` nos comentários do detalhe. Produção verificada antes do `db push`: 0 solicitantes, nenhum email duplicado. Smoke test local passou (P2002, autor externo, default de `origem`). Docs registradas em `docs/chamados.md`, `CLAUDE.md`, `skills/seguranca.md`.
+> **Decisões tomadas:** `criadoPorId` permanece obrigatório — usuário-sistema **"portal"** (inativo, sem login) criado no seed e nos bancos local/produção (prod: id 5). Escopo incluiu ajustes mínimos: `solicitantes.js` trata email duplicado com **409** (P2002) e usa select público (não vaza `senhaHash`/tokens; expõe `contaAtiva`); `chamados.js` inclui `autorSolicitante` nos comentários do detalhe. Produção verificada antes do `db push`: 0 solicitantes, nenhum email duplicado. Smoke test local passou (P2002, autor externo, default de `origem`). Docs registradas em `docs/chamados.md`, `CLAUDE.md`, `.claude/skills/seguranca/SKILL.md`.
 
 ```prisma
 model Solicitante {
@@ -151,7 +151,7 @@ model ChamadoComentario {
 
 ### Fase 2 — Backend do portal (`/api/portal/*`) — ✅ CONCLUÍDA (local, commit `3843f4a`, 2026-06-11)
 
-> **Implementado conforme o plano**, com os seguintes detalhes de escopo: helpers de auth (`hashToken`/`captchaValido`/`criarTransporter`) extraídos para `backend/src/lib/authUtils.js` (reuso entre `auth.js` e `portalAuth.js`); upload de anexos do portal (`POST /portal/chamados/:id/anexos`) com a mesma validação da Fase 0 (parser de 8 MB estendido no `index.js`); rota interna `POST /api/chamados/:id/comentarios` já aceita a flag `interno` (suporte antecipado ao toggle da Fase 4); aprovação de contas via `GET /api/solicitantes?contaPendente=true` + `PATCH /api/solicitantes/:id/conta` (admin) — a tela interna fica para a Fase 4. Listagem/detalhe do portal não expõem prioridade/classificação/vertical/responsável. Smoke test local com 33 checks passou (isolamento por solicitante, separação dos trilhos, filtro de comentários internos e de seus anexos, lockout, recuperação). **Postgres migrado na sequência** (mesmo dia, dev + produção — decisão #1 resolvida). Docs em `docs/chamados.md`, `skills/seguranca.md`, `skills/banco-de-dados.md`, `CLAUDE.md`.
+> **Implementado conforme o plano**, com os seguintes detalhes de escopo: helpers de auth (`hashToken`/`captchaValido`/`criarTransporter`) extraídos para `backend/src/lib/authUtils.js` (reuso entre `auth.js` e `portalAuth.js`); upload de anexos do portal (`POST /portal/chamados/:id/anexos`) com a mesma validação da Fase 0 (parser de 8 MB estendido no `index.js`); rota interna `POST /api/chamados/:id/comentarios` já aceita a flag `interno` (suporte antecipado ao toggle da Fase 4); aprovação de contas via `GET /api/solicitantes?contaPendente=true` + `PATCH /api/solicitantes/:id/conta` (admin) — a tela interna fica para a Fase 4. Listagem/detalhe do portal não expõem prioridade/classificação/vertical/responsável. Smoke test local com 33 checks passou (isolamento por solicitante, separação dos trilhos, filtro de comentários internos e de seus anexos, lockout, recuperação). **Postgres migrado na sequência** (mesmo dia, dev + produção — decisão #1 resolvida). Docs em `docs/chamados.md`, `.claude/skills/seguranca/SKILL.md`, `.claude/skills/banco-de-dados/SKILL.md`, `CLAUDE.md`.
 
 - **Middleware `autenticarExterno`:** JWT com claim `tipo: 'externo'` e `sid` (solicitanteId). Crucial: o `autenticar.js` interno passa a rejeitar tokens com `tipo: 'externo'` — sem isso, um externo logado acessaria todas as rotas internas.
 
@@ -191,7 +191,7 @@ model ChamadoComentario {
 
 ### Fase 4 — Integração no sistema interno — ✅ CONCLUÍDA (local, 2026-06-12)
 
-> **Implementado conforme o plano**, mais a tela de aprovação adiada da Fase 2. Backend: `GET /api/chamados/:id` passou a expor `contaAtiva`/`temConta` do solicitante (derivado de `senhaHash`, removido antes da resposta) e o `GET /dashboard` inclui `origem` em `semResponsavel` — todo o resto já existia desde as Fases 1–2. Smoke test local com 11 checks passou (temConta/contaAtiva sem vazar senhaHash, `?contaPendente=true`, aprovação via PATCH, `origem` na listagem/dashboard, flag `interno` persistida). Docs em `docs/chamados.md`, `docs/usuarios.md`, `skills/seguranca.md`, `CLAUDE.md`.
+> **Implementado conforme o plano**, mais a tela de aprovação adiada da Fase 2. Backend: `GET /api/chamados/:id` passou a expor `contaAtiva`/`temConta` do solicitante (derivado de `senhaHash`, removido antes da resposta) e o `GET /dashboard` inclui `origem` em `semResponsavel` — todo o resto já existia desde as Fases 1–2. Smoke test local com 11 checks passou (temConta/contaAtiva sem vazar senhaHash, `?contaPendente=true`, aprovação via PATCH, `origem` na listagem/dashboard, flag `interno` persistida). Docs em `docs/chamados.md`, `docs/usuarios.md`, `.claude/skills/seguranca/SKILL.md`, `CLAUDE.md`.
 
 - ✅ Badge "Portal" nos chamados de `origem: 'portal'` — cards da Minha Fila, tabela do Painel, lista do Dashboard e cabeçalho do detalhe.
 - ✅ Toggle **"Resposta ao cliente"** (default) vs **"Nota interna"** no formulário de comentário — nota interna renderiza em âmbar com badge; o modo não reseta após enviar (evita vazar nota ao cliente), só ao trocar de chamado. Comentários de autor externo exibem badge "Cliente".

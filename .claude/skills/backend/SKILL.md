@@ -1,3 +1,8 @@
+---
+name: backend
+description: "Use ao criar ou alterar rota, middleware ou lógica do servidor Express do Krakion (backend/src) — estrutura, padrões de rota e tratamento de erro."
+---
+
 # Backend — Node.js + Express + Prisma
 
 ## Visão geral

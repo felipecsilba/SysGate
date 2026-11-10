@@ -1,3 +1,8 @@
+---
+name: fluxos
+description: "Use para entender os fluxos ponta a ponta do Krakion web (importar Swagger, executar requisição, envio em lote) antes de mexer em mais de uma camada."
+---
+
 # Fluxos e Padrões
 
 ## Fluxo 1: Importar Swagger do sistema

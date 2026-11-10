@@ -1,3 +1,8 @@
+---
+name: deploy
+description: "Use ao fazer deploy do Krakion web na VPS (git pull, build, PM2, Nginx) ou ao configurar o tunnel SSH para chamadas à API Betha em produção."
+---
+
 # Deploy — VPS Hostinger
 
 **Servidor:** 187.77.230.138 | **Domínio:** krakionlabs.cloud | **OS:** Ubuntu 24.04 LTS

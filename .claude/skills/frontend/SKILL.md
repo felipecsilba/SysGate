@@ -1,3 +1,8 @@
+---
+name: frontend
+description: "Use ao criar ou alterar página, componente, store Zustand ou estilo Tailwind do Krakion web (frontend/src)."
+---
+
 # Frontend — React + Vite + Tailwind + Zustand
 
 ## Stack e configuração
