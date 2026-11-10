@@ -226,6 +226,30 @@ avisa em vez de chutar.
    21/10/2026 nos templates e no Gerador). Vários arquivos = um
    `Resultado.arquivo(...)` por arquivo, como os scripts de Cobrança Registrada
    da Caixa já fazem em produção. (`Resultado.arquivos([...])` não existe.)
+13. **"Último valor cadastrado" se busca em duas etapas, nunca pelo histórico
+   inteiro.** Cada campo adicional grava um registro por ano; pedir todos os anos
+   de uma vez (`ordenacao: "ano desc"`) trazia ~60 registros por imóvel e levou
+   >5 min para 3.000 imóveis. Certo: (1) só o ano corrente, em lote, para todos;
+   (2) para quem ficou sem aquele campo, o campo SOZINHO sem limite de ano, só dos
+   pendentes, mais recente primeiro. Base inteira de Congonhas (30.235) em ~3 min.
+   E **não fixar "N anos atrás"**: dado de cadastro (área do lote, uso) fica
+   parado há muitos anos — com 5 anos, 15 de 16 comerciais vinham sem área.
+   (Relatório de Congonhas, 09/11/2026.)
+14. **`se (lista)` do BFC é verdadeiro com lista vazia.** O `se` não segue a
+   "Groovy truth": `se ([]) { A } senao { B }` executa A. Para lista ou texto,
+   `if (!x.isEmpty())`. É a 2ª armadilha do `se` (a 1ª: `it` vira nulo dentro dele).
+15. **Filtrar imóveis por campo adicional no servidor**, não no script:
+   `imoveis.busca(parametros: ["camposadicionais": "DO USO = 'COMERCIAL'"], criterio: ...)`.
+   Vários valores = uma busca por valor, unidas pelo id. (Mecanismo do relatório
+   de Ilhota; o de Itaúna comparava imóvel por imóvel no script e era lento.)
+16. **Diagnóstico em pedaços quando "a busca volta vazia".** Rodar a mesma busca
+   com o critério desmontado (só faixa / + situação / + campos / um código /
+   sem critério) num log só achou em 1 rodada que a busca estava certa e o
+   problema era o `se` que a pulava. Mais rápido que adivinhar.
+17. **Relatório para indicador: lista imóvel a imóvel + resumo no fim, e sem
+   parâmetro de faixa.** O cliente quer comprovar (lista) e citar (resumo). Faixa
+   de código fica só como constante interna de teste — na tela permitiria emitir
+   um total parcial sem perceber.
 
 ---
 
@@ -240,6 +264,7 @@ avisa em vez de chutar.
 | `_BIBLIOTECA/Funcoes Prontas/` | Padrões generalizados: cálculo de acréscimos, fator por faixa, campos adicionais, indexador + achados de qualidade de código |
 | `_BIBLIOTECA/Templates/Atualiza_Valor_Venal_BASE.txt` | Template validado em produção (Placas) |
 | `_BIBLIOTECA/Templates/Exporta_Campos_Adicionais_Imoveis_BASE.txt` | Exportação de BCI + valores venais em CSV. Validado em produção 31/08/2026. Vem com o script de diagnóstico que descobre título e ano de cada campo |
+| `_BIBLIOTECA/Templates/Relatorio_Imoveis_por_Uso_BASE.txt` + `.jrxml` | **Relatório** (PDF) de imóveis agrupados por um campo adicional de lista (ex.: DO USO), com área, valor venal, subtotal e resumo. Parâmetro lista múltipla das opções do campo. Validado em Congonhas 09/11/2026 (30.235 imóveis em ~3 min) |
 
 ### Sistema de fontes de dados
 
@@ -253,6 +278,18 @@ avisa em vez de chutar.
 | `FontesDeDados/_validar.py` | Teste de regressão contra fatos verificados na tela |
 | `FontesDeDados/_obsoleto/` | Artefatos aposentados + o que cada um errava |
 
+### Grafo, revisor e agentes (2026-11-09)
+
+| Artefato | O que é |
+|---|---|
+| `_GRAFO/grafo.mjs` + `grafo.json` | **Primeiro lugar para perguntar o que existe.** Liga áreas, templates, funções prontas, tipos de fórmula, conhecimento, fontes BFC e endpoints. `busca`, `no`, `exemplos`, `vizinhos`, `gerar`, `checar` |
+| `_GRAFO/curado.json` | Ligações confirmadas na prática, áreas e notas. Sempre vence a inferência |
+| `_GRAFO/corpus.json` (fora do git) | As 9.732 peças de produção como exemplos: `exemplos tipo-formula:<TIPO>`, `exemplos fonte:<x>`, `exemplos template:<id>` (variantes) |
+| `_FERRAMENTAS/revisar-bfc.mjs` | Acusa as armadilhas das "Lições aprendidas" com linha e correção. Calibrado: 0 erros em 424 peças validadas ou em produção |
+| `.claude/agents/bfc-*` + skill `pedido-bfc` | Executores por tipo de peça (Sonnet), leitor (Haiku), roteiro do orquestrador |
+
+Referência completa: `../docs/estrutura-agentes-e-grafo.md`. Como curar o grafo: `_GRAFO/LEIAME.md`.
+
 ### Pipeline de regeneração (se reextrair as fontes)
 
 ```
@@ -260,6 +297,7 @@ avisa em vez de chutar.
 2. _extrair_nomes_bfc.py       Scripts/ → nomes_bfc.json
 3. _mapear_bfc_rest.py         ambos    → mapa_bfc_rest.json
 4. _validar.py                          → confere tudo
+5. node _GRAFO/grafo.mjs gerar          → grafo.json (+ corpus.json) com os nomes novos
 ```
 
 ---
@@ -276,6 +314,11 @@ avisa em vez de chutar.
 | campos adicionais | `imovel.camposAdicionais` lê / `imovel.campoAdicional` grava |
 | `imoveis.camposAdicionais` | leitura em lote: aceita `criterio` com `idImovel in (...)`, sem parâmetro |
 | campos adicionais | tipo LISTA_SELECAO vem com `vlCampo = 0` (não null) — o valor está em `opcoes` |
+| `camposAdicionais` | as **opções** de um campo de lista são campos filhos: `tituloCampoPai = '<campo>'` (Congonhas, 09/11/2026) |
+| `imoveis.busca` | `parametros: ["camposadicionais": "<TÍTULO> = '<valor>'"]` filtra no servidor; combina com `criterio` (Congonhas, 09/11/2026) |
+| parâmetro de relatório | Lista dinâmica com as opções de um campo: fonte "Listagem de campos adicionais" + **filtro avançado** `Criterio.onde('tituloCampoPai').igual('<campo>')`; o campo "Filtro" da tela só define colunas pesquisáveis |
+| parâmetro de relatório | existe em 3 lugares: fonte dinâmica (publicada), relatório, e o mapeamento entre os dois |
+| relatório sem dados | JasperReports gera página em branco; `whenNoDataType="AllSectionsNoDetail"` mostra cabeçalho e aviso |
 
 Esses casos estão cobertos por `_validar.py`.
 
@@ -295,7 +338,13 @@ Esses casos estão cobertos por `_validar.py`.
 - **50 nomes BFC do corpus não casaram com nenhuma fonte do catálogo**
   (`guiasEmitidas`, `baixasAutomaticasHomologadasEstornadas`, `movimentacoesMEI`,
   os `simam.*`). Provável pista do que falta no export — ver
-  `mapa_bfc_rest.json` → `sem_correspondencia`.
+  `mapa_bfc_rest.json` → `sem_correspondencia`. Desde 2026-11-09 elas existem no
+  grafo como fontes `[só produção]` (66 nomes de `nomes_bfc.json`), com quantas peças
+  as usam (`grafo.mjs no fonte:<nome>`), mas sem filtros nem campos documentados.
+- **Templates sem registro de validação** (2026-11-09): 8 sem data de validação no README
+  e 1 que o README diz "ainda não validado" (Receitas com Descrição Repetida). Lista
+  atualizada: `node _GRAFO/grafo.mjs checar`. Ao validar no Studio, registrar a data no
+  README ("Template validado em produção em DD/MM/AAAA") e rodar `grafo.mjs gerar`.
 - 1 fonte da lista de 575 IDs nunca foi extraída (`679a207a97f86d7606dc4904`).
 
 ### Visão do usuário pro projeto
@@ -306,7 +355,10 @@ scripts, biblioteca de funções. Ordem definida por ele ("uma coisa de cada vez
 2. ✅ Biblioteca de funções prontas
 3. ✅ Mapeamento completo das fontes (4 dimensões, relacionamentos, nomes reais)
 4. 🟡 **Especialistas por área** — em andamento (ver abaixo)
-5. ⏳ **RAG / embeddings** sobre a base pra busca semântica
+5. ✅ **Grafo da base + executores por tipo de peça** (2026-11-09) — busca por estrutura
+   (o que usa o quê, quem deriva de qual template), não semântica
+6. ⏳ **RAG / embeddings** sobre a base pra busca semântica — avaliar depois de usar o grafo;
+   boa parte do "achar o que existe" o grafo já resolve
 
 O usuário tem crédito na API do Claude disponível pra RAG/embeddings.
 

@@ -124,6 +124,7 @@ Revisor de armadilhas (rodar antes de entregar qualquer BFC):
 `node _FERRAMENTAS/revisar-bfc.mjs <arquivo> [--formula]`. Calibrado: 0 erros em 424 peças
 validadas ou em produção. Rascunho de município vai para `_RASCUNHOS-TESTES/<Município>/`.
 
-## O que vem aí
+## Referência
 
-O corpus indexado no grafo (Fase 4). Design em `../docs/plans/2026-11-09-estrutura-agentes-grafo.md`.
+Visão completa da estrutura (contexto, agentes, grafo, revisor, testes, pendências):
+`../docs/estrutura-agentes-e-grafo.md`.

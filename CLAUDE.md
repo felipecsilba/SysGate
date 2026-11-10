@@ -23,6 +23,7 @@ nela. Este arquivo vai junto para qualquer pasta, então fica curto.
 |---|---|
 | `docs/<módulo>.md` | Um por módulo do sistema (chamados, checagem, portfolio, desktop…), com regras e armadilhas |
 | `docs/api.md` | Todas as rotas do backend |
+| `docs/estrutura-agentes-e-grafo.md` | Como o contexto, os agentes, o grafo da biblioteca e o revisor de BFC se organizam (reestruturação de 2026-11-09) |
 | `docs/plans/` | Designs e planos datados; `arquivo/` guarda versões antigas (ex.: o CLAUDE.md de 739 linhas) |
 | `.claude/skills/` | Skills do projeto: processo (brainstorming, writing-plans, TDD, debug, verificação, melhorias) e domínio (backend, frontend, banco-de-dados, seguranca, deploy, betha-api, swagger-parser, fluxos) |
 | `.claude/agents/` | Executores da biblioteca BFC (`bfc-scripts`, `bfc-formulas`, `bfc-relatorios`, `bfc-api`, em Sonnet), `bfc-leitor` (Haiku) e o especialista `itbi-transferencias`. Pedido de peça BFC segue a skill `pedido-bfc` |
