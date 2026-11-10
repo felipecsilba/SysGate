@@ -19,6 +19,7 @@ function detalhes(n) {
       break
     case 'fonte':
       if (n.status === 'fora-do-catalogo') partes.push('fora do catálogo — conferir o nome no editor')
+      else if (n.status === 'so-producao') partes.push(`vista em produção (${n.usos} usos), fora do catálogo — filtros e campos não documentados`)
       else {
         partes.push(`fonte BFC · ${n.operacoes?.length || 0} operações · usos em produção: ${n.usos || 0}`)
         if (!n.confirmado) partes.push('nome não confirmado no editor')
@@ -71,6 +72,7 @@ function etiqueta(n) {
     return n.status === 'nao-validado' ? ' [NÃO validado no Studio]' : ' [sem registro]'
   }
   if (n.status === 'fora-do-catalogo') return ' [fora do catálogo]'
+  if (n.status === 'so-producao') return ' [só produção]'
   if (n.status === 'bruto') return ' [bruto]'
   return ''
 }

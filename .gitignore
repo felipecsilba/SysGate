@@ -15,7 +15,7 @@ ArquivosTemporarios/
 # biblioteca/ — corpus de clientes fica FORA do git (455 MB, material de prefeitura).
 # Entram no git só o conhecimento e as ferramentas: CONTEXTO, README, _BIBLIOTECA,
 # _CONHECIMENTO e FontesDeDados (scripts, mapas e catalogo_v2 que o Gerador usa).
-# Backup do corpus: ver biblioteca/LEIAME-KRAKION.md
+# Backup do corpus: ver biblioteca/CLAUDE.md
 biblioteca/Formulas/
 biblioteca/Scripts/
 biblioteca/Relatorios/

@@ -25,7 +25,7 @@ nela. Este arquivo vai junto para qualquer pasta, então fica curto.
 | `docs/api.md` | Todas as rotas do backend |
 | `docs/plans/` | Designs e planos datados; `arquivo/` guarda versões antigas (ex.: o CLAUDE.md de 739 linhas) |
 | `.claude/skills/` | Skills do projeto: processo (brainstorming, writing-plans, TDD, debug, verificação, melhorias) e domínio (backend, frontend, banco-de-dados, seguranca, deploy, betha-api, swagger-parser, fluxos) |
-| `.claude/agents/` | Especialistas (hoje: `itbi-transferencias`) |
+| `.claude/agents/` | Executores da biblioteca BFC (`bfc-scripts`, `bfc-formulas`, `bfc-relatorios`, `bfc-api`, em Sonnet), `bfc-leitor` (Haiku) e o especialista `itbi-transferencias`. Pedido de peça BFC segue a skill `pedido-bfc` |
 | `scripts/conferir-contexto.js` | Confere que nada do CLAUDE.md antigo se perdeu e mede o contexto carregado |
 | `sysgate.bat` / `deploy.bat` | Windows: iniciar/parar backend+frontend / deploy para a VPS |
 | `krakion-analise-fable5.md` | Análise e plano das fases do portal externo (histórico) |

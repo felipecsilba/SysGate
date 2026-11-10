@@ -80,6 +80,7 @@ function entradas() {
     templates, funcoes, tipos, conhecimentos,
     catalogo: json('FontesDeDados/catalogo_v2.json'),
     mapaBfc: json('FontesDeDados/mapa_bfc_rest.json'),
+    nomesBfc: json('FontesDeDados/nomes_bfc.json'),
     swagger: json('FontesDeDados/swagger/tributos-openapi.json'),
     dependencias: json('FontesDeDados/dependencias_confirmadas.json'),
     curado: json('_GRAFO/curado.json'),

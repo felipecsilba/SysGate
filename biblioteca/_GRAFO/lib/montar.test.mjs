@@ -122,6 +122,19 @@ test('checar: template que o README diz não validado tem aviso próprio', () =>
   assert.ok(!avisos.some(a => a.tipo === 'template-sem-registro'))
 })
 
+test('fonte vista em produção e fora do catálogo vira nó "so-producao", sem aviso; a desconhecida continua avisada', () => {
+  const e = entradas()
+  e.nomesBfc = { 'indexadores.movimentacoes': { usos: 12, exemplos: ['Scripts/Cidade - x.txt'] }, imoveis: { usos: 20 } }
+  const g = montarGrafo(e)
+  const no = g.nos.find(n => n.id === 'fonte:indexadores.movimentacoes')
+  assert.deepEqual(no, { id: 'fonte:indexadores.movimentacoes', tipo: 'fonte', rotulo: 'indexadores.movimentacoes', status: 'so-producao', usos: 12 })
+  assert.equal(g.nos.filter(n => n.id === 'fonte:imoveis').length, 1)
+  assert.ok(aresta(g, 'funcao:busca-de-indexador-numa-data', 'usa-fonte', 'fonte:indexadores.movimentacoes'))
+  const avisos = checar(g, e.curado).map(a => a.tipo + ' ' + a.id)
+  assert.ok(!avisos.includes('fonte-fora-do-catalogo fonte:indexadores.movimentacoes'))
+  assert.ok(avisos.includes('fonte-fora-do-catalogo fonte:naoExiste'))
+})
+
 test('checar: aresta órfã', () => {
   const g = montarGrafo(entradas())
   g.arestas.push({ de: 'template:Exporta_Debitos', tipo: 'usa-fonte', para: 'fonte:sumiu', origem: 'inferida' })

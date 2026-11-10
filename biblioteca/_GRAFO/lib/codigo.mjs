@@ -30,7 +30,7 @@ export function semComentarios(texto) {
 }
 
 // Verbos que encerram a cadeia: Dados.tributos.v2.imoveis.camposAdicionais.busca(...) → imoveis.camposAdicionais
-const METODOS = new Set(['busca', 'buscar', 'cria', 'criar', 'atualiza', 'atualizar', 'altera', 'alterar',
+export const METODOS = new Set(['busca', 'buscar', 'cria', 'criar', 'atualiza', 'atualizar', 'altera', 'alterar',
   'exclui', 'excluir', 'remove', 'remover', 'salva', 'salvar', 'lista', 'listar', 'insere', 'inserir', 'obtem', 'obter'])
 
 /** Fontes chamadas no código: [{ sistema, cadeia }], sem repetição, ordenadas. */

@@ -186,6 +186,42 @@ Pendências de curadoria apontadas pelo `checar` (não corrigidas à mão):
 - 2 fontes fora do catálogo: `tabelaAuxiliar.registros` e `dinamico/novo`.
 - 1 citação sem nó: `/api/core` no LEIAME do `_bruto/formula-catalogo`.
 
+## Resultado da Fase 3 (2026-11-09)
+
+Plano executado: `docs/plans/2026-11-09-fase3-agentes.md`.
+
+- Agentes em `.claude/agents/`: `bfc-leitor` (Haiku), `bfc-scripts`, `bfc-formulas`, `bfc-relatorios`,
+  `bfc-api` (Sonnet); `itbi-transferencias` consulta o grafo primeiro. Cada executor tem 420–770
+  tokens de instrução; a regra comum fica em `biblioteca/CLAUDE.md`.
+- Roteiro do orquestrador: skill `pedido-bfc`.
+- Revisor `biblioteca/_FERRAMENTAS/revisar-bfc.mjs` (11 regras, 13 testes). Calibração:
+
+| Conjunto | Peças | Erros | Com aviso |
+|---|---|---|---|
+| Templates + funções validados | 24 | 0 | 3 |
+| Scripts em produção (amostra) | 300 | 0 | 20 |
+| Fórmulas em produção (amostra) | 100 | 0 | 0 |
+
+  A 1ª passada dava ~470 avisos na amostra; o corpus mostrou que `metodo-rest` acusava métodos
+  legítimos (`preenche`, `metadados`, `calcula`) e `fonte-desconhecida` acusava fontes de produção
+  fora do catálogo. Correções: `metodo-rest` só para `busca<Algo>` do catálogo; `se-lista` só para
+  variável que recebeu lista; o grafo ganhou 66 fontes `so-producao` (de `nomes_bfc.json`).
+
+- Ensaio (um pedido por agente, gabarito já existente na base; rascunhos apagados ao fim):
+
+| Agente | Achou a base certa? | Revisor | Observação |
+|---|---|---|---|
+| `bfc-leitor` | sim (caso + template) | — | Descobriu que o template BB PIX **não** tem a correção `gerar-pix` do caso resolvido (pendência real) |
+| `bfc-scripts` | sim (`Exporta_Campos_Adicionais_Imoveis`) | limpo | Aplicou a leitura em duas etapas (lição 13) |
+| `bfc-formulas` | sim (função pronta IGPM) | limpo | Não achou fórmulas de produção do tipo: a instrução procurava no conteúdo, e o tipo está no nome do arquivo — corrigido no agente |
+| `bfc-relatorios` | sim (`Relatorio_Imoveis_por_Uso`) | limpo | Versão comentada + oficial limpa; trocou o `se (faltando)` que o revisor avisou |
+| `bfc-api` | sim (caso de exclusão + grafo) | — | Ordem igual à receita validada; ⛔ do PUT vazio; ids como placeholder; não chamou a API |
+
+  Os agentes só ficam disponíveis numa sessão nova, então o ensaio rodou como agente genérico no
+  mesmo modelo, seguindo o arquivo do agente (93–105 mil tokens processados cada). Repetido com o
+  `bfc-leitor` de verdade: mesma resposta, **~60 mil tokens processados em Haiku** (total com a
+  base fixa do sistema e cache; o trabalho saiu do Opus).
+
 ## Fases seguintes (resumo)
 
 - **Fase 2 — Grafo curado**: gerador, `curado.json`, comando de consulta, Mapa do App lendo o grafo.

@@ -77,6 +77,7 @@ test('formatarBusca e formatarResumo', () => {
   assert.equal(formatarBusca([]), 'Nada encontrado.')
   assert.equal(formatarBusca([{ id: 'template:A', tipo: 'template', rotulo: 'A', status: 'validado' }]), 'template:A — A [validado, sem data]')
   assert.equal(formatarBusca([{ id: 'template:B', tipo: 'template', rotulo: 'B', status: 'nao-validado' }]), 'template:B — B [NÃO validado no Studio]')
+  assert.equal(formatarBusca([{ id: 'fonte:guiasEmitidas', tipo: 'fonte', rotulo: 'guiasEmitidas', status: 'so-producao', usos: 8 }]), 'fonte:guiasEmitidas — guiasEmitidas [só produção]')
   assert.equal(formatarNo({ nos: [{ id: 'template:B', tipo: 'template', rotulo: 'B', status: 'nao-validado', arquivo: 'b.txt' }], arestas: [] }, 'template:B'),
     'template:B — B\n  NÃO validado no Studio · b.txt')
   assert.match(formatarResumo(g), /^8 nós: 2 area, 1 conhecimento, 2 endpoint, 2 fonte, 1 template\n8 arestas: 1 depende, 1 documenta, 1 mapeia, 4 pertence, 1 usa-fonte/)

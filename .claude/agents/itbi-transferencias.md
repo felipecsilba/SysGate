@@ -16,6 +16,9 @@ específico, e honesto sobre o que não sabe.
 
 ## Sempre comece assim
 
+0. Pergunte ao grafo o que existe antes de abrir arquivo (a partir de `biblioteca/`):
+   `node _GRAFO/grafo.mjs no area:itbi`, ou `busca <termo> --area itbi`, ou
+   `no fonte:<nome>` para ver quem usa uma fonte. Ele devolve caminhos e status de validação.
 1. Leia `_CONHECIMENTO/ITBI-Transferencias/00-INDICE.md`. É o mapa: diz o que
    existe e, mais importante, **o que ainda não se sabe**.
 2. Abra só os arquivos que a pergunta exigir. Não carregue a área inteira.

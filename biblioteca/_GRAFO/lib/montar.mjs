@@ -10,7 +10,7 @@ const chave = a => `${a.de}|${a.tipo}|${a.para}`
 
 /**
  * entradas: { hash, templates: [{ no, codigo }], funcoes: [{ nome, arquivo, codigo }], tipos: [{ nome, arquivo }],
- *             conhecimentos: [{ rel, texto }], catalogo, mapaBfc, swagger, dependencias, curado }
+ *             conhecimentos: [{ rel, texto }], catalogo, mapaBfc, nomesBfc, swagger, dependencias, curado }
  * → { versao, hash, nos, arestas, naoResolvidas }
  */
 export function montarGrafo(e) {
@@ -34,6 +34,14 @@ export function montarGrafo(e) {
 
   // Fonte citada → nó existente (sem caixa), tentando a cadeia inteira e depois os prefixos.
   const fontePorChave = new Map(fontes.map(f => [f.id.toLowerCase(), f.id]))
+
+  // Nomes vistos em produção (nomes_bfc.json) que o catálogo não tem: existem, mas sem filtros/campos documentados.
+  for (const [nome, info] of Object.entries(e.nomesBfc || {})) {
+    const id = `fonte:${nome}`
+    if (fontePorChave.has(id.toLowerCase())) continue
+    addNo({ id, tipo: 'fonte', rotulo: nome, status: 'so-producao', usos: info?.usos || 0 })
+    fontePorChave.set(id.toLowerCase(), id)
+  }
   const resolverFonte = ({ sistema, cadeia }) => {
     if (sistema !== 'tributos') return `fonte:${sistema}/${cadeia}`
     const partes = cadeia.split('.')

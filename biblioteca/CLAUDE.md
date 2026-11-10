@@ -100,7 +100,24 @@ publicar nem mandar para serviço externo.
 - **Agentes** (`.claude/agents/` na raiz do Krakion): leem `_CONHECIMENTO/`, `_BIBLIOTECA/` e
   rodam `FontesDeDados/fonte.py`. Hoje: `itbi-transferencias`.
 
+## Quem faz o quê
+
+Roteiro de todo pedido de peça: skill `pedido-bfc`. O Opus (sessão principal) entende, consulta o
+grafo, decide e revisa; os agentes em `.claude/agents/` executam com contexto mínimo.
+
+| Agente | Modelo | Faz |
+|---|---|---|
+| `bfc-leitor` | Haiku | Acha e resume o que a base tem (só lê) |
+| `bfc-scripts` | Sonnet | Scripts, fontes dinâmicas, críticas, componentes |
+| `bfc-formulas` | Sonnet | Fórmulas por tipo |
+| `bfc-relatorios` | Sonnet | `.jrxml` + fonte dinâmica + parâmetros |
+| `bfc-api` | Sonnet | Payloads e roteiro de envio — **nunca envia** |
+| `itbi-transferencias` | da sessão | Diagnóstico e consulta de ITBI/transferências |
+
+Revisor de armadilhas (rodar antes de entregar qualquer BFC):
+`node _FERRAMENTAS/revisar-bfc.mjs <arquivo> [--formula]`. Calibrado: 0 erros em 424 peças
+validadas ou em produção. Rascunho de município vai para `_RASCUNHOS-TESTES/<Município>/`.
+
 ## O que vem aí
 
-Executores por tipo de peça (Fórmulas, Scripts, Relatórios, API) consultando o grafo, e depois
-o corpus indexado nele. Design em `../docs/plans/2026-11-09-estrutura-agentes-grafo.md`.
+O corpus indexado no grafo (Fase 4). Design em `../docs/plans/2026-11-09-estrutura-agentes-grafo.md`.
