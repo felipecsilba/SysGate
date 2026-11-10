@@ -1,0 +1,16 @@
+{
+  "_leia": "Camada CURADA do grafo da biblioteca. Sempre vence a inferência. areas: id, nome, palavras (casam com o COMEÇO de uma palavra do id/rótulo, sem acento: 'iss' pega ISSQN e não emissão), pastas (pasta do _CONHECIMENTO que pertence à área). arestas: [{de, tipo, para, via?, nota?}] confirmadas na prática (tipos: usa-fonte, mapeia, depende, documenta, pertence). remover: [{de, tipo, para}] inferidas que estão erradas. notas: {id: [texto]} anexadas ao nó. Depois de mudar: node biblioteca/_GRAFO/grafo.mjs gerar && node biblioteca/_GRAFO/grafo.mjs checar.",
+  "areas": [
+    { "id": "area:itbi", "nome": "ITBI e Transferências", "palavras": ["itbi", "transferenc", "transmiss"], "pastas": ["ITBI-Transferencias"] },
+    { "id": "area:imoveis", "nome": "Imóveis e IPTU", "palavras": ["imove", "imovel", "iptu", "venal", "condomin", "englobad"], "pastas": ["Imoveis"] },
+    { "id": "area:divida-ativa", "nome": "Dívida Ativa e Procuradoria", "palavras": ["divida", "procuradoria", "execuc", "protest", "cda"], "pastas": [] },
+    { "id": "area:debitos", "nome": "Débitos, Créditos e Guias", "palavras": ["debito", "credito", "lancament", "guia", "parcelament"], "pastas": [] },
+    { "id": "area:registro-bancario", "nome": "Registro Bancário e Convênios", "palavras": ["convenio", "bancari", "pix", "boleto", "arrecad", "febraban", "cobranc"], "pastas": ["Registro-Bancario"] },
+    { "id": "area:economicos", "nome": "Econômicos e ISS", "palavras": ["economic", "iss", "alvara", "cnae", "atividade"], "pastas": [] },
+    { "id": "area:receitas-diversas", "nome": "Receitas Diversas", "palavras": ["diversa"], "pastas": [] },
+    { "id": "area:acrescimos", "nome": "Acréscimos, Descontos e Indexadores", "palavras": ["acrescimo", "desconto", "juros", "multa", "correc", "indexador", "refis", "beneficio", "isenc", "remiss", "anisti"], "pastas": [] }
+  ],
+  "arestas": [],
+  "remover": [],
+  "notas": {}
+}

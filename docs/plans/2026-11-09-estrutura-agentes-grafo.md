@@ -1,7 +1,7 @@
 # Estrutura de agentes, grafo e contexto — design
 
-> Data: 2026-11-09 · Status: **design aprovado · Fase 1 entregue em 2026-11-09** (ver "Resultado da Fase 1").
-> Próximo passo: plano da Fase 2 (grafo curado) com a skill `writing-plans`.
+> Data: 2026-11-09 · Status: **design aprovado · Fases 1 e 2 entregues em 2026-11-09** (ver "Resultado da Fase 1" e "Resultado da Fase 2").
+> Próximo passo: plano da Fase 3 (agentes executores) com a skill `writing-plans`.
 
 ## Objetivo
 
@@ -162,6 +162,29 @@ Plano executado: `docs/plans/2026-11-09-fase1-economia-contexto.md`.
 - Testes: backend 77/77, desktop 316/316.
 - 15 skills registradas em `.claude/skills/`; `skills/` removida.
 - Pendente com o Felipe: conferência manual com `/memory` numa sessão aberta em `biblioteca/`.
+
+## Resultado da Fase 2 (2026-11-09)
+
+Plano executado: `docs/plans/2026-11-09-fase2-grafo-curado.md`. Como usar: `biblioteca/_GRAFO/LEIAME.md`.
+
+- `biblioteca/_GRAFO/grafo.json`: 650 nós (8 áreas, 18 templates, 7 funções, 10 tipos de fórmula,
+  28 conhecimentos, 223 fontes, 356 endpoints) e 1.259 arestas (632 depende, 416 pertence,
+  145 mapeia, 36 documenta, 30 usa-fonte). 302 KB, gerado em 0,3 s, idêntico ao regerar.
+- Testes: 34/34 no grafo; desktop 316/316 (as funções reaproveitadas do App não mudaram).
+- O App **não** lê o grafo ainda: fase própria, quando houver algo novo para mostrar.
+
+| Pergunta | Pelo grafo | Abrindo arquivos |
+|---|---|---|
+| Que templates usam a fonte `debitos`? | `no fonte:debitos` ~80 tokens | templates + READMEs ~45.000 |
+| O que existe sobre ITBI? | `no area:itbi` ~450 | pasta ITBI inteira ~23.600 (índice sozinho ~1.800) |
+| O que depende de `imoveis` na API? | `vizinhos … --aresta depende` ~880 | Swagger ~1,5 milhão |
+
+Pendências de curadoria apontadas pelo `checar` (não corrigidas à mão):
+- 8 templates sem registro de validação (as 4 Varreduras, Diagnóstico e Lista de campos
+  adicionais, Lista de ids por código, Levantamento de débitos sem sistema de origem).
+- 1 template que o README diz **não validado**: Receitas com Descrição Repetida.
+- 2 fontes fora do catálogo: `tabelaAuxiliar.registros` e `dinamico/novo`.
+- 1 citação sem nó: `/api/core` no LEIAME do `_bruto/formula-catalogo`.
 
 ## Fases seguintes (resumo)
 

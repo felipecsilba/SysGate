@@ -39,6 +39,25 @@ Armadilhas que já custaram rodada (lista completa na memória `bfc-script-armad
 - Não zipar no script: o Studio já entrega zip. Um `Resultado.arquivo(...)` por arquivo.
 - `imprimir (a) + b` não soma: montar a linha numa variável antes.
 
+## Consultar o grafo antes de abrir arquivo
+
+O grafo (`_GRAFO/grafo.json`) liga áreas, templates, funções prontas, tipos de fórmula,
+conhecimento, fontes BFC e endpoints REST. **Para saber o que existe e onde, pergunte ao grafo
+primeiro** e abra só os arquivos que ele apontar. Uma consulta custa ~100 a 900 tokens; abrir a
+pasta de ITBI inteira custa ~23 mil, e o catálogo de fontes, milhões.
+
+```bash
+node _GRAFO/grafo.mjs busca <termo> [--tipo template|fonte|endpoint|conhecimento…] [--area itbi]
+node _GRAFO/grafo.mjs no <id>                   # ficha: arquivo, validação, notas e vizinhos
+node _GRAFO/grafo.mjs vizinhos <id> [--aresta depende] [--profundidade 2]
+node _GRAFO/grafo.mjs gerar && node _GRAFO/grafo.mjs checar   # depois de mudar template, conhecimento ou curado.json
+```
+
+- Template com `[sem registro]` ou `[NÃO validado no Studio]` não é base confiável: avise antes de usar.
+- Fonte `[fora do catálogo]`: conferir o nome no editor da Betha.
+- O grafo diz **onde** olhar. Campos, filtros e parâmetros de uma fonte continuam no `fonte.py`.
+- Confirmou uma ligação na prática? Registre em `_GRAFO/curado.json` (com data na nota) e rode `gerar`. Como funciona: `_GRAFO/LEIAME.md`.
+
 ## Consultar fontes de dados
 
 ```bash
@@ -59,6 +78,7 @@ Aceita o nome do catálogo ou o nome do editor da Betha. O catálogo (`catalogo_
 | Pasta | Conteúdo | No git? |
 |---|---|---|
 | `CONTEXTO.md`, `README.md`, este arquivo | Handoff da base | sim |
+| `_GRAFO/` | Grafo da biblioteca: `grafo.json` (gerado), `curado.json` (à mão), `grafo.mjs` (consulta) e `lib/` (testes: `node --test "_GRAFO/**/*.test.mjs"`) | sim |
 | `_BIBLIOTECA/` | Templates BASE (17), funções prontas (7), dicionário de fórmulas (10 tipos), dicionário de funções BFC-Script, Fórmula vs Script. `Exporta_Debitos_Completo_por_Credito_BASE` gera o `.jsonl` da Checagem Por Fonte | sim |
 | `_CONHECIMENTO/` | O que os agentes leem, por área (ITBI-Transferencias, Imoveis, Registro-Bancario, `_COMUM`, `_FUNDAMENTOS`) + `_bruto/` ainda não digerido | sim |
 | `FontesDeDados/` (scripts, `.md`, `catalogo_v2.json`, `mapa_bfc_rest.json`, `nomes_bfc.json`) | `fonte.py` e o Gerador do App precisam deles | sim |
@@ -82,6 +102,5 @@ publicar nem mandar para serviço externo.
 
 ## O que vem aí
 
-Grafo ligando templates, fontes, endpoints e conhecimento, e executores por tipo de peça
-(Fórmulas, Scripts, Relatórios, API). Design em
-`../docs/plans/2026-11-09-estrutura-agentes-grafo.md`.
+Executores por tipo de peça (Fórmulas, Scripts, Relatórios, API) consultando o grafo, e depois
+o corpus indexado nele. Design em `../docs/plans/2026-11-09-estrutura-agentes-grafo.md`.
