@@ -20,6 +20,9 @@ começo), agrupamento, totais, colunas, o que fica de fora. O Felipe aprova ante
    `biblioteca/_CONHECIMENTO/ITBI-Transferencias/relatorios/` antes (`chaveNatureza`, contratos de
    parâmetro). Campo do cadastro em relatório: o caso CIB, no mesmo lugar.
 3. Fontes: `python fonte.py ver <fonte>` (em `biblioteca/FontesDeDados`).
+4. Relatórios de produção parecidos: `node biblioteca/_GRAFO/grafo.mjs busca "<assunto>" --corpus --tipo peca`
+   e `exemplos <id>` (cada relatório traz a `chaveNatureza` e o caminho da fonte dinâmica). Abra no
+   máximo 2 ou 3; a pasta tem também o `.jrxml` e o `parametros.txt`.
 
 ## Como montar (o roteiro que deu certo na 1ª tentativa, Congonhas 09/11/2026)
 

@@ -38,6 +38,24 @@ Testes: `node --test "biblioteca/_GRAFO/**/*.test.mjs"` (na raiz do repositório
 
 Toda aresta tem `origem`: `inferida` ou `curada`. A curada sempre vence.
 
+## Corpus de produção (`corpus.json`, fora do git)
+
+Quando `Formulas/`, `Scripts/` e `Relatorios/` existem na máquina, o `gerar` também grava
+`corpus.json` (~11 MB, ~20 s). A consulta junta os dois em memória; `--sem-corpus` ignora. Sem o
+corpus, tudo funciona só com o curado e `exemplos` avisa.
+
+| Nó | Id | O que traz |
+|---|---|---|
+| `peca` | `peca:formulas/debitos-gerais/andradas-formula_acrescimo_debito-48611-1900` (colisão de nome: `~2`) | `subtipo` (formula, script, fonte-dinamica, critica, componente, relatorio), `municipio`, `arquivo`, e do nome/info: `tipoFormula`, `ano`, `especializacao`, `cadastro`/`evento` (crítica), `chaveNatureza` (relatório); `familia` (hash do código sem comentários) e quantas peças/municípios têm o mesmo código |
+| `municipio` | `municipio:jaragua-do-sul` | "Bom Jesus" com ⚠: dois municípios misturados no mesmo prefixo |
+| `tipo-formula` | (status `sem-dicionario`) | tipos do corpus que o Dicionário de Fórmulas ainda não cobre |
+
+Arestas: `de-municipio`, `tipo` (subtipo `ITBI_*` → `tipo-formula:ITBI`), `usa-fonte`, `pertence`,
+`variante-de` (Jaccard de trechos de 5 tokens ≥ **0,40** com um template; calibrado em 2026-11-09:
+variantes reais 0,77–1,00, não relacionados ≤ 0,35, nenhum par entre 0,35 e 0,50).
+
+Código idêntico em várias cidades **não** é duplicata (CONTEXTO, decisão 5): é a mesma família.
+
 ## Como curar
 
 1. Confirmou na prática (Studio, tela, chamado) uma ligação que o grafo não tem? Acrescente em

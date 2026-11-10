@@ -1,5 +1,5 @@
 // Consultas sobre o grafo já carregado: busca por termo e vizinhança.
-import { semAcento } from './biblioteca.mjs'
+import { semAcento, slug } from './biblioteca.mjs'
 
 const letras = s => semAcento(s).replace(/[^A-Za-z0-9]/g, '').toLowerCase()
 const texto = s => semAcento(s).toLowerCase()
@@ -27,14 +27,28 @@ export function indice(grafo) {
 const areaId = a => (a.startsWith('area:') ? a : `area:${a}`)
 const daArea = (grafo, id, area) => (indice(grafo).saida.get(id) || []).some(a => a.tipo === 'pertence' && a.para === areaId(area))
 
-/** Nós que casam com o termo: nome exato (4) > começa com (2) > todas as palavras contidas (1). */
-export function buscar(grafo, termo, { tipo, area, limite = 20 } = {}) {
+/** Grafo curado + índice do corpus num só objeto de consulta (o corpus só acrescenta nós e arestas). */
+export function juntar(grafo, corpus) {
+  if (!corpus) return grafo
+  const ids = new Set(grafo.nos.map(n => n.id))
+  return {
+    versao: grafo.versao, hash: grafo.hash, corpusHash: corpus.hash,
+    nos: [...grafo.nos, ...corpus.nos.filter(n => !ids.has(n.id))],
+    arestas: [...grafo.arestas, ...corpus.arestas],
+    naoResolvidas: grafo.naoResolvidas || [],
+  }
+}
+
+/** Nós que casam com o termo: nome exato (4) > começa com (2) > todas as palavras contidas (1).
+ *  Peças do corpus só entram com { corpus: true } ou { tipo: 'peca' } — seriam milhares. */
+export function buscar(grafo, termo, { tipo, area, limite = 20, corpus = false } = {}) {
   const alvo = letras(termo)
   const palavras = texto(termo).split(/\s+/).filter(Boolean)
   if (!alvo) return []
   const res = []
   for (const n of grafo.nos) {
     if (tipo && n.tipo !== tipo) continue
+    if (n.tipo === 'peca' && !corpus && tipo !== 'peca') continue
     if (area && !daArea(grafo, n.id, area)) continue
     const lId = letras(local(n.id)), lRot = letras(n.rotulo || '')
     let score = 0
@@ -52,6 +66,40 @@ export function buscar(grafo, termo, { tipo, area, limite = 20 } = {}) {
     || (a.id < b.id ? -1 : 1))
   return res.slice(0, limite)
 }
+
+const semelhanca = via => Number(/semelhança (\d+,\d+)/.exec(via || '')?.[1]?.replace(',', '.') || 0)
+
+/**
+ * Peças de produção ligadas ao nó (que usam a fonte, são do tipo, derivam do template, são do município…).
+ * Uma por família (código idêntico aparece uma vez), alternando municípios; variante mais parecida primeiro.
+ */
+export function exemplos(grafo, id, { municipio, limite = 5, subtipo } = {}) {
+  const { porId, entrada } = indice(grafo)
+  const alvoMun = municipio ? slug(municipio) : null
+  const pecas = []
+  const vistos = new Set()
+  for (const a of entrada.get(id) || []) {
+    const n = porId.get(a.de)
+    if (!n || n.tipo !== 'peca' || vistos.has(n.id)) continue
+    if (subtipo && n.subtipo !== subtipo) continue
+    if (alvoMun && !slug(n.municipio || '').includes(alvoMun)) continue
+    vistos.add(n.id)
+    pecas.push({ ...n, via: a.via, peso: semelhanca(a.via) })
+  }
+  pecas.sort((x, y) => y.peso - x.peso || cmpTexto(y.ano || '', x.ano || '') || cmpTexto(x.municipio || '', y.municipio || '') || cmpTexto(x.id, y.id))
+  const porFamilia = new Map()
+  for (const p of pecas) if (!porFamilia.has(p.familia)) porFamilia.set(p.familia, p)
+  const restantes = [...porFamilia.values()]
+  const itens = [], munis = new Set()
+  while (itens.length < limite && restantes.length) {
+    const i = restantes.findIndex(p => !munis.has(p.municipio))
+    const p = restantes.splice(i < 0 ? 0 : i, 1)[0]
+    itens.push(p)
+    munis.add(p.municipio)
+  }
+  return { id, total: pecas.length, familias: porFamilia.size, municipios: new Set(pecas.map(p => p.municipio)).size, itens }
+}
+const cmpTexto = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 
 /** Vizinhos até a profundidade pedida (saída e entrada). Não atravessa áreas: elas ligam tudo a tudo. */
 export function vizinhos(grafo, id, { aresta, profundidade = 1, area } = {}) {

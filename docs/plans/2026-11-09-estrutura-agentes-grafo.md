@@ -1,7 +1,7 @@
 # Estrutura de agentes, grafo e contexto — design
 
-> Data: 2026-11-09 · Status: **design aprovado · Fases 1 e 2 entregues em 2026-11-09** (ver "Resultado da Fase 1" e "Resultado da Fase 2").
-> Próximo passo: plano da Fase 3 (agentes executores) com a skill `writing-plans`.
+> Data: 2026-11-09 · Status: **design aprovado · Fases 1 a 4 entregues em 2026-11-09** (ver "Resultado da Fase N").
+> Próximo passo: usar no dia a dia e ajustar agentes e revisor com casos reais; o App lendo o grafo fica para uma fase própria.
 
 ## Objetivo
 
@@ -221,6 +221,26 @@ Plano executado: `docs/plans/2026-11-09-fase3-agentes.md`.
   mesmo modelo, seguindo o arquivo do agente (93–105 mil tokens processados cada). Repetido com o
   `bfc-leitor` de verdade: mesma resposta, **~60 mil tokens processados em Haiku** (total com a
   base fixa do sistema e cache; o trabalho saiu do Opus).
+
+## Resultado da Fase 4 (2026-11-09)
+
+Plano executado: `docs/plans/2026-11-09-fase4-corpus.md`. Como usar: `biblioteca/_GRAFO/LEIAME.md`.
+
+- `biblioteca/_GRAFO/corpus.json` (**fora do git**, ~11 MB, gerado em ~20 s junto com o grafo):
+  9.732 peças (2.035 fórmulas, 5.393 scripts, 2.304 relatórios — igual ao disco), 36 municípios,
+  9 tipos de fórmula que o dicionário ainda não cobre; 47.506 arestas (25.556 usa-fonte, 10.159
+  pertence, 9.732 de-municipio, 2.033 tipo, 26 variante-de). `grafo.json` idêntico com e sem corpus.
+- Leitura: 2.033/2.035 fórmulas com tipo, 70/77 críticas com evento, 1.049 relatórios com `chaveNatureza`.
+- Famílias: 6.709 códigos distintos; 441 se repetem entre municípios (1.160 peças).
+- `variante-de`: limiar 0,40 calibrado (variantes reais 0,77–1,00; não relacionados ≤ 0,35; vão vazio
+  entre 0,35 e 0,50). O template BB PIX tem 24 variantes em 8 municípios, inclusive uma Sicredi (0,54).
+- Defeito pego na conferência de contagem: 17 nomes que viravam o mesmo id (caixa/pontuação) sumiam
+  e misturavam arestas — corrigido com sufixo `~2` e teste.
+- Comando novo `exemplos <id>`; `busca` só mostra peças com `--corpus`. Consulta com corpus: ~0,2 s;
+  respostas de 110–240 tokens (ex.: 5 exemplos de FORMULA_ACRESCIMO_DEBITO de municípios diferentes
+  entre 37 peças).
+- Agentes passaram a usar `exemplos` no lugar de `ls`/`grep` no corpus. Testes: 58 (grafo +
+  revisor), desktop 316/316.
 
 ## Fases seguintes (resumo)
 

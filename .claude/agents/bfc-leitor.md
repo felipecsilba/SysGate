@@ -17,8 +17,9 @@ mínimo. Quem pergunta é o orquestrador ou o Felipe, no meio de um trabalho.
    ```
 2. Abra no máximo 3 arquivos que o grafo apontou, e só o trecho necessário (`Grep` para achar
    a linha, `Read` com offset/limit). Índice de área (`00-INDICE.md`) antes de documento.
-3. Corpus (`biblioteca/Formulas/`, `Scripts/`, `Relatorios/`) só se a pergunta pedir exemplo
-   de produção — e com `grep -rl` dirigido, nunca varredura.
+3. Exemplo de produção só se a pergunta pedir, pelo grafo:
+   `exemplos <id> [--municipio m]` (peças ligadas a uma fonte, tipo de fórmula, template ou
+   município) ou `busca <termo> --corpus --tipo peca`. Nunca varrer as pastas do corpus.
 
 ## Como responder (até 15 linhas)
 

@@ -56,8 +56,18 @@ export function formatarNo(grafo, id, { todos = false } = {}) {
   for (const [k, vs] of grupos) {
     const [direcao, aresta] = k.split('|')
     const tipos = [...new Set(vs.map(v => v.tipo))]
-    const sub = tipos.length > 1 ? tipos.sort().map(t => [t, vs.filter(v => v.tipo === t)]) : [[null, vs]]
+    const sub = tipos.length > 1 || tipos[0] === 'peca' ? tipos.sort().map(t => [t, vs.filter(v => v.tipo === t)]) : [[null, vs]]
     for (const [tipo, itens] of sub) {
+      if (tipo === 'peca') {
+        // peças do corpus: contagem + 3 amostras; a lista completa sai em "exemplos"
+        const porId = indice(grafo).porId
+        const pecas = itens.map(v => porId.get(v.id)).filter(Boolean)
+        const munis = new Set(pecas.map(p => p.municipio)).size
+        const amostra = pecas.slice(0, 3).map(p => `${p.municipio}: ${p.rotulo}`).join('; ')
+        const rot = `${aresta} · peca (${pecas.length} em ${munis} município${munis === 1 ? '' : 's'})`
+        linhas.push(`  ${direcao === 'saida' ? '' : '← '}${rot}: ${amostra} — ver: grafo.mjs exemplos ${id}`)
+        continue
+      }
       const rot = `${aresta}${tipo ? ` · ${tipo}` : ''}${itens.length > 1 ? ` (${itens.length})` : ''}`
       const ids = lista(itens.map(v => (v.via ? `${v.id} [${v.via}]` : v.id)), todos)
       linhas.push(direcao === 'saida' ? `  ${rot} → ${ids}` : `  ← ${rot}: ${ids}`)
@@ -80,6 +90,21 @@ function etiqueta(n) {
 export function formatarBusca(resultados) {
   if (!resultados.length) return 'Nada encontrado.'
   return resultados.map(n => `${n.id} — ${n.rotulo}${etiqueta(n)}`).join('\n')
+}
+
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`
+
+export function formatarExemplos(ex) {
+  if (!ex.total) return `Nenhuma peça de produção ligada a ${ex.id}.`
+  const cab = `${plural(ex.total, 'peça', 'peças')} (${plural(ex.familias, 'código diferente', 'códigos diferentes')}, ${plural(ex.municipios, 'município', 'municípios')})` +
+    (ex.itens.length < ex.familias ? `; mostrando ${ex.itens.length} (--limite n para mais)` : '')
+  const linhas = [cab]
+  for (const p of ex.itens) {
+    const tags = [p.subtipo, p.tipoFormula, p.ano, p.chaveNatureza, p.cadastro && p.evento ? `${p.cadastro}/${p.evento}` : null, p.via].filter(Boolean).join(' · ')
+    linhas.push(`- ${p.municipio} · ${tags} — ${p.rotulo}`)
+    linhas.push(`    ${p.arquivo}${p.qtdMunicipiosFamilia > 1 ? ` (mesmo código em ${p.qtdMunicipiosFamilia} municípios)` : ''}`)
+  }
+  return linhas.join('\n')
 }
 
 export function formatarVizinhos(itens) {

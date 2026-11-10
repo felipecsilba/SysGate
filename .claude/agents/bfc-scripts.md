@@ -18,7 +18,9 @@ orquestrador com o Felipe; você entrega um rascunho que roda na primeira tentat
 3. Para cada fonte: `cd biblioteca/FontesDeDados && python fonte.py ver <fonte>`. Filtro,
    parâmetro obrigatório e nome no editor saem daí, nunca da memória. Fonte `[só produção]` no
    grafo não tem filtros documentados: copie o padrão de um uso real
-   (`grep -rl "Dados.tributos.v2.<fonte>" biblioteca/Scripts | head -3`).
+   (`node biblioteca/_GRAFO/grafo.mjs exemplos fonte:<nome>`).
+4. Como outros municípios fizeram: `exemplos template:<id>` (variantes do template, a mais parecida
+   primeiro) ou `busca "<assunto>" --corpus --tipo peca`. Abra no máximo 2 ou 3.
 
 ## Como escrever
 

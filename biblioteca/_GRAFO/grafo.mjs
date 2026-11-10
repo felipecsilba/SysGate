@@ -8,33 +8,39 @@ import { fileURLToPath } from 'node:url'
 import { agruparTemplates, casarReadme, lerTemplate } from './lib/biblioteca.mjs'
 import { montarGrafo } from './lib/montar.mjs'
 import { checar } from './lib/checar.mjs'
-import { buscar, vizinhos } from './lib/consulta.mjs'
-import { formatarNo, formatarBusca, formatarVizinhos, formatarResumo } from './lib/formatar.mjs'
+import { buscar, vizinhos, exemplos, juntar } from './lib/consulta.mjs'
+import { formatarNo, formatarBusca, formatarVizinhos, formatarResumo, formatarExemplos } from './lib/formatar.mjs'
+import { lerInfoRelatorio } from './lib/corpus.mjs'
+import { montarCorpus } from './lib/montarCorpus.mjs'
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const BIB = path.resolve(AQUI, '..')
 const ARQ_GRAFO = path.join(AQUI, 'grafo.json')
-const ARQ_CURADO = path.join(AQUI, 'curado.json')
+const ARQ_CORPUS = path.join(AQUI, 'corpus.json') // fora do git: material de prefeitura
+// Limiar de variante-de calibrado em 2026-11-09: variantes reais 0,77–1,00; não relacionados ≤ 0,35; nenhum par entre 0,35 e 0,50
+const LIMIAR_VARIANTE = 0.4
 
 const AJUDA = `Grafo da biblioteca BFC — onde olhar antes de abrir arquivo.
 
-  node biblioteca/_GRAFO/grafo.mjs busca <termo> [--tipo t] [--area a]
+  node biblioteca/_GRAFO/grafo.mjs busca <termo> [--tipo t] [--area a] [--corpus]
   node biblioteca/_GRAFO/grafo.mjs no <id> [--todos]
+  node biblioteca/_GRAFO/grafo.mjs exemplos <id> [--municipio m] [--subtipo s] [--limite n]   (peças de produção)
   node biblioteca/_GRAFO/grafo.mjs vizinhos <id> [--aresta t] [--profundidade n] [--area a]
   node biblioteca/_GRAFO/grafo.mjs resumo
   node biblioteca/_GRAFO/grafo.mjs gerar      (depois de mudar template, conhecimento, catálogo ou curado.json)
   node biblioteca/_GRAFO/grafo.mjs checar     (pendências de curadoria)
   Qualquer consulta aceita --json.
 
-Tipos de nó: area, template, funcao, tipo-formula, conhecimento, fonte, endpoint
-Tipos de aresta: usa-fonte, mapeia, depende, documenta, pertence`
+Tipos de nó: area, template, funcao, tipo-formula, conhecimento, fonte, endpoint (+ peca e municipio com o corpus)
+Tipos de aresta: usa-fonte, mapeia, depende, documenta, pertence (+ de-municipio, tipo, variante-de com o corpus)
+O corpus (corpus.json, fora do git) entra sozinho quando existe; --sem-corpus para ignorar.`
 
 function args(argv) {
   const pos = [], op = {}
   for (let i = 0; i < argv.length; i++) {
     if (argv[i].startsWith('--')) {
       const k = argv[i].slice(2)
-      if (argv[i + 1] && !argv[i + 1].startsWith('--') && !['json', 'todos'].includes(k)) op[k] = argv[++i]
+      if (argv[i + 1] && !argv[i + 1].startsWith('--') && !['json', 'todos', 'corpus', 'sem-corpus'].includes(k)) op[k] = argv[++i]
       else op[k] = true
     } else pos.push(argv[i])
   }
@@ -94,16 +100,41 @@ function entradas() {
 }
 
 // Um nó/aresta por linha: arquivo pequeno e diff legível no git.
-function escreverGrafo(g) {
+function escreverGrafo(g, arquivo = ARQ_GRAFO) {
   const bloco = (nome, itens, ultimo) => `"${nome}":[\n${itens.map(i => JSON.stringify(i)).join(',\n')}\n]${ultimo ? '' : ','}\n`
-  const txt = `{"versao":${g.versao},"hash":"${g.hash}",\n` + bloco('nos', g.nos) + bloco('arestas', g.arestas) + bloco('naoResolvidas', g.naoResolvidas, true) + '}\n'
-  fs.writeFileSync(ARQ_GRAFO, txt)
+  const txt = `{"versao":${g.versao},"hash":"${g.hash}",\n` + bloco('nos', g.nos) + bloco('arestas', g.arestas, !g.naoResolvidas) +
+    (g.naoResolvidas ? bloco('naoResolvidas', g.naoResolvidas, true) : '') + '}\n'
+  fs.writeFileSync(arquivo, txt)
   return txt.length
+}
+
+// Corpus de produção: Formulas/<especialização>/*.txt, Scripts/<subtipo>/*.txt, Relatorios/<pasta>/fonte_dinamica*.txt
+function entradasCorpus(templates) {
+  const pastas = ['Formulas', 'Scripts', 'Relatorios']
+  if (!pastas.every(p => fs.existsSync(path.join(BIB, p)))) return null
+  const pecas = []
+  const h = crypto.createHash('sha256')
+  const lerP = rel => { const t = fs.readFileSync(path.join(BIB, rel), 'utf8'); h.update(rel).update(t); return t }
+  for (const raiz of ['Formulas', 'Scripts']) {
+    for (const pasta of listar(raiz)) {
+      if (!fs.statSync(path.join(BIB, raiz, pasta)).isDirectory()) continue
+      for (const nome of listar(`${raiz}/${pasta}`).filter(n => n.endsWith('.txt'))) pecas.push({ raiz, pasta, nome, codigo: lerP(`${raiz}/${pasta}/${nome}`) })
+    }
+  }
+  for (const pasta of listar('Relatorios')) {
+    if (!fs.statSync(path.join(BIB, 'Relatorios', pasta)).isDirectory()) continue
+    const arqs = listar(`Relatorios/${pasta}`)
+    const fonte = arqs.includes('fonte_dinamica.txt') ? 'fonte_dinamica.txt' : arqs.find(n => /^fonte_dinamica.*\.txt$/i.test(n))
+    const info = arqs.includes('relatorio_info.txt') ? lerInfoRelatorio(lerP(`Relatorios/${pasta}/relatorio_info.txt`)) : null
+    pecas.push({ raiz: 'Relatorios', pasta, nome: fonte || arqs.find(n => n.endsWith('.jrxml')) || '', codigo: fonte ? lerP(`Relatorios/${pasta}/${fonte}`) : '', info })
+  }
+  return { pecas, hashParcial: h }
 }
 
 function carregarGrafo() {
   if (!fs.existsSync(ARQ_GRAFO)) { console.error('grafo.json não existe. Rode: node biblioteca/_GRAFO/grafo.mjs gerar'); process.exit(1) }
-  const g = JSON.parse(fs.readFileSync(ARQ_GRAFO, 'utf8'))
+  let g = JSON.parse(fs.readFileSync(ARQ_GRAFO, 'utf8'))
+  if (!op['sem-corpus'] && fs.existsSync(ARQ_CORPUS)) g = juntar(g, JSON.parse(fs.readFileSync(ARQ_CORPUS, 'utf8')))
   // aviso barato de desatualização: alguma entrada mais nova que o grafo
   const t = fs.statSync(ARQ_GRAFO).mtimeMs
   const pastas = ['_BIBLIOTECA/Templates', '_BIBLIOTECA/Funcoes Prontas', '_CONHECIMENTO', 'FontesDeDados', '_GRAFO/curado.json']
@@ -122,6 +153,17 @@ switch (cmd) {
     const bytes = escreverGrafo(g)
     console.log(`grafo.json gerado (${Math.round(bytes / 1024)} KB, hash ${g.hash})`)
     console.log(formatarResumo(g))
+    const ec = op['sem-corpus'] ? null : entradasCorpus(e.templates)
+    if (ec) {
+      const c = montarCorpus({
+        hash: ec.hashParcial.update(g.hash).digest('hex').slice(0, 16), limiar: LIMIAR_VARIANTE, areas: e.curado.areas,
+        templates: e.templates.filter(t => t.no.arquivo.endsWith('.txt')).map(t => ({ id: t.no.id, codigo: t.codigo })),
+        pecas: ec.pecas,
+      }, g)
+      const kb = Math.round(escreverGrafo(c, ARQ_CORPUS) / 1024)
+      console.log(`\ncorpus.json gerado (${kb} KB, fora do git)`)
+      console.log(formatarResumo({ nos: c.nos, arestas: c.arestas }))
+    } else if (!op['sem-corpus']) console.log('\n(sem corpus nesta máquina: Formulas/, Scripts/ e Relatorios/ não existem — só o grafo curado)')
     break
   }
   case 'checar': {
@@ -142,8 +184,16 @@ switch (cmd) {
   case 'busca': {
     const termo = [alvo, ...resto].filter(Boolean).join(' ')
     if (!termo) { console.log(AJUDA); break }
-    const r = buscar(carregarGrafo(), termo, { tipo: op.tipo, area: op.area, limite: Number(op.limite) || 20 })
+    const r = buscar(carregarGrafo(), termo, { tipo: op.tipo, area: op.area, limite: Number(op.limite) || 20, corpus: !!op.corpus })
     saida(r, formatarBusca(r))
+    break
+  }
+  case 'exemplos': {
+    if (!alvo) { console.log(AJUDA); break }
+    const g = carregarGrafo()
+    if (!g.corpusHash) { console.log('Sem corpus nesta máquina (ou --sem-corpus): não há peças de produção para mostrar.'); break }
+    const ex = exemplos(g, alvo, { municipio: op.municipio, subtipo: op.subtipo, limite: Number(op.limite) || 5 })
+    saida(ex, formatarExemplos(ex))
     break
   }
   case 'no': {

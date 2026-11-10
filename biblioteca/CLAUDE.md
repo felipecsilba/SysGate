@@ -47,11 +47,17 @@ primeiro** e abra só os arquivos que ele apontar. Uma consulta custa ~100 a 900
 pasta de ITBI inteira custa ~23 mil, e o catálogo de fontes, milhões.
 
 ```bash
-node _GRAFO/grafo.mjs busca <termo> [--tipo template|fonte|endpoint|conhecimento…] [--area itbi]
+node _GRAFO/grafo.mjs busca <termo> [--tipo template|fonte|endpoint|conhecimento…] [--area itbi] [--corpus]
 node _GRAFO/grafo.mjs no <id>                   # ficha: arquivo, validação, notas e vizinhos
+node _GRAFO/grafo.mjs exemplos <id> [--municipio m]   # peças de PRODUÇÃO ligadas ao nó (fonte, tipo de fórmula, template, município)
 node _GRAFO/grafo.mjs vizinhos <id> [--aresta depende] [--profundidade 2]
-node _GRAFO/grafo.mjs gerar && node _GRAFO/grafo.mjs checar   # depois de mudar template, conhecimento ou curado.json
+node _GRAFO/grafo.mjs gerar && node _GRAFO/grafo.mjs checar   # depois de mudar template, conhecimento, curado.json ou o corpus
 ```
+
+O corpus (9.732 peças de 36 municípios) entra no grafo pelo `_GRAFO/corpus.json`, **fora do git**
+e só nesta máquina: em `exemplos`, uma peça por código distinto, municípios diferentes primeiro, e
+`variante-de` liga a peça ao template de que ela deriva. Para exemplo de produção, use `exemplos`;
+**não varra** `Formulas/`, `Scripts/` ou `Relatorios/`.
 
 - Template com `[sem registro]` ou `[NÃO validado no Studio]` não é base confiável: avise antes de usar.
 - Fonte `[fora do catálogo]`: conferir o nome no editor da Betha.

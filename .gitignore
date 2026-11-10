@@ -26,4 +26,5 @@ biblioteca/*.jrxml
 biblioteca/FontesDeDados/raw/
 biblioteca/FontesDeDados/_obsoleto/
 biblioteca/FontesDeDados/fontes_catalog_completo.json
+biblioteca/_GRAFO/corpus.json
 __pycache__/

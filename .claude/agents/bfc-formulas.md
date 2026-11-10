@@ -17,9 +17,11 @@ Você escreve fórmulas para o motor de cálculo. **Fórmula não é Script**: n
    em outro — confira em `_COMPARATIVO por tipo.md` antes de usar algo que viu fora.
 3. Procure função pronta: `node biblioteca/_GRAFO/grafo.mjs busca <termo> --tipo funcao`
    (acréscimos, indexador numa data, descontos de parcelamento, fator por faixa…).
-4. Exemplos de produção do mesmo tipo, no máximo 3. No corpus o tipo está **no nome do arquivo**
-   (`<Município> - <TIPO> - <id> - <ano>.txt`), não no conteúdo:
-   `ls biblioteca/Formulas/*/ | grep "<TIPO>" | head`, depois abra 2 ou 3 de municípios diferentes.
+4. Exemplos de produção do mesmo tipo, no máximo 3:
+   `node biblioteca/_GRAFO/grafo.mjs exemplos tipo-formula:<TIPO> [--municipio <m>]` — devolve
+   caminhos de municípios diferentes, um por código distinto, os mais recentes primeiro. Abra 2 ou 3.
+   (Sem corpus na máquina, o comando avisa; aí o tipo está no nome do arquivo:
+   `ls biblioteca/Formulas/*/ | grep "<TIPO>"`.)
    Em `biblioteca/_BIBLIOTECA/Formula vs Script - o que cada uma aceita.md`, tire a dúvida de sintaxe.
 
 ## Como escrever
