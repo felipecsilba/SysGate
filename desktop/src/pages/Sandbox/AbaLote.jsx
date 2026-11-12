@@ -146,6 +146,14 @@ export default function AbaLote({ campos, municipioId, sistemaId, endpoint, meto
     setExecucao(e => ({ ...e, ativo: false }))
   }
 
+  async function consultarUm(r) {
+    setExecucao(e => ({ ...e, ativo: true }))
+    parar.current = false
+    atualizar(r.indice, { status: 'fila', finalFila: false, mensagem: 'Consultando…' })
+    await consultarLote(r.indice, r.idLote, Date.now())
+    setExecucao(e => ({ ...e, ativo: false }))
+  }
+
   const resultados = execucao?.resultados ?? []
   const concluidos = resultados.filter(r => ['ok', 'parcial', 'erro'].includes(r.status) || r.finalFila).length
   const todosIds = resultados.flatMap(r => r.ids || [])
@@ -303,6 +311,10 @@ export default function AbaLote({ campos, municipioId, sistemaId, endpoint, meto
                   <span className={`rounded-md px-2 py-0.5 font-medium ${COR_STATUS[r.status] || 'bg-texto/[0.06] text-suave'}`}>{ROTULO_STATUS[r.status] || r.status}</span>
                   <span className="min-w-0 flex-1 truncate text-suave" title={r.mensagem}>{r.mensagem}</span>
                   {r.ids?.length > 0 && <span className="shrink-0 font-mono text-[11px] text-suave">{r.ids.length} id{r.ids.length === 1 ? '' : 's'}</span>}
+                  {r.idLote && <span className="max-w-[10rem] shrink-0 truncate font-mono text-[11px] text-suave" title={`idLote ${r.idLote} — também fica no Histórico, para consultar depois`}>lote {r.idLote}</span>}
+                  {r.idLote && !execucao.ativo && r.status === 'fila' && (
+                    <button type="button" className="botao-secundario h-6 shrink-0 px-2 text-[11px]" onClick={() => consultarUm(r)}>Consultar</button>
+                  )}
                 </div>
                 {r.erros?.length > 0 && (
                   <ul className="mt-2 space-y-0.5 border-t border-borda pt-2">

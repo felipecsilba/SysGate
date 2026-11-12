@@ -8,8 +8,9 @@ import Icone from '../components/Icone'
 import JsonColorido from '../components/JsonColorido'
 import MetodoBadge from '../components/MetodoBadge'
 import Pagina from '../components/Pagina'
-import { mensagemErro, municipiosApi, requisicoesApi } from '../lib/api'
+import { mensagemErro, municipiosApi, proxyApi, requisicoesApi } from '../lib/api'
 import { agruparPorDia, filtrarHistorico, situacao } from '../lib/historico'
+import { consultaDoLote, interpretarStatusLote } from '../lib/lote'
 import { StatusBadge } from './Sandbox/PainelResposta'
 
 const TODOS = ''
@@ -142,7 +143,7 @@ export default function Historico() {
           {itens.length >= 500 && <p className="px-2 pb-2 text-[11px] text-suave">Mostrando as 500 mais recentes.</p>}
         </div>
 
-        {atual && <Detalhe r={atual} onFechar={() => setSelecionado(null)} />}
+        {atual && <Detalhe key={atual.id} r={atual} onFechar={() => setSelecionado(null)} />}
       </div>
 
       <Confirmar
@@ -206,11 +207,81 @@ function Detalhe({ r, onFechar }) {
             </div>
           )}
         </dl>
+        {consultaDoLote(r) && <ConsultaLote r={r} {...consultaDoLote(r)} />}
         {r.body != null && <JsonColorido dados={r.body} titulo="Enviado" alturaMax="32vh" />}
         {r.resposta != null
           ? <JsonColorido dados={r.resposta} titulo="Resposta" alturaMax="40vh" />
           : <p className="flex items-center gap-2 text-xs text-suave"><Icone nome="nuvem" className="h-4 w-4" /> Sem corpo de resposta.</p>}
       </div>
     </aside>
+  )
+}
+
+const COR_LOTE = {
+  fila: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+  ok: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  parcial: 'bg-orange-500/10 text-orange-700 dark:text-orange-400',
+  erro: 'bg-red-500/10 text-red-600 dark:text-red-400',
+}
+const ROTULO_LOTE = { fila: 'na fila', ok: 'gravado', parcial: 'parcial', erro: 'erro' }
+
+// POST aceito pela Betha só devolve o idLote; o resultado de cada item sai do GET {path}/{idLote}.
+// Aqui dá para consultar a qualquer hora, mesmo depois de fechar a tela de envio.
+function ConsultaLote({ r, idLote, path }) {
+  const [consultando, setConsultando] = useState(false)
+  const [resultado, setResultado] = useState(null) // interpretarStatusLote + { quando, resposta }
+
+  async function consultar() {
+    setConsultando(true)
+    try {
+      const res = await proxyApi.executar({ municipioId: r.municipioId, sistemaId: r.sistemaId, path, metodo: 'GET', tipo: 'individual' })
+      const st = res.statusCode >= 200 && res.statusCode < 300
+        ? interpretarStatusLote(res.data)
+        : { status: 'erro', mensagem: res.statusCode === 429 ? 'HTTP 429 — a Betha bloqueou por alguns minutos; espere e consulte de novo' : `HTTP ${res.statusCode}`, ids: [], erros: [] }
+      setResultado({ ...st, quando: new Date(), resposta: res.data })
+    } catch (err) {
+      setResultado({ status: 'erro', mensagem: mensagemErro(err), ids: [], erros: [], quando: new Date() })
+    } finally {
+      setConsultando(false)
+    }
+  }
+
+  return (
+    <section className="rounded-xl border border-borda p-3">
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-suave">Lote</span>
+        <span className="min-w-0 truncate font-mono font-medium" title={idLote}>{idLote}</span>
+        <Copiar texto={idLote} titulo="Copiar idLote" />
+        <button type="button" className="botao-secundario ml-auto h-7 px-2.5 text-xs" disabled={consultando} onClick={consultar}>
+          <Icone nome="atualizar" className="h-3.5 w-3.5" /> {consultando ? 'Consultando…' : resultado ? 'Consultar de novo' : 'Consultar lote'}
+        </button>
+      </div>
+      {resultado && (
+        <div className="mt-3 space-y-2 border-t border-borda pt-3">
+          <div className="flex items-center gap-2 text-xs">
+            <span className={`rounded-md px-2 py-0.5 font-medium ${COR_LOTE[resultado.status]}`}>{ROTULO_LOTE[resultado.status]}</span>
+            <span className="min-w-0 flex-1 text-suave">{resultado.mensagem}</span>
+            <span className="shrink-0 font-mono text-[11px] text-suave">{hora(resultado.quando)}</span>
+          </div>
+          {resultado.ids.length > 0 && (
+            <div className="flex items-center gap-1 text-[11px] text-suave">
+              {resultado.ids.length} id{resultado.ids.length === 1 ? '' : 's'} gerado{resultado.ids.length === 1 ? '' : 's'}
+              <Copiar texto={resultado.ids.join(',')} titulo="Copiar IDs" />
+            </div>
+          )}
+          {resultado.erros.length > 0 && (
+            <ul className="max-h-48 space-y-0.5 overflow-y-auto">
+              {resultado.erros.map((e, k) => (
+                <li key={k} className="flex gap-2 text-[11px]">
+                  <span className="shrink-0 font-mono text-perigo">{e.idIntegracao}</span>
+                  <span className="text-suave">{e.mensagem}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {resultado.resposta != null && <JsonColorido dados={resultado.resposta} titulo="Resposta da consulta" alturaMax="30vh" />}
+        </div>
+      )}
+    </section>
   )
 }

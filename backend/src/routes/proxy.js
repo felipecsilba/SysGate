@@ -27,9 +27,11 @@ const HISTORICO_MAX = 200
 async function salvarRequisicao(data) {
   try {
     await prisma.requisicao.create({ data })
-    // Mantém apenas as últimas 20 por município
+    // Mantém as últimas HISTORICO_MAX por município, com cota própria para os envios em lote:
+    // os GETs de consulta do idLote (um a cada 5 s) não podem empurrar para fora o POST que guarda o idLote
+    const ehLote = data.tipo === 'lote'
     const todas = await prisma.requisicao.findMany({
-      where: { municipioId: data.municipioId },
+      where: { municipioId: data.municipioId, ...(ehLote ? { tipo: 'lote' } : { OR: [{ tipo: null }, { tipo: { not: 'lote' } }] }) },
       orderBy: { criadoEm: 'desc' },
       select: { id: true },
     })

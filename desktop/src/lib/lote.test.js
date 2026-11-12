@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { expandirSchema } from './corpo.js'
 import {
   colunasSemCabecalho, autoMapear, construirBodyLinha, dividirEmLotes,
-  interpretarEnvio, interpretarStatusLote, linhaDoIdIntegracao, csvResultados, esperaApos429,
+  interpretarEnvio, interpretarStatusLote, linhaDoIdIntegracao, csvResultados, esperaApos429, consultaDoLote,
 } from './lote.js'
 
 const campos = expandirSchema([
@@ -91,4 +91,15 @@ test('csvResultados: uma linha por lote, com ids e erros', () => {
 
 test('esperaApos429: 30 s, 1 min, 2 min e depois fica em 5 min', () => {
   assert.deepEqual([0, 1, 2, 3, 4, 9].map(esperaApos429), [30000, 60000, 120000, 300000, 300000, 300000])
+})
+
+test('consultaDoLote: POST aceito no histórico vira GET {path}/{idLote}; o resto não tem lote', () => {
+  const sistema = { urlBase: 'https://tributos.betha.cloud/service-layer-tributos' }
+  const r = { metodo: 'POST', statusCode: 200, url: `${sistema.urlBase}/api/imoveis`, sistema, resposta: { idLote: 'abc-1' } }
+  assert.deepEqual(consultaDoLote(r), { idLote: 'abc-1', path: '/api/imoveis/abc-1' })
+  assert.deepEqual(consultaDoLote({ ...r, url: `${sistema.urlBase}/api/imoveis?x=1` }), { idLote: 'abc-1', path: '/api/imoveis/abc-1' })
+  assert.equal(consultaDoLote({ ...r, metodo: 'GET' }), null)
+  assert.equal(consultaDoLote({ ...r, resposta: { message: 'recusado' } }), null)
+  assert.equal(consultaDoLote({ ...r, statusCode: 400 }), null)
+  assert.equal(consultaDoLote({ ...r, sistema: { urlBase: 'https://outro' } }), null)
 })

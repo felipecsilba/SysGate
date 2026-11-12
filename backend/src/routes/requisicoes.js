@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
       take,
       include: {
         municipio: { select: { id: true, nome: true } },
-        sistema: { select: { id: true, nome: true } },
+        sistema: { select: { id: true, nome: true, urlBase: true } },
         endpoint: { select: { id: true, nome: true, modulo: true } },
       },
     })

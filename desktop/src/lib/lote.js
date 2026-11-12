@@ -82,6 +82,17 @@ export function interpretarStatusLote(dados) {
   return { status: 'parcial', mensagem: `${itens.length - erros.length} de ${itens.length} gravado(s) — ${erros.length} com erro`, ids, erros }
 }
 
+// Registro do Histórico → consulta do lote mais tarde (a tela de envio perde o idLote ao fechar).
+// O path sai da URL gravada menos o urlBase do sistema; sem lote aceito, null.
+export function consultaDoLote(r) {
+  const idLote = r?.resposta?.idLote
+  const urlBase = r?.sistema?.urlBase
+  if (!idLote || !urlBase || !['POST', 'PUT', 'PATCH'].includes(r.metodo) || !(r.statusCode >= 200 && r.statusCode < 300)) return null
+  const url = r.url.split('?')[0]
+  if (!url.startsWith(urlBase)) return null
+  return { idLote: String(idLote), path: `${url.slice(urlBase.length)}/${encodeURIComponent(idLote)}` }
+}
+
 // HTTP 429: a Betha bloqueia por alguns minutos depois de ~120 chamadas em poucos minutos e não manda Retry-After.
 // Espera e repete a MESMA chamada — marcar erro e seguir só queima os lotes seguintes.
 const ESPERAS_429_MS = [30000, 60000, 120000, 300000]
