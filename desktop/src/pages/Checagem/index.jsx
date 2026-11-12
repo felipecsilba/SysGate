@@ -9,12 +9,15 @@ import { opcoesCadastros } from '../../lib/checagem'
 import PorFonte from './PorFonte'
 import PorApi from './PorApi'
 import CamposApi from './CamposApi'
+import Migracao from './Migracao'
 
-// Duas frentes, porque os dois mundos usam nomes diferentes para a mesma coisa: o payload de migração
-// fala idPessoa/valorInscrito; o retorno da fonte BFC fala idContribuinte/valorTributoInscrito.
+// Por Fonte e Por API usam nomes diferentes para a mesma coisa: o payload de migração fala idPessoa/valorInscrito;
+// o retorno da fonte BFC fala idContribuinte/valorTributoInscrito. Migração: checagem por cadastro sobre o .jsonl
+// do Studio, com verificações nascidas dos erros reais do salvar pela tela (lib/checagemMigracao.js).
 const FRENTES = [
   { id: 'fonte', rotulo: 'Por Fonte' },
   { id: 'api', rotulo: 'Por API' },
+  { id: 'migracao', rotulo: 'Migração' },
 ]
 
 const ABAS_API = [
@@ -80,7 +83,8 @@ export default function Checagem() {
   const regrasDaFonte = useMemo(() => (regras || []).filter(r => r.cadastro === fonte), [regras, fonte])
 
   let conteudo
-  if (sistemas === null) conteudo = <p className="py-16 text-center text-sm text-suave">Carregando…</p>
+  if (frente === 'migracao') conteudo = <Migracao />
+  else if (sistemas === null) conteudo = <p className="py-16 text-center text-sm text-suave">Carregando…</p>
   else if (!sistemas.length) {
     conteudo = (
       <Aviso icone="sistemas" titulo="Nenhum sistema neste app" acao={['Importar dados', () => navegar('/importar')]}>
@@ -119,7 +123,7 @@ export default function Checagem() {
 
   return (
     <Pagina titulo="Checagem" icone="checagem" acoes={<Abas abas={FRENTES} atual={frente} onMudar={setFrente} />}>
-      <div className="flex items-center gap-2 border-b border-borda px-4 py-2.5">
+      {frente !== 'migracao' && <div className="flex items-center gap-2 border-b border-borda px-4 py-2.5">
         {sistemas?.length > 1 && (
           <div className="w-48">
             <CaixaBusca opcoes={sistemas.map(s => ({ valor: s.id, rotulo: s.nome }))} valor={sistemaId} onEscolher={setSistemaId} buscavel={false} />
@@ -144,7 +148,7 @@ export default function Checagem() {
           </>
         )}
         {erro && <span className="text-sm text-perigo">{erro}</span>}
-      </div>
+      </div>}
       {conteudo}
     </Pagina>
   )

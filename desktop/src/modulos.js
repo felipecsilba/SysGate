@@ -62,6 +62,16 @@ export const GRUPOS = [
       { id: 'mapa', rotulo: 'Mapa de dependências', icone: 'mapa', descricao: 'Quem depende de quem na API Betha, como excluir e como encontrar cada dependente.' },
     ],
   },
+  // Cadastro único: estimula cada registro do tributos para espelhar nos outros sistemas, sem migrar de novo
+  {
+    id: 'espelho',
+    titulo: 'Migração Espelho',
+    icone: 'espelho',
+    direto: true,
+    itens: [
+      { id: 'espelho', rotulo: 'Migração Espelho', icone: 'espelho', descricao: 'Backup, estímulo e conferência para o cadastro único espelhar os dados entre sistemas.' },
+    ],
+  },
   {
     id: 'configuracoes',
     titulo: 'Configurações',

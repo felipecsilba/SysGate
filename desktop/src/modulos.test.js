@@ -10,6 +10,7 @@ test('menu tem os módulos combinados, com ids únicos', () => {
     'biblioteca',
     'gerador',
     'mapa',
+    'espelho',
     'sistemas', 'tokens', 'betha-admin', 'importar',
     'conexoes',
   ])

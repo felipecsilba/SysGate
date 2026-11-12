@@ -22,6 +22,24 @@ contextBridge.exposeInMainWorld('krakion', {
       return () => ipcRenderer.removeListener('betha:passo', ouvinte)
     },
   },
+  // Migração Espelho: sessão do tributos numa janela do App. A interface só recebe se está conectado;
+  // as chamadas (só GET/PUT de crédito tributário) passam pelo main, que guarda o token
+  tributos: {
+    entrar: () => ipcRenderer.invoke('tributos:entrar'),
+    status: () => ipcRenderer.invoke('tributos:status'),
+    sair: () => ipcRenderer.invoke('tributos:sair'),
+    chamar: (metodo, path, corpo) => ipcRenderer.invoke('tributos:chamar', metodo, path, corpo),
+    aoMudar: callback => {
+      const ouvinte = (_evento, estado) => callback(estado)
+      ipcRenderer.on('tributos:sessao', ouvinte)
+      return () => ipcRenderer.removeListener('tributos:sessao', ouvinte)
+    },
+  },
+  // Migração Espelho: backup completo de cada registro antes do estímulo (só grava na pasta do App)
+  espelho: {
+    guardar: (cadastroId, registro) => ipcRenderer.invoke('espelho:guardar', cadastroId, registro),
+    abrirBackups: () => ipcRenderer.invoke('espelho:abrir-backups'),
+  },
   // Biblioteca das Extensões (pasta de scripts, fórmulas e relatórios — somente leitura)
   biblioteca: {
     indice: () => ipcRenderer.invoke('biblioteca:indice'),

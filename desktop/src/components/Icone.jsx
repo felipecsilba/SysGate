@@ -56,6 +56,7 @@ const CAMINHOS = {
   duvida: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3', 'M12 17h.01'],
   arquivo: ['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z', 'M14 2v4a2 2 0 0 0 2 2h4'],
   direita: ['m9 18 6-6-6-6'],
+  espelho: ['m3 7 5 5-5 5V7', 'm21 7-5 5 5 5V7', 'M12 20v2', 'M12 14v2', 'M12 8v2', 'M12 2v2'],
 }
 
 export default function Icone({ nome, className = 'h-5 w-5', strokeWidth = 1.75 }) {

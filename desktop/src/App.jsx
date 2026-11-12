@@ -19,6 +19,7 @@ import Municipios from './pages/Municipios'
 import Gerador from './pages/Gerador'
 import Mapa from './pages/Mapa'
 import ExclusaoCascata from './pages/Mapa/ExclusaoCascata'
+import MigracaoEspelho from './pages/MigracaoEspelho'
 import { MODULOS } from './modulos'
 import { useAuthStore } from './stores/authStore'
 
@@ -34,6 +35,7 @@ const PAGINAS = {
   municipios: Municipios,
   gerador: Gerador,
   mapa: Mapa,
+  espelho: MigracaoEspelho,
   sistemas: Sistemas,
   tokens: CentralTokens,
   'betha-admin': BethaAdmin,

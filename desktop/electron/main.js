@@ -11,6 +11,8 @@ import { maisForte, vigiar } from './novaVersao.js'
 import { hashArquivo } from './schemaHash.js'
 import * as credenciaisBetha from './bethaAdmin/credenciais.js'
 import { renovarToken } from './bethaAdmin/agente.js'
+import * as sessaoTributos from './sessaoTributos/index.js'
+import { anexarBackup } from './espelho/backup.js'
 import * as biblioteca from './biblioteca.js'
 import * as catalogoFontes from './catalogoFontes.js'
 import * as municipiosDocs from './municipiosDocs.js'
@@ -289,6 +291,17 @@ ipcMain.handle('mapa:script', comErro((_e, relativo) => {
   return fs.readFileSync(biblioteca.resolverDentro(pastaBiblioteca(), relativo), 'utf8')
 }))
 ipcMain.handle('mapa:recarregar', comErro(() => { mapaCache = null; return mapa().entidades().length }))
+
+// Migração Espelho: sessão do tributos (janela de login do App) para chamar a API da tela — o token nunca vai à interface
+sessaoTributos.aoMudar(estado => { if (janela && !janela.isDestroyed()) janela.webContents.send('tributos:sessao', estado) })
+ipcMain.handle('tributos:entrar', comErro(() => sessaoTributos.entrar()))
+ipcMain.handle('tributos:status', comErro(() => sessaoTributos.status()))
+ipcMain.handle('tributos:sair', comErro(() => sessaoTributos.sair()))
+ipcMain.handle('tributos:chamar', comErro((_e, metodo, path, corpo) => sessaoTributos.chamar(metodo, path, corpo)))
+// Backup completo do estímulo: o registro lido pela tela, antes do 1º PUT (%APPDATA%\Krakion Desktop\backups\migracao-espelho)
+const pastaBackupEspelho = () => path.join(dadosApp(), 'backups', 'migracao-espelho')
+ipcMain.handle('espelho:guardar', comErro((_e, cadastroId, registro) => { anexarBackup(pastaBackupEspelho(), cadastroId, registro); return true }))
+ipcMain.handle('espelho:abrir-backups', comErro(async () => { fs.mkdirSync(pastaBackupEspelho(), { recursive: true }); return shell.openPath(pastaBackupEspelho()) }))
 
 let filaBetha = Promise.resolve() // uma renovação por vez — nada de várias janelas no Betha ao mesmo tempo
 ipcMain.handle('betha:renovar', (e, pedido) => {
