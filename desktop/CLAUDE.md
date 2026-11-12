@@ -2,8 +2,9 @@
 
 - **Krakion Desktop (2026-10-17)** — nova versão melhorada do Krakion (nome visível "Krakion App"; pasta de dados segue `%APPDATA%\Krakion Desktop` — **não renomear**: o app perderia banco, conta e dados): app Electron em `desktop/`, local e offline, com Postgres embutido (5433) e o **mesmo** `backend/` rodando como processo filho (3101). Não compartilha banco nem sessão com o web. Toda mudança no `schema.prisma` é aplicada no banco do desktop na próxima abertura (`prisma db push` sem `--accept-data-loss`).
 
-**Documentação completa e diário: `docs/desktop.md`.** Ao retomar trabalho, ler a seção
-"Estado e próximos passos" → "▶ Retomar aqui". Planos em `docs/plans/2026-10-*-desktop-*.md`.
+**Documentação: `docs/desktop.md` é o índice** (rodar, armadilhas, "▶ Retomar aqui") e aponta um
+arquivo por módulo em `docs/desktop/`. Antes de mexer num módulo, leia só o arquivo dele; ao
+terminar, registre ali o que mudou. Planos em `docs/plans/2026-10-*-desktop-*.md`.
 
 ## Comandos
 
@@ -46,6 +47,6 @@ Pasta de dados alternativa: `KRAKION_DADOS=<pasta> npm run dev`.
 | `electron/biblioteca.js`, `catalogoFontes.js`, `municipiosDocs.js`, `mapaDependencias.js` | Leitura da pasta `biblioteca/` (Biblioteca, Gerador, Municípios, Mapa) |
 | `src/modulos.js` | Fonte única do menu (grupos do Rail) |
 | `src/components/` | `Pagina` (moldura de todo módulo), `Layout`, `Rail`, `PainelLista`, `Modal`, `Confirmar`, `CaixaBusca`, `Abas`, `LimiteErro`, `AvisoVersao`, `Icone`… |
-| `src/pages/` | Um diretório por módulo (seção própria em `docs/desktop.md`) |
+| `src/pages/` | Um diretório por módulo (arquivo próprio em `docs/desktop/`) |
 | `src/lib/` | Regras puras, todas com `.test.js` (lote, json, checagem, espelho, exclusão de imóveis…) |
 | `scripts/` | `criar-atalho.js` + `icone.js` |

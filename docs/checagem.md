@@ -213,7 +213,7 @@ O body de `/verificar` está sujeito ao limite global de 1 MB do `express.json` 
 
 ## No Krakion App (desktop)
 
-A Checagem também existe no Krakion App (`desktop/src/pages/Checagem/`), com as duas frentes e o mesmo backend (`/api/checagem/*` no backend local). Regras, notas, catálogo de fontes e campos marcados chegam pela importação (Configurações → Importar dados → **Checagem**). Diferenças: lotes medidos em bytes UTF-8 (não em caracteres), laudo mantido só em memória enquanto o app está aberto, e o atalho "Gerar o script de exportação desta fonte" abre o Gerador de Extensões do app (que lê o catálogo `catalogo_v2.json` + `mapa_bfc_rest.json` da pasta da biblioteca, com o nome BFC confirmado). Detalhes em `docs/desktop.md`.
+A Checagem também existe no Krakion App (`desktop/src/pages/Checagem/`), com as duas frentes e o mesmo backend (`/api/checagem/*` no backend local). Regras, notas, catálogo de fontes e campos marcados chegam pela importação (Configurações → Importar dados → **Checagem**). Diferenças: lotes medidos em bytes UTF-8 (não em caracteres), laudo mantido só em memória enquanto o app está aberto, e o atalho "Gerar o script de exportação desta fonte" abre o Gerador de Extensões do app (que lê o catálogo `catalogo_v2.json` + `mapa_bfc_rest.json` da pasta da biblioteca, com o nome BFC confirmado). Detalhes em `docs/desktop/checagem.md`.
 
 ## Regras e armadilhas
 

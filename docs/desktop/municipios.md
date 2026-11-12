@@ -1,0 +1,14 @@
+# Krakion App — Municípios
+
+Parte da documentação do Krakion App. Índice e "Retomar aqui": `docs/desktop.md`.
+
+## Municípios (ícone próprio, 2026-10-19)
+
+Legislação e documentos de cada município atendido. Ícone próprio no Rail (grupo `municipios`, rota `/municipios`), antes da Biblioteca. Decisões do Felipe: **arquivos na pasta**, não no banco — `<pasta da Biblioteca>/Municipios/<município>/Legislacao/<Tipo>/` — para os agentes do Claude Code no VS Code lerem os mesmos documentos; **tipos fixos**: Código Tributário, Leis, Decretos, Portarias, Anotações, Outros.
+- `electron/municipiosDocs.js` (6 testes): lista os municípios de `Municipios/` (pasta "ENTIDADE — Nome" ou só "Nome"), cria pasta de município novo, lista/anexa (copia; nome padronizado `Lei 524-2021 - PROREFIS.pdf`, ` (2)` se repetir — nunca sobrescreve), lê/grava texto (`.md`), renomeia pelos campos (e muda de tipo). **Escrita só em `Municipios/*/Legislacao`** (`resolverDoc` barra `metadados/`, `..` e o resto da pasta). Excluir = `shell.trashItem` (Lixeira do Windows).
+- Protocolo **`krakion-doc://municipios/<id>`** (`protocolo.servirDocumentos`, registrado como privilegiado junto do `app://`) serve PDF/imagem direto do disco; `plugins: true` na janela liga o leitor de PDF do Chromium (miniaturas, zoom, imprimir). O PDF não passa pela tela (o Código Tributário de Ruropólis tem 47 MB).
+- Arrastar arquivos do Windows: `webUtils.getPathForFile` no preload (`municipios.caminhoDoArquivo`) → o main copia pelo caminho. Sem arrastar, "Anexar" abre a janela de arquivos no main.
+- Tela `pages/Municipios/` (index + Documento + Modais) + `lib/documentos.js` (6 testes): municípios | documentos por tipo (mais novo primeiro, busca sem acento) | visualizador — PDF no leitor embutido, `.md/.txt` editável que grava sozinho (800 ms), CSV em tabela, imagem; demais formatos "Abrir no programa do Windows". Ações: Editar dados (renomeia), Abrir no Windows, Mostrar na pasta, Lixeira.
+- Testado numa cópia da pasta (scratchpad), nunca na real: criar Ruropólis, anexar a Lei 524 (PDF) e um CSV, abrir o PDF, CSV em tabela, anotação gravada no `.md` igual ao digitado.
+- **Só os municípios ativados aparecem** (2026-10-19, pedido do Felipe: os 34 de `Municipios/` são de onde vieram scripts, não clientes do dia a dia). A lista mostra só pastas com `Legislacao/`; as que têm só `metadados/` ficam no disco, fora da lista. "Adicionar município" sugere os da **Central de Tokens** (1 clique) e, se já existe pasta com aquele nome, só cria a `Legislacao` dentro dela. **Remover da lista** (lixeira no cabeçalho do município) manda para a Lixeira só a `Legislacao` — ou a pasta inteira quando ela só tinha a `Legislacao`; `metadados/` nunca (`alvosParaRemover`, testado).
+- Os dois PDFs soltos na raiz de `biblioteca/` (Código Tributário de Ruropólis e Lei 524 PROREFIS) **não foram movidos** — o Felipe arrasta para o município quando quiser.

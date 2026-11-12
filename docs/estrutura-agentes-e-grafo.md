@@ -30,7 +30,7 @@ subpasta só entra quando se trabalha em arquivos dela. Por isso a raiz é curta
 | `CLAUDE.md` | Os dois mundos, regras para tudo, onde está cada coisa, comandos |
 | `backend/CLAUDE.md` | Postgres/Prisma, rotas, segurança ativa, `lib/`, testes |
 | `frontend/CLAUDE.md` | Safelist do Tailwind, identidade visual, stores, chunks após deploy |
-| `desktop/CLAUDE.md` | Krakion App: portas, banco embutido, armadilhas; diário em `docs/desktop.md` |
+| `desktop/CLAUDE.md` | Krakion App: portas, banco embutido, armadilhas; índice em `docs/desktop.md` e um arquivo por módulo em `docs/desktop/` (dividido em 2026-11-12) |
 | `biblioteca/CLAUDE.md` | Mundo BFC: regras, armadilhas, grafo, agentes, revisor, git × fora do git |
 | `docs/api.md` | Todas as rotas do backend |
 | `docs/<módulo>.md` | Regras e armadilhas de cada módulo (seção trazida do CLAUDE.md antigo) |

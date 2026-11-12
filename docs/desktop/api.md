@@ -1,0 +1,24 @@
+# Krakion App — API (requisição única, Modelos, envio em lote)
+
+Parte da documentação do Krakion App. Índice e "Retomar aqui": `docs/desktop.md`.
+
+## API — requisição única (ícone API; ex-Sandbox)
+
+`pages/Sandbox/` — esquerda: município (vem o ativo), sistema (mostra se o município tem token e a validade), endpoint (`SeletorEndpoint` — dois níveis como no web: módulo (busca sem acento) → recurso, um por path com os métodos existentes; ao escolher já vem POST; método pelos botões), método e path com um campo por `{parâmetro}` e a URL final. Direita: body (`EditorBody` — Campos com marcar/preencher + prévia, ou JSON livre), Executar (bloqueado com o motivo: sem token, sem path, parâmetro vazio), Resposta (status, tempo, cabeçalhos, JSON colorido, ID gerado + "Consultar resultado") e Histórico do município. A tela rola até a resposta ao executar. Plano: `docs/plans/2026-10-17-desktop-sandbox-requisicao.md`.
+
+- Lógica pura e testada (no web estava repetida em 3 lugares): `lib/corpo.js` (`expandirSchema` — objeto 1 nível pelo `_exemplo`, `idGerado` → `{ id }`; `fixo` — idIntegracao/idGerado sempre vão; `selecaoInicial`, `valoresIniciais`, `montarBody` — número inválido segue como texto para a API apontar o erro; `pedeJsonLivre` para `array<…>`), `lib/caminho.js` (`parametrosDoPath`, `preencherPath` com encode, `urlFinal` = exatamente o que o proxy chama), `lib/ids.js` (`extrairId`), `buscarEndpoints` em `lib/endpoints.js`.
+- `components/JsonColorido.jsx` escapa o HTML **antes** de colorir — resposta de API externa nunca vira marcação (testado com `<script>` na resposta).
+- Backend: o histórico deixa de guardar o token em texto puro — `lib/mascararHeaders.js` (testado) mascara `Authorization` ao gravar (`proxy.js`) e ao ler (`requisicoes.js`, cobre registros antigos). Vale também para a VPS.
+- **Testes nunca chamam a Betha**: sistema de teste com `urlBase` apontando para um servidor falso local (201 com id, 400 com mensagem, GET /{id}, registra o token recebido).
+
+## API — Modelos (2026-10-18)
+
+Requisições prontas para reusar: botões no **cabeçalho do Body, ao lado das abas Campos/JSON** (longe do Executar, para não clicar errado; sem body — GET/DELETE — ficam no canto esquerdo da linha do Executar). Sem modelo aberto: **Salvar modelo** (verde sólido). Com modelo aberto: **Atualizar modelo** (neutro — só regrava) + **Salvar como novo** (verde — cria). E a lista **Modelos** no fim da coluna da esquerda (clique aplica; lixeira no hover). Guarda sistema, método, path, `{params}`, modo, campos marcados, valores e JSON — **não** o município (o mesmo modelo serve para qualquer um). Ao abrir modelo de outro sistema, troca o sistema e aplica quando os endpoints carregam (`modeloPendente`). Armazenamento: `localStorage` do app (`krakion-desktop-modelos`, persiste em userData) via `lib/modelos.js` (testado) — local desta máquina, sem banco.
+
+## API — envio em lote (aba "Envio em lote")
+
+`pages/Sandbox/AbaLote.jsx` — usa a mesma coluna da esquerda (município, sistema, endpoint, path). CSV (Papa Parse; "Sem cabeçalho" → colunas A, B, C…; prévia das 4 primeiras linhas) → **mapeamento** por campo: coluna do CSV (com valor de exemplo), valor fixo ou não enviar — pré-mapeado por nome sem acento/caixa → itens por lote (padrão 50, até 300; as descrições dos endpoints não trazem o limite de forma utilizável) e lotes simultâneos (até 5) → prévia do 1º item → **confirmação** (itens + URL — os dados vão direto para a API) → progresso (rola até ele) com **Parar**, **Consultar pendentes**, **Copiar IDs** e **Exportar CSV** (`;`, UTF-8 com BOM).
+
+- Regras puras e testadas em `lib/lote.js` (ver memória `betha-api-lote-assincrono`): POST devolve só `idLote` → consulta `GET {path}/{idLote}` a cada 5 s por até 60 s; `PROCESSADO` = gravado, `PROCESSADO_COM_ERRO` = parcial (erros por item), **`NAO_PROCESSADO` = ainda na fila, nunca erro**; 200 **sem** `idLote` = lote recusado (`message`). Sem mapa para `idIntegracao`, cada item recebe `RUNID-L<linha>` — o erro da Betha aponta de volta a **linha da planilha**. Endpoint sem schema: a linha inteira vira o objeto.
+- **Consultar o lote depois (2026-10-29)**: a consulta automática dura 60 s e o estado da tela some ao sair dela. Cada lote mostra o `idLote` e tem **Consultar** enquanto está na fila. No **Histórico**, o detalhe de um POST/PUT/PATCH aceito com `idLote` ganha o cartão **Consultar lote** (`consultaDoLote` em `lib/lote.js`: path = URL gravada − `urlBase` do sistema), com status, IDs gerados e erros por `idIntegracao`. O proxy guarda as 200 últimas requisições por município com **cota separada para `tipo: 'lote'`**, para os GETs de consulta não apagarem o POST que guarda o idLote.
+- Teste: Betha falsa local com lote assíncrono (1ª consulta NAO_PROCESSADO, depois PROCESSADO / COM_ERRO, e envelope recusado) — 7 linhas em 3 lotes: gravado / parcial (linha 5) / recusado.
