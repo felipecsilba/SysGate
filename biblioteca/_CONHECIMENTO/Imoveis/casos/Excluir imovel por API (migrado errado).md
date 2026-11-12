@@ -77,6 +77,18 @@ são descartados apesar do 200. Teste combinado: PUTs com 120 s de intervalo, pa
   Betha pedindo a remoção. Não confirmado: `imoveisMovDetalhes` (anexo da movimentação) — nenhuma fonte BFC o lê.
 - **Regra para a receita:** imóvel cuja linha de inscrição aponta para a movimentação de **criação** (`idMovimentacao`
   ≠ 0) não sai pela API. Separar esses no levantamento e mandar para chamado, sem gastar rodadas.
+- **Laboratório na base de teste (2026-10-21, entidade 11494):** o 2402 foi **cadastrado pela tela** (marcelalo,
+  25/03/2026); os 2.373 que saíram vieram da migração. Criados 2 imóveis pela tela (36381476, 36381496): **os dois
+  nasceram com movimentação + histórico + linha de inscrição ligada à movimentação** (o POST da tela não manda nada
+  disso — o Tributos cria por dentro). Tentado no 36381476: excluir proprietário → PUT de inscrição (linha com o mesmo
+  id) → POST de inscrição (idem) → `PATCH /api/imoveisMovimentacoes` trocando `idImoveis` para o outro imóvel
+  (**funciona**: a movimentação e o histórico vão juntos) → PUT com o imóvel já **sem nenhuma movimentação** → a linha
+  13490820 **continua** → DELETE do imóvel "em uso". `DELETE /api/imoveisMovimentacoesInscricoesImobiliarias` → 405.
+  **Conclusão:** a linha de inscrição criada pela tela não é alcançada por nenhuma rota da API de migração (PUT/POST só
+  refazem as linhas geradas pela migração). **Imóvel cadastrado pela tela não sai pela API**, e a tela não tem excluir
+  (só desativar). Também validado no caminho: `PATCH /api/imoveis` aceita limpar agrupamento (`idAgrupamento`) e
+  inscrição/endereço (como RURAL; logradouro e `nroImovel` não aceitam nulo); a varredura ampla (83 consultas por id,
+  código e inscrição), econômicos (2.246) e a tela (anexos, documentos, transferências) não acharam mais nada.
 
 - Receita completa validada em **1** imóvel; o perfil "só inscrição" excluído pela tela em **17**. Lista inteira: códigos 11 a 2402.
 - Imóveis com movimento financeiro: fora desta receita (débitos, dívidas e lançamentos não foram testados).

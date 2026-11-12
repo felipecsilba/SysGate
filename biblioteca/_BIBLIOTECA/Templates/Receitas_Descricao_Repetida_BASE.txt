@@ -1,0 +1,65 @@
+// ---------------------------------------------------------------------------
+// Receitas com descrição repetida (tributos) e os créditos tributários que usam cada uma
+//
+// Por que existe: salvar um crédito pela tela (e pela Migração Espelho do Krakion) re-salva
+// as receitas dele, e a Betha recusa com 422 "Já existe uma receita com a descrição informada."
+// quando outra receita tem a mesma descrição. Este script lista esses grupos antes do estímulo.
+//
+// Agrupa por descrição sem diferença de maiúsculas/minúsculas e sem espaços nas pontas.
+// Uma linha por receita de cada grupo repetido, com os créditos que a usam.
+//
+// Fontes:
+//   Dados.tributos.v2.receitas                        (GET /receitas)
+//   Dados.tributos.v2.creditosTributarios.receitas    (GET /creditos-tributarios/receitas)
+// ---------------------------------------------------------------------------
+
+NOME_ARQUIVO = "receitas_descricao_repetida.csv"
+
+chave = { d -> d == null ? "" : d.toString().trim().toUpperCase() }
+limpar = { v -> v == null ? "" : v.toString().replace(";", " ").replace("\n", " ").trim() }
+
+// --- 1) Receitas agrupadas pela descrição ----------------------------------
+receitasPorChave = [:]
+totalReceitas = 0
+percorrer (Dados.tributos.v2.receitas.busca()) { r ->
+  k = chave(r.descricao)
+  if (receitasPorChave[k] == null) receitasPorChave[k] = []
+  receitasPorChave[k] << r
+  totalReceitas = totalReceitas + 1
+}
+
+// --- 2) Créditos que usam cada receita --------------------------------------
+creditosPorReceita = [:]
+percorrer (Dados.tributos.v2.creditosTributarios.receitas.busca()) { v ->
+  idReceita = v.receita?.id
+  if (idReceita != null) {
+    if (creditosPorReceita[idReceita] == null) creditosPorReceita[idReceita] = []
+    creditosPorReceita[idReceita] << (limpar(v.creditoTributario?.id) + " " + limpar(v.creditoTributario?.descricao))
+  }
+}
+
+// --- 3) Só os grupos com mais de uma receita --------------------------------
+arquivo = Arquivo.novo(NOME_ARQUIVO, 'csv', [delimitador: ';', entreAspas: 'N', encoding: 'utf-8'])
+arquivo.escrever("descricao;idReceita;abreviatura;classificacao;templateId;creditos")
+arquivo.novaLinha()
+
+grupos = 0
+receitasPorChave.each { k, lista ->
+  if (lista.size() > 1) {
+    grupos = grupos + 1
+    lista.each { r ->
+      creditos = creditosPorReceita[r.id] ?: []
+      linha = [r.descricao, r.id, r.abreviatura, r.classificacao?.valor, r.templateId, creditos.join(" | ")]
+        .collect { limpar(it) }.join(";")
+      arquivo.escrever(linha)
+      arquivo.novaLinha()
+      imprimir linha
+    }
+  }
+}
+
+mensagem = "Receitas: " + totalReceitas + " · grupos com descrição repetida: " + grupos
+imprimir mensagem
+
+// O Studio já entrega o resultado zipado — não zipar aqui
+Resultado.arquivo(arquivo)

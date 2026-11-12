@@ -81,8 +81,33 @@ test('fórmula: def, .find{} e Dados.* são erro só com --formula', () => {
   assert.deepEqual(regras(t).filter(r => r.includes('formula')), [])
 })
 
+test('busca-isempty: isEmpty() em variável que recebeu .busca(...); lista própria passa', () => {
+  const t = `existentes = fonteMov.busca(criterio: c, campos: "id")
+if (!existentes.isEmpty()) { a() }
+vendedores = []
+if (vendedores.isEmpty()) { b() }
+n = fonteMov.busca(criterio: c).size()`
+  assert.deepEqual(regras(t), ['L2 erro busca-isempty'])
+})
+
+test('averbacao-dh: dhMovimentacao num arquivo que cria averbação de imóvel', () => {
+  const t = `fonteAverbacao = Dados.tributos.v2.imovel.averbacao
+fonteAverbacao.cria(conteudo: [idImovel: 1, dhMovimentacao: Datas.hoje()])`
+  assert.deepEqual(regras(t), ['L2 aviso averbacao-dh'])
+  assert.deepEqual(regras('x = [dhMovimentacao: Datas.hoje()]'), [])
+})
+
 test('cada achado traz trecho e mensagem com a correção', () => {
   const [a] = revisar('v = (x as BigDecimal) * 100')
   assert.equal(a.trecho, 'as BigDecimal')
   assert.match(a.msg, /Math\.round/)
+})
+
+test('busca-isempty: variável que também recebe lista ([] ou .collect) passa', () => {
+  const t = `rec = []
+rec = fonte.busca(criterio: c).collect { it }
+if (rec.isEmpty()) { a() }
+um = fonte.busca(criterio: c, primeiro: true)
+if (um.isEmpty()) { b() }`
+  assert.deepEqual(regras(t), [])
 })

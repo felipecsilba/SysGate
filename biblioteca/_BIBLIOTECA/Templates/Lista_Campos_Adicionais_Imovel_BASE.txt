@@ -1,0 +1,65 @@
+// ---------------------------------------------------------------------------
+// CAMPOS ADICIONAIS GRAVADOS EM UM IMÓVEL — antes de excluir o imóvel por API
+//
+// Lista os valores de campo adicional (InformacaoComplementarImovel) gravados no imóvel, com o
+// agrupamento de cada um, e gera o body do DELETE /api/imoveisInfComplem (lotes de até 50).
+// Motivo: imóvel 34664997 (Placas, 21/10/2026) seguia "em uso" depois de proprietário, movimentações,
+// histórico e inscrição — a Varredura achou 46 registros em imovel.camposAdicionais.
+//
+// NÃO ALTERA NADA — só lê, imprime e gera um arquivo.
+// 1º uso (21/10/2026, imóvel 34664997): os 46 vieram com id 0 = a fonte devolve TODOS os campos do cadastro,
+// gravados ou não; id 0 é campo sem valor gravado (não há registro a excluir). Por isso o filtro abaixo.
+//
+// Saída: campos_adicionais_<id>.json com o body do DELETE (no zip que o Studio entrega)
+// ---------------------------------------------------------------------------
+
+// ============================ CONFIGURAÇÃO =================================
+
+ID_IMOVEL = 0   // id do imóvel (não o código)
+
+// ===========================================================================
+
+if (!ID_IMOVEL) {
+  imprimir "Preencha ID_IMOVEL."
+  return
+}
+
+// enum vem como objeto { valor, descricao } — ler o .valor
+valorEnum = { v -> v instanceof Map ? v.valor : v }
+
+registros = []
+semRegistro = 0
+comOpcoes = 0
+porAgrupamento = [:]
+Dados.tributos.v2.imovel.camposAdicionais.busca(parametros: ["idImovel": ID_IMOVEL]).each { c ->
+  // id 0 = campo sem valor gravado neste imóvel (a fonte lista todos os campos do cadastro)
+  if (!c.id) {
+    semRegistro = semRegistro + 1
+    return
+  }
+  registros << c.id
+  agrup = c.agrupamento ? (c.agrupamento.id + " - " + c.agrupamento.descricao) : "(sem agrupamento)"
+  porAgrupamento[agrup] = (porAgrupamento[agrup] ? porAgrupamento[agrup] : 0) + 1
+  if (c.opcoesIds) comOpcoes = comOpcoes + 1
+  valor = c.texto ? c.texto : (c.vlCampo != null ? c.vlCampo : (c.areaTexto ? "(área de texto)" : (c.opcoes ? c.opcoes : "")))
+  titulo = c.campoAdicional ? c.campoAdicional.titulo : ""
+  imprimir "id " + c.id + " · ano " + c.ano + " · " + agrup + " · " + titulo + " = " + valor + (c.opcoesIds ? " · opcoesIds " + c.opcoesIds : "")
+}
+
+imprimir "------------------------------------------------------------"
+imprimir "Gravados neste imóvel: " + registros.size() + " · com opções marcadas: " + comOpcoes + " · campos sem valor (id 0, ignorados): " + semRegistro
+imprimir "Por agrupamento: " + porAgrupamento
+imprimir "------------------------------------------------------------"
+if (!registros) {
+  imprimir "Nenhum campo adicional gravado neste imóvel."
+  return
+}
+
+// body do DELETE /api/imoveisInfComplem — um array por lote de 50, um por linha
+arquivo = Arquivo.novo("campos_adicionais_" + ID_IMOVEL + ".json", 'txt', [encoding: 'utf-8'])
+registros.collate(50).each { parte ->
+  corpo = parte.collect { id -> ["idIntegracao": "EXCL-INFC-" + id, "imoveisInfComplem": ["idGerado": ["id": id]]] }
+  arquivo.escrever(JSON.escrever(corpo))
+  arquivo.novaLinha()
+}
+Resultado.arquivo(arquivo)

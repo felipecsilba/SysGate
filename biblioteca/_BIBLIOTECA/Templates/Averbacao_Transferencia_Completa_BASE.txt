@@ -1,0 +1,158 @@
+// Título   : Averbação completa da transferência de imóvel (agendado)
+// Validado : Studio, base de teste, 11/11/2026 — texto, duplicata, transferência nova,
+//            horário e percentual com 2 compradores (50/50). Ver README.
+// Objetivo : a transferência automática do Cloud averba só o motivo ("Compra e venda").
+//            Este script complementa com o texto no padrão do Desktop:
+//            proprietário anterior e atual com código, nome e CPF/CNPJ
+//            (com percentual quando houver mais de um vendedor ou comprador).
+// Uso      : rotina agendada de hora em hora, sem parâmetros (roda como usuário "sistema").
+// Duplicata: cada averbação leva nroProcesso = PREFIXO + código/ano da transferência.
+//            Se o imóvel já tem averbação com esse processo, pula (rodar 2x no dia não repete).
+
+//==================== Constantes ====================
+PREFIXO_PROCESSO = 'TRANSF-'  // nroProcesso gravado na averbação: TRANSF-<codigo>/<ano>
+MODO_TESTE       = true       // true: só imprime o texto, NÃO cria averbação. Trocar para false depois de conferir.
+
+//==================== Fontes ====================
+fonteTransferencias = Dados.tributos.v2.transferenciasImoveis
+fonteItens          = Dados.tributos.v2.transferenciasImoveis.itens
+fonteVenda          = Dados.tributos.v2.transferenciasImoveis.venda
+fonteCompra         = Dados.tributos.v2.transferenciasImoveis.compra
+fonteMovimentacoes  = Dados.tributos.v2.imoveis.movimentacoes
+fonteAverbacao      = Dados.tributos.v2.imovel.averbacao
+
+//==================== Funções ====================
+formataPercentual = { valor ->
+  if (valor == null) {
+    return '?'
+  }
+  return String.format("%.2f", valor.toBigDecimal()).replace(".", ",") + '%'
+}
+
+// pessoas: lista de [codigo, nome, cpfCnpj, percentual]
+descrevePessoas = { pessoas ->
+  def partes = []
+  def mostrarPercentual = pessoas.size() > 1
+  pessoas.each { p ->
+    def texto = "${p.codigo} - ${p.nome} CPFCNPJ: ${p.cpfCnpj ?: ''}"
+    if (mostrarPercentual) {
+      texto = texto + " (" + formataPercentual(p.percentual) + ")"
+    }
+    partes << texto
+  }
+  return partes.join('; ')
+}
+
+//==================== Execução ====================
+// Cada execução pega só as transferências encerradas no dia da execução.
+dataHoje = Datas.formatar(Datas.hoje(), 'yyyy-MM-dd')
+
+totalCriadas  = 0
+totalJaTinham = 0
+totalErros    = 0
+
+transferencias = fonteTransferencias.busca(
+  criterio: "situacao = 'ENCERRADA' and dataTransferencia = '${dataHoje}'",
+  campos: "id, codigo, anoCadastro, dataTransferencia",
+  ordenacao: "id asc"
+)
+
+linha = "Transferências encerradas em " + dataHoje + ": " + transferencias.size()
+imprimir linha
+
+transferencias.each { transf ->
+  def processo = PREFIXO_PROCESSO + transf.codigo + '/' + transf.anoCadastro
+  def dataTransf = transf.dataTransferencia ? Datas.formatar(transf.dataTransferencia, 'dd/MM/yyyy') : ''
+
+  def itens = fonteItens.busca(
+    criterio: "transferenciaImovel.id = ${transf.id}",
+    campos: "id, imovel.id, imovel.codigo, motivo.descricao"
+  )
+
+  itens.each { item ->
+    def idImovel = item.imovel?.id
+    if (idImovel == null || idImovel == 0) {
+      return
+    }
+
+    try {
+      // Já averbado por este script?
+      // .busca devolve um iterável da Betha, sem isEmpty(). Com primeiro:true, quando
+      // não acha nada devolve [:] (mapa vazio), não null: testar o id.
+      def existente = fonteMovimentacoes.busca(
+        criterio: "idImovel = ${idImovel} and tipoMovimentacao = 'AVERBACAO' and nroProcesso = '${processo}'",
+        campos: "id",
+        primeiro: true
+      )
+      if (existente?.id) {
+        totalJaTinham = totalJaTinham + 1
+        return
+      }
+
+      // Proprietário anterior = vendedores do item
+      def vendedores = []
+      fonteVenda.busca(
+        criterio: "item.id = ${item.id}",
+        campos: "vendedor.codigo, vendedor.nome, vendedor.cpfCnpj, percentualVendedor"
+      ).each { v ->
+        vendedores << [codigo: v.vendedor?.codigo, nome: v.vendedor?.nome, cpfCnpj: v.vendedor?.cpfCnpj, percentual: v.percentualVendedor]
+      }
+
+      // Proprietário atual = compradores do item. Um comprador pode comprar de mais de
+      // um vendedor (uma linha por vendedor): agrupa pelo comprador e soma o percentual.
+      def compradoresPorId = [:]
+      fonteCompra.busca(
+        criterio: "item.id = ${item.id}",
+        campos: "comprador.id, comprador.codigo, comprador.nome, comprador.cpfCnpj, percVendido"
+      ).each { c ->
+        def chave = c.comprador?.id
+        if (compradoresPorId[chave] == null) {
+          compradoresPorId[chave] = [codigo: c.comprador?.codigo, nome: c.comprador?.nome, cpfCnpj: c.comprador?.cpfCnpj, percentual: c.percVendido]
+        } else if (c.percVendido != null) {
+          def atual = compradoresPorId[chave].percentual ?: 0
+          compradoresPorId[chave].percentual = atual + c.percVendido
+        }
+      }
+      def compradores = compradoresPorId.values().toList()
+
+      if (vendedores.isEmpty() || compradores.isEmpty()) {
+        totalErros = totalErros + 1
+        linha = "SEM VENDEDOR/COMPRADOR - Imóvel " + item.imovel?.codigo + " - Transferência " + processo
+        imprimir linha
+        return
+      }
+
+      def descricao = "Data: " + dataTransf +
+                      " Obs: Transferência do Imóvel (" + (item.motivo?.descricao ?: 'motivo não informado') + ")" +
+                      ", Proprietário Anterior: " + descrevePessoas(vendedores) +
+                      ", Proprietário Atual: " + descrevePessoas(compradores)
+
+      if (MODO_TESTE) {
+        linha = "[TESTE] Imóvel " + item.imovel?.codigo + " | " + processo + " | " + descricao
+        imprimir linha
+        totalCriadas = totalCriadas + 1
+        return
+      }
+
+      fonteAverbacao.cria(conteudo: [
+        idImovel      : idImovel,
+        descricao     : descricao,
+        // dhMovimentacao omitido de propósito: Datas.hoje() e o texto 'yyyy-MM-dd HH:mm:ss'
+        // foram gravados como UTC e a tela mostrou +3h (testes 2026-11-11). Teste: deixar o servidor preencher.
+        nroProcesso   : processo
+      ])
+      totalCriadas = totalCriadas + 1
+      linha = "Averbação criada - Imóvel " + item.imovel?.codigo + " - " + processo
+      imprimir linha
+
+    } catch (e) {
+      totalErros = totalErros + 1
+      linha = "ERRO - Imóvel " + item.imovel?.codigo + " - " + processo + " - " + e.message
+      imprimir linha
+    }
+  }
+}
+
+linha = "Resumo: " + totalCriadas + (MODO_TESTE ? " seriam criadas (modo teste)" : " criadas") +
+        ", " + totalJaTinham + " já tinham, " + totalErros + " com erro/sem dados"
+imprimir linha

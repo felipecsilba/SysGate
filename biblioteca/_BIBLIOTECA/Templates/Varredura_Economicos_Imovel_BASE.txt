@@ -1,0 +1,70 @@
+// ---------------------------------------------------------------------------
+// ECONÔMICOS (E GUIAS UNIFICADAS) LIGADOS A UM IMÓVEL
+//
+// A fonte economicos não filtra por imóvel — só por contribuinte —, mas devolve o imóvel de cada
+// econômico (endereço de funcionamento). Este script:
+//   1. lista os econômicos do contribuinte do imóvel e o imóvel de cada um
+//   2. varre TODOS os econômicos da entidade procurando algum com imovel.id = ID_IMOVEL
+//   3. lista as guias unificadas do contribuinte (guiasUnificadas tem idImovel na API)
+// Motivo: imóvel 34664997 (Placas, 21/10/2026) segue "em uso"; econômicos ficaram fora de todas as
+// varreduras e o contribuinte tem nome fantasia (é empresa).
+//
+// NÃO ALTERA NADA — só lê e imprime no console.
+// Rodado no Studio em 21/10/2026 (Placas, 2.246 econômicos em ~4 s): funcionou; imóvel 34664997 sem econômico.
+// ---------------------------------------------------------------------------
+
+ID_IMOVEL = 0         // id do imóvel
+ID_CONTRIBUINTE = 0   // id da pessoa do imóvel (o "Proprietário responsável")
+
+if (!ID_IMOVEL) {
+  imprimir "Preencha ID_IMOVEL e ID_CONTRIBUINTE."
+  return
+}
+
+fonte = Dados.tributos.v2
+erros = []
+
+imprimir "1. Econômicos do contribuinte " + ID_CONTRIBUINTE
+try {
+  n = 0
+  fonte.economicos.busca(criterio: "contribuinte.id = " + ID_CONTRIBUINTE).each { e ->
+    n = n + 1
+    imovelId = e.imovel ? e.imovel.id : null
+    imprimir "  econômico id " + e.id + " · código " + e.codigo + " · situação " + e.situacao + " · imóvel " + imovelId + (imovelId == ID_IMOVEL ? "   <<< ESTE IMÓVEL" : "")
+  }
+  imprimir "  total: " + n
+} catch (x) {
+  erros << "economicos por contribuinte -> " + x.message
+}
+
+imprimir "2. Varrendo TODOS os econômicos atrás do imóvel " + ID_IMOVEL + "…"
+try {
+  lidos = 0
+  achou = 0
+  fonte.economicos.busca().each { e ->
+    lidos = lidos + 1
+    if (e.imovel && e.imovel.id == ID_IMOVEL) {
+      achou = achou + 1
+      imprimir "  ACHOU: econômico id " + e.id + " · código " + e.codigo + " · situação " + e.situacao + " · contribuinte " + (e.contribuinte ? e.contribuinte.id : null)
+    }
+  }
+  imprimir "  econômicos lidos: " + lidos + " · ligados a este imóvel: " + achou
+} catch (x) {
+  erros << "varredura de economicos -> " + x.message
+}
+
+imprimir "3. Guias unificadas do contribuinte " + ID_CONTRIBUINTE
+try {
+  n = 0
+  fonte.guiasUnificadas.busca(criterio: "contribuinte.id = " + ID_CONTRIBUINTE).each { g ->
+    n = n + 1
+    if (n <= 20) imprimir "  guia unificada id " + g.id + " · " + g
+  }
+  imprimir "  total: " + n
+} catch (x) {
+  erros << "guiasUnificadas -> " + x.message
+}
+
+imprimir "------------------------------------------------------------"
+imprimir "Com erro (" + erros.size() + "):"
+erros.each { imprimir "  ! " + it }

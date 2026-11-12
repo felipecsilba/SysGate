@@ -1,0 +1,91 @@
+// ---------------------------------------------------------------------------
+// VARREDURA DE AGRUPAMENTOS DE UM IMÓVEL — englobamento, remembramento, desmembramento, agrupamento
+//
+// Complementa a Varredura_Vinculos_Imovel_BASE, que não olha:
+//   - os campos do PRÓPRIO imóvel que apontam para outro registro (agrupamento, englobado,
+//     idImovelPrincipal, idEnglobamento, idImovelEnglobado)
+//   - englobamentos em que o imóvel é principal OU englobado
+//   - remembramentos e desmembramentos em que o imóvel aparece
+// Motivo: imóvel 34664997 (Placas, 21/10/2026) segue "em uso" sem filho nenhum nas outras varreduras;
+// o Felipe lembrou que ele teve um agrupamento com campos adicionais.
+//
+// NÃO ALTERA NADA — só lê e imprime no console.
+// AINDA NÃO RODADO NO STUDIO. Os nomes de englobamentos/remembramentos/desmembramentos no editor não
+// foram confirmados: fonte com erro é só anotada (veja "Com erro" no fim) e a varredura continua.
+// ---------------------------------------------------------------------------
+
+ID_IMOVEL = 0   // id do imóvel (não o código)
+
+if (!ID_IMOVEL) {
+  imprimir "Preencha ID_IMOVEL."
+  return
+}
+
+fonte = Dados.tributos.v2
+erros = []
+
+tentar = { rotulo, bloco ->
+  try {
+    bloco()
+  } catch (e) {
+    erros << rotulo + " -> " + e.message
+  }
+}
+
+imprimir "Imóvel " + ID_IMOVEL
+imprimir "------------------------------------------------------------"
+
+// 1. O próprio imóvel: campos que apontam para fora
+tentar("imoveis (cadastro)", {
+  n = 0
+  fonte.imoveis.busca(criterio: "id = " + ID_IMOVEL).each { im ->
+    n = n + 1
+    imprimir "Cadastro: código " + im.codigo + " · situação " + im.situacao
+    imprimir "  agrupamento: " + (im.agrupamento ? (im.agrupamento.id + " - " + im.agrupamento.descricao + " (cadastro " + im.agrupamento.cadastro + ", tipoProjeto " + im.agrupamento.tipoProjeto + ")") : "nenhum")
+    imprimir "  englobado: " + im.englobado + " · idImovelPrincipal: " + im.idImovelPrincipal + " · idEnglobamento: " + im.idEnglobamento + " · idImovelEnglobado: " + im.idImovelEnglobado
+  }
+  if (!n) imprimir "Cadastro: não encontrado com id = " + ID_IMOVEL
+})
+
+// 2. Englobamentos em que o imóvel é principal ou englobado
+tentar("imoveis.englobamentos", {
+  n = 0
+  fonte.imoveis.englobamentos.busca(criterio: "idImovelPrincipal = " + ID_IMOVEL + " or idImovelEnglobado = " + ID_IMOVEL).each { e ->
+    n = n + 1
+    imprimir "Englobamento id " + e.id + " · principal " + e.idImovelPrincipal + " · englobado " + e.idImovelEnglobado + " · tipo " + e.tipo
+  }
+  imprimir "Englobamentos: " + n
+})
+
+// 3. Remembramentos: percorre os remembramentos e procura o imóvel na lista de imóveis de cada um
+tentar("remembramentos", {
+  achou = 0
+  total = 0
+  fonte.remembramentos.busca().each { r ->
+    total = total + 1
+    tentar("remembramentos.imoveis (remembramento " + r.id + ")", {
+      fonte.remembramentos.imoveis.busca(parametros: ["idRemembramento": r.id]).each { ri ->
+        if (ri.imovel && ri.imovel.id == ID_IMOVEL) {
+          achou = achou + 1
+          imprimir "Remembramento id " + r.id + " · situação " + r.situacao + " · item " + ri.id + " · principal " + ri.principal
+        }
+      }
+    })
+  }
+  imprimir "Remembramentos lidos: " + total + " · com este imóvel: " + achou
+})
+
+// 4. Desmembramentos do imóvel
+tentar("desmembramentos", {
+  n = 0
+  fonte.desmembramentos.busca(criterio: "imovel.id = " + ID_IMOVEL).each { d ->
+    n = n + 1
+    imprimir "Desmembramento id " + d.id + " · situação " + d.situacao + " · " + d.descricao
+  }
+  imprimir "Desmembramentos deste imóvel: " + n
+})
+
+imprimir "------------------------------------------------------------"
+imprimir "Com erro (" + erros.size() + ") — nome da fonte ou filtro a confirmar no editor:"
+erros.each { imprimir "  ! " + it }
+imprimir "------------------------------------------------------------"

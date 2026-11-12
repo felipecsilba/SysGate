@@ -1,0 +1,165 @@
+// ---------------------------------------------------------------------------
+// VARREDURA AMPLA DE UM IMÓVEL — TODAS as fontes do catálogo que filtram por imóvel
+//
+// Gerada do catálogo de fontes (biblioteca/FontesDeDados, 574 fontes) pelo Krakion em 2026-10-21.
+// Para cada fonte de leitura com qualquer filtro de imóvel, pergunta pelo ID, pelo CÓDIGO e pela
+// INSCRIÇÃO formatada — pega também registro que guardou só o código ou a inscrição (sem o id):
+// financeiro, cálculo, taxas, transferências, ITBI, notificações, campos adicionais, históricos…
+// Motivo: imóvel 34664997 (Placas) segue "em uso" e as varreduras anteriores olharam só uma parte.
+//
+// NÃO ALTERA NADA — só lê e imprime no console.
+// AINDA NÃO RODADO NO STUDIO. "(nome deduzido)" = nome no editor não confirmado: se der erro, é anotado
+// em "Com erro" e a varredura continua. Cada fonte conta no máximo LIMITE registros.
+// ---------------------------------------------------------------------------
+
+ID_IMOVEL = 0                 // id do imóvel (não o código)
+CODIGO_IMOVEL = 0             // código do imóvel
+INSCRICAO_FORMATADA = ""      // ex.: "01.01.345.0030.001"
+LIMITE = 50
+
+if (!ID_IMOVEL) {
+  imprimir "Preencha ID_IMOVEL (e, se souber, CODIGO_IMOVEL e INSCRICAO_FORMATADA)."
+  return
+}
+
+fonte = Dados.tributos.v2
+achados = []
+erros = []
+vazias = 0
+
+// conta os registros (até LIMITE) e guarda os primeiros ids; erro de fonte não para a varredura
+verificar = { rotulo, busca ->
+  if (rotulo.contains("[imovel.codigo]") && !CODIGO_IMOVEL) return
+  if (rotulo.contains("[inscricao") && !INSCRICAO_FORMATADA) return
+  try {
+    n = 0
+    ids = []
+    busca().each { r ->
+      n = n + 1
+      if (ids.size() < 5) {
+        try { ids << r.id } catch (x) { }
+      }
+      if (n >= LIMITE) return
+    }
+    if (n > 0) achados << rotulo + ": " + (n >= LIMITE ? LIMITE + "+" : n) + (ids ? " · ids " + ids.join(",") : "")
+    else vazias = vazias + 1
+  } catch (e) {
+    erros << rotulo + " -> " + e.message
+  }
+}
+
+imprimir "Varredura ampla do imóvel " + ID_IMOVEL + " (código " + CODIGO_IMOVEL + ", inscrição " + INSCRICAO_FORMATADA + ")…"
+
+verificar("IncentivoFiscalTransparencia — /incentivo-fiscal-transparencia [idImovel]", { fonte.IncentivoFiscalTransparencia.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("calculosTributarios.camposAdicionais — /calculos-tributarios/campos-adicionais [idReferente]", { fonte.calculosTributarios.camposAdicionais.busca(criterio: "idReferente = " + ID_IMOVEL) })
+verificar("contribuicoesMelhoriasImoveis — /contribuicoes-melhorias-imoveis [imovel.id]", { fonte.contribuicoesMelhoriasImoveis.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("contribuicoesMelhoriasImoveis — /contribuicoes-melhorias-imoveis [imovel.codigo]", { fonte.contribuicoesMelhoriasImoveis.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("debitos — /debitos [idImovel]", { fonte.debitos.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("debitos.metadados (nome deduzido) — /debitos/metadados [idImovel]", { fonte.debitos.metadados.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("debitos.receitas — /debitos/receitas [debito.idImovel]", { fonte.debitos.receitas.busca(criterio: "debito.idImovel = " + ID_IMOVEL) })
+verificar("debitos.simulados — /debitos/simulados [idImovel]", { fonte.debitos.simulados.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("debitos.simulados.receitas — /debitos/simulados-receitas [debito.idImovel]", { fonte.debitos.simulados.receitas.busca(criterio: "debito.idImovel = " + ID_IMOVEL) })
+verificar("desmembramentos (nome deduzido) — /desmembramentos [idImovel]", { fonte.desmembramentos.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("dividas — /dividas [idImovel]", { fonte.dividas.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("dividas.comAcrescimo — /dividas/com-acrescimos [idImovel]", { fonte.dividas.comAcrescimo.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("dividas.metadados (nome deduzido) — /dividas/metadados [idImovel]", { fonte.dividas.metadados.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("dividas.receitas — /dividas/receitas [divida.idImovel]", { fonte.dividas.receitas.busca(criterio: "divida.idImovel = " + ID_IMOVEL) })
+verificar("dividas.receitas.simplificadas — /dividas/receitas/simplificadas [divida.idImovel]", { fonte.dividas.receitas.simplificadas.busca(criterio: "divida.idImovel = " + ID_IMOVEL) })
+verificar("documentos — /documentos [idReferente]", { fonte.documentos.busca(criterio: "idReferente = " + ID_IMOVEL) })
+verificar("economicos.metadados (nome deduzido) — /economicos/metadados [imovel.id]", { fonte.economicos.metadados.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("encerramento-mensal.movimentacoesDividas (nome deduzido) — /encerramento-mensal/movimentacoes-dividas [idReferente]", { fonte["encerramento-mensal"].movimentacoesDividas.busca(criterio: "idReferente = " + ID_IMOVEL) })
+verificar("encerramento-mensal.movimentacoesLanctos (nome deduzido) — /encerramento-mensal/movimentacoes-lanctos [idReferente]", { fonte["encerramento-mensal"].movimentacoesLanctos.busca(criterio: "idReferente = " + ID_IMOVEL) })
+verificar("imoveis.englobamentos (nome deduzido) — /imoveis/englobamentos [idImovelPrincipal]", { fonte.imoveis.englobamentos.busca(criterio: "idImovelPrincipal = " + ID_IMOVEL) })
+verificar("errosCalculosTributarios — /erros-calculos-tributarios [imovel.id]", { fonte.errosCalculosTributarios.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("errosCalculosTributarios — /erros-calculos-tributarios [imovel.codigo]", { fonte.errosCalculosTributarios.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("esfinge.dadosCadastraisSaldosIniciaisFln (nome deduzido) — /esfinge/dados-cadastrais-saldos-iniciais-fln [idImovel]", { fonte.esfinge.dadosCadastraisSaldosIniciaisFln.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("esfinge.dadosCadastraisSaldosIniciaisFln (nome deduzido) — /esfinge/dados-cadastrais-saldos-iniciais-fln [inscricaoImobiliaria]", { fonte.esfinge.dadosCadastraisSaldosIniciaisFln.busca(criterio: "inscricaoImobiliaria = '" + INSCRICAO_FORMATADA + "'") })
+verificar("emissaoGuias — /emissao-guias [debito.idImovel]", { fonte.emissaoGuias.busca(criterio: "debito.idImovel = " + ID_IMOVEL) })
+verificar("imoveis — /imoveis [idImovelPrincipal]", { fonte.imoveis.busca(criterio: "idImovelPrincipal = " + ID_IMOVEL) })
+verificar("imoveis — /imoveis [inscricaoImobiliariaFormatada]", { fonte.imoveis.busca(criterio: "inscricaoImobiliariaFormatada = '" + INSCRICAO_FORMATADA + "'") })
+verificar("imoveis.camposAdicionais — /imoveis/campos-adicionais [idImovel]", { fonte.imoveis.camposAdicionais.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imoveis.camposAdicionais.titulos — /imoveis/campos-adicionais/titulos [idImovel]", { fonte.imoveis.camposAdicionais.titulos.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imoveis.corresponsaveis — /imoveis/corresponsaveis [idImovel]", { fonte.imoveis.corresponsaveis.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imoveis.historico — /imoveis/historico [idImovel]", { fonte.imoveis.historico.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imoveis.metadados (nome deduzido) — /imoveis/metadados [inscricaoImobiliariaFormatada]", { fonte.imoveis.metadados.busca(criterio: "inscricaoImobiliariaFormatada = '" + INSCRICAO_FORMATADA + "'") })
+verificar("imoveis.movimentacoes — /imoveis/movimentacoes [idImovel]", { fonte.imoveis.movimentacoes.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imoveis.movimentacoesInscricaoImobiliaria — /imoveis/movimentacoes/inscricao-imobiliaria [idImovel]", { fonte.imoveis.movimentacoesInscricaoImobiliaria.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imoveis.proprietarios — /imoveis/proprietarios [idImovel]", { fonte.imoveis.proprietarios.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imoveis.transferencias — /imoveis/transferencias [idImovel]", { fonte.imoveis.transferencias.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("imovel.beneficioFiscal — /imoveis/{idImovel}/beneficios [parâmetro idImovel]", { fonte.imovel.beneficioFiscal.busca(parametros: ["idImovel": ID_IMOVEL]) })
+verificar("imovel.camposAdicionais — /imoveis/{idImovel}/campos-adicionais [parâmetro idImovel]", { fonte.imovel.camposAdicionais.busca(parametros: ["idImovel": ID_IMOVEL]) })
+verificar("imovel.corresponsaveis — /imoveis/{idImovel}/corresponsaveis [parâmetro idImovel]", { fonte.imovel.corresponsaveis.busca(parametros: ["idImovel": ID_IMOVEL]) })
+verificar("imovel.englobados — /imoveis/{idImovel}/englobados [parâmetro idImovel]", { fonte.imovel.englobados.busca(parametros: ["idImovel": ID_IMOVEL]) })
+verificar("imovel.englobados — /imoveis/{idImovel}/englobados [inscricaoImobiliariaFormatada]", { fonte.imovel.englobados.busca(parametros: ["idImovel": ID_IMOVEL], criterio: "inscricaoImobiliariaFormatada = '" + INSCRICAO_FORMATADA + "'") })
+verificar("imoveis.origem (nome deduzido) — /imoveis/{idImovel}/origem [parâmetro idImovel]", { fonte.imoveis.origem.busca(parametros: ["idImovel": ID_IMOVEL]) })
+verificar("imovel.proprietarios — /imoveis/{idImovel}/proprietarios [parâmetro idImovel]", { fonte.imovel.proprietarios.busca(parametros: ["idImovel": ID_IMOVEL]) })
+verificar("imovel.testadas — /imoveis/{idImovel}/testadas [parâmetro idImovel]", { fonte.imovel.testadas.busca(parametros: ["idImovel": ID_IMOVEL]) })
+verificar("lancamentos — /lancamentos [imovel.id]", { fonte.lancamentos.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("manutencaoLoteImoveis.imoveis (nome deduzido) — /manutencao-lote/imoveis [imovel.id]", { fonte.manutencaoLoteImoveis.imoveis.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("manutencaoLoteImoveis.imoveis.ignorados (nome deduzido) — /manutencao-lote/imoveis/ignorados [idImovel]", { fonte.manutencaoLoteImoveis.imoveis.ignorados.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("manutencaoLoteImoveis.imoveis.ignorados.reversao (nome deduzido) — /manutencao-lote/imoveis/ignorados/reversao [idImovel]", { fonte.manutencaoLoteImoveis.imoveis.ignorados.reversao.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("manutencaoLoteImoveis.imoveis.valoresOriginais (nome deduzido) — /manutencao-lote/imoveis/valores-originais [idImovel]", { fonte.manutencaoLoteImoveis.imoveis.valoresOriginais.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("manutencoesCalculos — /manutencoes-calculos [referente.id]", { fonte.manutencoesCalculos.busca(criterio: "referente.id = " + ID_IMOVEL) })
+verificar("manutencoesCalculos.lancamentos — /manutencoes-calculos/lancamentos [idReferente]", { fonte.manutencoesCalculos.lancamentos.busca(criterio: "idReferente = " + ID_IMOVEL) })
+verificar("manutencoesCalculos.lancamentos.v2 — /manutencoes-calculos/lancamentos/v2 [idReferente]", { fonte.manutencoesCalculos.lancamentos.v2.busca(criterio: "idReferente = " + ID_IMOVEL) })
+verificar("notificacoesDebitos — /notificacoes-debitos [idImovel]", { fonte.notificacoesDebitos.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("notificacoesDividas — /notificacoes-dividas [idImovel]", { fonte.notificacoesDividas.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("obras — /obras [imovel.id]", { fonte.obras.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("obras — /obras [imovel.codigo]", { fonte.obras.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("obras.sisobra (nome deduzido) — /obras/sisobra [imovel.id]", { fonte.obras.sisobra.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("obras.sisobra (nome deduzido) — /obras/sisobra [imovel.codigo]", { fonte.obras.sisobra.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("pagamentos — /pagamentos [debito.idImovel]", { fonte.pagamentos.busca(criterio: "debito.idImovel = " + ID_IMOVEL) })
+verificar("pagamentos.debitos — /pagamentos/debitos [debito.idImovel]", { fonte.pagamentos.debitos.busca(criterio: "debito.idImovel = " + ID_IMOVEL) })
+verificar("pagamentoDetalhado (nome deduzido) — /pagamentos-detalhados [idImovel]", { fonte.pagamentoDetalhado.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("pagamentoDetalhado.divida.mensal (nome deduzido) — /pagamentos-detalhados/divida/mensal [idImovel]", { fonte.pagamentoDetalhado.divida.mensal.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("pagamentoDetalhado.mensal (nome deduzido) — /pagamentos-detalhados/mensal [debito.idImovel]", { fonte.pagamentoDetalhado.mensal.busca(criterio: "debito.idImovel = " + ID_IMOVEL) })
+verificar("pagamentos.dividas — /pagamentos/dividas [divida.idImovel]", { fonte.pagamentos.dividas.busca(criterio: "divida.idImovel = " + ID_IMOVEL) })
+verificar("pagamentos.parcelamentos — /pagamentos/parcelamentos [idImovelItemPago]", { fonte.pagamentos.parcelamentos.busca(criterio: "idImovelItemPago = " + ID_IMOVEL) })
+verificar("parcelamentos — /parcelamentos [idImovel]", { fonte.parcelamentos.busca(criterio: "idImovel = " + ID_IMOVEL) })
+verificar("parcelamentos.composicoes — /parcelamentos/composicoes [parcelamento.idImovel]", { fonte.parcelamentos.composicoes.busca(criterio: "parcelamento.idImovel = " + ID_IMOVEL) })
+verificar("parcelamentos.parcelas — /parcelamentos/parcelas [parcelamento.idImovel]", { fonte.parcelamentos.parcelas.busca(criterio: "parcelamento.idImovel = " + ID_IMOVEL) })
+verificar("parcelamentos.metadadosParcelas (nome deduzido) — /parcelamentos/metadados-parcelas [parcelamento.idImovel]", { fonte.parcelamentos.metadadosParcelas.busca(criterio: "parcelamento.idImovel = " + ID_IMOVEL) })
+verificar("ParcelamentoOrdemAbatimentoReceitas (nome deduzido) — /parcelamentos-ordens-abatimentos-receitas [parcelamento.idImovel]", { fonte.ParcelamentoOrdemAbatimentoReceitas.busca(criterio: "parcelamento.idImovel = " + ID_IMOVEL) })
+verificar("plantaValores — /planta-valores [inscricaoImobiliaria]", { fonte.plantaValores.busca(criterio: "inscricaoImobiliaria = '" + INSCRICAO_FORMATADA + "'") })
+verificar("receitasDiversas — /receitas-diversas [imovel.id]", { fonte.receitasDiversas.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("receitasDiversas — /receitas-diversas [imovel.codigo]", { fonte.receitasDiversas.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("solicitacaoTransferenciaImovel.itens — /solicitacoes-transferencias-imoveis/itens [imovel.id]", { fonte.solicitacaoTransferenciaImovel.itens.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("solicitacaoTransferenciaImovel.itens — /solicitacoes-transferencias-imoveis/itens [imovel.codigo]", { fonte.solicitacaoTransferenciaImovel.itens.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("solicitacaoTransferenciaImovel.vendas — /solicitacoes-transferencias-imoveis/vendas [solicitacaoTransferenciaImovel.imovel.id]", { fonte.solicitacaoTransferenciaImovel.vendas.busca(criterio: "solicitacaoTransferenciaImovel.imovel.id = " + ID_IMOVEL) })
+verificar("solicitacaoTransferenciaImovel.vendas — /solicitacoes-transferencias-imoveis/vendas [solicitacaoTransferenciaImovel.imovel.codigo]", { fonte.solicitacaoTransferenciaImovel.vendas.busca(criterio: "solicitacaoTransferenciaImovel.imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("transferenciasImoveis.compra — /transferencias-imoveis/compra [imovel.id]", { fonte.transferenciasImoveis.compra.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("transferenciasImoveis.compra — /transferencias-imoveis/compra [imovel.codigo]", { fonte.transferenciasImoveis.compra.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("transferenciasImoveis.itens — /transferencias-imoveis/itens [imovel.id]", { fonte.transferenciasImoveis.itens.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("transferenciasImoveis.itens — /transferencias-imoveis/itens [imovel.codigo]", { fonte.transferenciasImoveis.itens.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+verificar("transferenciasImoveis.venda — /transferencias-imoveis/venda [imovel.id]", { fonte.transferenciasImoveis.venda.busca(criterio: "imovel.id = " + ID_IMOVEL) })
+verificar("transferenciasImoveis.venda — /transferencias-imoveis/venda [imovel.codigo]", { fonte.transferenciasImoveis.venda.busca(criterio: "imovel.codigo = " + CODIGO_IMOVEL) })
+
+imprimir "------------------------------------------------------------"
+imprimir "COM REGISTROS (" + achados.size() + "):"
+achados.each { imprimir "  • " + it }
+imprimir "Sem registros: " + vazias + " consultas"
+imprimir "Com erro (" + erros.size() + "):"
+erros.each { imprimir "  ! " + it }
+imprimir "------------------------------------------------------------"
+
+// Fora da varredura — exigem parâmetro que não é o imóvel (20):
+//   /incentivo-fiscal-transparencia/{id} (busca) — exige id
+//   /baixaAutomatica/{idBaixaAutomatica}/pagamentos (busca) — exige idBaixaAutomatica
+//   /certidoes-itbi/{ano}/{nroDocumento}/imoveis (buscaImoveis) — exige ano, nroDocumento
+//   /certidoes-itbi/{ano}/{nroDocumento}/itens (buscaItens) — exige ano, nroDocumento
+//   /certidoes-itbi/{ano}/{nroDocumento}/{idImovel}/processos (buscaProcessos) — exige ano, nroDocumento
+//   /certidoes-itbi/{ano}/{nroDocumento}/{idImovel}/vendas (buscaVendas) — exige ano, nroDocumento
+//   /condominios/{idCondominio}/imoveis (busca) — exige idCondominio
+//   /desmembramentos/{idDesmembramento}/imoveis (buscaImoveis) — exige idDesmembramento
+//   /emissao-guias/{protocoloEmissao} (busca) — exige protocoloEmissao
+//   /emissao-guias/{protocoloEmissao}/imoveis (busca) — exige protocoloEmissao
+//   /emissao-guias/{protocoloEmissao}/imoveis-endereco (busca) — exige protocoloEmissao
+//   /emissao-guias/{protocoloEmissao}/referentes (busca) — exige protocoloEmissao
+//   /notificacoes-debitos/{idsDebitos} (busca) — exige idsDebitos
+//   /notificacoes-debitos/lote/{subLote} (busca) — exige subLote
+//   /notificacoes-dividas/{idsDividas} (busca) — exige idsDividas
+//   /notificacoes-dividas/lote/{subLote} (busca) — exige subLote
+//   /remembramentos/{idRemembramento}/imoveis (buscaImoveis) — exige idRemembramento
+//   /termos-parcelamento/{nroParcelamento}/composicao (buscaComposicao) — exige nroParcelamento
+//   /termos-parcelamento/{nroParcelamento}/parcelas (buscaParcelas) — exige nroParcelamento
+//   /transferencias-imoveis/{idTransferenciaImoveis}/processos (busca) — exige idTransferenciaImoveis

@@ -22,6 +22,7 @@ emitida. Essa diferença é a origem da maior parte dos problemas da área.
 ```
 casos/
   Guias do Livro Eletronico Fly nao registram no BB.md   🟢 causa confirmada (Rurópolis, 25/08/2026)
+  Guia BB PIX sai sem QR code para alguns contribuintes.md   🟢 resolvido (Rurópolis, 03/11/2026) — Abend do BB + gerar-pix
 configuracoes/
   (vazio)
 ```
@@ -39,6 +40,6 @@ configuracoes/
 
 ## Procedência
 
-Tudo desta área veio de chamado real trabalhado com o Felipe em 25/08/2026,
+Tudo desta área veio de chamados reais trabalhados com o Felipe (25/08/2026 e 03/11/2026),
 com logs de execução e telas dos dois sistemas. Nada foi tirado de central de
 ajuda ainda.

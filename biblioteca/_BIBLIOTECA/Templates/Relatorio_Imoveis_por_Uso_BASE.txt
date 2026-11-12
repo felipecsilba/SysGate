@@ -1,0 +1,234 @@
+// ---------------------------------------------------------------------------
+// RELATÓRIO DE IMÓVEIS POR USO (campo adicional de lista) - fonte dinâmica BASE
+// Origem: Congonhas/MG, 09/11/2026 - "[PMC] Relação Analítica de Imóveis por Tipo de USO"
+// Validado na tela: 30.235 imóveis em ~3 min. Ver "README - Relatorio Imoveis por Uso.md".
+//
+// Lista os imóveis ATIVOS agrupados pelo valor de um campo adicional de lista
+// (ex.: DO USO), com área e valor venal (sempre o ÚLTIMO valor cadastrado),
+// subtotal por grupo e resumo final. Layout: Relatorio_Imoveis_por_Uso_BASE.jrxml
+//
+// Parâmetro externo "usos" (lista múltipla, opcional) - nenhum marcado = todos.
+// ---------------------------------------------------------------------------
+
+esquema = [
+  titulo:      Esquema.caracter,
+  filtro:      Esquema.caracter,
+  uso:         Esquema.caracter,
+  codigo:      Esquema.inteiro,
+  inscricao:   Esquema.caracter,
+  endereco:    Esquema.caracter,
+  bairro:      Esquema.caracter,
+  area:        Esquema.numero,
+  valorVenal:  Esquema.numero,
+  anoVenal:    Esquema.inteiro,
+  resumoUso:   Esquema.caracter,
+  resumoQtd:   Esquema.caracter,
+  resumoValor: Esquema.caracter,
+  semVenal:    Esquema.inteiro
+]
+
+fonte = Dados.dinamico.v2.novo(esquema)
+
+// ============================ CONFIGURAÇÃO =================================
+// Títulos EXATOS dos campos adicionais no município (conferir na tela do imóvel
+// ou com levantamento_campos_uso.txt). Em Congonhas existia também "VALOR VENAL"
+// - não era o certo; confirmar qual é o venal total.
+CAMPO_USO    = 'DO USO'                  // campo de lista que define os grupos
+TITULO_AREA  = 'AREA DO LOTE'            // área (arredondada para 2 casas)
+TITULO_VENAL = 'Valor Venal do Imovel'   // valor venal total
+SEM_USO      = 'NÃO INFORMADO'           // grupo de quem tem o campo em branco
+// ===========================================================================
+// ATENÇÃO (BFC): "se (lista)" é verdadeiro com lista vazia - usar if + isEmpty().
+// Nada de "x as Tipo" (sandbox bloqueia asType).
+
+brutoUsos = parametros.usos?.selecionados?.valor
+usosMarcados = []
+se (brutoUsos != null) {
+  listaBruta = [brutoUsos].flatten()
+  listaBruta.each { v ->
+    se (v != null) {
+      txt = v.toString().trim()
+      if (txt != null && !txt.isEmpty() && txt != 'null' && txt != '[]') { usosMarcados << txt }
+    }
+  }
+}
+
+def titulo(texto) {
+  if (!texto) return ''
+  def minusculas = ['da', 'de', 'do', 'das', 'dos', 'e']
+  def palavras = texto.toString().trim().toLowerCase().split(' ').findAll { it }
+  def saida = []
+  def i = 0
+  palavras.each { p ->
+    saida << ((i > 0 && minusculas.contains(p)) ? p : p.substring(0, 1).toUpperCase() + p.substring(1))
+    i++
+  }
+  return saida.join(' ')
+}
+
+def semAcento(s) {
+  return (s ?: '').toString().toUpperCase()
+    .replaceAll('[ÁÀÂÃ]', 'A').replaceAll('[ÉÊ]', 'E').replaceAll('[ÍÎ]', 'I')
+    .replaceAll('[ÓÔÕ]', 'O').replaceAll('[ÚÛ]', 'U').replaceAll('Ç', 'C')
+    .replaceAll('[^A-Z0-9]', '')
+}
+
+def montaEndereco(imovel) {
+  def tipo   = titulo(imovel.logradouro?.tipoLogradouroDescricao)
+  def nome   = titulo(imovel.logradouro?.nome)
+  def numero = imovel.numero?.toString()?.trim()
+  def compl  = titulo(imovel.complemento)
+  def bairro = titulo(imovel.bairro?.nome)
+  if (tipo && nome && semAcento(nome).startsWith(semAcento(tipo))) tipo = ''
+  def texto = [tipo, nome].findAll { it }.join(' ')
+  texto += ', ' + (numero && numero != '0' ? numero : 'S/N')
+  if (compl) {
+    def c = semAcento(compl), b = semAcento(bairro)
+    if (!b || (!c.contains(b) && !b.contains(c))) texto += ' - ' + compl
+  }
+  return texto
+}
+
+def moeda(v) {
+  def centavos = Math.round((v ?: 0) * 100)
+  def inteiro = centavos.intdiv(100).toString()
+  def dec     = (centavos % 100).toString().padLeft(2, '0')
+  inteiro = inteiro.reverse().replaceAll(/(\d{3})(?=\d)/, '$1.').reverse()
+  return "${inteiro},${dec}"
+}
+
+def textoOpcao(v) {
+  if (v == null) return null
+  def s = v.toString().trim()
+  if (s.startsWith('[') && s.endsWith(']')) s = s.substring(1, s.length() - 1).trim()
+  return s ?: null
+}
+
+criterioImoveis = "situacao = 'ATIVADO'"
+camposImovel = "id, codigo, inscricaoImobiliariaFormatada, numero, complemento, logradouro(nome, tipoLogradouroDescricao), bairro(nome)"
+imoveis = [:]
+
+def guardaImovel(imoveis, imovel, uso) {
+  if (imoveis.containsKey(imovel.id)) return
+  imoveis[imovel.id] = [
+    codigo:    imovel.codigo,
+    inscricao: imovel.inscricaoImobiliariaFormatada,
+    endereco:  montaEndereco(imovel),
+    bairro:    titulo(imovel.bairro?.nome),
+    uso:       uso
+  ]
+}
+
+if (!usosMarcados.isEmpty()) {
+  usosMarcados.each { u ->
+    filtro = "${CAMPO_USO} = '${u}'"
+    percorrer(Dados.tributos.v2.imoveis.busca(
+        parametros: ["camposadicionais": filtro],
+        criterio:   criterioImoveis,
+        campos:     camposImovel)) { imovel ->
+      guardaImovel(imoveis, imovel, u)
+    }
+  }
+} else {
+  percorrer(Dados.tributos.v2.imoveis.busca(criterio: criterioImoveis, campos: camposImovel)) { imovel ->
+    guardaImovel(imoveis, imovel, null)
+  }
+}
+
+area  = [:]
+venal = [:]
+usoLido = [:]
+
+usoUp   = CAMPO_USO.toUpperCase()
+areaUp  = TITULO_AREA?.toUpperCase()
+venalUp = TITULO_VENAL?.toUpperCase()
+listaTitulos = [CAMPO_USO, TITULO_AREA, TITULO_VENAL].findAll { it }.collect { "'${it}'" }.join(', ')
+
+anoAtual = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+todosIds = imoveis.keySet().toList()
+
+def guardaCampo(t, item, usoUp, areaUp, venalUp, usoLido, area, venal) {
+  def id = item.idImovel
+  if (t == usoUp && !usoLido.containsKey(id)) {
+    def u = textoOpcao(item.opcoes) ?: textoOpcao(item.texto)
+    if (u) usoLido[id] = u
+  }
+  if (item.vlCampo != null && item.vlCampo > 0) {
+    if (t == areaUp && !area.containsKey(id)) area[id] = Numeros.arredonda(item.vlCampo, 2)
+    if (t == venalUp && !venal.containsKey(id)) venal[id] = [valor: item.vlCampo, ano: item.ano]
+  }
+}
+
+// Último valor cadastrado: (1) ano corrente para todos; (2) para quem ficou sem o
+// campo, aquele campo sem limite de ano, só dos pendentes, mais recente primeiro.
+todosIds.collate(200).each { lote ->
+  percorrer(Dados.tributos.v2.imoveis.camposAdicionais.busca(
+      criterio: "idImovel in (${lote.join(',')}) and ano = ${anoAtual} and campoAdicional.titulo in (${listaTitulos})",
+      campos:   "idImovel, ano, opcoes, texto, vlCampo, campoAdicional(titulo)")) { item ->
+    guardaCampo(item.campoAdicional?.titulo?.trim()?.toUpperCase(), item, usoUp, areaUp, venalUp, usoLido, area, venal)
+  }
+}
+
+[[CAMPO_USO, usoLido], [TITULO_AREA, area], [TITULO_VENAL, venal]].each { par ->
+  tituloCampo = par[0]
+  mapa        = par[1]
+  se (tituloCampo) {
+    faltando = todosIds.findAll { !mapa.containsKey(it) }
+    se (faltando) {
+      faltando.collate(200).each { lote ->
+        percorrer(Dados.tributos.v2.imoveis.camposAdicionais.busca(
+            criterio:  "idImovel in (${lote.join(',')}) and campoAdicional.titulo = '${tituloCampo}'",
+            campos:    "idImovel, ano, opcoes, texto, vlCampo",
+            ordenacao: "ano desc")) { item ->
+          guardaCampo(tituloCampo.toUpperCase(), item, usoUp, areaUp, venalUp, usoLido, area, venal)
+        }
+      }
+    }
+  }
+}
+
+imoveis.each { id, im -> im.uso = im.uso ?: usoLido[id] ?: SEM_USO }
+
+resumo = [:]
+semVenal = 0
+imoveis.each { id, im ->
+  r = resumo[im.uso] ?: [qtd: 0, valor: 0]
+  r.qtd++
+  se (venal[id]) { r.valor += venal[id].valor } senao { semVenal++ }
+  resumo[im.uso] = r
+}
+ordemUso = { a, b -> (a == SEM_USO ? 1 : 0) <=> (b == SEM_USO ? 1 : 0) ?: a <=> b }
+usosOrdenados = resumo.keySet().toList().sort(ordemUso)
+
+totalQtd   = resumo.values().sum { it.qtd } ?: 0
+totalValor = resumo.values().sum { it.valor } ?: 0
+
+resumoUso   = (usosOrdenados + ['TOTAL']).join('\n')
+resumoQtd   = (usosOrdenados.collect { resumo[it].qtd.toString() } + [totalQtd.toString()]).join('\n')
+resumoValor = (usosOrdenados.collect { moeda(resumo[it].valor) } + [moeda(totalValor)]).join('\n')
+
+tituloDoc = usosMarcados ?
+  "Valor Venal dos Imóveis - Uso: ${usosMarcados.join(', ')}" :
+  "Valor Venal de Todas as Propriedades"
+textoFiltro = ["${titulo(CAMPO_USO)}: ${usosMarcados ? usosMarcados.join(' ou ') : 'todos'}", "Situação: Ativo"].join('  ·  ')
+
+imoveis.sort { a, b -> ordemUso(a.value.uso, b.value.uso) ?: ((a.value.codigo ?: 0) <=> (b.value.codigo ?: 0)) }.each { id, im ->
+  fonte.inserirLinha([
+    titulo:      tituloDoc,
+    filtro:      textoFiltro,
+    uso:         im.uso,
+    codigo:      im.codigo,
+    inscricao:   im.inscricao,
+    endereco:    im.endereco,
+    bairro:      im.bairro,
+    area:        area[id],
+    valorVenal:  venal[id]?.valor,
+    anoVenal:    venal[id]?.ano,
+    resumoUso:   resumoUso,
+    resumoQtd:   resumoQtd,
+    resumoValor: resumoValor,
+    semVenal:    semVenal
+  ])
+}
+
+retornar fonte

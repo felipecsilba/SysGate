@@ -39,12 +39,14 @@ const MSG = {
   'se-lista': 'Essa variável recebe uma lista, e "se (lista)" é verdadeiro mesmo com a lista VAZIA. Compare explicitamente: if (!x.isEmpty()) ou se (x != null && x.size() > 0).',
   'it-em-se': 'Dentro de se (...) { } o "it" vira nulo. Use if, ou copie para uma variável antes (item = it).',
   'zero-ausencia': 'Em base migrada, id ausente costuma vir 0, não nulo. Trate os dois: v == nulo || v == 0.',
-  'fonte-desconhecida': 'Fonte que não está no catálogo/grafo. Confira o nome no editor ou com fonte.py buscar.',
+  'busca-isempty': 'O retorno de .busca(...) é um iterável da Betha sem isEmpty() ("No signature of method … isEmpty()"). Para "existe?": .busca(…, primeiro: true) e teste x?.id; para contar: .size().',
+  'averbacao-dh': 'Na averbação de imóvel, dhMovimentacao enviado (Datas.hoje() ou texto) é gravado como UTC e a tela mostra +3h. Omita o campo: o servidor preenche com a hora local.',
+  'fonte-desconhecida':'Fonte que não está no catálogo/grafo. Confira o nome no editor ou com fonte.py buscar.',
   'formula-def': 'Fórmula não aceita def: escreva o cálculo direto, sem função.',
   'formula-find': 'Fórmula não aceita .find{}: use laço simples.',
   'formula-dados': 'Fórmula não acessa Dados.*: use as variáveis de contexto do motor (Dicionario de Formulas/<TIPO>).',
 }
-const NIVEL = { 'se-lista': 'aviso', 'it-em-se': 'aviso', 'zero-ausencia': 'aviso', 'metodo-rest': 'aviso', 'fonte-desconhecida': 'aviso' }
+const NIVEL = { 'averbacao-dh': 'aviso', 'se-lista': 'aviso','it-em-se': 'aviso', 'zero-ausencia': 'aviso', 'metodo-rest': 'aviso', 'fonte-desconhecida': 'aviso' }
 
 function fecha(s, i, abre, fechaCh) {
   let d = 0
@@ -115,6 +117,25 @@ export function revisar(texto, { formula = false, fontesConhecidas = [], operaco
     const v = x[1].replace(/\s+/g, '')
     if (![`${v}==0`, `${v}!=0`, `${v}>0`, `${v}<=0`].some(s => linha.includes(s))) add('zero-ausencia', x.index, x[0])
   }
+
+  // busca-isempty: variável que só recebe o retorno cru de .busca(...) (confirmado no Studio em 2026-11-11).
+  // Calibrado no corpus: se a variável também recebe outra coisa ([] , .collect…), pode ser lista — passa.
+  // (primeiro:true + "!= null" devolvendo [:] ficou FORA do revisor: 407 ocorrências em produção, defeito
+  //  silencioso e confirmado numa fonte só. A lição está na memória bfc-script-armadilhas.)
+  const daBusca = new Set(), outra = new Set()
+  for (const x of m.matchAll(/\b([A-Za-z_]\w*)\s*=(?!=)\s*/g)) {
+    const depois = m.slice(x.index + x[0].length)
+    const b = depois.match(/^[\w.]*\.busca\s*\(/)
+    if (!b) { outra.add(x[1]); continue }
+    const fim = fecha(m, x.index + x[0].length + b[0].length - 1, '(', ')')
+    const args = fim < 0 ? '' : m.slice(x.index, fim)
+    if (/^\s*\./.test(m.slice(fim + 1, fim + 3)) || /\bprimeiro\s*:\s*true\b/.test(args)) outra.add(x[1])
+    else daBusca.add(x[1])
+  }
+  todos(/\b([A-Za-z_]\w*)\??\.isEmpty\s*\(/g, 'busca-isempty', m, x => daBusca.has(x[1]) && !outra.has(x[1]))
+
+  // averbacao-dh: dhMovimentacao enviado num arquivo que usa a fonte de averbação de imóvel
+  if (/\bimovel\.averbacao\b/.test(m)) todos(/\bdhMovimenta\w*\s*:/g, 'averbacao-dh')
 
   // fonte-desconhecida: cadeia do tributos sem nenhum prefixo no grafo
   if (fontesConhecidas.length) {

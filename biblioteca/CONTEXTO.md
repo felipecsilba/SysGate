@@ -250,6 +250,27 @@ avisa em vez de chutar.
    parâmetro de faixa.** O cliente quer comprovar (lista) e citar (resumo). Faixa
    de código fica só como constante interna de teste — na tela permitiria emitir
    um total parcial sem perceber.
+18. **Retorno de `.busca(...)` não é lista.** Tem `size()` e `.each`, mas não tem
+   `isEmpty()` ("No signature of method … isEmpty()"). E com `primeiro: true`, se não
+   houver resultado, volta `[:]`, não `null`, de modo que `!= null` é sempre verdadeiro.
+   Para "existe?": `x?.id`. (Confirmado em `imoveis.movimentacoes`, 11/11/2026. O
+   `!= null` aparece em ~400 peças de produção sem quebrar nada, porque é um defeito
+   silencioso, por isso não virou regra do revisor.)
+19. **Averbação de imóvel: não mandar `dhMovimentacao`.** `Datas.hoje()` e o texto
+   `yyyy-MM-dd HH:mm:ss` são gravados como UTC, e a tela mostra 3 horas a mais. Sem o
+   campo, o servidor usa a hora local. Template: `Averbacao_Transferencia_Completa_BASE`.
+   (11/11/2026.)
+20. **`economico.dataInicioOuReinicio` não é a data de abertura da tela.** Ela segue a
+   última movimentação de INICIO ou REINICIO, enquanto o campo "Início da atividade"
+   da tela mostra a abertura e não muda. Uma baixa seguida de reinício no mesmo dia,
+   feita só para destravar uma edição do cadastro, faz a fórmula enxergar a empresa
+   como aberta naquele dia e cobrar a taxa proporcional. Diagnóstico: o valor do ano
+   bate com N/12 do ano anterior, e o histórico do econômico mostra a baixa e o reinício
+   minutos um do outro. Correção: excluir as duas movimentações, sem mexer na fórmula.
+   Se a regra do município for proporcional só na abertura, a data de abertura sai da
+   menor `item.dataSituacao` com `item.situacaoEconomico == 'INICIO'` em
+   `UtilitariosEconomicos.buscaMovimentacoes(economico.codigo)`, padrão que já roda em
+   produção em fórmulas de TLF. (Confirmado no recálculo, 12/11/2026.)
 
 ---
 

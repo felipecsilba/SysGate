@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ValorVenalImoveisPorUso" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="AllSectionsNoDetail" whenResourceMissingType="Key" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c01">
+	<style name="base" isDefault="true" fontName="Arial" fontSize="8" forecolor="#1F2937"/>
+	<style name="cabecalhoColuna" style="base" fontSize="7" isBold="true" forecolor="#374151"/>
+	<style name="zebra" style="base">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{grupoUso_COUNT} % 2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#F3F4F6"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="ENTIDADE_NOME" class="java.lang.String"/>
+	<parameter name="ENTIDADE_BRASAO" class="java.awt.Image"/>
+	<parameter name="BTH_ENTIDADE_ESTADO" class="java.lang.String"/>
+	<parameter name="USUARIO_NOME" class="java.lang.String"/>
+	<field name="titulo" class="java.lang.String"/>
+	<field name="filtro" class="java.lang.String"/>
+	<field name="uso" class="java.lang.String"/>
+	<field name="codigo" class="java.lang.Long"/>
+	<field name="inscricao" class="java.lang.String"/>
+	<field name="endereco" class="java.lang.String"/>
+	<field name="bairro" class="java.lang.String"/>
+	<field name="area" class="java.math.BigDecimal"/>
+	<field name="valorVenal" class="java.math.BigDecimal"/>
+	<field name="anoVenal" class="java.lang.Long"/>
+	<field name="resumoUso" class="java.lang.String"/>
+	<field name="resumoQtd" class="java.lang.String"/>
+	<field name="resumoValor" class="java.lang.String"/>
+	<field name="semVenal" class="java.lang.Long"/>
+	<variable name="subtotalVenal" class="java.math.BigDecimal" resetType="Group" resetGroup="grupoUso" calculation="Sum">
+		<variableExpression><![CDATA[$F{valorVenal} == null ? BigDecimal.ZERO : $F{valorVenal}]]></variableExpression>
+		<initialValueExpression><![CDATA[BigDecimal.ZERO]]></initialValueExpression>
+	</variable>
+	<group name="grupoUso" keepTogether="false">
+		<groupExpression><![CDATA[$F{uso}]]></groupExpression>
+		<groupHeader>
+			<band height="22">
+				<printWhenExpression><![CDATA[$F{uso} != null]]></printWhenExpression>
+				<textField>
+					<reportElement x="0" y="6" width="555" height="14" forecolor="#4338CA" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c02"/>
+					<box>
+						<bottomPen lineWidth="0.75" lineColor="#4338CA"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font size="9" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{uso}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="20">
+				<printWhenExpression><![CDATA[$F{uso} != null]]></printWhenExpression>
+				<textField>
+					<reportElement x="180" y="2" width="298" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c03"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Subtotal " + $F{uso} + ": " + $V{grupoUso_COUNT} + " imóvel(is)"]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="482" y="2" width="71" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c04"/>
+					<box>
+						<topPen lineWidth="0.5" lineColor="#9CA3AF"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("pt", "BR"))).format($V{subtotalVenal})]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<pageHeader>
+		<band height="96" splitType="Stretch">
+			<image scaleImage="RetainShape">
+				<reportElement x="0" y="0" width="48" height="48" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c05"/>
+				<imageExpression><![CDATA[$P{ENTIDADE_BRASAO}]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement x="56" y="0" width="390" height="17" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c06"/>
+				<textElement>
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{ENTIDADE_NOME} == null ? "" : $P{ENTIDADE_NOME}.toUpperCase()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="56" y="17" width="390" height="13" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c07"/>
+				<textElement>
+					<font size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{BTH_ENTIDADE_ESTADO} == null ? "" : $P{BTH_ENTIDADE_ESTADO}.toUpperCase()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="56" y="32" width="390" height="16" forecolor="#4338CA" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c08"/>
+				<textElement>
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{titulo} == null ? "Valor Venal dos Imóveis" : $F{titulo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="445" y="0" width="110" height="12" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c09"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Emissão: " + new java.text.SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date())]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="445" y="12" width="95" height="12" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c10"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="540" y="12" width="15" height="12" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c11"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="56" width="555" height="12" forecolor="#4B5563" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c12"/>
+				<textFieldExpression><![CDATA[$F{filtro} == null ? "" : "Filtro: " + $F{filtro}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement positionType="Float" mode="Opaque" x="0" y="74" width="555" height="20" backcolor="#E0E7FF" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c13"/>
+				<box>
+					<bottomPen lineWidth="1.0" lineColor="#4338CA"/>
+				</box>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="4" y="0" width="34" height="20" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9d00"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle"/>
+					<text><![CDATA[CÓD.]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="40" y="0" width="78" height="20" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9d01"/>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[INSCRIÇÃO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="120" y="0" width="150" height="20" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9d02"/>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[ENDEREÇO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="274" y="0" width="80" height="20" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9d03"/>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[BAIRRO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="358" y="0" width="68" height="20" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9d04"/>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[USO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="428" y="0" width="52" height="20" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9d05"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<text><![CDATA[ÁREA (m²)]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="482" y="0" width="71" height="20" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9d06"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<text><![CDATA[VALOR VENAL (R$)]]></text>
+				</staticText>
+			</frame>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="14" splitType="Stretch">
+			<frame>
+				<reportElement style="zebra" stretchType="RelativeToTallestObject" x="0" y="0" width="555" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c21"/>
+				<textField isBlankWhenNull="true">
+					<reportElement x="4" y="0" width="34" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9e00"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{codigo}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement x="40" y="0" width="78" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9e01"/>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{inscricao}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement x="120" y="0" width="150" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9e02"/>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{endereco}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement x="274" y="0" width="80" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9e03"/>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{bairro}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement x="358" y="0" width="68" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9e04"/>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{uso}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement x="428" y="0" width="52" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9e05"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{area} == null ? "—" : new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("pt", "BR"))).format($F{area})]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement x="482" y="0" width="71" height="14" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9e06"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{valorVenal} == null ? "—" : new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("pt", "BR"))).format($F{valorVenal})]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="16">
+			<line>
+				<reportElement x="0" y="2" width="555" height="1" forecolor="#D1D5DB" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c29"/>
+			</line>
+			<textField>
+				<reportElement x="0" y="4" width="555" height="12" forecolor="#6B7280" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c30"/>
+				<textElement>
+					<font size="7" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Emitido por " + ($P{USUARIO_NOME} == null ? "" : $P{USUARIO_NOME}) + "  ·  Valor venal: último valor calculado de cada imóvel"]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="70" splitType="Prevent">
+			<staticText>
+				<reportElement x="0" y="10" width="230" height="40" forecolor="#B45309" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c40">
+					<printWhenExpression><![CDATA[$V{REPORT_COUNT} == 0]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nenhum imóvel encontrado com os filtros informados.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="235" y="10" width="320" height="16" forecolor="#4338CA" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c31"/>
+				<box>
+					<bottomPen lineWidth="1.0" lineColor="#4338CA"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[RESUMO POR USO]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="235" y="28" width="320" height="16" backcolor="#E0E7FF" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c32"/>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="6" y="0" width="150" height="16" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c33"/>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[USO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="156" y="0" width="60" height="16" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c34"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<text><![CDATA[IMÓVEIS]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="cabecalhoColuna" x="216" y="0" width="98" height="16" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c35"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<text><![CDATA[VALOR VENAL (R$)]]></text>
+				</staticText>
+			</frame>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="241" y="46" width="150" height="12" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c36"/>
+				<textElement>
+					<font isBold="true"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.4"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{resumoUso}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="391" y="46" width="60" height="12" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c37"/>
+				<textElement textAlignment="Right">
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.4"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{resumoQtd}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="451" y="46" width="98" height="12" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c38"/>
+				<textElement textAlignment="Right">
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.4"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{resumoValor}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="235" y="58" width="320" height="12" forecolor="#B45309" uuid="3b1f6c2e-8a41-4d0b-9c55-6f2a7e1d9c39">
+					<printWhenExpression><![CDATA[$F{semVenal} != null && $F{semVenal} > 0]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="7" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Atenção: " + $F{semVenal} + " imóvel(is) sem valor venal gravado (marcados com —) - não entram na soma."]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>
