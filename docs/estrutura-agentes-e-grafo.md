@@ -130,7 +130,10 @@ regra que acusa peça que roda em produção está errada.
   origem) e 1 que o README diz não validado (Receitas com Descrição Repetida). Ao validar no Studio,
   registrar a data no README e rodar `grafo gerar`.
 - **Fontes fora do catálogo**: `dinamico/novo` (usada em template, sem catálogo nem uso em produção registrado).
-- **Ensaio real**: os agentes foram ensaiados só com casos de resposta conhecida; ajustar com pedidos do dia a dia.
+- **Ensaio real**: os agentes foram ensaiados só com casos de resposta conhecida. Desde 2026-11-12, cada
+  peça entregue ganha uma linha em `biblioteca/_REGISTRO/pedidos.md` (quem fez, base, revisor, rodadas no
+  Studio, o que falhou). Com ~10 pedidos: um resumo (acerto de primeira por tipo de peça e por agente,
+  falhas que se repetem) para decidir ajustes nos agentes com dado.
 - **Bom Jesus**: dois municípios no mesmo prefixo; o grafo marca com ⚠.
 - **App lendo o grafo** (Mapa, Biblioteca, Gerador): fase própria, quando houver algo novo para mostrar.
 

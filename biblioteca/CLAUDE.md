@@ -86,6 +86,7 @@ Aceita o nome do catálogo ou o nome do editor da Betha. O catálogo (`catalogo_
 | `CONTEXTO.md`, `README.md`, este arquivo | Handoff da base | sim |
 | `_GRAFO/` | Grafo da biblioteca: `grafo.json` (gerado), `curado.json` (à mão), `grafo.mjs` (consulta) e `lib/` (testes: `node --test "_GRAFO/**/*.test.mjs"`) | sim |
 | `_BIBLIOTECA/` | Templates BASE (17), funções prontas (7), dicionário de fórmulas (10 tipos), dicionário de funções BFC-Script, Fórmula vs Script. `Exporta_Debitos_Completo_por_Credito_BASE` gera o `.jsonl` da Checagem Por Fonte | sim |
+| `_REGISTRO/pedidos.md` | Uma linha por peça entregue: quem fez, base, revisor, rodadas no Studio até dar certo e o que falhou. Mede se os agentes compensam (preenchido pela skill `pedido-bfc`) | sim |
 | `_CONHECIMENTO/` | O que os agentes leem, por área (ITBI-Transferencias, Imoveis, Registro-Bancario, `_COMUM`, `_FUNDAMENTOS`) + `_bruto/` ainda não digerido | sim |
 | `FontesDeDados/` (scripts, `.md`, `catalogo_v2.json`, `mapa_bfc_rest.json`, `nomes_bfc.json`) | `fonte.py` e o Gerador do App precisam deles | sim |
 | `FontesDeDados/swagger/tributos-openapi.json` (5,6 MB, público) | Lido pelo Mapa de dependências do App | sim |
@@ -104,7 +105,7 @@ publicar nem mandar para serviço externo.
   repositório (Configurações → pasta da Biblioteca troca). Biblioteca, Municípios (escreve em
   `Municipios/<cidade>/Legislacao/`), Gerador de Extensões e Mapa (`FontesDeDados/`).
 - **Agentes** (`.claude/agents/` na raiz do Krakion): leem `_CONHECIMENTO/`, `_BIBLIOTECA/` e
-  rodam `FontesDeDados/fonte.py`. Hoje: `itbi-transferencias`.
+  rodam `FontesDeDados/fonte.py`. Lista em "Quem faz o quê", abaixo.
 
 ## Quem faz o quê
 

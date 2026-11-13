@@ -62,7 +62,16 @@ existe (`no fonte:<x>`)? O que não é portável está marcado? Erro do revisor 
 Caminho do arquivo, o que mudou, **o que conferir no Studio** (log, total, faixa de teste) e as
 perguntas para o município. Alerta de risco em destaque (⛔ irreversível, ⚠ revisar).
 
-## 7. Depois que o Felipe validar no Studio (não antes)
+**Registre a entrega** com uma linha nova em `biblioteca/_REGISTRO/pedidos.md`: data, município,
+peça, quem fez, base, revisor e `Rodadas: pendente`. Sem dado de contribuinte.
+
+## 7. Quando o Felipe contar o resultado no Studio
+
+Complete a linha do pedido em `_REGISTRO/pedidos.md`: rodadas até dar certo (`1` = de primeira),
+o motivo de cada rodada extra e o que a falha virou (passo 2 abaixo). Se uma rodada falhou,
+corrija e registre a nova tentativa na mesma linha (`Rodadas: 2`).
+
+Depois que o Felipe validar (não antes):
 
 1. Template reutilizável? Versão genérica em `biblioteca/_BIBLIOTECA/Templates/<Nome>_BASE.txt`
    + `README - <Nome>.md` com "Template validado em produção em DD/MM/AAAA" e como usar.
