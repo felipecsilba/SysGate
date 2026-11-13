@@ -1,32 +1,12 @@
 // Revisor de BFC-Script: as armadilhas que já custaram rodada no Studio, com linha e correção.
 // Fontes das regras: memória bfc-script-armadilhas e CONTEXTO.md ("Lições aprendidas").
 // Calibrado contra peças validadas: regra que acusa peça que roda em produção está errada.
-import { semComentarios, METODOS } from '../../_GRAFO/lib/codigo.mjs'
+import { semComentarios, varrerCodigo, METODOS } from '../../_GRAFO/lib/codigo.mjs'
 
-/** Apaga o conteúdo das strings (mantém aspas, tamanho e quebras de linha) para regra não casar com texto. */
+/** Apaga o conteúdo das strings (mantém aspas, tamanho e quebras de linha) para regra não casar com texto.
+ *  O código dentro de ${...} continua visível. */
 export function mascararStrings(texto) {
-  let out = ''
-  let i = 0
-  while (i < texto.length) {
-    const c = texto[i]
-    if (c === '"' || c === "'") {
-      const tripla = texto.startsWith(c.repeat(3), i)
-      const fim = tripla ? c.repeat(3) : c
-      out += fim
-      i += fim.length
-      while (i < texto.length && !texto.startsWith(fim, i)) {
-        if (!tripla && texto[i] === '\n') break
-        if (texto[i] === '\\') { out += '  '; i += 2; continue }
-        out += texto[i] === '\n' ? '\n' : ' '
-        i++
-      }
-      if (texto.startsWith(fim, i)) { out += fim; i += fim.length }
-      continue
-    }
-    out += c
-    i++
-  }
-  return out
+  return varrerCodigo(texto, { mascararStrings: true })
 }
 
 const MSG = {
@@ -42,7 +22,7 @@ const MSG = {
   'busca-isempty': 'O retorno de .busca(...) é um iterável da Betha sem isEmpty() ("No signature of method … isEmpty()"). Para "existe?": .busca(…, primeiro: true) e teste x?.id; para contar: .size().',
   'averbacao-dh': 'Na averbação de imóvel, dhMovimentacao enviado (Datas.hoje() ou texto) é gravado como UTC e a tela mostra +3h. Omita o campo: o servidor preenche com a hora local.',
   'fonte-desconhecida':'Fonte que não está no catálogo/grafo. Confira o nome no editor ou com fonte.py buscar.',
-  'formula-def': 'Fórmula não aceita def: escreva o cálculo direto, sem função.',
+  'formula-def': 'Fórmula não aceita definir função (def nome(...) {}): escreva o cálculo direto. Declarar variável com def roda.',
   'formula-find': 'Fórmula não aceita .find{}: use laço simples.',
   'formula-dados': 'Fórmula não acessa Dados.*: use as variáveis de contexto do motor (Dicionario de Formulas/<TIPO>).',
 }
@@ -153,7 +133,7 @@ export function revisar(texto, { formula = false, fontesConhecidas = [], operaco
   }
 
   if (formula) {
-    todos(/\bdef\s+[A-Za-z_]/g, 'formula-def')
+    todos(/\bdef\s+[A-Za-z_]\w*\s*\(/g, 'formula-def')
     todos(/\.find\s*\{/g, 'formula-find')
     todos(/\bDados\./g, 'formula-dados')
   }

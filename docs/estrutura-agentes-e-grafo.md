@@ -108,12 +108,31 @@ nível, regra e correção; sai com 1 se houver erro. Ignora comentários e cont
 
 | Nível | Regras |
 |---|---|
-| erro | `cast-as`, `json-minusculo`, `imprimir-soma`, `zip-no-script`, `metodo-sistema`; com `--formula`: `formula-def`, `formula-find`, `formula-dados` |
-| aviso | `se-lista` (variável que recebeu lista), `it-em-se`, `zero-ausencia`, `metodo-rest` (`busca<Algo>` do catálogo como método), `fonte-desconhecida` |
+| erro | `cast-as`, `json-minusculo`, `imprimir-soma`, `zip-no-script`, `metodo-sistema`, `busca-isempty`; com `--formula`: `formula-def` (só `def nome(`), `formula-find`, `formula-dados` |
+| aviso | `se-lista` (variável que recebeu lista), `it-em-se`, `zero-ausencia`, `metodo-rest` (`busca<Algo>` do catálogo como método), `fonte-desconhecida`, `averbacao-dh` |
 
 **Calibrado contra o gabarito** (2026-11-09): 0 erros em 24 templates/funções validados, 300 scripts
 e 100 fórmulas de produção. Regra nova só entra com teste e passando de novo por essa calibração —
 regra que acusa peça que roda em produção está errada.
+
+**Recalibrado no corpus inteiro** (2026-11-12, depois de `busca-isempty` e `averbacao-dh`): gabarito
+(16 templates + 7 funções) com 0 erro; as duas regras novas, 0 falso positivo (`busca-isempty` não aparece
+em produção; `averbacao-dh` dá 4 avisos, todos enviando o campo). A amostra de 2026-11-09 escondia
+defeitos das regras antigas, que acusavam 166 erros em peças de produção. Corrigidos:
+- O leitor de código (`varrerCodigo` em `_GRAFO/lib/codigo.mjs`, usado pelo revisor e pelo grafo) não
+  entendia `${...}` com aspas dentro nem string sem fechar: um `join(",")` dentro de GString fazia o
+  resto do arquivo trocar código por comentário. O corpus perdeu 4 `usa-fonte` falsos (código comentado).
+- `formula-def` acusava `def x` declarando variável (97 de 98 casos, IPTU de produção). Agora só `def nome(`.
+
+Ficaram **66 erros em 5 casos**, à espera do Felipe dizer se a regra ou a peça está errada:
+
+| Regra | Onde | Pergunta |
+|---|---|---|
+| `formula-find` | TLF de Criciúma 2026 (`.find { it == codigoCnae }`, 10×) | `.find{}` roda em fórmula de GERACAO_CREDITO_ECONOMICOS? |
+| `metodo-sistema` | 20 relatórios/fontes de Lagoa Santa: `Dados.procuradoria.v2.resumoDivida.busca(` | Na procuradoria, `resumoDivida` usa `.busca` e não `.buscar`? |
+| `zip-no-script` | Componentes SisObra (Jaraguá do Sul, Balneário Rincão): `Arquivo.novo(…'.zip', 'zip')` | Zip para enviar a sistema externo é permitido (a regra só deveria valer para o resultado)? |
+| `cast-as` | Validação e-Sfinge 2026 de Florianópolis e Campos Novos (`txt as Long`) | Essas fontes rodam? A lição diz que o Studio proíbe cast |
+| `formula-def` | Florianópolis, FORMULA_ACRESCIMO_PARCELAMENTO 15451 (`def ajustaParaDiaUtil(`) | Essa fórmula roda? |
 
 ## 6. Testes
 

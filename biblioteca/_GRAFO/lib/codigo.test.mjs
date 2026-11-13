@@ -39,3 +39,20 @@ c = Dados.dinamico.v2.algo`
 test('semComentarios preserva as quebras de linha', () => {
   assert.equal(semComentarios('a // b\nc /* d\ne */ f').split('\n').length, 3)
 })
+
+test('semComentarios: aspas dentro de ${...} não fecham a string (GString do Groovy)', () => {
+  // caso real (fonte de Atibaia): a aspa de join(",") desalinhava tudo e o comentário seguinte virava código
+  const t = 'c += " and id in (${p.join(",").replace("\'","")})"\n// Buscando as CNAEs\nx = 1'
+  const r = semComentarios(t)
+  assert.ok(!r.includes('Buscando'), r)
+  assert.ok(r.includes('join(",")') && r.includes('x = 1'))
+})
+
+test('semComentarios: string simples sem fechar termina na quebra de linha', () => {
+  const r = semComentarios('a = "sem fechar\n// comentario\nb = 2')
+  assert.ok(!r.includes('comentario') && r.includes('b = 2'), r)
+})
+
+test('semComentarios: // dentro de string continua sendo texto', () => {
+  assert.equal(semComentarios('u = "http://x" // fim'), 'u = "http://x" ')
+})

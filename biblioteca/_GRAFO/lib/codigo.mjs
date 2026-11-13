@@ -3,25 +3,49 @@
 // Tira comentários // e /* */ sem mexer em strings e preservando as quebras de linha
 // (assim um "não é Dados.tributos.v2.x" num comentário não vira uso da fonte).
 export function semComentarios(texto) {
+  return varrerCodigo(texto, { tirarComentarios: true })
+}
+
+/**
+ * Lê BFC-Script/Groovy separando código, strings e comentários.
+ * - tirarComentarios: apaga // e /* *\/ (mantém as quebras de linha).
+ * - mascararStrings: troca o texto das strings por espaços (mantém aspas, tamanho e quebras de linha).
+ * Entende interpolação em string de aspas duplas: o que está em ${...} é código, e aspas lá dentro
+ * não fecham a string de fora ("in (${p.join(",")})"). String de aspa simples (não tripla) termina
+ * na quebra de linha, para uma aspa solta não engolir o resto do arquivo.
+ */
+export function varrerCodigo(texto, { tirarComentarios = false, mascararStrings = false } = {}) {
   let out = ''
   let i = 0
-  let aspas = null
+  const pilha = [] // { str: '"' | "'" | '"""' | "'''" } ou { interp: profundidade de chaves }
   while (i < texto.length) {
     const c = texto[i], d = texto[i + 1]
-    if (aspas) {
-      out += c
-      if (c === '\\') { out += d ?? ''; i += 2; continue }
-      if (c === aspas) aspas = null
+    const topo = pilha[pilha.length - 1]
+    if (topo && topo.str) {
+      const tripla = topo.str.length === 3
+      if (c === '\\') { out += mascararStrings ? '  ' : c + (d ?? ''); i += 2; continue }
+      if (texto.startsWith(topo.str, i)) { out += topo.str; i += topo.str.length; pilha.pop(); continue }
+      if (topo.str[0] === '"' && c === '$' && d === '{') { out += '${'; i += 2; pilha.push({ interp: 0 }); continue }
+      if (c === '\n') { out += '\n'; i++; if (!tripla) pilha.pop(); continue }
+      out += mascararStrings ? ' ' : c
       i++
       continue
     }
-    if (c === '"' || c === "'") { aspas = c; out += c; i++; continue }
-    if (c === '/' && d === '/') { while (i < texto.length && texto[i] !== '\n') i++; continue }
-    if (c === '/' && d === '*') {
+    // código (no nível de cima ou dentro de ${...})
+    if (c === '"' || c === "'") {
+      const q = texto.startsWith(c.repeat(3), i) ? c.repeat(3) : c
+      out += q; i += q.length; pilha.push({ str: q }); continue
+    }
+    if (tirarComentarios && c === '/' && d === '/') { while (i < texto.length && texto[i] !== '\n') i++; continue }
+    if (tirarComentarios && c === '/' && d === '*') {
       i += 2
       while (i < texto.length && !(texto[i] === '*' && texto[i + 1] === '/')) { if (texto[i] === '\n') out += '\n'; i++ }
       i += 2
       continue
+    }
+    if (topo && 'interp' in topo) {
+      if (c === '{') topo.interp++
+      else if (c === '}') { if (topo.interp === 0) { pilha.pop(); out += c; i++; continue } topo.interp-- }
     }
     out += c
     i++

@@ -75,6 +75,24 @@ test('fonte-desconhecida: fonte fora do grafo; cadeia filha de fonte conhecida p
     ['L2 aviso fonte-desconhecida'])
 })
 
+test('mascararStrings: o código dentro de ${...} fica visível; o texto ao redor some', () => {
+  const t = 'c = "texto ${lista.join(",")} mais"'
+  const m = mascararStrings(t)
+  assert.equal(m.length, t.length)
+  assert.ok(m.includes('${lista.join(" ")}') && !m.includes('texto') && !m.includes('mais'), m) // a string interna também é mascarada
+})
+
+test('cast-as: comentário depois de GString com aspas internas não acusa', () => {
+  const t = 'c += " and id in (${p.join(",").replace("\'","")})"\n// Buscando as CNAEs\nx = 1'
+  assert.deepEqual(regras(t), [])
+})
+
+test('formula-def: só definição de função; def declarando variável roda em produção', () => {
+  // 97 de 98 achados no corpus eram "def Valor_A" (IPTU de Fazenda Rio Grande, 2017-2021)
+  assert.deepEqual(regras('def Valor_A\ndef total = 0\nValor_A = 1', { formula: true }), [])
+  assert.deepEqual(regras('def calc(x) { x }\ndef  soma (a, b) { a + b }', { formula: true }), ['L1 erro formula-def', 'L2 erro formula-def'])
+})
+
 test('fórmula: def, .find{} e Dados.* são erro só com --formula', () => {
   const t = 'def calc() { 1 }\nx = lista.find { it > 1 }\ny = Dados.tributos.v2.imoveis.busca()'
   assert.deepEqual(regras(t, { formula: true }).filter(r => r.includes('formula')), ['L1 erro formula-def', 'L2 erro formula-find', 'L3 erro formula-dados'])
