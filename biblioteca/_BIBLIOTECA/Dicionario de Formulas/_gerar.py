@@ -32,28 +32,45 @@ MAPA_CORPUS = {
     'CONVENIO_BANCARIO':               'CONVENIO_BANCARIO',
     'DESCONTO_GUIA':                   'DESCONTO_GUIA',
     'CALCULO_PROJETOS_OBRAS':          None,   # sem equivalente em Formulas/
+    # Capturados em 2026-11-13. Lista = subtipos que dividem o mesmo contexto no editor.
+    'GERACAO_CREDITO_PARCELAMENTOS':   'GERACAO_CREDITO_PARCELAMENTOS',
+    'DESCONTO_PARCELAMENTO':           ['DESCONTO_PARCELAMENTO_TODOS', 'DESCONTO_PARCELAMENTO_DIVIDAS',
+                                        'DESCONTO_PARCELAMENTO_LANCAMENTOS_EXERCICIO',
+                                        'DESCONTO_PARCELAMENTO_PARCELAMENTOS_ANTERIORES'],
+    'ITBI_VALOR_VENAL':                ['ITBI_VALOR_VENAL_TERRITORIAL', 'ITBI_VALOR_VENAL_CONSTRUCAO',
+                                        'ITBI_VALOR_VENAL_BENFEITORIAS'],
+    # O corpus chama os dois de ACRESCIMO_PARCELAMENTO, sem separar juro de antecipação de juro:
+    # a contagem dos dois sai da mesma família de arquivos.
+    'ACRESCIMO_PARCELAMENTO_JURO':     'ACRESCIMO_PARCELAMENTO',
+    'ACRESCIMO_PARCELAMENTO_ANTECIPACAO_JURO': 'ACRESCIMO_PARCELAMENTO',
+    'IMPOSTOS_FEDERAIS':               None,
+    'CREDITO_INSCRITO_DIVIDA_ATIVA':   None,
+    'MANUTENCAO_DIVIDA':               None,
+    'REDUCAO_BASE_CALC_ISSQN':         None,
+    'REQUERIMENTO_MANUTENCAO_CALCULO': None,
 }
 
 
 def carregar_corpus(tipo):
     """Le so as formulas do tipo correspondente. Devolve (texto, n_arquivos, escopo)."""
     alvo = MAPA_CORPUS.get(tipo, tipo)
+    alvos = alvo if isinstance(alvo, list) else ([alvo] if alvo else [])
     partes = []
     base = os.path.join(RAIZ, 'Formulas')
     for pasta, _, arquivos in os.walk(base):
         for a in arquivos:
             if not a.endswith('.txt'):
                 continue
-            if alvo and (' - %s - ' % alvo) not in a:
+            if alvos and not any((' - %s - ' % x) in a for x in alvos):
                 continue
             with io.open(os.path.join(pasta, a), encoding='utf8', errors='replace') as f:
                 partes.append(f.read())
     if alvo is None:
         escopo = 'nenhuma fórmula deste tipo existe em `Formulas/` — coluna Corpus não se aplica'
     elif not partes:
-        escopo = 'nenhum arquivo `%s` encontrado em `Formulas/`' % alvo
+        escopo = 'nenhum arquivo `%s` encontrado em `Formulas/`' % '` / `'.join(alvos)
     else:
-        escopo = '%d fórmulas do tipo `%s`' % (len(partes), alvo)
+        escopo = '%d fórmulas do tipo `%s`' % (len(partes), '` / `'.join(alvos))
     return '\n'.join(partes), len(partes), escopo
 
 

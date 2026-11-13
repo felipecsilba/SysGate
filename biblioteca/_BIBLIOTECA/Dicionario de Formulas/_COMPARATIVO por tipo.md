@@ -12,7 +12,7 @@
 Vale tanto quanto a regra de que nada é portável entre municípios — e é
 menos óbvia, porque o nome da *classe* costuma ser o mesmo.
 
-**10 tipos capturados.**
+**20 tipos capturados.**
 
 | Rótulo | Tipo | Variáveis | Classes |
 |---|---|---:|---:|
@@ -26,6 +26,16 @@ menos óbvia, porque o nome da *classe* costuma ser o mesmo.
 | `A_PAR` | `FORMULA_ACRESCIMO_PARCELAMENTO` | 9 | 6 |
 | `DESC` | `DESCONTO_GUIA` | 6 | 3 |
 | `CONV` | `CONVENIO_BANCARIO` | 7 | 4 |
+| `G_PAR` | `GERACAO_CREDITO_PARCELAMENTOS` | 8 | 6 |
+| `IT_VV` | `ITBI_VALOR_VENAL` | 4 | 6 |
+| `AP_JUR` | `ACRESCIMO_PARCELAMENTO_JURO` | 16 | 4 |
+| `AP_ANT` | `ACRESCIMO_PARCELAMENTO_ANTECIPACAO_JURO` | 3 | 3 |
+| `D_PAR` | `DESCONTO_PARCELAMENTO` | 21 | 7 |
+| `INSC` | `CREDITO_INSCRITO_DIVIDA_ATIVA` | 4 | 8 |
+| `MANUT` | `MANUTENCAO_DIVIDA` | 5 | 5 |
+| `FED` | `IMPOSTOS_FEDERAIS` | 2 | 10 |
+| `RED` | `REDUCAO_BASE_CALC_ISSQN` | 3 | 4 |
+| `REQ` | `REQUERIMENTO_MANUTENCAO_CALCULO` | 2 | 3 |
 
 ---
 
@@ -33,27 +43,42 @@ menos óbvia, porque o nome da *classe* costuma ser o mesmo.
 
 Número = quantidade de métodos. `—` = a classe não existe naquele tipo.
 
-| Classe | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `Caracteres` | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 |
-| `Datas` | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 |
-| `Numeros` | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 |
-| `Utilitarios` | 10 | 10 | 10 | 10 | 14 | 9 | 9 | 9 | — | 6 |
-| `CamposAdicionais` | 5 | 5 | 5 | 4 | 5 | 4 | 4 | 4 | — | — |
-| `Agrupamentos` | 3 | 3 | 3 | — | 3 | — | — | — | — | — |
-| `TabelasAuxiliares` | 3 | 5 | — | — | — | — | — | — | — | — |
-| `Atividades` | — | 7 | — | — | — | — | — | — | — | — |
-| `ConfiguracoesParcela` | — | 1 | — | — | — | — | — | — | — | — |
-| `ConfiguracoesParcelas` | 1 | — | — | — | — | — | — | — | — | — |
-| `Creditos` | — | — | — | — | 3 | — | — | — | — | — |
-| `Imoveis` | 3 | — | — | — | — | — | — | — | — | — |
-| `UtilitariosDebitos` | — | — | — | — | — | 2 | — | — | — | — |
-| `UtilitariosDividas` | — | — | — | — | — | — | 5 | — | — | — |
-| `UtilitariosEconomicos` | — | 11 | — | — | — | — | — | — | — | — |
-| `UtilitariosImoveis` | 13 | — | — | — | — | — | — | — | — | — |
-| `UtilitariosParcelamento` | — | — | — | — | — | — | — | 2 | — | — |
-| `UtilitariosReceitasDiversas` | — | — | 2 | — | — | — | — | — | — | — |
-| `dadosContribuinte` | — | — | — | — | 1 | — | — | — | — | — |
+| Classe | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV | G_PAR | IT_VV | AP_JUR | AP_ANT | D_PAR | INSC | MANUT | FED | RED | REQ |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `Caracteres` | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 | 18 |
+| `Datas` | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 |
+| `Numeros` | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 | 22 |
+| `Utilitarios` | 10 | 10 | 10 | 10 | 14 | 9 | 9 | 9 | — | 6 | 10 | 14 | 7 | — | — | — | 1 | 10 | — | — |
+| `CamposAdicionais` | 5 | 5 | 5 | 4 | 5 | 4 | 4 | 4 | — | — | — | 3 | — | — | 2 | — | — | 5 | — | — |
+| `Agrupamentos` | 3 | 3 | 3 | — | 3 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `TabelasAuxiliares` | 3 | 5 | — | — | — | — | — | — | — | — | 3 | 3 | — | — | — | — | — | — | — | — |
+| `dadosContribuinte` | — | — | — | — | 1 | — | — | — | — | — | — | — | — | — | 1 | — | — | — | — | — |
+| `AliquotasServicosEconomicos` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 3 | — | — |
+| `Atividades` | — | 7 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `ConfiguracoesParcela` | — | 1 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `ConfiguracoesParcelas` | 1 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `Creditos` | — | — | — | — | 3 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `Economicos` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 2 | — | — |
+| `Imoveis` | 3 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `Manutencoes` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 2 | — | — | — |
+| `NotasAvulsas` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 10 | — | — |
+| `TabelasIRRF` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 2 | — | — |
+| `UtilitariosDebitos` | — | — | — | — | — | 2 | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `UtilitariosDividas` | — | — | — | — | — | — | 5 | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `UtilitariosEconomicos` | — | 11 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `UtilitariosImoveis` | 13 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `UtilitariosParcelamento` | — | — | — | — | — | — | — | 2 | — | — | — | — | — | — | — | — | — | — | — | — |
+| `UtilitariosReceitasDiversas` | — | — | 2 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `UtilitariosTaxas` | — | — | — | — | — | — | — | — | — | — | 2 | — | — | — | — | — | — | — | — | — |
+| `ValoresDeAtividadesDosEconomicos` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 7 | — | — |
+| `guiaReceitaRepositorio` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 4 | — | — | — | — |
+| `guiaRepositorio` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 6 | — | — | — | — |
+| `imovelRepositorio` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 3 | — | — | — | — |
+| `indexadorValorRepositorio` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 5 | — | — | — | — |
+| `lancamentos` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 3 | — | — | — | — | — |
+| `receitaDiversaRepositorio` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 1 | — | — | — | — |
+| `repositorioDeNotasAvulsas` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 10 | — |
+| `situacaoFinanceira` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | 9 | — | — | — | — | — |
 
 **Idênticas em todos os tipos** (seguras de copiar entre tipos): `Caracteres` · `Datas` · `Numeros`
 
@@ -62,120 +87,164 @@ Número = quantidade de métodos. `—` = a classe não existe naquele tipo.
 
 ### `CamposAdicionais` — método a método
 
-| Método | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `preencherCampoAdicional` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
-| `preencherCampoAdicionalAgrupamento` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
-| `valor` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
-| `valorOpcao` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
-| `lotePossuiCampoAdicionalInformado` | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — | — |
+| Método | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV | G_PAR | IT_VV | AP_JUR | AP_ANT | D_PAR | INSC | MANUT | FED | RED | REQ |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `valor` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — | ✅ | — | — | ✅ | — | — | ✅ | — | — |
+| `valorOpcao` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — | ✅ | — | — | ✅ | — | — | ✅ | — | — |
+| `preencherCampoAdicional` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | ✅ | — | — |
+| `preencherCampoAdicionalAgrupamento` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | ✅ | — | — |
+| `lotePossuiCampoAdicionalInformado` | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | ✅ | — | — |
 
 ### `TabelasAuxiliares` — método a método
 
-| Método | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `buscarRegistroDaTabelaPorCampo` | ✅ | ✅ | — | — | — | — | — | — | — | — |
-| `buscarRegistrosDaTabela` | ✅ | ✅ | — | — | — | — | — | — | — | — |
-| `valorDoCampoPorDescricao` | ✅ | ✅ | — | — | — | — | — | — | — | — |
-| `buscarRegistroDoReferentePorCampo` | — | ✅ | — | — | — | — | — | — | — | — |
-| `buscarRegistrosDoReferente` | — | ✅ | — | — | — | — | — | — | — | — |
+| Método | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV | G_PAR | IT_VV | AP_JUR | AP_ANT | D_PAR | INSC | MANUT | FED | RED | REQ |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `buscarRegistroDaTabelaPorCampo` | ✅ | ✅ | — | — | — | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — |
+| `buscarRegistrosDaTabela` | ✅ | ✅ | — | — | — | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — |
+| `valorDoCampoPorDescricao` | ✅ | ✅ | — | — | — | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — |
+| `buscarRegistroDoReferentePorCampo` | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `buscarRegistrosDoReferente` | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 
 ### `Utilitarios` — método a método
 
-| Método | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
-| `ehMoedaCorrente` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
-| `ehFeriado` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | — |
-| `proximoDiaUtil` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | — |
-| `buscaBeneficioFiscal` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| `buscaIndexadorPorNomeESigla` | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — | — |
-| `buscaIndexadorPorSigla` | — | — | — | ✅ | — | ✅ | ✅ | ✅ | — | — |
-| `buscaValorDoIndexadorPorSiglaNumaDataEspecifica` | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — | — |
-| `buscaValorIndexadorPorSiglaEData` | — | — | — | ✅ | — | ✅ | ✅ | ✅ | — | — |
-| `emitirErro` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| `existeLancamento` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| `valorGeradoLancadoPorCreditoTributarioParaReferente` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| `buscaAgrupamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — |
-| `buscaAgrupamentoParcelamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — |
-| `montaReferente` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — |
-| `buscaPlantaDeValoresDoImovel` | — | — | — | — | ✅ | — | — | — | — | — |
-| `buscaSecao` | — | — | — | — | ✅ | — | — | — | — | — |
-| `buscaSecaoDoImovel` | — | — | — | — | ✅ | — | — | — | — | — |
-| `completarADireita` | — | — | — | — | — | — | — | — | — | ✅ |
-| `completarAEsquerda` | — | — | — | — | — | — | — | — | — | ✅ |
-| `existeParcelamentoPorSituacao` | — | — | — | — | ✅ | — | — | — | — | — |
-| `existeParcelamentoVencido` | — | — | — | — | ✅ | — | — | — | — | — |
-| `existemDebitosPorSituacao` | — | — | — | — | ✅ | — | — | — | — | — |
-| `existemDebitosVencidos` | — | — | — | — | ✅ | — | — | — | — | — |
-| `existemDividasPorSituacao` | — | — | — | — | ✅ | — | — | — | — | — |
-| `existemDividasVencidas` | — | — | — | — | ✅ | — | — | — | — | — |
-| `fatorVencimento` | — | — | — | — | — | — | — | — | — | ✅ |
-| `imovelEhEnglobado` | — | — | — | — | ✅ | — | — | — | — | — |
-| `somatorioModulo10` | — | — | — | — | — | — | — | — | — | ✅ |
-| `somatorioModulo11` | — | — | — | — | — | — | — | — | — | ✅ |
-| `somenteNumeros` | — | — | — | — | — | — | — | — | — | ✅ |
+| Método | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV | G_PAR | IT_VV | AP_JUR | AP_ANT | D_PAR | INSC | MANUT | FED | RED | REQ |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | ✅ | — | — | — | — | ✅ | — | — |
+| `ehMoedaCorrente` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | ✅ | — | — | — | — | ✅ | — | — |
+| `ehFeriado` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | — | ✅ | — | ✅ | — | — | — | — | ✅ | — | — |
+| `proximoDiaUtil` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | — | ✅ | — | ✅ | — | — | — | — | ✅ | — | — |
+| `buscaValorDoIndexadorPorSiglaNumaDataEspecifica` | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | ✅ | — | — |
+| `buscaIndexadorPorNomeESigla` | ✅ | ✅ | ✅ | — | ✅ | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | ✅ | — | — |
+| `buscaBeneficioFiscal` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — |
+| `emitirErro` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — |
+| `existeLancamento` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — |
+| `valorGeradoLancadoPorCreditoTributarioParaReferente` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — |
+| `buscaIndexadorPorSigla` | — | — | — | ✅ | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `buscaValorIndexadorPorSiglaEData` | — | — | — | ✅ | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `buscaAgrupamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `buscaAgrupamentoParcelamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `montaReferente` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `buscaPlantaDeValoresDoImovel` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `buscaSecao` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `buscaSecaoDoImovel` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `existeParcelamentoPorSituacao` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `existeParcelamentoVencido` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `existemDebitosPorSituacao` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `existemDebitosVencidos` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `existemDividasPorSituacao` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `existemDividasVencidas` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `imovelEhEnglobado` | — | — | — | — | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `buscaImoveisDoContribuinte` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — |
+| `buscaImovelPeloCodigo` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — |
+| `completarADireita` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `completarAEsquerda` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `fatorVencimento` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `ignorarDivida` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — |
+| `somatorioModulo10` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `somatorioModulo11` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `somenteNumeros` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
 
 ---
 
 ## Variáveis de contexto por tipo
 
-| Variável | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `ano` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | — |
-| `creditoTributario` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | — | — | — |
-| `dataBase` | — | ✅ | — | — | — | ✅ | ✅ | ✅ | ✅ | — |
-| `usuario` | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — |
-| `complementar` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| `contribuinte` | — | — | — | — | — | ✅ | ✅ | ✅ | ✅ | — |
-| `dataLancamento` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| `imovel` | ✅ | — | ✅ | ✅ | ✅ | — | — | — | — | — |
-| `lancamento` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| `configParcelamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — |
-| `dataVencimento` | — | — | — | — | — | ✅ | ✅ | — | ✅ | — |
-| `referente` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — |
-| `tabelasCalculos` | ✅ | ✅ | ✅ | — | — | — | — | — | — | — |
-| `tipoLancamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — |
-| `dataDeVencimento` | — | — | — | — | ✅ | — | — | — | — | ✅ |
-| `economico` | — | ✅ | ✅ | — | — | — | — | — | — | — |
-| `formaPagamento` | ✅ | ✅ | — | — | — | — | — | — | — | — |
-| `indexador` | — | — | — | — | — | ✅ | ✅ | — | — | — |
-| `numeroParcela` | — | — | — | — | — | ✅ | ✅ | — | — | — |
-| `quantidadeParcelas` | ✅ | ✅ | — | — | — | — | — | — | — | — |
-| `receitas` | — | — | — | — | — | ✅ | ✅ | — | — | — |
-| `valorDevido` | — | — | — | — | — | ✅ | ✅ | — | — | — |
-| `Convenio` | — | — | — | — | — | — | — | — | — | ✅ |
-| `TipoRetorno` | — | — | — | — | — | — | — | — | — | ✅ |
-| `anoTransferencia` | — | — | — | — | ✅ | — | — | — | — | — |
-| `codigo` | — | — | — | — | — | — | ✅ | — | — | — |
-| `composicao` | — | — | — | — | — | — | — | — | ✅ | — |
-| `configuracaoLancamento` | — | — | ✅ | — | — | — | — | — | — | — |
-| `configuracaoTaxaExpediente` | — | ✅ | — | — | — | — | — | — | — | — |
-| `contaUnica` | — | — | — | — | — | — | — | — | — | ✅ |
-| `dataDaTransferencia` | — | — | — | — | ✅ | — | — | — | — | — |
-| `dataInscricao` | — | — | — | — | — | — | ✅ | — | — | — |
-| `dataParcelamento` | — | — | — | — | — | — | — | ✅ | — | — |
-| `formaDeCobranca` | — | — | — | — | ✅ | — | — | — | — | — |
-| `idDebito` | — | — | — | — | — | ✅ | — | — | — | — |
-| `idDivida` | — | — | — | — | — | — | ✅ | — | — | — |
-| `lancamentosEnglobados` | ✅ | — | — | — | — | — | — | — | — | — |
-| `nroDaparcela` | — | — | — | — | — | — | — | — | — | ✅ |
-| `numeroDeBaixa` | — | — | — | — | — | — | — | — | — | ✅ |
-| `numeroInscricao` | — | — | — | — | — | — | ✅ | — | — | — |
-| `numeroParcelamento` | — | — | — | — | — | — | — | ✅ | — | — |
-| `obra` | — | — | — | ✅ | — | — | — | — | — | — |
-| `opcoesListaServico` | — | ✅ | — | — | — | — | — | — | — | — |
-| `pagadoresDoItbi` | — | — | — | — | ✅ | — | — | — | — | — |
-| `parcelas` | — | — | — | — | — | — | — | ✅ | — | — |
-| `plantasDeValores` | — | — | — | — | ✅ | — | — | — | — | — |
-| `processoAdministrativo` | — | — | — | — | — | — | ✅ | — | — | — |
-| `quantidadeDeItens` | — | — | — | — | — | — | — | — | ✅ | — |
-| `receitaDiversa` | — | — | ✅ | — | — | — | — | — | — | — |
-| `simplesNacional` | — | — | — | — | — | — | ✅ | — | — | — |
-| `statusDivida` | — | — | — | — | — | — | ✅ | — | — | — |
-| `transfImoveisItens` | — | — | — | — | ✅ | — | — | — | — | — |
-| `transferenciaImoveis` | — | — | — | — | ✅ | — | — | — | — | — |
-| `valorDoDocumento` | — | — | — | — | — | — | — | — | — | ✅ |
+| Variável | IMOV | ECON | RECD | OBRA | ITBI | A_DEB | A_DIV | A_PAR | DESC | CONV | G_PAR | IT_VV | AP_JUR | AP_ANT | D_PAR | INSC | MANUT | FED | RED | REQ |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `ano` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | — | — | — | ✅ | — | — | — | — | — | — | — |
+| `contribuinte` | — | — | — | — | — | ✅ | ✅ | ✅ | ✅ | — | ✅ | — | ✅ | — | ✅ | — | — | — | — | — |
+| `creditoTributario` | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `dataBase` | — | ✅ | — | — | — | ✅ | ✅ | ✅ | ✅ | — | — | — | ✅ | ✅ | — | — | — | — | — | — |
+| `imovel` | ✅ | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `lancamento` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — |
+| `usuario` | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `complementar` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `dataLancamento` | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `tabelasCalculos` | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `tipoLancamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | ✅ | — | — | — | — | — | — | — |
+| `configParcelamento` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `configuracaoParcelamento` | — | — | — | — | — | — | — | — | — | — | ✅ | — | ✅ | — | ✅ | — | — | — | — | — |
+| `dataVencimento` | — | — | — | — | — | ✅ | ✅ | — | ✅ | — | — | — | — | — | — | — | — | — | — | — |
+| `divida` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | ✅ | — | ✅ | — | — | — |
+| `guia` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | ✅ | ✅ | — | — | — | — |
+| `guiaReceita` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | ✅ | ✅ | — | — | — | — |
+| `qtdParcelas` | — | — | — | — | — | — | — | — | — | — | ✅ | — | ✅ | — | ✅ | — | — | — | — | — |
+| `referente` | — | — | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `dataDeVencimento` | — | — | — | — | ✅ | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `dataInscricao` | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — | — | — |
+| `dividaReceita` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | ✅ | — | — | — | — | — |
+| `economico` | — | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `formaPagamento` | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `indexador` | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `montante` | — | — | — | — | — | — | — | — | — | — | ✅ | — | ✅ | — | — | — | — | — | — | — |
+| `notaAvulsa` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | ✅ | — |
+| `numeroParcela` | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `parcelamento` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — |
+| `parcelamentoParcela` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — |
+| `quantidadeParcelas` | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `receitas` | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `valorDevido` | — | — | — | — | — | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `Convenio` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `TipoRetorno` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `anoDaTransferencia` | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `anoTransferencia` | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `codigo` | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `competencias` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — |
+| `composicao` | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — |
+| `configuracaoLancamento` | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `configuracaoTaxaExpediente` | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `contaUnica` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `creditosTributarios` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — |
+| `dataDaTransferencia` | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `dataDoProcesso` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — |
+| `dataParcelamento` | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `dividas` | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — |
+| `dtVctoPrimeiraParcela` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `ehLancamentoInscrito` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `formaDeCobranca` | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `guias` | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — |
+| `idDebito` | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `idDivida` | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `impostosFederais` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — |
+| `issqn` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — |
+| `lancamentosEnglobados` | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `leiAto` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — |
+| `nroDaparcela` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `numeroDeBaixa` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `numeroDoProcesso` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — |
+| `numeroInscricao` | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `numeroParcelamento` | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `obra` | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `opcoesListaServico` | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `pagadoresDoItbi` | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `parcela` | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — |
+| `parcelamentoAnterior` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `parcelas` | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — |
+| `plantasDeValores` | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `processoAdministrativo` | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `quantidadeDeItens` | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — |
+| `receitaDiversa` | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `requerimentoManutencaoCalculo` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ |
+| `saldo` | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — |
+| `servico` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — |
+| `simplesNacional` | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `situacoesRequerimento` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ |
+| `statusDivida` | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `tipoDesconto` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `tipoManutencaoDivida` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — |
+| `transfImoveisItens` | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `transferenciaImoveis` | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `usuarioCorrente` | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — |
+| `valorDoDocumento` | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — | — | — |
+| `vendedoresDoImovel` | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — | — | — | — |
+| `vlTotalCorrecao` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalCorrecaoParcelar` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalDevido` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalJuros` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalJurosParcelar` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalLancado` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalLancadoParcelar` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalMulta` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
+| `vlTotalMultaParcelar` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | ✅ | — | — | — | — | — |
 
 ---
 
@@ -191,17 +260,35 @@ O que existe em **apenas um** tipo — o que mais engana quem adapta código.
 
 **`CALCULO_PROJETOS_OBRAS`** — `obra`
 
-**`ITBI`** — classe `dadosContribuinte` · classe `Creditos` · `transfImoveisItens` · `pagadoresDoItbi` · `dataDaTransferencia` · `plantasDeValores` · `anoTransferencia` · `transferenciaImoveis` · `formaDeCobranca`
+**`ITBI`** — classe `Creditos` · `transfImoveisItens` · `pagadoresDoItbi` · `dataDaTransferencia` · `plantasDeValores` · `anoTransferencia` · `transferenciaImoveis` · `formaDeCobranca`
 
 **`FORMULA_ACRESCIMO_DEBITO`** — classe `UtilitariosDebitos` · `idDebito`
 
-**`FORMULA_ACRESCIMO_DIVIDA_ATIVA`** — classe `UtilitariosDividas` · `simplesNacional` · `codigo` · `processoAdministrativo` · `statusDivida` · `numeroInscricao` · `dataInscricao` · `idDivida`
+**`FORMULA_ACRESCIMO_DIVIDA_ATIVA`** — classe `UtilitariosDividas` · `simplesNacional` · `codigo` · `processoAdministrativo` · `statusDivida` · `numeroInscricao` · `idDivida`
 
 **`FORMULA_ACRESCIMO_PARCELAMENTO`** — classe `UtilitariosParcelamento` · `numeroParcelamento` · `parcelas` · `dataParcelamento`
 
 **`DESCONTO_GUIA`** — `quantidadeDeItens` · `composicao`
 
 **`CONVENIO_BANCARIO`** — `contaUnica` · `numeroDeBaixa` · `nroDaparcela` · `Convenio` · `valorDoDocumento` · `TipoRetorno`
+
+**`GERACAO_CREDITO_PARCELAMENTOS`** — classe `UtilitariosTaxas` · `dividas` · `parcela` · `usuarioCorrente` · `guias`
+
+**`ITBI_VALOR_VENAL`** — `vendedoresDoImovel` · `anoDaTransferencia`
+
+**`ACRESCIMO_PARCELAMENTO_JURO`** — `saldo` · `competencias` · `creditosTributarios`
+
+**`DESCONTO_PARCELAMENTO`** — classe `lancamentos` · classe `situacaoFinanceira` · `vlTotalJuros` · `vlTotalMultaParcelar` · `parcelamentoAnterior` · `vlTotalMulta` · `vlTotalCorrecao` · `ehLancamentoInscrito` · `vlTotalLancadoParcelar` · `vlTotalDevido` · `vlTotalLancado` · `vlTotalJurosParcelar` · `dtVctoPrimeiraParcela` · `tipoDesconto` · `vlTotalCorrecaoParcelar`
+
+**`CREDITO_INSCRITO_DIVIDA_ATIVA`** — classe `receitaDiversaRepositorio` · classe `imovelRepositorio` · classe `guiaReceitaRepositorio` · classe `indexadorValorRepositorio` · classe `guiaRepositorio`
+
+**`MANUTENCAO_DIVIDA`** — classe `Manutencoes` · `leiAto` · `tipoManutencaoDivida` · `dataDoProcesso` · `numeroDoProcesso`
+
+**`IMPOSTOS_FEDERAIS`** — classe `ValoresDeAtividadesDosEconomicos` · classe `Economicos` · classe `AliquotasServicosEconomicos` · classe `NotasAvulsas` · classe `TabelasIRRF` · `impostosFederais`
+
+**`REDUCAO_BASE_CALC_ISSQN`** — classe `repositorioDeNotasAvulsas` · `issqn` · `servico`
+
+**`REQUERIMENTO_MANUTENCAO_CALCULO`** — `requerimentoManutencaoCalculo` · `situacoesRequerimento`
 
 Também faltam: `GERACAO_CREDITO_PARCELAMENTOS`,
 `GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS`, `DESCONTO_PARCELAMENTO_*`,

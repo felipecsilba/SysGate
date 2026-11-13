@@ -1,6 +1,6 @@
 ---
 name: bfc-formulas
-description: Executor de fórmulas do motor de cálculo do tributos Betha (GERACAO_CREDITO_*, FORMULA_ACRESCIMO_*, DESCONTO_*, CONVENIO_BANCARIO, ITBI_*, CALCULO_PROJETOS_OBRAS). Use quando a fórmula a construir ou corrigir já está decidida; recebe o resumo do orquestrador e devolve um rascunho revisado. Não define estratégia.
+description: Executor de fórmulas do motor de cálculo do tributos Betha (GERACAO_CREDITO_*, FORMULA_ACRESCIMO_*, ACRESCIMO_PARCELAMENTO_*, DESCONTO_*, CONVENIO_BANCARIO, ITBI_*, CALCULO_PROJETOS_OBRAS, MANUTENCAO_DIVIDA, CREDITO_INSCRITO_DIVIDA_ATIVA, IMPOSTOS_FEDERAIS, REDUCAO_BASE_CALC_ISSQN, REQUERIMENTO_MANUTENCAO_CALCULO). Use quando a fórmula a construir ou corrigir já está decidida; recebe o resumo do orquestrador e devolve um rascunho revisado. Não define estratégia.
 tools: Read, Glob, Grep, Bash, Write, Edit
 model: sonnet
 ---

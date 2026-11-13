@@ -89,26 +89,40 @@ Lê `_CONHECIMENTO/_bruto/formula-catalogo/ITBI.json`, cruza com os 2.035
 arquivos de `Formulas/` e grava `ITBI - contexto da formula.md`, com cada
 método ordenado por uso real. **O `.md` é gerado — não editar à mão.**
 
-## Estado da captura — 10 de ~17 tipos
+## Estado da captura — 20 contextos (2026-11-13)
 
-| Tipo | | Observação |
-|---|:-:|---|
-| `GERACAO_CREDITO_IMOVEIS` | ✅ | 264 fórmulas — IPTU |
-| `GERACAO_CREDITO_ECONOMICOS` | ✅ | 302 fórmulas — ISS |
-| `GERACAO_CREDITO_RECEITAS_DIVERSAS` | ✅ | 1.009 fórmulas — o maior volume |
-| `CALCULO_PROJETOS_OBRAS` | ✅ | sem equivalente em `Formulas/` |
-| `ITBI` | ✅ | 27 fórmulas |
-| `FORMULA_ACRESCIMO_DEBITO` | ✅ | 37 |
-| `FORMULA_ACRESCIMO_DIVIDA_ATIVA` | ✅ | 38 — o contexto mais rico (19 variáveis) |
-| `FORMULA_ACRESCIMO_PARCELAMENTO` | ✅ | 37 |
-| `DESCONTO_GUIA` | ✅ | 21 |
-| `CONVENIO_BANCARIO` | ✅ | 67 |
-| `GERACAO_CREDITO_PARCELAMENTOS` | ⬜ | 49 — o Felipe adiciona depois |
-| `GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS` | ⬜ | 5 — idem |
-| `DESCONTO_PARCELAMENTO_*` | ⬜ | 117 fórmulas em 4 subtipos |
-| `GERACAO_CREDITO_NOTA_FISCAL_AVULSA` | ⬜ | 28 |
-| `ACRESCIMO_PARCELAMENTO` / `ACRESCIMO_PRE_FIXADA` | ⬜ | 25 — tipos distintos dos `FORMULA_ACRESCIMO_*` |
-| `ITBI_VALOR_VENAL_*` | ⬜ | 7 |
+A lista oficial de tipos do sistema está em `_CONHECIMENTO/_bruto/formula-catalogo/_TIPOS-do-sistema.json`
+(enums do recurso `scriptArrecadacao`: `TipoScript` com 12 tipos, e os subtipos `TiposFormulas`,
+`TipoAcrescimo`, `TipoJuro`, `TipoCorrecao`, `TiposLancamentosDescontosParcelamentos`, `TipoCadastro`).
+Em 2026-11-13 os 10 tipos de agosto foram recapturados e estão **idênticos** (mesmas variáveis,
+classes e métodos).
+
+| Tipo (arquivo) | Menu do Betha / tipo no sistema | | Corpus |
+|---|---|:-:|---|
+| `GERACAO_CREDITO_IMOVEIS` | Cálculo · `GERACAO_CREDITO` / Imóveis | ✅ | 264 — IPTU |
+| `GERACAO_CREDITO_ECONOMICOS` | Cálculo · Econômicos | ✅ | 302 — ISS |
+| `GERACAO_CREDITO_RECEITAS_DIVERSAS` | Cálculo · Receitas diversas | ✅ | 1.009 |
+| `GERACAO_CREDITO_PARCELAMENTOS` | Cálculo · Parcelamentos | ✅ 11/13 | 49 |
+| `CALCULO_PROJETOS_OBRAS` | Cálculo · Projetos | ✅ | — |
+| `ITBI` | ITBI · Transferência de créditos | ✅ | 27 (`ITBI_TRANSFERENCIA_CREDITOS`) |
+| `ITBI_VALOR_VENAL` | ITBI · Valor venal territorial / construção / benfeitorias (mesmo contexto) | ✅ 11/13 | 8 |
+| `FORMULA_ACRESCIMO_DEBITO` | Acréscimos · Débito | ✅ | 37 |
+| `FORMULA_ACRESCIMO_DIVIDA_ATIVA` | Acréscimos · Dívida ativa | ✅ | 38 — o contexto mais rico (19 variáveis) |
+| `FORMULA_ACRESCIMO_PARCELAMENTO` | Acréscimos · Parcelamento | ✅ | 37 |
+| `ACRESCIMO_PARCELAMENTO_JURO` | Acréscimos · `ACRESCIMO` juro de parcelamento (`tipoAcrescimo JURO`) | ✅ 11/13 | 24 (`ACRESCIMO_PARCELAMENTO`, o corpus não separa do de baixo) |
+| `ACRESCIMO_PARCELAMENTO_ANTECIPACAO_JURO` | Acréscimos · antecipação de juro de parcelamento | ✅ 11/13 | idem |
+| `DESCONTO_GUIA` | Desconto para guia unificada | ✅ | 21 |
+| `DESCONTO_PARCELAMENTO` | Desconto para parcelamentos · Todos / Dívidas / Lançamentos do exercício / Parcelamentos anteriores (mesmo contexto) | ✅ 11/13 | 117 |
+| `CONVENIO_BANCARIO` | Convênio bancário | ✅ | 67 |
+| `CREDITO_INSCRITO_DIVIDA_ATIVA` | Dívida ativa · `DIVIDA_ATIVA` "Validar inscrição de créditos em dívida" | ✅ 11/13 | — |
+| `MANUTENCAO_DIVIDA` | Manutenção de dívida ativa (anistia, cancelamento, prescrição, remissão, suspensão: mesmo contexto) | ✅ 11/13 | — |
+| `IMPOSTOS_FEDERAIS` | Impostos federais | ✅ 11/13 | — |
+| `REDUCAO_BASE_CALC_ISSQN` | Redução da base de cálculo do ISSQN | ✅ 11/13 | — |
+| `REQUERIMENTO_MANUTENCAO_CALCULO` | Requerimento da manutenção de cálculo · `BENEFICIO_FISCAL` | ✅ 11/13 | — |
+| `GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS` | Cálculo · Contribuição de melhorias | ⬜ | 5 — sem fórmula no município da captura |
+| `GERACAO_CREDITO_NOTA_FISCAL_AVULSA` | Cálculo · Nota fiscal avulsa | ⬜ | 28 — idem |
+| `ACRESCIMO_PRE_FIXADA` | Acréscimos · correção pré-fixada | ⬜ | 1 |
+| `VALIDACAO_CADASTRAL` | está no enum `TipoScript`; a tela "validação cadastral" abriu a lista de `DIVIDA_ATIVA` | ❓ | — |
 
 ## ⚠️ Leia antes de adaptar código entre tipos
 

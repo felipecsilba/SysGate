@@ -25,6 +25,17 @@ ORDEM = [
     ('FORMULA_ACRESCIMO_PARCELAMENTO',   'A_PAR'),
     ('DESCONTO_GUIA',                    'DESC'),
     ('CONVENIO_BANCARIO',                'CONV'),
+    # capturados em 2026-11-13
+    ('GERACAO_CREDITO_PARCELAMENTOS',    'G_PAR'),
+    ('ITBI_VALOR_VENAL',                 'IT_VV'),
+    ('ACRESCIMO_PARCELAMENTO_JURO',      'AP_JUR'),
+    ('ACRESCIMO_PARCELAMENTO_ANTECIPACAO_JURO', 'AP_ANT'),
+    ('DESCONTO_PARCELAMENTO',            'D_PAR'),
+    ('CREDITO_INSCRITO_DIVIDA_ATIVA',    'INSC'),
+    ('MANUTENCAO_DIVIDA',                'MANUT'),
+    ('IMPOSTOS_FEDERAIS',                'FED'),
+    ('REDUCAO_BASE_CALC_ISSQN',          'RED'),
+    ('REQUERIMENTO_MANUTENCAO_CALCULO',  'REQ'),
 ]
 
 

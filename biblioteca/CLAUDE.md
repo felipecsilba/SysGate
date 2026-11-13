@@ -85,7 +85,7 @@ Aceita o nome do catálogo ou o nome do editor da Betha. O catálogo (`catalogo_
 |---|---|---|
 | `CONTEXTO.md`, `README.md`, este arquivo | Handoff da base | sim |
 | `_GRAFO/` | Grafo da biblioteca: `grafo.json` (gerado), `curado.json` (à mão), `grafo.mjs` (consulta) e `lib/` (testes: `node --test "_GRAFO/**/*.test.mjs"`) | sim |
-| `_BIBLIOTECA/` | Templates BASE (17), funções prontas (7), dicionário de fórmulas (10 tipos), dicionário de funções BFC-Script, Fórmula vs Script. `Exporta_Debitos_Completo_por_Credito_BASE` gera o `.jsonl` da Checagem Por Fonte | sim |
+| `_BIBLIOTECA/` | Templates BASE (17), funções prontas (7), dicionário de fórmulas (20 contextos, tirados do editor; lista oficial de tipos em `_CONHECIMENTO/_bruto/formula-catalogo/_TIPOS-do-sistema.json`), dicionário de funções BFC-Script, Fórmula vs Script. `Exporta_Debitos_Completo_por_Credito_BASE` gera o `.jsonl` da Checagem Por Fonte | sim |
 | `_REGISTRO/pedidos.md` | Uma linha por peça entregue: quem fez, base, revisor, rodadas no Studio até dar certo e o que falhou. Mede se os agentes compensam (preenchido pela skill `pedido-bfc`) | sim |
 | `_CONHECIMENTO/` | O que os agentes leem, por área (ITBI-Transferencias, Imoveis, Registro-Bancario, `_COMUM`, `_FUNDAMENTOS`) + `_bruto/` ainda não digerido | sim |
 | `FontesDeDados/` (scripts, `.md`, `catalogo_v2.json`, `mapa_bfc_rest.json`, `nomes_bfc.json`) | `fonte.py` e o Gerador do App precisam deles | sim |

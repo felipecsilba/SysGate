@@ -1,0 +1,244 @@
+{
+ "origem": "OPTIONS /tributos/v1/api/arrecadacao/scriptArrecadacao (metadados do recurso), capturado em 2026-11-13",
+ "enums": {
+  "TipoScript": [
+   {
+    "key": "ACRESCIMO",
+    "value": "A"
+   },
+   {
+    "key": "BENEFICIO_FISCAL",
+    "value": "B"
+   },
+   {
+    "key": "GERACAO_CREDITO",
+    "value": "G"
+   },
+   {
+    "key": "VALIDACAO_CADASTRAL",
+    "value": "V"
+   },
+   {
+    "key": "ITBI",
+    "value": "I"
+   },
+   {
+    "key": "DIVIDA_ATIVA",
+    "value": "D"
+   },
+   {
+    "key": "DESCONTO_PARCELAMENTO",
+    "value": "P"
+   },
+   {
+    "key": "IMPOSTOS_FEDERAIS",
+    "value": "F"
+   },
+   {
+    "key": "REDUCAO_BASE_CALC_ISSQN",
+    "value": "R"
+   },
+   {
+    "key": "CONVENIO_BANCARIO",
+    "value": "C"
+   },
+   {
+    "key": "MANUTENCAO_DIVIDA",
+    "value": "M"
+   },
+   {
+    "key": "GUIA_UNIFICADA",
+    "value": "U"
+   }
+  ],
+  "TiposFormulas": [
+   {
+    "key": "PARCELAMENTOS",
+    "value": "P",
+    "description": "Cadastro de parcelamentos de créditos"
+   },
+   {
+    "key": "ECONOMICOS",
+    "value": "E",
+    "description": "Cadastro de econômicos"
+   },
+   {
+    "key": "TRANSFERENCIA_CREDITOS",
+    "value": "R",
+    "description": "Transferência de créditos"
+   },
+   {
+    "key": "VALOR_VENAL_TERRITORIAL",
+    "value": "T",
+    "description": "Valor venal territorial"
+   },
+   {
+    "key": "VALOR_VENAL_CONSTRUCAO",
+    "value": "C",
+    "description": "Valor venal construção"
+   },
+   {
+    "key": "VALOR_VENAL_BENFEITORIAS",
+    "value": "B",
+    "description": "Valor venal das benfeitorias"
+   },
+   {
+    "key": "CREDITO_INSCRITO_DIVIDA_ATIVA",
+    "value": "D",
+    "description": "Validar inscrição de créditos em dívida"
+   }
+  ],
+  "TipoLancamentoScript": [
+   {
+    "key": "LANCAMENTO_DE_CREDITOS_EXERCICIO",
+    "value": 0,
+    "description": "Lançamentos de créditos no exercício"
+   },
+   {
+    "key": "DIVIDA_ATIVA",
+    "value": 1,
+    "description": "Divida ativa"
+   },
+   {
+    "key": "PARCELAMENTO",
+    "value": 2,
+    "description": "Parcelamento"
+   }
+  ],
+  "TipoAcrescimo": [
+   {
+    "key": "CORRECAO",
+    "value": "C",
+    "description": "Correção"
+   },
+   {
+    "key": "JURO",
+    "value": "J",
+    "description": "Juro"
+   },
+   {
+    "key": "MULTA",
+    "value": "M",
+    "description": "Multa"
+   },
+   {
+    "key": "ANTECIPACAO_CORRECAO",
+    "value": "A",
+    "description": "Antecipação da correção"
+   },
+   {
+    "key": "ANTECIPACAO_JURO",
+    "value": "N",
+    "description": "Antecipação do juro"
+   }
+  ],
+  "TipoJuro": [
+   {
+    "key": "MORATORIO",
+    "value": "M",
+    "description": "Moratórios"
+   },
+   {
+    "key": "PARCELAMENTO",
+    "value": "P",
+    "description": "Parcelamento"
+   }
+  ],
+  "TipoCorrecao": [
+   {
+    "key": "POS_FIXADA",
+    "value": "D",
+    "description": "Pós-fixada"
+   },
+   {
+    "key": "PRE_FIXADA",
+    "value": "A",
+    "description": "Pré-fixada"
+   }
+  ],
+  "TiposLancamentosDescontosParcelamentos": [
+   {
+    "key": "DIVIDAS",
+    "value": 0,
+    "description": "Dívidas"
+   },
+   {
+    "key": "LANCAMENTOS_EXERCICIO",
+    "value": 1,
+    "description": "Lançamentos do exercício"
+   },
+   {
+    "key": "PARCELAMENTOS_ANTERIORES",
+    "value": 2,
+    "description": "Parcelamentos anteriores"
+   },
+   {
+    "key": "TODOS",
+    "value": 99,
+    "description": "Todos"
+   }
+  ],
+  "TipoCadastro": [
+   {
+    "key": "CONTRIBUICAO_MELHORIAS",
+    "value": "M",
+    "description": "Contribuição de melhorias"
+   },
+   {
+    "key": "CONTRIBUINTE",
+    "value": "C",
+    "description": "Contribuintes"
+   },
+   {
+    "key": "ECONOMICOS",
+    "value": "E",
+    "description": "Econômicos"
+   },
+   {
+    "key": "ECONOMICO_ATIVIDADE",
+    "value": "A",
+    "description": "Econômico/Atividade"
+   },
+   {
+    "key": "IMOVEIS",
+    "value": "I",
+    "description": "Imóveis"
+   },
+   {
+    "key": "RECEITAS_DIVERSAS",
+    "value": "R",
+    "description": "Receitas diversas"
+   },
+   {
+    "key": "PARCELAMENTOS",
+    "value": "P",
+    "description": "Parcelamentos"
+   },
+   {
+    "key": "TRANSFERENCIA_IMOVEIS",
+    "value": "T",
+    "description": "Transferência de imóveis"
+   },
+   {
+    "key": "NOTA_FISCAL_AVULSA",
+    "value": "N",
+    "description": "Nota fiscal avulsa"
+   },
+   {
+    "key": "AUTO_INFRACAO",
+    "value": "U",
+    "description": "Autos de infrações"
+   },
+   {
+    "key": "PROJETOS",
+    "value": "J",
+    "description": "Projetos"
+   },
+   {
+    "key": "NOTIFICACOES_ISS",
+    "value": "S",
+    "description": "Notificação de ISS"
+   }
+  ]
+ }
+}
