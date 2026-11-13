@@ -121,7 +121,7 @@ classes e métodos).
 | `REQUERIMENTO_MANUTENCAO_CALCULO` | Requerimento da manutenção de cálculo · `BENEFICIO_FISCAL` | ✅ 11/13 | — |
 | `GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS` | Cálculo · Contribuição de melhorias ("Cálculo de contribuição") | ✅ 11/13 | 5 |
 | `GERACAO_CREDITO_NOTA_FISCAL_AVULSA` | Cálculo · Nota fiscal avulsa | — | 28 no corpus; **a nota fiscal avulsa foi extinta** no sistema (Felipe, 2026-11-13) |
-| `VALIDACAO_CADASTRAL` | está no enum `TipoScript`; a tela "validação cadastral" abriu a lista de `DIVIDA_ATIVA` | ❓ | — |
+| `VALIDACAO_CADASTRAL` | está no enum `TipoScript`, mas nenhuma tela conhecida abre esse tipo (a "validação cadastral" abre a lista de `DIVIDA_ATIVA`). Fica sem captura por decisão do Felipe (2026-11-13) | — | — |
 
 ## ⚠️ Leia antes de adaptar código entre tipos
 
