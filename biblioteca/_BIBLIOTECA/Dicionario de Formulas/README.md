@@ -21,18 +21,19 @@ https://tributos.betha.cloud/tributos/v1/api/core/scriptArrecadacao/{id}/script
 ```
 
 ⚠️ **`GET` nessa URL devolve o código-fonte da fórmula, com `variables` vazio.**
-O catálogo cheio vem de outra chamada do editor na mesma URL (o payload traz um
-snapshot de avaliação com `dataBase` do instante da requisição). O `Copy as
-cURL` do DevTools captura só o **preflight OPTIONS**, que não revela o método
-real. **Captura continua manual**, pelo DevTools — o que é aceitável: é uma vez
-por tipo de fórmula, não por dia.
+**O catálogo vem de `OPTIONS` na mesma URL** (resposta 202 com o JSON; confirmado em
+2026-11-13). Não é o preflight do navegador: a Betha usa `OPTIONS` para servir o catálogo.
+Em 2026-08 isso foi lido como preflight, e a captura ficou manual por causa disso.
 
 ### Como capturar
 
-1. Abrir a fórmula no editor, com o DevTools na aba **Network**, filtro Fetch/XHR
-2. Achar a requisição cujo **Preview** mostra `variables: [...]` e `classes: [...]`
-3. Botão direito → **Copy response**
-4. Salvar em `_CONHECIMENTO/_bruto/formula-catalogo/<TIPO>.json`
+Pelo `tools/betha-capture` (grava `OPTIONS` desde 2026-11-13): `1-abrir-chrome.cmd`,
+depois `4-escutar-formulas.cmd`, e abrir no Betha uma fórmula de cada tipo. As respostas
+ficam em `tools/betha-capture/capturas/formulas/` (fora do git).
+
+Manual, pelo DevTools: aba **Network**, filtro Fetch/XHR, a requisição `script` com método
+`OPTIONS` → **Preview** mostra `variables`, `classes` e `scaffolds` → **Copy response** →
+salvar em `_CONHECIMENTO/_bruto/formula-catalogo/<TIPO>.json`.
 
 Repetir **uma vez por tipo de fórmula** — cada tipo tem catálogo próprio.
 

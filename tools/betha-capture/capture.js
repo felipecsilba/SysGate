@@ -9,7 +9,7 @@
  *   CDP_PORT   porta de depuracao do Chrome (default 9222)
  *   CAP_DIR    pasta de saida (default ./capturas)
  *   CAP_HOSTS  substrings de host a capturar, separadas por virgula (default "betha")
- *   CAP_GET    "1" para capturar GET tambem (default so POST/PUT/PATCH/DELETE)
+ *   CAP_GET    "1" para capturar GET e OPTIONS tambem (default so POST/PUT/PATCH/DELETE)
  *   CAP_TOKEN  "1" para gravar o Authorization inteiro (default mascarado)
  */
 const fs = require('fs')
@@ -59,9 +59,11 @@ function interessa(url, metodo, tipo) {
   if (!HOSTS.some(h => url.includes(h))) return false
   if (!CAP_TUDO && RUIDO.some(r => url.includes(r))) return false
   if (tipo && !TIPOS.has(tipo)) return false          // so chamada de API, nao asset
-  if (metodo === 'OPTIONS') return false
   if (METODOS.has(metodo)) return true
-  return CAP_GET && metodo === 'GET'
+  // OPTIONS que chega aqui e chamada real: o preflight do CORS vem com tipo "Preflight" e ja
+  // saiu na linha de cima. A Betha usa OPTIONS para servir dados - o catalogo de contexto do
+  // editor de formulas e OPTIONS /core/scriptArrecadacao/{id}/script (2026-11-13). Leitura, como o GET.
+  return CAP_GET && (metodo === 'GET' || metodo === 'OPTIONS')
 }
 
 function mascarar(headers) {
