@@ -89,7 +89,7 @@ Lê `_CONHECIMENTO/_bruto/formula-catalogo/ITBI.json`, cruza com os 2.035
 arquivos de `Formulas/` e grava `ITBI - contexto da formula.md`, com cada
 método ordenado por uso real. **O `.md` é gerado — não editar à mão.**
 
-## Estado da captura — 20 contextos (2026-11-13)
+## Estado da captura — 21 contextos (2026-11-13)
 
 A lista oficial de tipos do sistema está em `_CONHECIMENTO/_bruto/formula-catalogo/_TIPOS-do-sistema.json`
 (enums do recurso `scriptArrecadacao`: `TipoScript` com 12 tipos, e os subtipos `TiposFormulas`,
@@ -109,8 +109,8 @@ classes e métodos).
 | `FORMULA_ACRESCIMO_DEBITO` | Acréscimos · Débito | ✅ | 37 |
 | `FORMULA_ACRESCIMO_DIVIDA_ATIVA` | Acréscimos · Dívida ativa | ✅ | 38 — o contexto mais rico (19 variáveis) |
 | `FORMULA_ACRESCIMO_PARCELAMENTO` | Acréscimos · Parcelamento | ✅ | 37 |
-| `ACRESCIMO_PARCELAMENTO_JURO` | Acréscimos · `ACRESCIMO` juro de parcelamento (`tipoAcrescimo JURO`) | ✅ 11/13 | 24 (`ACRESCIMO_PARCELAMENTO`, o corpus não separa do de baixo) |
-| `ACRESCIMO_PARCELAMENTO_ANTECIPACAO_JURO` | Acréscimos · antecipação de juro de parcelamento | ✅ 11/13 | idem |
+| `ACRESCIMO_PARCELAMENTO` | Acréscimos · `ACRESCIMO` juro de parcelamento **e** correção pré-fixada (mesmo contexto) | ✅ 11/13 | 25 (`ACRESCIMO_PARCELAMENTO` + `ACRESCIMO_PRE_FIXADA`; o corpus pode misturar antecipação) |
+| `ACRESCIMO_PARCELAMENTO_ANTECIPACAO` | Acréscimos · antecipação de juro **e** antecipação de correção (mesmo contexto, 3 variáveis) | ✅ 11/13 | o corpus não separa |
 | `DESCONTO_GUIA` | Desconto para guia unificada | ✅ | 21 |
 | `DESCONTO_PARCELAMENTO` | Desconto para parcelamentos · Todos / Dívidas / Lançamentos do exercício / Parcelamentos anteriores (mesmo contexto) | ✅ 11/13 | 117 |
 | `CONVENIO_BANCARIO` | Convênio bancário | ✅ | 67 |
@@ -119,9 +119,8 @@ classes e métodos).
 | `IMPOSTOS_FEDERAIS` | Impostos federais | ✅ 11/13 | — |
 | `REDUCAO_BASE_CALC_ISSQN` | Redução da base de cálculo do ISSQN | ✅ 11/13 | — |
 | `REQUERIMENTO_MANUTENCAO_CALCULO` | Requerimento da manutenção de cálculo · `BENEFICIO_FISCAL` | ✅ 11/13 | — |
-| `GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS` | Cálculo · Contribuição de melhorias | ⬜ | 5 — sem fórmula no município da captura |
-| `GERACAO_CREDITO_NOTA_FISCAL_AVULSA` | Cálculo · Nota fiscal avulsa | ⬜ | 28 — idem |
-| `ACRESCIMO_PRE_FIXADA` | Acréscimos · correção pré-fixada | ⬜ | 1 |
+| `GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS` | Cálculo · Contribuição de melhorias ("Cálculo de contribuição") | ✅ 11/13 | 5 |
+| `GERACAO_CREDITO_NOTA_FISCAL_AVULSA` | Cálculo · Nota fiscal avulsa | — | 28 no corpus; **a nota fiscal avulsa foi extinta** no sistema (Felipe, 2026-11-13) |
 | `VALIDACAO_CADASTRAL` | está no enum `TipoScript`; a tela "validação cadastral" abriu a lista de `DIVIDA_ATIVA` | ❓ | — |
 
 ## ⚠️ Leia antes de adaptar código entre tipos

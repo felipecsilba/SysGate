@@ -39,10 +39,12 @@ MAPA_CORPUS = {
                                         'DESCONTO_PARCELAMENTO_PARCELAMENTOS_ANTERIORES'],
     'ITBI_VALOR_VENAL':                ['ITBI_VALOR_VENAL_TERRITORIAL', 'ITBI_VALOR_VENAL_CONSTRUCAO',
                                         'ITBI_VALOR_VENAL_BENFEITORIAS'],
-    # O corpus chama os dois de ACRESCIMO_PARCELAMENTO, sem separar juro de antecipação de juro:
-    # a contagem dos dois sai da mesma família de arquivos.
-    'ACRESCIMO_PARCELAMENTO_JURO':     'ACRESCIMO_PARCELAMENTO',
-    'ACRESCIMO_PARCELAMENTO_ANTECIPACAO_JURO': 'ACRESCIMO_PARCELAMENTO',
+    # Acréscimo de parcelamento: o contexto muda entre normal e antecipação (juro de parcelamento
+    # e correção pré-fixada dividem um; antecipação de juro e de correção dividem o outro).
+    # O corpus não separa antecipação: os nomes ACRESCIMO_PARCELAMENTO podem conter as duas.
+    'ACRESCIMO_PARCELAMENTO':          ['ACRESCIMO_PARCELAMENTO', 'ACRESCIMO_PRE_FIXADA'],
+    'ACRESCIMO_PARCELAMENTO_ANTECIPACAO': None,
+    'GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS': 'GERACAO_CREDITO_CONTRIBUICAO_MELHORIAS',
     'IMPOSTOS_FEDERAIS':               None,
     'CREDITO_INSCRITO_DIVIDA_ATIVA':   None,
     'MANUTENCAO_DIVIDA':               None,

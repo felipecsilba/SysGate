@@ -1,10 +1,10 @@
-# Contexto da fórmula — tipo `ACRESCIMO_PARCELAMENTO_JURO`
+# Contexto da fórmula — tipo `ACRESCIMO_PARCELAMENTO`
 
 > **Gerado por** `_BIBLIOTECA/Dicionario de Formulas/_gerar.py` a partir de
-> `_CONHECIMENTO/_bruto/formula-catalogo/ACRESCIMO_PARCELAMENTO_JURO.json`, capturado do editor do
+> `_CONHECIMENTO/_bruto/formula-catalogo/ACRESCIMO_PARCELAMENTO.json`, capturado do editor do
 > Tributos. **Não editar à mão** — recapture o JSON e rode o gerador.
 >
-> Coluna **Corpus** = ocorrências **dentro deste tipo de fórmula** — 24 fórmulas do tipo `ACRESCIMO_PARCELAMENTO`.
+> Coluna **Corpus** = ocorrências **dentro deste tipo de fórmula** — 25 fórmulas do tipo `ACRESCIMO_PARCELAMENTO` / `ACRESCIMO_PRE_FIXADA`.
 > **`0` em negrito = existe no sistema e nunca foi usado neste tipo.**
 >
 > ⚠️ Nome de função **só vale dentro do tipo em que existe** — ver
@@ -245,10 +245,10 @@ O que o motor injeta. Não declarar.
 
 | Método | Retorna | Corpus | O que é |
 |---|---|---:|---|
-| `parcelamentoParcela.valorDaParcela` | `BigDecimal` | 59 | Valor da parcela |
+| `parcelamentoParcela.valorDaParcela` | `BigDecimal` | 60 | Valor da parcela |
 | `parcelamentoParcela.numeroDaParcela` | `Integer` | 41 | Número da parcela |
 | `parcelamentoParcela.valorDoDesconto` | `BigDecimal` | 16 | Valor do desconto |
-| `parcelamentoParcela.vencimento` | `Date` | 13 | Data de vencimento da parcela |
+| `parcelamentoParcela.vencimento` | `Date` | 15 | Data de vencimento da parcela |
 | `parcelamentoParcela.valorDeCorrecao` | `BigDecimal` | 6 | Valor de correção na parcela |
 | `parcelamentoParcela.valorDeJuros` | `BigDecimal` | 6 | Valor de juros na parcela |
 | `parcelamentoParcela.valorDeMulta` | `BigDecimal` | 6 | Valor de multa na parcela |
@@ -349,7 +349,7 @@ O que o motor injeta. Não declarar.
 
 | Método | Retorna | Corpus | O que é |
 |---|---|---:|---|
-| `Numeros.arredonda(valor, casasDecimais)` | `Number` | 3 | Arredonda um valor. → Um novo valor arredondado considerando as casas decimais especificadas. |
+| `Numeros.arredonda(valor, casasDecimais)` | `Number` | 4 | Arredonda um valor. → Um novo valor arredondado considerando as casas decimais especificadas. |
 | `Numeros.absoluto(valor)` | `Number` | **0** | Calcula o valor absoluto de um número. → O valor absoluto. |
 | `Numeros.coseno(valor)` | `Number` | **0** | Calcula o co-seno de um ângulo. |
 | `Numeros.ehNumero(texto)` | `boolean` | **0** | Verifica se um texto é um número válido. → Verdadeiro se for um número e falso caso não for. |
@@ -378,8 +378,8 @@ O que o motor injeta. Não declarar.
 
 | Método | Retorna | Corpus | O que é |
 |---|---|---:|---|
-| `Utilitarios.buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo(Sigla, Data inicial, Data final)` | `List` | 2 | Função que retorna as movimentações do indexador em um período → Lista de movimentações do indexador |
-| `Utilitarios.buscaValorDoIndexadorPorSiglaNumaDataEspecifica(Sigla, Data)` | `BigDecimal` | 1 | Função que retorna o valor do indexador em uma data específica |
+| `Utilitarios.buscaValorDoIndexadorPorSiglaNumaDataEspecifica(Sigla, Data)` | `BigDecimal` | 3 | Função que retorna o valor do indexador em uma data específica |
+| `Utilitarios.buscaMovimentacoesDoIndexadorPorSiglaEmUmPeriodo(Sigla, Data inicial, Data final)` | `List` | 3 | Função que retorna as movimentações do indexador em um período → Lista de movimentações do indexador |
 | `Utilitarios.buscaImoveisDoContribuinte(Código do contribuinte)` | `List` | **0** | Função que busca os imóveis do contribuinte → Lista de imóveis |
 | `Utilitarios.buscaImovelPeloCodigo(Código do imóvel)` | `ImoveisScript` | **0** | Função que busca o imóvel pelo código |
 | `Utilitarios.ehMoedaCorrente(Sigla)` | `boolean` | **0** | Função que retorna se o indexador é uma moeda corrente no país → true / false |
