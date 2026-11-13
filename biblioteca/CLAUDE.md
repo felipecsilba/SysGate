@@ -122,7 +122,8 @@ grafo, decide e revisa; os agentes em `.claude/agents/` executam com contexto m�
 | `itbi-transferencias` | da sessão | Diagnóstico e consulta de ITBI/transferências |
 
 Revisor de armadilhas (rodar antes de entregar qualquer BFC):
-`node _FERRAMENTAS/revisar-bfc.mjs <arquivo> [--formula]`. Calibrado: 0 erros no gabarito
+`node _FERRAMENTAS/revisar-bfc.mjs <arquivo> [--formula | --tipo <TIPO>]` (com o tipo, confere classes e
+métodos contra o catálogo do editor daquele tipo). Calibrado: 0 erros no gabarito
 (templates e funções validados); no corpus inteiro, 66 erros em 5 casos em aberto, listados em
 `../docs/estrutura-agentes-e-grafo.md` (seção 5). Rascunho de município vai para `_RASCUNHOS-TESTES/<Município>/`.
 

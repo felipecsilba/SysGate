@@ -5,15 +5,33 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { revisar } from './lib/regras.mjs'
+import { indexarCatalogos, tipoDoArquivo } from './lib/catalogoFormulas.mjs'
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const args = process.argv.slice(2)
 const flag = f => args.includes(`--${f}`)
-const arquivos = args.filter(a => !a.startsWith('--'))
+const iTipo = args.indexOf('--tipo')
+const tipoPedido = iTipo >= 0 ? args[iTipo + 1] : null
+const arquivos = args.filter((a, i) => !a.startsWith('--') && !(iTipo >= 0 && i === iTipo + 1))
 
 if (!arquivos.length) {
-  console.log('Uso: node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo>... [--formula] [--json] [--resumo]')
+  console.log('Uso: node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo>... [--formula] [--tipo TIPO] [--json] [--resumo]')
+  console.log('  --tipo: tipo de fórmula do Dicionario de Formulas (sem ele, vem do nome "Município - TIPO - Nome - Ano.txt")')
   process.exit(0)
+}
+
+// Catálogo do editor por tipo de fórmula (classes utilitárias e métodos de cada tipo)
+let catalogos = null
+try {
+  const dir = path.join(AQUI, '..', '_CONHECIMENTO', '_bruto', 'formula-catalogo')
+  const porTipo = {}
+  for (const n of fs.readdirSync(dir).filter(n => /^[A-Z][A-Z0-9_]*\.json$/.test(n)))
+    porTipo[n.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8'))
+  catalogos = indexarCatalogos(porTipo)
+} catch { /* sem catálogo: as regras de tipo ficam desligadas */ }
+if (tipoPedido && !catalogos?.tipos[tipoPedido]) {
+  console.log(`Tipo "${tipoPedido}" não está no Dicionario de Formulas. Tipos: ${Object.keys(catalogos?.tipos || {}).join(', ')}`)
+  process.exit(2)
 }
 
 let fontesConhecidas = [], operacoesRest = []
@@ -28,8 +46,11 @@ let erros = 0
 const porRegra = {}
 const saida = []
 for (const arq of arquivos) {
-  const formula = flag('formula') || /[\\/]Formulas[\\/]/.test(path.resolve(arq))
-  const achados = revisar(fs.readFileSync(arq, 'utf8'), { formula, fontesConhecidas, operacoesRest })
+  const tipo = tipoPedido || (catalogos && tipoDoArquivo(path.basename(arq), Object.keys(catalogos.tipos)))
+  const formula = flag('formula') || !!tipoPedido || /[\\/]Formulas[\\/]/.test(path.resolve(arq))
+  const catalogo = catalogos && tipo ? { ...catalogos, tipo } : null
+  const achados = revisar(fs.readFileSync(arq, 'utf8'), { formula, fontesConhecidas, operacoesRest, catalogo })
+  if (formula && !tipo && !flag('json') && !flag('resumo')) console.log(`(${path.basename(arq)}: tipo de fórmula não identificado — use --tipo para conferir classes e métodos do tipo)`)
   erros += achados.filter(a => a.nivel === 'erro').length
   for (const a of achados) porRegra[`${a.nivel} ${a.regra}`] = (porRegra[`${a.nivel} ${a.regra}`] || 0) + 1
   saida.push({ arquivo: arq, achados })

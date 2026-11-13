@@ -35,8 +35,10 @@ Você escreve fórmulas para o motor de cálculo. **Fórmula não é Script**: n
 ## Antes de devolver
 
 ```bash
-node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo> --formula
+node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo> --tipo <TIPO>   # tipo do Dicionario de Formulas
 ```
+`--tipo` confere as classes utilitárias e os métodos contra o catálogo daquele tipo
+(`formula-classe-tipo` é erro; `formula-metodo-tipo` é aviso e diz em que tipo o método existe).
 Erro: corrija. Aviso: corrija ou explique.
 
 ## Devolva só isto

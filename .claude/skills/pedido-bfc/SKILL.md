@@ -51,7 +51,7 @@ API: o `bfc-api` **nunca** envia nada — quem envia é o Felipe, inclusive GET.
 ## 5. Revisar antes de entregar
 
 ```bash
-node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo> [--formula]
+node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo> [--formula | --tipo <TIPO da fórmula>]
 ```
 
 E leia o que mudou em relação ao template de base: o que foi validado continua igual? A fonte

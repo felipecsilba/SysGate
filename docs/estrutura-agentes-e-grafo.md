@@ -103,13 +103,13 @@ corpus. Regerar sem mudança deixa `grafo.json` idêntico (sem data de geração
 
 ## 5. Revisor de BFC (`biblioteca/_FERRAMENTAS/revisar-bfc.mjs`)
 
-`node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo>... [--formula] [--json] [--resumo]` — linha,
+`node biblioteca/_FERRAMENTAS/revisar-bfc.mjs <arquivo>... [--formula] [--tipo TIPO] [--json] [--resumo]` — linha,
 nível, regra e correção; sai com 1 se houver erro. Ignora comentários e conteúdo de strings.
 
 | Nível | Regras |
 |---|---|
-| erro | `cast-as`, `json-minusculo`, `imprimir-soma`, `zip-no-script`, `metodo-sistema`, `busca-isempty`; com `--formula`: `formula-def` (só `def nome(`), `formula-find`, `formula-dados` |
-| aviso | `se-lista` (variável que recebeu lista), `it-em-se`, `zero-ausencia`, `metodo-rest` (`busca<Algo>` do catálogo como método), `fonte-desconhecida`, `averbacao-dh` |
+| erro | `cast-as`, `json-minusculo`, `imprimir-soma`, `zip-no-script`, `metodo-sistema`, `busca-isempty`; com `--formula`: `formula-def` (só `def nome(`), `formula-find`, `formula-dados`; com o tipo da fórmula (`--tipo` ou pelo nome do arquivo): `formula-classe-tipo` |
+| aviso | `se-lista` (variável que recebeu lista), `it-em-se`, `zero-ausencia`, `metodo-rest` (`busca<Algo>` do catálogo como método), `fonte-desconhecida`, `averbacao-dh`, `formula-metodo-tipo` |
 
 **Calibrado contra o gabarito** (2026-11-09): 0 erros em 24 templates/funções validados, 300 scripts
 e 100 fórmulas de produção. Regra nova só entra com teste e passando de novo por essa calibração —
@@ -123,6 +123,12 @@ defeitos das regras antigas, que acusavam 166 erros em peças de produção. Cor
   entendia `${...}` com aspas dentro nem string sem fechar: um `join(",")` dentro de GString fazia o
   resto do arquivo trocar código por comentário. O corpus perdeu 4 `usa-fonte` falsos (código comentado).
 - `formula-def` acusava `def x` declarando variável (97 de 98 casos, IPTU de produção). Agora só `def nome(`.
+
+**Regras de tipo de fórmula** (2026-11-13): conferem `Classe.metodo(` contra o catálogo do editor
+(`biblioteca/_CONHECIMENTO/_bruto/formula-catalogo/`, 21 contextos; `lib/catalogoFormulas.mjs`). Classe que o
+tipo não libera é erro; método fora da classe é aviso, porque o catálogo não lista tudo (`Numeros.inteiro`
+roda em produção sem estar nele: exceção em `METODOS_SEM_CATALOGO`). Nas 2.035 fórmulas de produção: 0 achado.
+Variável de contexto ficou de fora (`receitaDiversa.agrupamento` roda em 245 lugares sem estar no catálogo).
 
 Ficaram **66 erros em 5 casos**, à espera do Felipe dizer se a regra ou a peça está errada:
 

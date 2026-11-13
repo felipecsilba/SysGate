@@ -2,6 +2,7 @@
 // Fontes das regras: memória bfc-script-armadilhas e CONTEXTO.md ("Lições aprendidas").
 // Calibrado contra peças validadas: regra que acusa peça que roda em produção está errada.
 import { semComentarios, varrerCodigo, METODOS } from '../../_GRAFO/lib/codigo.mjs'
+import { METODOS_SEM_CATALOGO } from './catalogoFormulas.mjs'
 
 /** Apaga o conteúdo das strings (mantém aspas, tamanho e quebras de linha) para regra não casar com texto.
  *  O código dentro de ${...} continua visível. */
@@ -25,8 +26,10 @@ const MSG = {
   'formula-def': 'Fórmula não aceita definir função (def nome(...) {}): escreva o cálculo direto. Declarar variável com def roda.',
   'formula-find': 'Fórmula não aceita .find{}: use laço simples.',
   'formula-dados': 'Fórmula não acessa Dados.*: use as variáveis de contexto do motor (Dicionario de Formulas/<TIPO>).',
+  'formula-classe-tipo': 'Essa classe utilitária não existe neste tipo de fórmula: cada tipo libera as suas (Dicionario de Formulas/<TIPO>).',
+  'formula-metodo-tipo': 'Esse método não está no catálogo desta classe neste tipo de fórmula (o mesmo nome de classe muda de conteúdo entre tipos). Confira no Dicionario de Formulas/<TIPO>; se roda no Studio, registre em METODOS_SEM_CATALOGO.',
 }
-const NIVEL = { 'averbacao-dh': 'aviso', 'se-lista': 'aviso','it-em-se': 'aviso', 'zero-ausencia': 'aviso', 'metodo-rest': 'aviso', 'fonte-desconhecida': 'aviso' }
+const NIVEL = { 'formula-metodo-tipo': 'aviso', 'averbacao-dh': 'aviso', 'se-lista': 'aviso','it-em-se': 'aviso', 'zero-ausencia': 'aviso', 'metodo-rest': 'aviso', 'fonte-desconhecida': 'aviso' }
 
 function fecha(s, i, abre, fechaCh) {
   let d = 0
@@ -42,14 +45,14 @@ function fecha(s, i, abre, fechaCh) {
  * opcoes.formula: aplica as regras de fórmula. opcoes.fontesConhecidas: ids "fonte:x" do grafo.
  * opcoes.operacoesRest: nomes de operação do catálogo (liga a regra metodo-rest).
  */
-export function revisar(texto, { formula = false, fontesConhecidas = [], operacoesRest = [] } = {}) {
+export function revisar(texto, { formula = false, fontesConhecidas = [], operacoesRest = [], catalogo = null } = {}) {
   const codigo = semComentarios(String(texto || ''))
   const m = mascararStrings(codigo)
   const inicios = [0]
   for (let i = 0; i < m.length; i++) if (m[i] === '\n') inicios.push(i + 1)
   const linhaDe = idx => { let lo = 0, hi = inicios.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (inicios[mid] <= idx) lo = mid; else hi = mid - 1 } return lo + 1 }
   const achados = []
-  const add = (regra, idx, trecho) => achados.push({ linha: linhaDe(idx), nivel: NIVEL[regra] || 'erro', regra, trecho: trecho.trim(), msg: MSG[regra] })
+  const add = (regra, idx, trecho, extra = '') => achados.push({ linha: linhaDe(idx), nivel: NIVEL[regra] || 'erro', regra, trecho: trecho.trim(), msg: MSG[regra] + extra })
   const todos = (re, regra, src = m, filtro = () => true) => { for (const x of src.matchAll(re)) if (filtro(x)) add(regra, x.index, x[0]) }
 
   todos(/\bas\s+[A-Z]\w*/g, 'cast-as')
@@ -136,6 +139,25 @@ export function revisar(texto, { formula = false, fontesConhecidas = [], operaco
     todos(/\bdef\s+[A-Za-z_]\w*\s*\(/g, 'formula-def')
     todos(/\.find\s*\{/g, 'formula-find')
     todos(/\bDados\./g, 'formula-dados')
+
+    // Classe e método conferidos contra o catálogo do editor para o tipo desta fórmula.
+    // Calibrado em 2026-11-13 nas 2.007 fórmulas de produção com tipo: 0 classe fora do tipo; método
+    // fora só Numeros.inteiro (METODOS_SEM_CATALOGO). Variável de contexto fica de fora: o catálogo
+    // não lista tudo (receitaDiversa.agrupamento roda em 245 lugares sem estar nele).
+    const doTipo = catalogo?.tipo && catalogo.tipos?.[catalogo.tipo]
+    if (doTipo) {
+      const locais = new Set([...m.matchAll(/\b([A-Za-z_]\w*)\s*=(?!=)/g)].map(x => x[1]))
+      const onde = tipos => tipos.length ? ` Existe em: ${tipos.join(', ')}.` : ' Não existe em nenhum tipo capturado.'
+      for (const x of m.matchAll(/(?<![\w.])([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*\(/g)) {
+        const [, classe, metodo] = x
+        if (!catalogo.classesConhecidas.has(classe) || locais.has(classe) || doTipo.variaveis.has(classe)) continue
+        const metodos = doTipo.classes.get(classe)
+        if (!metodos) { add('formula-classe-tipo', x.index, `${classe}.${metodo}`, onde(catalogo.classesConhecidas.get(classe))); continue }
+        if (metodos.has(metodo) || METODOS_SEM_CATALOGO.has(`${classe}.${metodo}`)) continue
+        const outros = Object.entries(catalogo.tipos).filter(([, t]) => t.classes.get(classe)?.has(metodo)).map(([n]) => n)
+        add('formula-metodo-tipo', x.index, `${classe}.${metodo}`, onde(outros))
+      }
+    }
   }
 
   return achados.sort((a, b) => a.linha - b.linha || (a.regra < b.regra ? -1 : 1))
